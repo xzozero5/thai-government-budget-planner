@@ -68,7 +68,8 @@ function buildQueryBudgetLinesTurn(): ScriptedTurn {
   return {
     kind: 'dynamic',
     build: () => {
-      const searchOutput = getLastCapturedOutputByName('search_catalog') as SearchCatalogOutput | undefined;
+      const searchOutput = getLastCapturedOutputByName('search_catalog') as
+        SearchCatalogOutput | undefined;
       const firstKey = searchOutput?.items[0]?.key;
       const input =
         firstKey !== undefined
@@ -113,8 +114,7 @@ function buildEmitProposalTurn(): ScriptedTurn {
     kind: 'dynamic',
     build: () => {
       const queryOutput = getLastCapturedOutputByName('query_budget_lines') as
-        | QueryBudgetLinesOutput
-        | undefined;
+        QueryBudgetLinesOutput | undefined;
       const firstRow = queryOutput?.rows[0];
 
       const unitPriceThb = firstRow?.unit_price_thb ?? firstRow?.amount_thb ?? 1000;
@@ -133,7 +133,9 @@ function buildEmitProposalTurn(): ScriptedTurn {
             confidence: firstRow !== undefined ? 'medium' : 'low',
             rationale: '(dry-run) อ้างอิงผลลัพธ์จริงจาก query_budget_lines ของรอบทดสอบนี้',
             citations:
-              firstRow !== undefined ? [{ kind: 'budget_line', source_id: firstRow.source_id }] : [],
+              firstRow !== undefined
+                ? [{ kind: 'budget_line', source_id: firstRow.source_id }]
+                : [],
           },
         ],
         totals: {
@@ -176,7 +178,9 @@ export function buildGenericDryRunScript(promptTurnCount: number): ScriptedTurn[
     buildEndTurn('(dry-run) สรุปข้อเสนอทดสอบเรียบร้อยแล้ว'),
   ];
   for (let i = 1; i < promptTurnCount; i += 1) {
-    turns.push(buildEndTurn('(dry-run) รับทราบคำยืนยันแล้ว — ไม่มีการเรียกเครื่องมือเพิ่มในรอบนี้'));
+    turns.push(
+      buildEndTurn('(dry-run) รับทราบคำยืนยันแล้ว — ไม่มีการเรียกเครื่องมือเพิ่มในรอบนี้'),
+    );
   }
   return turns;
 }

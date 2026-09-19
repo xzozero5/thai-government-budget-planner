@@ -36,6 +36,7 @@ import {
 import { createToolLog } from '@/ai/toolLog';
 import { toApiTools } from '@/ai/tools';
 import { buildGenericDryRunScript } from './aiEvalHarness/dryRunScript';
+import { matchCaptures } from './aiEvalHarness/matchCaptures';
 import { summarizeToolOutput } from './aiEvalHarness/summarizeToolOutput';
 import { createCountingToolLog } from './aiEvalHarness/toolLogSummary';
 import type {
@@ -309,16 +310,23 @@ async function runCaseImpl(
       messages = result.messages;
       runningCostUsd += result.costUsd;
       finalEndedBecause = result.endedBecause;
+      // แหล่งหลักของ proposal คือผลของ agent loop เอง (ไม่พึ่งการจับคู่ capture ด้านล่าง ซึ่งเคยทำ proposal
+      // ที่จ่ายเงินแล้วหายไปทั้งก้อน) — ผ่าน JSON เพื่อยืนยันว่าเป็น plain data ก่อนข้าม page.evaluate
+      if (result.proposal !== undefined) {
+        latestProposal = JSON.parse(JSON.stringify(result.proposal.proposal)) as unknown;
+        latestProposalWarnings = [...result.proposal.warnings];
+      }
 
-      const newCaptures = getCapturedToolCalls().slice(captureStartIndex);
-      let captureCursor = 0;
-      for (const tc of result.toolCalls) {
-        const cap = newCaptures[captureCursor];
-        // ตั้งใจไม่ใช้ optional chain ตรงนี้ (`cap?.name === tc.name`) เพราะต้องให้ TS narrow `cap`
-        // เป็น non-undefined ตลอด block นี้ (อ่าน `cap.input`/`cap.output`/`cap.errorContent` ต่อ)
-        // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-        if (cap !== undefined && cap.name === tc.name) {
-          captureCursor += 1;
+      // จับคู่ capture กับ tool call แบบ FIFO "ต่อชื่อ tool" + กรองด้วย isError — ห้ามเดินด้วย cursor ตัวเดียว:
+      // tool ที่รันขนานในรอบเดียวกันถูก capture ตามลำดับที่ "เสร็จ" ไม่ใช่ลำดับที่โมเดลเรียก (รันจริงรอบ 2:
+      // query_budget_lines error เสร็จก่อน search_catalog → cursor เพี้ยนทั้ง case และ proposal หาย)
+      const matched = matchCaptures(
+        result.toolCalls,
+        getCapturedToolCalls().slice(captureStartIndex),
+      );
+      for (const [callIndex, tc] of result.toolCalls.entries()) {
+        const cap = matched[callIndex];
+        if (cap !== undefined) {
           const record: EvalToolCallRecord = {
             id: tc.id,
             name: tc.name,

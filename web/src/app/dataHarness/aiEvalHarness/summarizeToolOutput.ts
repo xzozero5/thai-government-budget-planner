@@ -111,7 +111,10 @@ const DEFAULT_PREVIEW_MAX_CHARS = 2000;
 function summarizeUnknown(output: unknown): ToolOutputPreview {
   const json = output === undefined ? 'null' : JSON.stringify(output);
   return {
-    preview: json.length > DEFAULT_PREVIEW_MAX_CHARS ? `${json.slice(0, DEFAULT_PREVIEW_MAX_CHARS)}…` : json,
+    preview:
+      json.length > DEFAULT_PREVIEW_MAX_CHARS
+        ? `${json.slice(0, DEFAULT_PREVIEW_MAX_CHARS)}…`
+        : json,
   };
 }
 

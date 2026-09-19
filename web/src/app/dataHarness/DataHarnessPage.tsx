@@ -16,9 +16,7 @@ import {
 } from '@/data/repo';
 import type { Facets } from '@/data/types';
 
-type SafeResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; errorName: string; message: string };
+type SafeResult<T> = { ok: true; data: T } | { ok: false; errorName: string; message: string };
 
 async function safeCall<T>(fn: () => Promise<T>): Promise<SafeResult<T>> {
   try {
@@ -54,7 +52,8 @@ export function DataHarnessPage(): ReactElement {
   useEffect(() => {
     window.__dataHarness = {
       queryLines: (params) => safeCall(() => budgetRepo.queryLines(params)),
-      getLines: (sourceIds, shardHints) => safeCall(() => budgetRepo.getLines(sourceIds, shardHints)),
+      getLines: (sourceIds, shardHints) =>
+        safeCall(() => budgetRepo.getLines(sourceIds, shardHints)),
       getDoc: (docId, opts) => safeCall(() => getDoc(docId, opts)),
       facets: () => safeCall(() => budgetRepo.facets()),
       prefetchDb: () => safeCall(() => prefetchDb()),
