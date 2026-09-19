@@ -121,7 +121,7 @@
 - **Lazy (โหลดเมื่อ tool แรกถูกเรียก พร้อม progress)**: DuckDB-WASM **~8.6 MB gz** (wasm 7.64 + worker 0.19 + parquet ext 0.69 + js 0.04 — ตัวเลขเดิม 2.5 MB ผิด) · ค้นหา ~3.6 MB gz (prebuilt index 1.60 + catalog ผอม 1.96 — T-208; ถ้าไม่ทำคือ 5.4 MB gz + build index 1.7–14.3 s)
 - **Lazy ตอน export**: react-pdf ~456 KB gz + Sarabun Regular/Bold ~90 KB gz; render 4 หน้า 235 ms
 - Tool round-trip: `search_catalog` < 200 ms **ไม่รวมเวลาโหลด index** (วัด: 5 query 42 ms desktop / แย่สุด 72 ms ต่อ query ที่ CPU 4× แบบ key_only); `query_budget_lines` ต่อ shard เย็น < 3 s (วัดบน Pages: 0.4–1.5 s — ยังไม่ได้ throttle เครือข่าย `[UNVERIFIED]`), อุ่น < 300 ms (วัด 16–110 ms)
-- Memory: DuckDB จำกัด 512 MB; JS heap ของ catalog+index ≈ 23 MB (prebuilt) / 74 MB (build เอง; peak 110 MB); ไม่โหลดเกิน 3 ปี × 3 กระทรวงพร้อมกันโดยไม่ evict
+- Memory: DuckDB จำกัด 512 MB; JS heap ของ catalog+index ≈ 23 MB (prebuilt) / 74 MB (build เอง; peak 110 MB); ลงทะเบียน shard พร้อมกันได้ ≤ 12 ไฟล์ (= เพดาน shard ต่อ query; shard ของ query ที่กำลังรันถูก pin ไม่ถูก evict — T-206 F7)
 - PRD "initial < 3 MB gz" ยังทำได้ (ของหนักทั้งหมดเป็น lazy) แต่ time-to-first-tool-result บน 4G จะถูกกำหนดโดย DuckDB 8.6 MB → ต้องเริ่ม prefetch หลังผู้ใช้ใส่ key สำเร็จ (ระหว่างที่ AI ยังถามคำถาม) — AC ใหม่ใน T-203/T-408
 
 ## 6. สิ่งที่ต้อง spike ก่อน (Phase 2, ทำก่อนเขียน feature)

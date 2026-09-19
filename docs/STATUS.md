@@ -3,13 +3,14 @@
 รูปแบบ entry: `## YYYY-MM-DD HH:MM (Asia/Bangkok) — <ใคร/agent> — <phase/task>` แล้วตามด้วย ทำอะไร / ไฟล์ที่แตะ / test / ค้าง / ไม่ยืนยัน
 
 ## สถานะปัจจุบัน
-- Phase: **2 กำลังทำ** — เสร็จ: T-201 (spikes S1–S5 → `docs/decisions/SPIKES.md`, **ADR-002**), T-202 (types + manifest loader; schema ตรวจกับ production ครบ) · กำลังทำขนาน 3 `frontend-dev`: **T-203** (DuckDB ตาม ADR-002 + repo + e2e กัน N5) ∥ **T-204 + T-208 ฝั่งเว็บ** (ค้นหาไทย + prebuilt index) ∥ **T-205 + T-207** (econ/inflation/trends + SVG sanitizer) → แล้ว T-206 (architect review) · Phase 1 **เสร็จ**
-- Phase 0: เสร็จทั้งหมด (Pages live)
-- ข้อมูลที่ publish: `data_version cd15fb2dd39b…` — **2,993,621 แถว / 794 ไฟล์ / 180.6 MB** (งบ 500 MB), ไฟล์ใหญ่สุด 6.17 MB; `tgbp build --dataset all` = 12 นาที, deterministic (main thread รันเต็มเองได้ `data_version` เดียวกับ agent)
-- Test ล่าสุด (main thread รันเอง ณ `1f5e464`): pipeline **pytest 437 passed**, ruff check/format ผ่าน; web ไม่เปลี่ยน (vitest 7/7 ณ Phase 0); **CI ของ `eea8632` เขียว + deploy สำเร็จ** — Pages เสิร์ฟ `data_version cd15fb2dd39b` (794 ไฟล์); `budget_lines/pbo/2564/20000.parquet` ตอบ Range ด้วย **206** (7,492 bytes / 53 ms); `*.json.gz` เสิร์ฟเป็น `application/gzip` ไม่มี `Content-Encoding` → client ต้อง gunzip เอง
-- Blockers: ไม่มี · `[ASK-HUMAN]` ค้าง: ไม่มี (ข้อ 5 ปิด — คุณนิวใส่ key ใน `web/.env.local` แล้ว, **เครดิตรวม 5 USD "ใช้อย่างประหยัด"** → `docs/api-budget.md`; ใช้ไปแล้ว **0.1453 USD**)
-- **แจ้งคุณนิว (ไม่บล็อก)**: (1) ADR-004 `PBO/2562.xlsx` ต้นทางไม่ครบ (coverage 79.24 %, ขาด 6 กระทรวง) — ถ้ามีไฟล์ฉบับครบนำมาแทนแล้วรัน `tgbp build` ใหม่ (2) ADR-005 ราชาเทวะ: ตัวเลขมาจาก OCR ของต้นทาง ไม่ตรงยอดในเอกสาร 10/38 กลุ่ม → V3 เป็น soft + flag (3) econ ยังไม่มีราคาน้ำมัน/ค่าแรงขั้นต่ำรายปี; ทุกค่า `verified:false` (4) ราคาต่อหน่วยมีแค่ ~3 % ของแถว PBO (ชื่อรายการส่วนใหญ่ไม่ระบุจำนวน)
-- กติกาจากบทเรียน: (1) ตรวจซ้ำรายงาน agent ทุกครั้งก่อน commit (2) ห้าม `git stash/checkout` ขณะมี agent แก้ไฟล์ (3) test ห้ามเขียนลง `.cache`/`web/public/data` จริง (4) commit data หลัง review ผ่านเท่านั้น (กัน history บวม)
+- Phase: **2 เสร็จ** (T-201..T-208; T-206 review = conditional go → blockers ปิดครบ) → ถัดไป **Phase 3** `/phase-3-ai` (AI layer — **SDK mocked ทั้งหมดระหว่างพัฒนา**; เรียก API จริงเฉพาะ eval ตาม `docs/api-budget.md`)
+- Phase 0, 1: เสร็จ · ข้อมูล production: `data_version cd15fb2dd39b…` 796 ไฟล์ (เพิ่ม `catalog/items-slim` + `catalog/search-index`), อยู่บน Pages แล้ว
+- Test ล่าสุด (main thread รันเองทั้งหมด): **web** lint 0 error · typecheck ✅ · vitest **312/312** · build ✅ (initial JS 60.3 KB gz; DuckDB/ค้นหาเป็น lazy; ไม่มี harness ใน `dist/`) · Playwright e2e **7/7** (206 จาก DuckDB worker, บล็อก cross-origin แล้ว query ผ่าน, ไม่มี CSP violation, ลำดับ range = full) · **pipeline** pytest **451** · ruff ✅ · CI ล่าสุดที่ยืนยัน: `a62b978` เขียว (web 75 s รวม e2e)
+- API ที่ `ai/` ต้องใช้: **`web/src/data/index.ts` (facade) เท่านั้น** — ESLint `no-restricted-imports` บังคับ
+- Blockers: ไม่มี · `[ASK-HUMAN]` ค้าง: ไม่มี · **งบ API: ใช้ไป 0.1453 / 5.00 USD** (`docs/api-budget.md`)
+- งานที่เลื่อน (มี interface รองรับแล้ว): **T-209** sort shard ตาม `item_key` + row group 16k, **T-210** catalog detail blocks (เลิกโหลด catalog เต็ม ~40 MB heap) — ทำพร้อมกันใน republish ครั้งถัดไป
+- แจ้งคุณนิว (ไม่บล็อก): ADR-004 (PBO 2562 ไม่ครบ 79 %), ADR-005 (ราชาเทวะ OCR ต้นทาง), econ ขาดน้ำมัน/ค่าแรง + `verified:false` ทั้งหมด, ราคาต่อหน่วยมี ~3 % ของแถว, DuckDB-WASM จริง ~8.6 MB gz (lazy), react-pdf มี 3 บั๊กภาษาไทยที่ต้องแก้ใน Phase 5
+- กติกาจากบทเรียน: (1) ตรวจซ้ำรายงาน agent ทุกครั้งก่อน commit — รวม**ตรวจกับข้อมูล production ไม่ใช่แค่ fixture** และ**โจมตี security code เอง** (2) ห้าม `git stash/checkout` ขณะมี agent แก้ไฟล์เดียวกัน (3) test ห้ามเขียนลง `.cache`/`web/public/data` จริง (4) commit data หลัง review ผ่าน (5) **ห้ามแก้ไฟล์ที่มี backslash ผ่าน Python heredoc** — ใช้ Edit tool
 
 ## Open questions / `[UNVERIFIED]` ที่ยังค้าง
 - econ: ยังไม่มี `diesel_avg_thb_per_l`, `gasoline95_avg_thb_per_l` (EPPO มีแต่ราคารายวัน/หน้า JS), `min_wage_bangkok_thb` มีแค่ปี 2568, `min_wage_avg_thb` ไม่มีค่าทางการ → คง `null`; **ทุกค่า econ `verified:false` `[UNVERIFIED]`** จนกว่าคนจะตรวจ (`docs/econ-sources.md`)
@@ -24,6 +25,15 @@
 - GitHub Pages: **live แล้ว** — ยืนยัน 19 ก.ย.: หน้า placeholder ขึ้น, CSP meta อยู่ใน HTML ที่ serve, `Accept-Ranges: bytes`, `Range: bytes=0-99` กับ `data/sources.json` → **206 / 100 bytes**; ยังต้องวัดกับไฟล์ parquet + DuckDB-WASM จริงใน S1 (T-201) และ `Cache-Control: max-age=600` (ข้อมูลใหม่อาจช้า ≤ 10 นาที)
 
 ## Log
+
+## 2569-09-20 09:30 (Asia/Bangkok) — Claude Code main thread (+ frontend-dev ×4, data-engineer, architect) — ปิด Phase 2
+- **T-203** DuckDB client ตาม ADR-002 + `BudgetRepo` + หน้า harness (ตัดออกจาก production ด้วย alias ตาม mode) + e2e ใน Chromium จริง. main thread: e2e 7/7, `dist/` ไม่มี harness/duckdb, **sha256 ของ parquet extension ตรงกับ `extensions.duckdb.org`**, CI Linux เขียว. agent เจอบั๊กจริง 2 จุด (URL root-relative ใช้ไม่ได้จาก blob worker; Arrow `LIST(NULL)` เมื่อ list ว่างทั้งคอลัมน์)
+- **T-204 + T-208** ค้นหาไทย: fold ก่อน tokenize + `Intl.Segmenter`, prebuilt index (slim 1.97 MB gz + index 1.65 MB gz; tokenizer แชร์กับ Node ผ่าน esbuild). main thread วัด latency กับ catalog จริง: query ที่มีคำทั่วไป 230–360 ms (เกินงบ) — agent คาดว่าเป็น fuzzy/prefix แต่**ต้นเหตุจริงคือ re-rank เรียก `Intl.Segmenter` ต่อ hit** → เปลี่ยนเป็น string scan + เลข/คำสั้น match ตรงตัว → **0.8–19 ms**. pipeline: `tgbp publish` เรียกสคริปต์ + ลง manifest; แก้ปัญหาไก่-ไข่ของ `data_version` (ไม่นับไฟล์ derived) → `data_version` เดิม, shards byte เดิม
+- **T-205 + T-207** econ/inflation (ไม่เดาค่า, ไม่ข้ามปีฐาน), trends (basis ไม่ปน, caveat 2562), **SVG sanitizer**: test ของ agent ผ่าน 30 เคส แต่ (ก) การโจมตีของ main thread หลุด 1/9 (`style="mask-image:image-set(…)"`) → ตัด `style` attribute เสมอ + กฎ external reference (ข) architect หลุดได้อีกด้วย **CSS escape `\000075rl(`** (Chromium ยิง request ออกจริง) → เปลี่ยนเป็น **allowlist grammar** สำหรับ paint/reference attributes + ห้าม backslash; ตอนนี้ 62 tests. ยังต้องมี e2e ใน browser จริง (T-412)
+- **T-206** architect review: boundaries ผ่าน, ADR-002 ครบ, ไม่มี SQL injection; blockers 3 (ORDER BY ไม่มี tiebreaker → citation ไม่ reproducible; แถว Zod fail ถูกทิ้งเงียบ; ผล query ไม่บอก shard) + majors (LRU evict shard ของ query ตัวเอง, coverageNotes ไม่ครบ, re-rank, ตรวจ version ของ slim) → แก้ครบ + API ใหม่สำหรับ Phase 3 (`findDocuments`, `getDoc` จำกัด chunk, `getCatalogItemByKey`, `searchCatalog.total`) + **facade `data/index.ts`**. รายงาน: `docs/decisions/T-206-review.md`
+- ข้อสังเกตคุณภาพที่ยังเปิด (ส่งต่อ eval T-306): "ก่อสร้างอาคาร" → top-1 ยังเป็น "ปรับปรุงซ่อมแซมอาคารเรียน…สิ่งก่อสร้างอื่น" (substring match; n=53,806); `getDoc` แนบ coverage notes ของกลุ่ม `province_budget` แบบ heuristic
+- ความผิดพลาดของ main thread: แก้ไฟล์ผ่าน Python heredoc ทำ backslash เพี้ยน/NUL byte → คืนจาก git แล้วแก้ด้วย Edit tool (ไม่มีอะไรหลุดเข้า commit)
+- Commits: `077ee92` `56fb6f6` `f7c5f05` `a62b978` `64ba7f2` `39c97e1` `5a98586`(data) `9ec7f32` + commit นี้
 
 ## 2569-09-20 02:30 (Asia/Bangkok) — Claude Code main thread (+ architect, frontend-dev) — Phase 2 ช่วงแรก
 - **ยืนยันบน production**: CI/deploy ของ `eea8632` เขียว; Pages เสิร์ฟ `data_version cd15fb2dd39b` (794 ไฟล์); parquet ตอบ Range `206`
