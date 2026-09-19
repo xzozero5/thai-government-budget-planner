@@ -9,6 +9,9 @@ __pycache__/
 .pytest_cache/
 # web
 web/node_modules/
+web/spikes/node_modules/
+web/spikes/**/dist/
+web/spikes/**/out/
 web/dist/
 web/playwright-report/
 web/test-results/

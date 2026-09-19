@@ -3,10 +3,10 @@
 รูปแบบ entry: `## YYYY-MM-DD HH:MM (Asia/Bangkok) — <ใคร/agent> — <phase/task>` แล้วตามด้วย ทำอะไร / ไฟล์ที่แตะ / test / ค้าง / ไม่ยืนยัน
 
 ## สถานะปัจจุบัน
-- Phase: **1 เสร็จ** (T-101..T-115 ปิดครบ; `po` review T-113 ผ่าน — blocking 5 ข้อปิดแล้ว) → ถัดไป **Phase 2** `/phase-2-arch` (T-201 spikes S1–S5 ∥ T-202…)
+- Phase: **2 กำลังทำ** — `architect` T-201 spikes S1–S5 (ใน `web/spikes/` แยก npm project) ∥ `frontend-dev` T-202 (types + manifest loader จาก fixture จริง) → แล้ว T-203/T-204/T-205/T-207 → T-206 · Phase 1 **เสร็จ** (T-101..T-115; `po` review ผ่าน)
 - Phase 0: เสร็จทั้งหมด (Pages live)
 - ข้อมูลที่ publish: `data_version cd15fb2dd39b…` — **2,993,621 แถว / 794 ไฟล์ / 180.6 MB** (งบ 500 MB), ไฟล์ใหญ่สุด 6.17 MB; `tgbp build --dataset all` = 12 นาที, deterministic (main thread รันเต็มเองได้ `data_version` เดียวกับ agent)
-- Test ล่าสุด (main thread รันเอง ณ `1f5e464`): pipeline **pytest 437 passed**, ruff check/format ผ่าน; web ไม่เปลี่ยน (vitest 7/7 ณ Phase 0); CI — ดู log ล่าสุด
+- Test ล่าสุด (main thread รันเอง ณ `1f5e464`): pipeline **pytest 437 passed**, ruff check/format ผ่าน; web ไม่เปลี่ยน (vitest 7/7 ณ Phase 0); **CI ของ `eea8632` เขียว + deploy สำเร็จ** — Pages เสิร์ฟ `data_version cd15fb2dd39b` (794 ไฟล์); `budget_lines/pbo/2564/20000.parquet` ตอบ Range ด้วย **206** (7,492 bytes / 53 ms); `*.json.gz` เสิร์ฟเป็น `application/gzip` ไม่มี `Content-Encoding` → client ต้อง gunzip เอง
 - Blockers: ไม่มี · `[ASK-HUMAN]` ค้าง: ไม่มี
 - **แจ้งคุณนิว (ไม่บล็อก)**: (1) ADR-004 `PBO/2562.xlsx` ต้นทางไม่ครบ (coverage 79.24 %, ขาด 6 กระทรวง) — ถ้ามีไฟล์ฉบับครบนำมาแทนแล้วรัน `tgbp build` ใหม่ (2) ADR-005 ราชาเทวะ: ตัวเลขมาจาก OCR ของต้นทาง ไม่ตรงยอดในเอกสาร 10/38 กลุ่ม → V3 เป็น soft + flag (3) econ ยังไม่มีราคาน้ำมัน/ค่าแรงขั้นต่ำรายปี; ทุกค่า `verified:false` (4) ราคาต่อหน่วยมีแค่ ~3 % ของแถว PBO (ชื่อรายการส่วนใหญ่ไม่ระบุจำนวน)
 - กติกาจากบทเรียน: (1) ตรวจซ้ำรายงาน agent ทุกครั้งก่อน commit (2) ห้าม `git stash/checkout` ขณะมี agent แก้ไฟล์ (3) test ห้ามเขียนลง `.cache`/`web/public/data` จริง (4) commit data หลัง review ผ่านเท่านั้น (กัน history บวม)
