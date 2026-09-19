@@ -228,6 +228,14 @@ def _detect_kind(path: Path) -> Kind:
     return _detect_magic_kind(path)
 
 
+def detect_kind(path: Path) -> Kind:
+    """Public wrapper ของ `_detect_kind` (T-110b) — ใช้โดย `validate.check_v10` เพื่อนับ PDF ใน
+    raw ด้วยตรรกะเดียวกับที่ `scan_raw_dir`/`build_source_doc` ใช้จริง (magic bytes กันไฟล์ที่ไม่มี
+    นามสกุล `.pdf`) แทนการเขียน sniffer ซ้ำ (N7)
+    """
+    return _detect_kind(path)
+
+
 @dataclass
 class _FolderMetadata:
     collection: Collection

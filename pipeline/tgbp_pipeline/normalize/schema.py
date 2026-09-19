@@ -65,6 +65,9 @@ class SourceDoc(BaseModel):
     fiscal_years: list[int] = Field(default_factory=list)
 
     text_chunks_file: str | None = None
+    # T-110b (publish): จำนวน DocChunk ของไฟล์นี้ (นับจาก `.cache/docs/{doc_id}.json.gz` หรือ
+    # `_pdf_report.json`) — `None` ถ้ายังไม่ extract/ไม่มี text_chunks_file
+    n_chunks: int | None = None
     note: str | None = None
 
     # ไฟล์ที่ sha1 ซ้ำกัน (03 §4.2) — เก็บไว้เฉพาะที่ตัวหลัก (ตัวแรกตามลำดับตัวอักษรของ rel_path)

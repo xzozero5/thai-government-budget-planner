@@ -701,6 +701,16 @@ class V10Result:
 
 
 def check_v10(cfg: PipelineConfig, sources_json_path: Path) -> V10Result:
+    """V10 (03 §6): ทุก PDF ใน raw ปรากฏใน sources.json
+
+    แก้ 19 ก.ย. 2569 (T-110b): นับ PDF ใน raw ด้วย**ตรรกะเดียวกับ `inventory.py`**
+    (`inventory.detect_kind` — magic bytes, ไม่ใช่แค่นามสกุลไฟล์) เพราะมีไฟล์ PDF จริง 1 ไฟล์ที่
+    ไม่มีนามสกุล `.pdf` (ตรวจพบจาก `%PDF` magic bytes เท่านั้น) ทำให้นับด้วยนามสกุลอย่างเดียวได้
+    raw=261 ไม่ตรงกับ sources.json (kind="pdf") ที่ได้ 262 — ใช้ `inventory.detect_kind()` ที่
+    export เป็น public แล้ว (N7 ไม่สร้าง magic-byte sniffer ซ้ำ)
+    """
+    from tgbp_pipeline.inventory import detect_kind
+
     if not cfg.raw_data_dir.is_dir():
         return V10Result(
             status="skipped_no_raw_dir", passed=True, n_pdf_in_raw=0, n_pdf_in_sources=0
@@ -708,7 +718,7 @@ def check_v10(cfg: PipelineConfig, sources_json_path: Path) -> V10Result:
     raw_pdfs = {
         p.relative_to(cfg.raw_data_dir).as_posix()
         for p in cfg.raw_data_dir.rglob("*")
-        if p.is_file() and p.suffix.lower() == ".pdf"
+        if p.is_file() and detect_kind(p) == "pdf"
     }
     if not sources_json_path.is_file():
         return V10Result(
@@ -731,6 +741,37 @@ def check_v10(cfg: PipelineConfig, sources_json_path: Path) -> V10Result:
 
 
 # ---------------------------------------------------------------------------
+# V6 (03 §6, hard): ไม่มีไฟล์ output > 24 MB — คำนวณได้เฉพาะ**หลัง publish** (T-110b) เพราะต้องมี
+# รายการไฟล์ที่เขียนจริงใน `web/public/data/` (`tgbp validate` เดี่ยว ๆ ที่ทำงานกับ `.cache/`
+# อย่างเดียวจึงส่ง `published_files=None` แล้ว v6=None ตามเดิม — ไม่กระทบพฤติกรรมเดิม)
+# ---------------------------------------------------------------------------
+
+V6_MAX_FILE_BYTES = 24_000_000
+
+
+@dataclass
+class V6Result:
+    passed: bool
+    n_files: int
+    max_bytes: int
+    oversized: list[dict] = field(default_factory=list)  # [{"path": str, "bytes": int}]
+
+
+def check_v6(file_paths: list[Path], max_bytes: int = V6_MAX_FILE_BYTES) -> V6Result:
+    oversized: list[dict] = []
+    for path in file_paths:
+        try:
+            size = path.stat().st_size
+        except OSError:
+            continue
+        if size > max_bytes:
+            oversized.append({"path": str(path), "bytes": size})
+    return V6Result(
+        passed=not oversized, n_files=len(file_paths), max_bytes=max_bytes, oversized=oversized
+    )
+
+
+# ---------------------------------------------------------------------------
 # ValidationReport — ประกอบผล V1-V10 ทั้งหมด + markdown
 # ---------------------------------------------------------------------------
 
@@ -743,10 +784,13 @@ class ValidationReport:
     v3: V3Summary | None = None
     v4_by_dataset: dict[str, V4Result] = field(default_factory=dict)
     v5: V5Result | None = None
+    v6: V6Result | None = None
     v7_by_dataset: dict[str, V7DatasetResult] = field(default_factory=dict)
     v8: V8Result | None = None
     v9_by_dataset: list[V9DatasetResult] = field(default_factory=list)
     v10: V10Result | None = None
+    total_output_bytes: int | None = None
+    total_output_bytes_limit: int | None = None
     hard_failures: list[str] = field(default_factory=list)
     notable_statuses: list[str] = field(default_factory=list)
 
@@ -758,8 +802,29 @@ class ValidationReport:
         return asdict(self)
 
 
-def build_validation_report(cfg: PipelineConfig) -> ValidationReport:
-    """ประกอบ `ValidationReport` จาก extract-stage cache (V1/V2) + normalized cache (V3-V10)"""
+def build_validation_report(
+    cfg: PipelineConfig,
+    *,
+    published_files: list[Path] | None = None,
+    total_output_bytes: int | None = None,
+    total_output_bytes_limit: int | None = None,
+    sources_json_path: Path | None = None,
+) -> ValidationReport:
+    """ประกอบ `ValidationReport` จาก extract-stage cache (V1/V2) + normalized cache (V3-V10)
+
+    `published_files`/`total_output_bytes*` (T-110b, optional): ส่งเข้ามาจาก `publish.py`
+    **หลัง**เขียนไฟล์ทั้งหมดจริงใน `web/public/data/` แล้วเท่านั้น เพื่อคำนวณ V6 (ไม่มีไฟล์ > 24 MB)
+    และเช็ครวม ≤ 500 MB (hard, ไม่ใช่ V-number ทางการแต่เป็นกฎ CLAUDE.md §5.1) — `tgbp validate`
+    เดี่ยว ๆ (ทำงานกับ `.cache/` เท่านั้น ไม่รู้จักไฟล์ที่ publish แล้ว) เรียกแบบไม่ส่งพารามิเตอร์เหล่านี้
+    เหมือนเดิม (`v6=None`, ไม่กระทบพฤติกรรมเดิม/เทสต์เดิม)
+
+    `sources_json_path` (T-110b, optional): path ของ `sources.json` ที่ใช้ตรวจ V5/V10 — ปกติคือ
+    `cfg.output_dir / "sources.json"` (ค่าเริ่มต้น) แต่ `publish.py`/`sample()` (T-112) เขียนไป
+    `out_dir` ที่อาจไม่ใช่ `cfg.output_dir` เสมอ (เช่น `cfg.fixtures_dir` หรือ `tmp_path` ในเทสต์)
+    """
+    sources_path = (
+        sources_json_path if sources_json_path is not None else cfg.output_dir / "sources.json"
+    )
     from tgbp_pipeline.extract.act2570 import check_v2 as check_v2_act2570
 
     hard_failures: list[str] = []
@@ -806,7 +871,7 @@ def build_validation_report(cfg: PipelineConfig) -> ValidationReport:
             hard_failures.append(f"V4 {ds}: source_id ซ้ำ {len(r.duplicates)} รายการ")
 
     # --- V5 ---
-    v5 = check_v5(all_paths, cfg.output_dir / "sources.json")
+    v5 = check_v5(all_paths, sources_path)
     if v5.status == "failed":
         hard_failures.append(
             f"V5: source_doc_id ไม่พบใน sources.json {len(v5.missing_doc_ids)} รายการ"
@@ -837,13 +902,27 @@ def build_validation_report(cfg: PipelineConfig) -> ValidationReport:
             )
 
     # --- V10 ---
-    v10 = check_v10(cfg, cfg.output_dir / "sources.json")
+    v10 = check_v10(cfg, sources_path)
     if v10.status == "failed":
         hard_failures.append(
             f"V10: PDF ใน raw ที่ไม่อยู่ใน sources.json {len(v10.missing_rel_paths)} ไฟล์"
         )
     elif v10.status.startswith("skipped"):
         notable_statuses.append(f"V10: {v10.status}")
+
+    # --- V6 (hard, เฉพาะเมื่อเรียกจาก publish.py หลังเขียนไฟล์จริงแล้ว) ---
+    v6: V6Result | None = None
+    if published_files is not None:
+        v6 = check_v6(published_files)
+        if not v6.passed:
+            hard_failures.append(f"V6: ไฟล์ output > 24 MB {len(v6.oversized)} ไฟล์")
+
+    if total_output_bytes is not None and total_output_bytes_limit is not None:
+        if total_output_bytes > total_output_bytes_limit:
+            hard_failures.append(
+                f"total_output_bytes: {total_output_bytes:,} เกินเพดาน "
+                f"{total_output_bytes_limit:,} bytes"
+            )
 
     return ValidationReport(
         generated_at=datetime.now(UTC).isoformat(),
@@ -852,10 +931,13 @@ def build_validation_report(cfg: PipelineConfig) -> ValidationReport:
         v3=v3,
         v4_by_dataset=v4_by_dataset,
         v5=v5,
+        v6=v6,
         v7_by_dataset=v7_by_dataset,
         v8=v8,
         v9_by_dataset=v9_by_dataset,
         v10=v10,
+        total_output_bytes=total_output_bytes,
+        total_output_bytes_limit=total_output_bytes_limit,
         hard_failures=hard_failures,
         notable_statuses=notable_statuses,
     )
@@ -936,6 +1018,26 @@ def render_validation_markdown(report: ValidationReport) -> str:
         )
     lines.append("")
 
+    if report.v6 is not None:
+        lines.append(
+            f"## V6 — ไม่มีไฟล์ output > 24 MB: {'PASS' if report.v6.passed else 'FAIL'} "
+            f"({report.v6.n_files:,} ไฟล์ตรวจ)"
+        )
+        lines.append("")
+        if report.v6.oversized:
+            lines.append("| path | bytes |")
+            lines.append("|---|---|")
+            for item in report.v6.oversized:
+                lines.append(f"| `{item['path']}` | {item['bytes']:,} |")
+            lines.append("")
+
+    if report.total_output_bytes is not None:
+        lines.append(
+            f"## รวมขนาด web/public/data/: {report.total_output_bytes:,} bytes "
+            f"(เพดาน {report.total_output_bytes_limit:,})"
+        )
+        lines.append("")
+
     if report.v8 is not None:
         lines.append(
             f"## V8 — unit_price outlier (soft): {report.v8.n_outlier_rows:,} แถว "
@@ -961,11 +1063,16 @@ def render_validation_markdown(report: ValidationReport) -> str:
     return "\n".join(lines) + "\n"
 
 
-def write_validation_report(cfg: PipelineConfig, report: ValidationReport) -> tuple[Path, Path]:
-    """เขียน `.cache/validation/validation.json` + `validation_report.md` (publish จะ copy ไป
-    `web/public/data/` ทีหลัง — คนละ task/T-110b)
+def write_validation_report(
+    cfg: PipelineConfig, report: ValidationReport, out_dir: Path | None = None
+) -> tuple[Path, Path]:
+    """เขียน `validation.json` + `validation_report.md`
+
+    ค่าเริ่มต้นเขียนที่ `.cache/validation/`; T-110b (`publish.py`) ส่ง `out_dir=cfg.output_dir`
+    เพื่อเขียนฉบับสุดท้าย (รวม V6) ตรงไปที่ `web/public/data/` แทนการ copy ไฟล์ซ้ำ
     """
-    out_dir = cfg.assert_writable_path(cfg.cache_dir / "validation")
+    target_dir = out_dir if out_dir is not None else (cfg.cache_dir / "validation")
+    out_dir = cfg.assert_writable_path(target_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     json_path = out_dir / "validation.json"

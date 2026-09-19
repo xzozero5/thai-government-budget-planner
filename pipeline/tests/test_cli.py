@@ -25,18 +25,21 @@ def test_help_exits_zero() -> None:
     assert "tgbp" in result.output.lower()
 
 
-@pytest.mark.parametrize(
-    "args",
-    [
-        ["publish"],
-        ["build"],
-        ["sample"],
-    ],
-)
-def test_stub_commands_exit_nonzero(args: list[str]) -> None:
-    result = runner.invoke(app, args)
-    assert result.exit_code != 0
-    assert "ยังไม่ implement" in result.output
+def test_publish_command_help_exits_zero() -> None:
+    result = runner.invoke(app, ["publish", "--help"])
+    assert result.exit_code == 0
+
+
+def test_build_command_help_exits_zero() -> None:
+    result = runner.invoke(app, ["build", "--help"])
+    assert result.exit_code == 0
+    assert "--skip-extract" in result.output
+
+
+def test_sample_command_help_exits_zero() -> None:
+    result = runner.invoke(app, ["sample", "--help"])
+    assert result.exit_code == 0
+    assert "--rows" in result.output
 
 
 def test_inventory_command_help_exits_zero() -> None:
@@ -427,3 +430,145 @@ def test_validate_command_fail_exits_nonzero_and_prints_hard_failures(
     assert "สถานะรวม: FAIL" in result.output
     assert "source_incomplete" in result.output
     assert "V7 pbo_disbursement" in result.output
+
+
+# ---------------------------------------------------------------------------
+# T-110b: `tgbp publish` / `tgbp sample` / `tgbp build`
+# ---------------------------------------------------------------------------
+
+
+def _fake_publish_result(passed: bool = True) -> SimpleNamespace:
+    return SimpleNamespace(
+        manifest_path=Path("/x/manifest.json"),
+        manifest={"data_version": "abc123def456"},
+        shard_parts=[1, 2, 3],
+        catalog=SimpleNamespace(
+            entries=[{}] * 5, min_lines=3, min_years=3, min_unit_price_distinct=2
+        ),
+        n_trend_items=2,
+        docs=SimpleNamespace(n_copied=1, n_bytes=100),
+        total_bytes=12_345,
+        validation_passed=passed,
+    )
+
+
+def test_publish_command_success_reports_and_exits_zero(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import tgbp_pipeline.publish as publish_mod
+
+    monkeypatch.setattr(publish_mod, "publish", lambda cfg: _fake_publish_result(True))
+    config_path = _write_minimal_cli_config(tmp_path)
+
+    result = runner.invoke(app, ["publish", "--config", str(config_path)])
+
+    assert result.exit_code == 0
+    assert "manifest.json" in result.output
+    assert "validation: PASS" in result.output
+
+
+def test_publish_command_validation_fail_exits_nonzero(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import tgbp_pipeline.publish as publish_mod
+
+    monkeypatch.setattr(publish_mod, "publish", lambda cfg: _fake_publish_result(False))
+    config_path = _write_minimal_cli_config(tmp_path)
+
+    result = runner.invoke(app, ["publish", "--config", str(config_path)])
+
+    assert result.exit_code == 1
+    assert isinstance(result.exception, SystemExit)
+    assert "validation: FAIL" in result.output
+
+
+def test_sample_command_success_reports_and_exits_zero(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import tgbp_pipeline.publish as publish_mod
+
+    monkeypatch.setattr(publish_mod, "sample", lambda cfg, rows: _fake_publish_result(True))
+    config_path = _write_minimal_cli_config(tmp_path)
+
+    result = runner.invoke(app, ["sample", "--rows", "500", "--config", str(config_path)])
+
+    assert result.exit_code == 0
+    assert "manifest.json" in result.output
+
+
+def test_sample_command_validation_fail_exits_nonzero(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import tgbp_pipeline.publish as publish_mod
+
+    monkeypatch.setattr(publish_mod, "sample", lambda cfg, rows: _fake_publish_result(False))
+    config_path = _write_minimal_cli_config(tmp_path)
+
+    result = runner.invoke(app, ["sample", "--config", str(config_path)])
+
+    assert result.exit_code == 1
+    assert isinstance(result.exception, SystemExit)
+
+
+def test_build_command_runs_all_stages_in_order(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`tgbp build` เรียก extract → normalize → validate → publish ตามลำดับ (เรียกฟังก์ชัน CLI
+    อื่นตรง ๆ เป็นฟังก์ชัน Python — mock ที่ `tgbp_pipeline.cli` เอง ไม่ mock โมดูล extract ย่อย)
+    """
+    import tgbp_pipeline.cli as cli_mod
+
+    calls: list[str] = []
+    monkeypatch.setattr(cli_mod, "extract", lambda **kw: calls.append("extract"))
+    monkeypatch.setattr(cli_mod, "normalize", lambda **kw: calls.append("normalize"))
+    monkeypatch.setattr(cli_mod, "validate", lambda **kw: calls.append("validate"))
+    monkeypatch.setattr(cli_mod, "publish", lambda **kw: calls.append("publish"))
+    config_path = _write_minimal_cli_config(tmp_path)
+
+    result = runner.invoke(app, ["build", "--config", str(config_path)])
+
+    assert result.exit_code == 0
+    assert calls == ["extract", "normalize", "validate", "publish"]
+
+
+def test_build_command_skip_extract_does_not_call_extract(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import tgbp_pipeline.cli as cli_mod
+
+    calls: list[str] = []
+    monkeypatch.setattr(cli_mod, "extract", lambda **kw: calls.append("extract"))
+    monkeypatch.setattr(cli_mod, "normalize", lambda **kw: calls.append("normalize"))
+    monkeypatch.setattr(cli_mod, "validate", lambda **kw: calls.append("validate"))
+    monkeypatch.setattr(cli_mod, "publish", lambda **kw: calls.append("publish"))
+    config_path = _write_minimal_cli_config(tmp_path)
+
+    result = runner.invoke(app, ["build", "--skip-extract", "--config", str(config_path)])
+
+    assert result.exit_code == 0
+    assert calls == ["normalize", "validate", "publish"]
+
+
+def test_build_command_continues_and_fails_when_validate_hard_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import tgbp_pipeline.cli as cli_mod
+
+    calls: list[str] = []
+    monkeypatch.setattr(cli_mod, "extract", lambda **kw: calls.append("extract"))
+    monkeypatch.setattr(cli_mod, "normalize", lambda **kw: calls.append("normalize"))
+
+    def _fail_validate(**kw):
+        calls.append("validate")
+        raise cli_mod.typer.Exit(code=1)
+
+    monkeypatch.setattr(cli_mod, "validate", _fail_validate)
+    monkeypatch.setattr(cli_mod, "publish", lambda **kw: calls.append("publish"))
+    config_path = _write_minimal_cli_config(tmp_path)
+
+    result = runner.invoke(app, ["build", "--config", str(config_path)])
+
+    assert result.exit_code == 1
+    assert isinstance(result.exception, SystemExit)
+    # publish ยังต้องรันต่อแม้ validate hard fail (main thread: publish รายงานสถานะสุดท้ายเอง)
+    assert calls == ["extract", "normalize", "validate", "publish"]

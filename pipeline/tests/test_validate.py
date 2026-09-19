@@ -722,3 +722,167 @@ def test_build_validation_report_end_to_end_minimal(tmp_path: Path) -> None:
     assert json_path.is_file()
     assert md_path.is_file()
     assert "FAIL" in md_path.read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# T-110b: V6 (ไฟล์ output > 24 MB) + sources_json_path override + V10 magic-bytes
+# ---------------------------------------------------------------------------
+
+from tgbp_pipeline.validate import check_v6  # noqa: E402
+
+
+def test_check_v6_passes_when_all_files_under_limit(tmp_path: Path) -> None:
+    small = tmp_path / "a.parquet"
+    small.write_bytes(b"x" * 100)
+    result = check_v6([small], max_bytes=1000)
+    assert result.passed is True
+    assert result.oversized == []
+
+
+def test_check_v6_fails_and_lists_oversized_files(tmp_path: Path) -> None:
+    big = tmp_path / "big.parquet"
+    big.write_bytes(b"x" * 2000)
+    small = tmp_path / "small.parquet"
+    small.write_bytes(b"x" * 10)
+    result = check_v6([big, small], max_bytes=1000)
+    assert result.passed is False
+    assert result.n_files == 2
+    assert result.oversized == [{"path": str(big), "bytes": 2000}]
+
+
+def test_check_v10_detects_pdf_without_pdf_extension_via_magic_bytes(tmp_path: Path) -> None:
+    """T-110b: `check_v10` ต้องนับ PDF ด้วย magic bytes เหมือน `inventory.py` (ไม่ใช่แค่นามสกุล) —
+    ไฟล์จริงในโปรเจกต์มี PDF 1 ไฟล์ที่ไม่มีนามสกุล `.pdf` ทำให้นับด้วยนามสกุลอย่างเดียวขาดไป 1 ไฟล์
+    """
+    raw_dir = tmp_path / "raw"
+    (raw_dir / "PBO").mkdir(parents=True)
+    (raw_dir / "PBO" / "no_extension_but_pdf").write_bytes(b"%PDF-1.4 fake content")
+    cfg = _FakeConfig(tmp_path)
+    cfg.raw_data_dir = raw_dir
+    sources_path = tmp_path / "sources.json"
+    sources_path.write_text(
+        json.dumps([{"doc_id": "d_x", "rel_path": "PBO/no_extension_but_pdf", "kind": "pdf"}]),
+        encoding="utf-8",
+    )
+
+    result = check_v10(cfg, sources_path)
+
+    assert result.status == "ok"
+    assert result.n_pdf_in_raw == 1
+
+
+def test_build_validation_report_v6_hard_fails_when_published_file_oversized(
+    tmp_path: Path,
+) -> None:
+    cfg = PipelineConfig(
+        config_path=tmp_path / "config.yaml",
+        raw_data_dir=tmp_path / "raw",
+        output_dir=tmp_path / "out",
+        cache_dir=tmp_path / "cache",
+        fixtures_dir=tmp_path / "fixtures",
+    )
+    cfg.raw_data_dir.mkdir()
+    cfg.output_dir.mkdir(parents=True)
+    row_ok = _norm_row(source_id="ok1", source_doc_id="d_known")
+    _write_normalized_cache(cfg.cache_dir, "pbo_disbursement", "2566.parquet", [row_ok])
+    (cfg.output_dir / "sources.json").write_text(
+        json.dumps([{"doc_id": "d_known"}]), encoding="utf-8"
+    )
+
+    oversized_file = cfg.output_dir / "big.parquet"
+    with oversized_file.open("wb") as f:
+        f.seek(24_000_001)
+        f.write(b"0")  # sparse file > 24 MB — เร็ว ไม่กิน disk จริงเต็มขนาด
+
+    report = build_validation_report(
+        cfg,
+        published_files=[oversized_file],
+        total_output_bytes=24_000_002,
+        total_output_bytes_limit=1_000_000_000,
+    )
+
+    assert report.v6 is not None
+    assert report.v6.passed is False
+    assert report.passed is False
+    assert any("V6" in msg for msg in report.hard_failures)
+
+
+def test_build_validation_report_total_bytes_over_limit_is_hard_failure(tmp_path: Path) -> None:
+    cfg = PipelineConfig(
+        config_path=tmp_path / "config.yaml",
+        raw_data_dir=tmp_path / "raw",
+        output_dir=tmp_path / "out",
+        cache_dir=tmp_path / "cache",
+        fixtures_dir=tmp_path / "fixtures",
+    )
+    cfg.raw_data_dir.mkdir()
+    cfg.output_dir.mkdir(parents=True)
+    (cfg.output_dir / "sources.json").write_text(json.dumps([]), encoding="utf-8")
+
+    report = build_validation_report(
+        cfg, published_files=[], total_output_bytes=999, total_output_bytes_limit=100
+    )
+
+    assert report.passed is False
+    assert any("total_output_bytes" in msg for msg in report.hard_failures)
+
+
+def test_build_validation_report_no_published_files_v6_is_none(tmp_path: Path) -> None:
+    """ไม่ส่ง `published_files` (พฤติกรรมเดิมของ `tgbp validate` เดี่ยว ๆ) — `v6` ต้องเป็น `None` เสมอ"""
+    cfg = PipelineConfig(
+        config_path=tmp_path / "config.yaml",
+        raw_data_dir=tmp_path / "raw",
+        output_dir=tmp_path / "out",
+        cache_dir=tmp_path / "cache",
+        fixtures_dir=tmp_path / "fixtures",
+    )
+    cfg.raw_data_dir.mkdir()
+    (cfg.output_dir).mkdir(parents=True)
+    (cfg.output_dir / "sources.json").write_text(json.dumps([]), encoding="utf-8")
+
+    report = build_validation_report(cfg)
+
+    assert report.v6 is None
+    assert report.total_output_bytes is None
+
+
+def test_build_validation_report_sources_json_path_override(tmp_path: Path) -> None:
+    """`sources_json_path` (T-110b): `publish.py` เขียนไป `out_dir` ที่ไม่ใช่ `cfg.output_dir` เสมอ
+    (เช่น `sample()` เขียนไป `cfg.fixtures_dir`) — V5/V10 ต้องเช็คไฟล์ที่ path นั้นจริง ไม่ใช่
+    `cfg.output_dir` ตายตัว
+    """
+    cfg = PipelineConfig(
+        config_path=tmp_path / "config.yaml",
+        raw_data_dir=tmp_path / "raw",
+        output_dir=tmp_path / "out",
+        cache_dir=tmp_path / "cache",
+        fixtures_dir=tmp_path / "fixtures",
+    )
+    cfg.raw_data_dir.mkdir()
+    row_ok = _norm_row(source_id="ok1", source_doc_id="d_known")
+    _write_normalized_cache(cfg.cache_dir, "pbo_disbursement", "2566.parquet", [row_ok])
+
+    custom_dir = tmp_path / "custom_out"
+    custom_dir.mkdir()
+    (custom_dir / "sources.json").write_text(json.dumps([{"doc_id": "d_known"}]), encoding="utf-8")
+    # cfg.output_dir/sources.json ไม่มีเลย — ถ้า V5 ยังอ่าน cfg.output_dir ตายตัวจะ skip/fail ผิด
+
+    report = build_validation_report(cfg, sources_json_path=custom_dir / "sources.json")
+
+    assert report.v5.status == "ok"
+
+
+def test_write_validation_report_custom_out_dir(tmp_path: Path) -> None:
+    cfg = PipelineConfig(
+        config_path=tmp_path / "config.yaml",
+        raw_data_dir=tmp_path / "raw",
+        output_dir=tmp_path / "out",
+        cache_dir=tmp_path / "cache",
+        fixtures_dir=tmp_path / "fixtures",
+    )
+    report = build_validation_report(cfg)
+    custom_dir = tmp_path / "somewhere_else"
+    json_path, md_path = write_validation_report(cfg, report, out_dir=custom_dir)
+    assert json_path == custom_dir / "validation.json"
+    assert json_path.is_file()
+    assert md_path.is_file()

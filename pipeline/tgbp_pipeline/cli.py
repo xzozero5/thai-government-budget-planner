@@ -341,9 +341,29 @@ def validate(
 
 
 @app.command()
-def publish() -> None:
-    """เขียน parquet shards / catalog / manifest.json ไป web/public/data (T-110)"""
-    _stub("T-110")
+def publish(
+    config: str | None = typer.Option(
+        None, "--config", hidden=True, help="path ของ config.yaml อื่น (ใช้ใน test เท่านั้น)"
+    ),
+) -> None:
+    """เขียน parquet shards / catalog / manifest.json ไป web/public/data (T-110b)"""
+    from tgbp_pipeline.publish import publish as run_publish
+
+    cfg = load_config(config)
+    result = run_publish(cfg)
+    typer.echo(
+        f"เขียน {result.manifest_path} (data_version={result.manifest['data_version'][:12]}…)"
+    )
+    typer.echo(
+        f"budget_lines: {len(result.shard_parts)} ไฟล์ | "
+        f"catalog: {len(result.catalog.entries):,} entries (threshold={result.catalog.min_lines}/"
+        f"{result.catalog.min_years}/{result.catalog.min_unit_price_distinct}) | "
+        f"trends: {result.n_trend_items:,} item_key | docs: {result.docs.n_copied} ไฟล์"
+    )
+    typer.echo(f"รวมขนาด web/public/data/: {result.total_bytes:,} bytes")
+    typer.echo(f"validation: {'PASS' if result.validation_passed else 'FAIL'}")
+    if not result.validation_passed:
+        raise typer.Exit(code=1)
 
 
 @app.command()
@@ -353,17 +373,79 @@ def build(
         "--dataset",
         help="ตาม `extract --dataset` — รัน extract → normalize → validate → publish ทั้งหมด",
     ),
+    skip_extract: bool = typer.Option(
+        False, "--skip-extract", help="ข้ามขั้น extract (ใช้ `.cache/` ที่มีอยู่แล้ว)"
+    ),
+    config: str | None = typer.Option(
+        None, "--config", hidden=True, help="path ของ config.yaml อื่น (ใช้ใน test เท่านั้น)"
+    ),
 ) -> None:
-    """รันทุกขั้นตอนตามลำดับ: extract → normalize → validate → publish (T-110)"""
-    _stub("T-110")
+    """รันทุกขั้นตอนตามลำดับ: extract → normalize → validate → publish (T-110b)
+
+    `--skip-extract` ใช้ตอน `.cache/{pbo,act2570,local,committee,docs}` ทำไว้แล้ว (extract PBO
+    ใช้เวลานาน) — `normalize`/`validate`/`publish` ยังรันเสมอ exit code != 0 เมื่อขั้นใดพัง/hard fail
+
+    เรียกฟังก์ชัน CLI อื่น (`extract`/`normalize`/`validate`/`publish`) **ตรง ๆ เป็นฟังก์ชัน Python**
+    (ไม่ผ่าน Click dispatcher) — `@app.command()` ของ Typer คืนฟังก์ชันเดิมไม่เปลี่ยนแปลง จึงเรียกได้
+    ตรง ๆ; ทุกฟังก์ชันใช้ `typer.Exit` (ไม่ใช่ `SystemExit`) ตอน error จึงต้อง `except typer.Exit`
+    """
+    had_error = False
+
+    if not skip_extract:
+        typer.echo("== extract ==")
+        try:
+            extract(dataset=dataset, year=None, limit_rows=None, config=config)
+        except typer.Exit as exc:
+            if exc.exit_code:
+                had_error = True
+
+    typer.echo("== normalize ==")
+    try:
+        normalize(dataset="all", workers=None, config=config)
+    except typer.Exit as exc:
+        if exc.exit_code:
+            had_error = True
+
+    typer.echo("== validate ==")
+    try:
+        validate(config=config)
+    except typer.Exit as exc:
+        if exc.exit_code:
+            typer.echo("validate มี hard failure — publish ยังรันต่อ (ดูรายละเอียดด้านบน)", err=True)
+            had_error = True
+
+    typer.echo("== publish ==")
+    try:
+        publish(config=config)
+    except typer.Exit as exc:
+        if exc.exit_code:
+            had_error = True
+
+    if had_error:
+        raise typer.Exit(code=1)
 
 
 @app.command()
 def sample(
     rows: int = typer.Option(1000, "--rows", help="จำนวนแถวต่อ dataset สำหรับ fixtures"),
+    config: str | None = typer.Option(
+        None, "--config", hidden=True, help="path ของ config.yaml อื่น (ใช้ใน test เท่านั้น)"
+    ),
 ) -> None:
     """สร้าง web/tests/fixtures/data/ สำหรับ dev/test ฝั่ง web โดยไม่ต้องรอ pipeline เต็ม (T-112)"""
-    _stub("T-112")
+    from tgbp_pipeline.publish import sample as run_sample
+
+    cfg = load_config(config)
+    result = run_sample(cfg, rows=rows)
+    typer.echo(f"เขียน {result.manifest_path}")
+    typer.echo(
+        f"budget_lines: {len(result.shard_parts)} ไฟล์ | catalog: {len(result.catalog.entries)} "
+        f"entries | trends: {result.n_trend_items} | docs: {result.docs.n_copied} ไฟล์ | "
+        f"รวม {result.total_bytes:,} bytes"
+    )
+    if not result.validation_passed:
+        typer.echo("sample validation FAIL (ไฟล์ > 24 MB หรือรวมเกินเพดาน)", err=True)
+        raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":
