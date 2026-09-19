@@ -164,7 +164,7 @@ tgbp sample --rows 1000        # สร้าง web/tests/fixtures/data/ สำ
 
 | # | กฎ | ระดับ |
 |---|---|---|
-| V1 | ยอดรวมต่อปีของ PBO (ทุกคอลัมน์เงิน) = oracle ในไฟล์ ± 0.01 %: (a) แถว Grand Total (2558–2560, 2562–2566) (b) 2561: `Sheet1` แถว `ผลรวมทั้งหมด` (เฉพาะ พรบ.) + รายกระทรวง (c) 2568: `Sheet1` เฉพาะสำนักนายกรัฐมนตรี (d) 2567: **ไม่มี oracle** → รายงาน `no_oracle` + ตรวจจำนวนแถว = 221,571 (soft) — แก้ 19 ก.ย. 2569 หลังตรวจไฟล์จริง | hard (a–c) / soft (d) |
+| V1 | ยอดรวมต่อปีของ PBO (ทุกคอลัมน์เงิน) = oracle ในไฟล์ ± 0.01 %: (a) แถว Grand Total (2558–2560, 2562–2566) (b) 2561: `Sheet1` แถว `ผลรวมทั้งหมด` (เฉพาะ พรบ.) + รายกระทรวง (c) 2568: `Sheet1` เฉพาะสำนักนายกรัฐมนตรี (e) 2562: ไฟล์ต้นทางไม่ครบ → สถานะ `source_incomplete` ตาม `known_source_gaps.yaml` (ADR-004); tolerance = max(0.01 %, 1,000 บาท); ไม่นับแถว `corrupt_row` (d) 2567: **ไม่มี oracle** → รายงาน `no_oracle` + ตรวจจำนวนแถว = 221,571 (soft) — แก้ 19 ก.ย. 2569 หลังตรวจไฟล์จริง | hard (a–c) / soft (d) |
 | V2 | A3 (subset จังหวัด) แต่ละไฟล์: จำนวนแถว = N ใน title และผลรวม = X ใน title | hard |
 | V3 | ราชาเทวะ: ผลรวมต่อ (plan, work, budget_group) = `summary_ocr_raw_data` | hard (ยกเว้นแถวที่ flag outlier — รายงาน) |
 | V4 | `source_id` unique ทั้ง dataset | hard |
