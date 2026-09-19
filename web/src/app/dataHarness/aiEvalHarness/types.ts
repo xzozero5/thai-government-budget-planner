@@ -69,6 +69,8 @@ export interface EvalToolCallRecord {
   outputPreview?: Record<string, unknown>;
   /** ข้อความ error แบบย่อ — มีเฉพาะ isError */
   errorPreview?: string;
+  /** ขนาด (ตัวอักษร) ของ `JSON.stringify(output ดิบ)` — ใช้หา tool ที่กิน token มากผิดปกติ */
+  outputChars?: number;
 }
 
 export interface EvalTurnResult {
@@ -116,6 +118,8 @@ export interface EvalRunResult {
   ranAt: string;
   /** true เมื่อรันด้วย fake client (dry-run) — `score.mjs`/report ต้องรู้เพื่อไม่ตีความ auto_pass จริงจัง */
   isDryRun: boolean;
+  /** ขนาด (ตัวอักษร) ของ prefix ที่ส่งทุก request — ใช้ติดตามต้นทุน token คงที่ต่อ session */
+  promptStats?: { systemChars: number; toolsJsonChars: number; toolCount: number };
   /** ข้อผิดพลาดระดับ case (เช่น model id ไม่ถูกต้อง, เกิด exception ที่ไม่คาดคิด) — เมื่อมีค่านี้ field
    * อื่น ๆ ข้างบนอาจไม่ครบ (best-effort) */
   fatalError?: string;

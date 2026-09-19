@@ -1,0 +1,65 @@
+{
+  "entries": [
+    {
+      "at": "2026-09-19T22:16:05.915Z",
+      "case": "equip-aircon-18000btu",
+      "model": "claude-haiku-4-5-20251001",
+      "turn_index": 0,
+      "input_tokens": 3,
+      "output_tokens": 307,
+      "cache_read": 0,
+      "cache_creation": 28374,
+      "web_search_requests": 0,
+      "est_cost_usd": 0.037005
+    },
+    {
+      "at": "2026-09-19T22:16:05.915Z",
+      "case": "equip-aircon-18000btu",
+      "model": "claude-haiku-4-5-20251001",
+      "turn_index": 0,
+      "input_tokens": 7,
+      "output_tokens": 620,
+      "cache_read": 28374,
+      "cache_creation": 10708,
+      "web_search_requests": 0,
+      "est_cost_usd": 0.019329
+    },
+    {
+      "at": "2026-09-19T22:16:05.915Z",
+      "case": "equip-aircon-18000btu",
+      "model": "claude-haiku-4-5-20251001",
+      "turn_index": 0,
+      "input_tokens": 7,
+      "output_tokens": 405,
+      "cache_read": 39082,
+      "cache_creation": 1235,
+      "web_search_requests": 0,
+      "est_cost_usd": 0.007484
+    },
+    {
+      "at": "2026-09-19T22:16:05.915Z",
+      "case": "equip-aircon-18000btu",
+      "model": "claude-haiku-4-5-20251001",
+      "turn_index": 0,
+      "input_tokens": 7,
+      "output_tokens": 218,
+      "cache_read": 40317,
+      "cache_creation": 9605,
+      "web_search_requests": 0,
+      "est_cost_usd": 0.017135
+    },
+    {
+      "at": "2026-09-19T22:16:05.915Z",
+      "case": "equip-aircon-18000btu",
+      "model": "claude-haiku-4-5-20251001",
+      "turn_index": 0,
+      "input_tokens": 6,
+      "output_tokens": 6372,
+      "cache_read": 49922,
+      "cache_creation": 1945,
+      "web_search_requests": 0,
+      "est_cost_usd": 0.039289
+    }
+  ],
+  "total_usd": 0.120242
+}

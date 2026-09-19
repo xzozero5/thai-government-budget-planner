@@ -34,6 +34,7 @@ import {
   resetToolCapture,
 } from '@/ai/testing/toolCapture';
 import { createToolLog } from '@/ai/toolLog';
+import { toApiTools } from '@/ai/tools';
 import { buildGenericDryRunScript } from './aiEvalHarness/dryRunScript';
 import { summarizeToolOutput } from './aiEvalHarness/summarizeToolOutput';
 import { createCountingToolLog } from './aiEvalHarness/toolLogSummary';
@@ -207,6 +208,7 @@ async function runCaseImpl(
   // ประกาศนอก try: ถ้า case ล้มกลางทาง request ที่จ่ายเงินไปแล้วต้องยังถูกรายงานกลับไปลง ledger
   // (main thread review T-306 — เดิม catch คืน usage ว่าง/ต้นทุน 0 ทำให้ ledger นับเงินขาด)
   const perRequestUsage: EvalPerRequestUsage[] = [];
+  let promptStats: EvalRunResult['promptStats'];
 
   try {
     if (!isModelId(caseSpec.model)) {
@@ -245,6 +247,12 @@ async function runCaseImpl(
     const toolContext = { data, toolLog, illustrationSink: createInMemoryIllustrationSink() };
 
     const system = await buildSystemPromptInput(caseSpec.mode);
+    const apiTools = toApiTools(model);
+    promptStats = {
+      systemChars: system.reduce((sum, block) => sum + block.text.length, 0),
+      toolsJsonChars: JSON.stringify(apiTools).length,
+      toolCount: apiTools.length,
+    };
 
     let messages: Anthropic.MessageParam[] = [];
     const turns: EvalTurnResult[] = [];
@@ -255,6 +263,11 @@ async function runCaseImpl(
     let finalEndedBecause = '';
 
     for (let turnIndex = 0; turnIndex < caseSpec.prompt_sequence.length; turnIndex += 1) {
+      // ข้อความ follow-up ("ใช้สมมติฐานแล้วสรุปเลย") มีไว้เฉพาะกรณีโมเดลยังไม่ออกข้อเสนอ — ถ้าได้ proposal
+      // แล้วไม่ส่งต่อ (ทุก turn ส่งประวัติทั้งหมดซ้ำ = จ่ายเงินเปล่า; main thread review หลังรันจริง case แรก)
+      if (turnIndex > 0 && latestProposal !== null) {
+        break;
+      }
       currentTurnIndexBox.value = turnIndex;
       const userText = caseSpec.prompt_sequence[turnIndex] ?? '';
       messages = [...messages, { role: 'user', content: userText }];
@@ -321,6 +334,7 @@ async function runCaseImpl(
           } else {
             const preview = summarizeToolOutput(tc.name, cap.output);
             record.outputPreview = preview;
+            record.outputChars = JSON.stringify(cap.output ?? null).length;
             if (tc.name === 'emit_proposal') {
               latestProposal = (preview as { proposal?: unknown }).proposal ?? null;
               latestProposalWarnings = (preview as { warnings?: string[] }).warnings ?? [];
@@ -371,6 +385,7 @@ async function runCaseImpl(
       finalEndedBecause,
       ranAt: new Date().toISOString(),
       isDryRun,
+      ...(promptStats !== undefined ? { promptStats } : {}),
     };
   } catch (err) {
     return {
