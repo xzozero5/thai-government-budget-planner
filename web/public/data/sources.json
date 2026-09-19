@@ -20,7 +20,8 @@
     "fiscal_years": [
       2563
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_8359abe8c032.json.gz",
+    "n_chunks": 57,
     "note": null,
     "duplicates": null
   },
@@ -45,7 +46,8 @@
     "fiscal_years": [
       2564
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_1f490878307e.json.gz",
+    "n_chunks": 52,
     "note": null,
     "duplicates": null
   },
@@ -70,7 +72,8 @@
     "fiscal_years": [
       2565
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_63899f239e5d.json.gz",
+    "n_chunks": 51,
     "note": null,
     "duplicates": null
   },
@@ -95,7 +98,8 @@
     "fiscal_years": [
       2566
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_bcf473c913c8.json.gz",
+    "n_chunks": 50,
     "note": null,
     "duplicates": null
   },
@@ -120,7 +124,8 @@
     "fiscal_years": [
       2567
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_452ccb5aacec.json.gz",
+    "n_chunks": 50,
     "note": null,
     "duplicates": null
   },
@@ -145,7 +150,8 @@
     "fiscal_years": [
       2567
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_91f6279b9291.json.gz",
+    "n_chunks": 9439,
     "note": null,
     "duplicates": null
   },
@@ -157,7 +163,7 @@
     "sha1": "089811a9c9f05b5a98321a25d60107f83acccdc0",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "2558",
     "collection": "pbo",
     "meeting_no": null,
@@ -171,6 +177,7 @@
       2558
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -182,7 +189,7 @@
     "sha1": "29aedb5a512f64436b0166890c15659dc58cba69",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "2559",
     "collection": "pbo",
     "meeting_no": null,
@@ -196,6 +203,7 @@
       2559
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -207,7 +215,7 @@
     "sha1": "3c868c90bf1eb5d8fa6989704b6a110166a5a81b",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "2560",
     "collection": "pbo",
     "meeting_no": null,
@@ -221,6 +229,7 @@
       2560
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -232,7 +241,7 @@
     "sha1": "624eebc1acd3b704a5c8841929db62167a04ebb6",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "2561",
     "collection": "pbo",
     "meeting_no": null,
@@ -246,6 +255,7 @@
       2561
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -257,7 +267,7 @@
     "sha1": "a51d21915573ac3e68c1a3f7db37bb58cf240ea5",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "2562",
     "collection": "pbo",
     "meeting_no": null,
@@ -271,6 +281,7 @@
       2562
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -282,7 +293,7 @@
     "sha1": "5ef04fe9ebdfb5ff433ea203d5cd2b2bbee869a9",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "2563",
     "collection": "pbo",
     "meeting_no": null,
@@ -296,6 +307,7 @@
       2563
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -307,7 +319,7 @@
     "sha1": "f07f8996fee9531dd039e36f92899313b859ae09",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "2564",
     "collection": "pbo",
     "meeting_no": null,
@@ -321,6 +333,7 @@
       2564
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -332,7 +345,7 @@
     "sha1": "f678bf3c6d52585fd9bbd904dc61ff7bf2dee55c",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "2565",
     "collection": "pbo",
     "meeting_no": null,
@@ -346,6 +359,7 @@
       2565
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -357,7 +371,7 @@
     "sha1": "6e8d756633c1daecae43b66e961afea2cfec03f2",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "2566",
     "collection": "pbo",
     "meeting_no": null,
@@ -371,6 +385,7 @@
       2566
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -382,7 +397,7 @@
     "sha1": "227fbee9861a27d438d144c7fa652f6b8397ddcf",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "2567",
     "collection": "pbo",
     "meeting_no": null,
@@ -396,6 +411,7 @@
       2567
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -407,7 +423,7 @@
     "sha1": "40f418e4d34ee5d9add2ff07de34f3f7e864759d",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "2568",
     "collection": "pbo",
     "meeting_no": null,
@@ -421,6 +437,7 @@
       2568
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -444,6 +461,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -466,7 +484,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_8958cede1d86.json.gz",
+    "n_chunks": 21,
     "note": null,
     "duplicates": null
   },
@@ -490,6 +509,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -512,7 +532,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_184729563679.json.gz",
+    "n_chunks": 91,
     "note": null,
     "duplicates": null
   },
@@ -535,7 +556,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_736820418813.json.gz",
+    "n_chunks": 1,
     "note": null,
     "duplicates": null
   },
@@ -560,7 +582,8 @@
     "fiscal_years": [
       2566
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_ceee23b83464.json.gz",
+    "n_chunks": 126,
     "note": null,
     "duplicates": null
   },
@@ -583,7 +606,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_6ee3b08343c8.json.gz",
+    "n_chunks": 29,
     "note": null,
     "duplicates": null
   },
@@ -606,7 +630,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_94e3c919d499.json.gz",
+    "n_chunks": 2,
     "note": null,
     "duplicates": null
   },
@@ -629,7 +654,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_ea9fb0657ce3.json.gz",
+    "n_chunks": 189,
     "note": null,
     "duplicates": null
   },
@@ -655,6 +681,7 @@
       2568
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -680,7 +707,8 @@
       2568,
       2569
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_d0d1408ea10c.json.gz",
+    "n_chunks": 14,
     "note": null,
     "duplicates": null
   },
@@ -703,7 +731,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_cfe9f61a1796.json.gz",
+    "n_chunks": 1,
     "note": null,
     "duplicates": null
   },
@@ -726,7 +755,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_e8b98c1d611b.json.gz",
+    "n_chunks": 23,
     "note": null,
     "duplicates": null
   },
@@ -749,7 +779,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_83ee57d8815d.json.gz",
+    "n_chunks": 25,
     "note": null,
     "duplicates": null
   },
@@ -772,7 +803,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_3726fdc321bc.json.gz",
+    "n_chunks": 5,
     "note": null,
     "duplicates": null
   },
@@ -784,7 +816,7 @@
     "sha1": "d9650a2018abaf697f6e719d1f51ea5d76012c3b",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "รวมข้อมูลโครงการ 61-68 (65-66ไม่มีการสนับสนุน)",
     "collection": "committee",
     "meeting_no": 12,
@@ -795,7 +827,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_7b1b69cd5ad6.json.gz",
+    "n_chunks": 269,
     "note": null,
     "duplicates": null
   },
@@ -818,7 +851,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_a2b111e67756.json.gz",
+    "n_chunks": 4,
     "note": null,
     "duplicates": null
   },
@@ -841,7 +875,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_9b9695601159.json.gz",
+    "n_chunks": 92,
     "note": null,
     "duplicates": null
   },
@@ -864,7 +899,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_db895f8dd5a9.json.gz",
+    "n_chunks": 1,
     "note": null,
     "duplicates": null
   },
@@ -887,7 +923,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_40eb74c2f3ff.json.gz",
+    "n_chunks": 3,
     "note": null,
     "duplicates": null
   },
@@ -910,7 +947,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_7937f73c1f20.json.gz",
+    "n_chunks": 2,
     "note": null,
     "duplicates": null
   },
@@ -933,7 +971,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_768095ba488d.json.gz",
+    "n_chunks": 1,
     "note": null,
     "duplicates": null
   },
@@ -958,7 +997,8 @@
     "fiscal_years": [
       2561
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_c1e3ace07479.json.gz",
+    "n_chunks": 10,
     "note": null,
     "duplicates": null
   },
@@ -983,7 +1023,8 @@
     "fiscal_years": [
       2562
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_227756ac176e.json.gz",
+    "n_chunks": 5,
     "note": null,
     "duplicates": null
   },
@@ -1011,7 +1052,8 @@
       2565,
       2566
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_fa62c2fd241b.json.gz",
+    "n_chunks": 30,
     "note": null,
     "duplicates": null
   },
@@ -1036,7 +1078,8 @@
     "fiscal_years": [
       2567
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_a8e42a7d3685.json.gz",
+    "n_chunks": 24,
     "note": null,
     "duplicates": null
   },
@@ -1061,7 +1104,8 @@
     "fiscal_years": [
       2568
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_eca2ed1688f6.json.gz",
+    "n_chunks": 24,
     "note": null,
     "duplicates": null
   },
@@ -1086,7 +1130,8 @@
     "fiscal_years": [
       2569
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_5a64d01fafab.json.gz",
+    "n_chunks": 24,
     "note": null,
     "duplicates": null
   },
@@ -1109,7 +1154,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_94471eb1c010.json.gz",
+    "n_chunks": 70,
     "note": null,
     "duplicates": null
   },
@@ -1135,6 +1181,7 @@
       2561
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1160,6 +1207,7 @@
       2563
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1185,6 +1233,7 @@
       2563
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1210,6 +1259,7 @@
       2563
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1235,6 +1285,7 @@
       2563
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1261,6 +1312,7 @@
       2564
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1286,6 +1338,7 @@
       2565
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1312,6 +1365,7 @@
       2566
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1337,6 +1391,7 @@
       2568
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1362,6 +1417,7 @@
       2568
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1387,6 +1443,7 @@
       2568
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1412,6 +1469,7 @@
       2561
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1437,6 +1495,7 @@
       2568
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1462,6 +1521,7 @@
       2568
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1487,6 +1547,7 @@
       2569
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1512,6 +1573,7 @@
       2569
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1537,6 +1599,7 @@
       2569
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1562,6 +1625,7 @@
       2562
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1587,6 +1651,7 @@
       2562
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1612,6 +1677,7 @@
       2562
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1637,6 +1703,7 @@
       2562
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1663,6 +1730,7 @@
       2563
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1689,6 +1757,7 @@
       2563
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1714,6 +1783,7 @@
       2563
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1739,6 +1809,7 @@
       2561
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1764,6 +1835,7 @@
       2562
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1789,6 +1861,7 @@
       2562
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1814,6 +1887,7 @@
       2563
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1839,6 +1913,7 @@
       2564
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1864,6 +1939,7 @@
       2564
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1888,7 +1964,8 @@
     "fiscal_years": [
       2565
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_cc4f9477016e.json.gz",
+    "n_chunks": 46,
     "note": null,
     "duplicates": null
   },
@@ -1913,7 +1990,8 @@
     "fiscal_years": [
       2565
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_2aeff1076cfb.json.gz",
+    "n_chunks": 372,
     "note": null,
     "duplicates": null
   },
@@ -1938,7 +2016,8 @@
     "fiscal_years": [
       2566
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_844a10119d0f.json.gz",
+    "n_chunks": 532,
     "note": null,
     "duplicates": null
   },
@@ -1964,6 +2043,7 @@
       2566
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -1989,6 +2069,7 @@
       2568
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -2014,6 +2095,7 @@
       2569
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -2036,7 +2118,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_1000a15a98f5.json.gz",
+    "n_chunks": 90,
     "note": null,
     "duplicates": null
   },
@@ -2061,7 +2144,8 @@
     "fiscal_years": [
       2562
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_c9d6980d2904.json.gz",
+    "n_chunks": 12,
     "note": null,
     "duplicates": null
   },
@@ -2086,7 +2170,8 @@
     "fiscal_years": [
       2563
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_55b9859d776f.json.gz",
+    "n_chunks": 36,
     "note": null,
     "duplicates": null
   },
@@ -2111,7 +2196,8 @@
     "fiscal_years": [
       2565
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_b7254bf2fa9e.json.gz",
+    "n_chunks": 36,
     "note": null,
     "duplicates": null
   },
@@ -2136,7 +2222,8 @@
     "fiscal_years": [
       2566
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_716cfef4c3c5.json.gz",
+    "n_chunks": 51,
     "note": null,
     "duplicates": null
   },
@@ -2161,7 +2248,8 @@
     "fiscal_years": [
       2567
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_798f7b45e821.json.gz",
+    "n_chunks": 93,
     "note": null,
     "duplicates": null
   },
@@ -2186,7 +2274,8 @@
     "fiscal_years": [
       2568
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_4d249883127e.json.gz",
+    "n_chunks": 43,
     "note": null,
     "duplicates": null
   },
@@ -2211,7 +2300,8 @@
     "fiscal_years": [
       2562
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_b82862151dc5.json.gz",
+    "n_chunks": 60,
     "note": null,
     "duplicates": null
   },
@@ -2236,7 +2326,8 @@
     "fiscal_years": [
       2563
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_2c2c11ea6778.json.gz",
+    "n_chunks": 102,
     "note": null,
     "duplicates": null
   },
@@ -2261,7 +2352,8 @@
     "fiscal_years": [
       2565
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_d55207353f60.json.gz",
+    "n_chunks": 80,
     "note": null,
     "duplicates": null
   },
@@ -2287,6 +2379,7 @@
       2566
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -2311,7 +2404,8 @@
     "fiscal_years": [
       2567
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_d26c8e8a2616.json.gz",
+    "n_chunks": 99,
     "note": null,
     "duplicates": null
   },
@@ -2323,7 +2417,7 @@
     "sha1": "cc12f5e1eecf3b1510f1d75cd5f06dcf602d26ba",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "การบริหารงบประมาณ+-+รูปแบบส่วนราชการรัฐสภ",
     "collection": "committee",
     "meeting_no": 12,
@@ -2334,7 +2428,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_2df4d4dc44b7.json.gz",
+    "n_chunks": 25,
     "note": null,
     "duplicates": null
   },
@@ -2357,7 +2452,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_2e6fb81efc00.json.gz",
+    "n_chunks": 32,
     "note": null,
     "duplicates": null
   },
@@ -2381,6 +2477,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -2404,6 +2501,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -2426,7 +2524,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_e26d22952f7b.json.gz",
+    "n_chunks": 58,
     "note": null,
     "duplicates": null
   },
@@ -2449,7 +2548,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_c0f4efcb32e3.json.gz",
+    "n_chunks": 16,
     "note": null,
     "duplicates": null
   },
@@ -2472,7 +2572,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_6af54868e6a5.json.gz",
+    "n_chunks": 45,
     "note": null,
     "duplicates": null
   },
@@ -2495,7 +2596,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_6fdc2926bf58.json.gz",
+    "n_chunks": 12,
     "note": null,
     "duplicates": null
   },
@@ -2519,6 +2621,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -2542,6 +2645,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -2564,7 +2668,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_1ed527169c0b.json.gz",
+    "n_chunks": 36,
     "note": null,
     "duplicates": null
   },
@@ -2587,7 +2692,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_93b380631c13.json.gz",
+    "n_chunks": 46,
     "note": null,
     "duplicates": null
   },
@@ -2611,6 +2717,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -2633,7 +2740,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_029bade02ab7.json.gz",
+    "n_chunks": 10,
     "note": null,
     "duplicates": null
   },
@@ -2656,7 +2764,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_389e0eb88f57.json.gz",
+    "n_chunks": 6,
     "note": null,
     "duplicates": null
   },
@@ -2679,7 +2788,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_2eebd553a225.json.gz",
+    "n_chunks": 92,
     "note": null,
     "duplicates": null
   },
@@ -2704,7 +2814,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_2d0c57d45940.json.gz",
+    "n_chunks": 21,
     "note": null,
     "duplicates": null
   },
@@ -2729,7 +2840,8 @@
     "fiscal_years": [
       2569
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_23b359707d89.json.gz",
+    "n_chunks": 7,
     "note": null,
     "duplicates": null
   },
@@ -2741,7 +2853,7 @@
     "sha1": "8be4003134bec3a92753f66726e5f09a13ce1a45",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "2.คำของบประมาณ พ.ศ. 2570 กรมวิชาการเกษตร",
     "collection": "committee",
     "meeting_no": 3,
@@ -2754,7 +2866,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_ae719cec090a.json.gz",
+    "n_chunks": 5,
     "note": null,
     "duplicates": null
   },
@@ -2779,7 +2892,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_7ef6b53ead1f.json.gz",
+    "n_chunks": 37,
     "note": null,
     "duplicates": null
   },
@@ -2803,6 +2917,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -2825,7 +2940,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_bed193cf969f.json.gz",
+    "n_chunks": 22,
     "note": null,
     "duplicates": null
   },
@@ -2837,7 +2953,7 @@
     "sha1": "a5da35ee099dd3e1584101ed489771f92e647201",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "2.1 รายละเอียดคำของบฯ 70",
     "collection": "committee",
     "meeting_no": 3,
@@ -2850,7 +2966,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_d84e5ae5e1d2.json.gz",
+    "n_chunks": 295,
     "note": null,
     "duplicates": null
   },
@@ -2873,7 +2990,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_8bd93c13d42b.json.gz",
+    "n_chunks": 195,
     "note": null,
     "duplicates": null
   },
@@ -2899,6 +3017,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -2921,7 +3040,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_3b4d7133db13.json.gz",
+    "n_chunks": 25,
     "note": null,
     "duplicates": null
   },
@@ -2933,7 +3053,7 @@
     "sha1": "fddcedb269e8c3706e7496c67b58860e4741f47f",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "Bis65rreq1001 (1)",
     "collection": "committee",
     "meeting_no": 3,
@@ -2944,7 +3064,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_b25f97afdb47.json.gz",
+    "n_chunks": 9,
     "note": null,
     "duplicates": null
   },
@@ -2956,7 +3077,7 @@
     "sha1": "342341112cd8885d660cee040250324aad50de2f",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "Bis65rreq1002",
     "collection": "committee",
     "meeting_no": 3,
@@ -2967,7 +3088,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_f9222a52d4ab.json.gz",
+    "n_chunks": 4,
     "note": null,
     "duplicates": null
   },
@@ -2979,7 +3101,7 @@
     "sha1": "3857747756e286a6956c969b8c42ecad7f5e003f",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "Bis65rreq1004",
     "collection": "committee",
     "meeting_no": 3,
@@ -2990,7 +3112,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_515fa8cd24b2.json.gz",
+    "n_chunks": 7,
     "note": null,
     "duplicates": null
   },
@@ -3002,7 +3125,7 @@
     "sha1": "6a91003c202bf75c30a3963d723dea206dd85e4a",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "Bis65rreq1007",
     "collection": "committee",
     "meeting_no": 3,
@@ -3013,7 +3136,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_b9e6661360d4.json.gz",
+    "n_chunks": 17,
     "note": null,
     "duplicates": null
   },
@@ -3025,7 +3149,7 @@
     "sha1": "123e46333db0d9533f072e475ce833de5a19ce14",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "Bis65rreq1008",
     "collection": "committee",
     "meeting_no": 3,
@@ -3036,7 +3160,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_c4dfff7d3cc2.json.gz",
+    "n_chunks": 13,
     "note": null,
     "duplicates": null
   },
@@ -3048,7 +3173,7 @@
     "sha1": "7a91caf24a3c5e04b39703f70b858681b0ca8464",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "Bis65rreq1009",
     "collection": "committee",
     "meeting_no": 3,
@@ -3059,7 +3184,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_9de39da8f6c3.json.gz",
+    "n_chunks": 5,
     "note": null,
     "duplicates": null
   },
@@ -3071,7 +3197,7 @@
     "sha1": "f3290cde8ac6323aa551701614beb88c1b216f9f",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "Bis67rreq1010 (1)",
     "collection": "committee",
     "meeting_no": 3,
@@ -3082,7 +3208,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_56aedbbefaa3.json.gz",
+    "n_chunks": 24,
     "note": null,
     "duplicates": null
   },
@@ -3094,7 +3221,7 @@
     "sha1": "f67a3bb6eccf36c24b65a4a9f9d0ee389b741fc8",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "Bis67rreq1010 (2)",
     "collection": "committee",
     "meeting_no": 3,
@@ -3105,7 +3232,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_53667ff4de65.json.gz",
+    "n_chunks": 24,
     "note": null,
     "duplicates": null
   },
@@ -3117,7 +3245,7 @@
     "sha1": "fc9d4ba9663829d79abb334abd7d156ece734994",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "Bis67rreq1010",
     "collection": "committee",
     "meeting_no": 3,
@@ -3128,7 +3256,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_11042b904648.json.gz",
+    "n_chunks": 24,
     "note": null,
     "duplicates": null
   },
@@ -3151,7 +3280,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_0066dcea89b4.json.gz",
+    "n_chunks": 14,
     "note": null,
     "duplicates": null
   },
@@ -3174,7 +3304,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_ac9fff49a98c.json.gz",
+    "n_chunks": 136,
     "note": null,
     "duplicates": null
   },
@@ -3197,7 +3328,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_4ed62236574a.json.gz",
+    "n_chunks": 23,
     "note": null,
     "duplicates": null
   },
@@ -3220,7 +3352,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_a364949479e7.json.gz",
+    "n_chunks": 3,
     "note": null,
     "duplicates": null
   },
@@ -3232,7 +3365,7 @@
     "sha1": "0a0074a112e5b48b059c0d0401faa4e735bfe8ef",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "BI1C2F~1",
     "collection": "committee",
     "meeting_no": 3,
@@ -3243,7 +3376,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_2abfdc025926.json.gz",
+    "n_chunks": 6,
     "note": null,
     "duplicates": null
   },
@@ -3255,7 +3389,7 @@
     "sha1": "841aedd99b985ac789ac00ba804781ba6230fea8",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "BI32D0~1",
     "collection": "committee",
     "meeting_no": 3,
@@ -3266,7 +3400,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_9096f78afacf.json.gz",
+    "n_chunks": 18,
     "note": null,
     "duplicates": null
   },
@@ -3278,7 +3413,7 @@
     "sha1": "954f1d87c67ef43924640e25f35889b05b63daaf",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "BI454A~1",
     "collection": "committee",
     "meeting_no": 3,
@@ -3289,7 +3424,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_b85b560c9795.json.gz",
+    "n_chunks": 9,
     "note": null,
     "duplicates": null
   },
@@ -3301,7 +3437,7 @@
     "sha1": "d024f45e2a0d638c38b3aa6c159be011659e296d",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "BIA656~1",
     "collection": "committee",
     "meeting_no": 3,
@@ -3312,7 +3448,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_1754cc7c165d.json.gz",
+    "n_chunks": 5,
     "note": null,
     "duplicates": null
   },
@@ -3324,7 +3461,7 @@
     "sha1": "f662a4c0b864734e1efc70b898bfbf368bbd7fa6",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "BIA7A9~1",
     "collection": "committee",
     "meeting_no": 3,
@@ -3335,7 +3472,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_b9abf6798d57.json.gz",
+    "n_chunks": 7,
     "note": null,
     "duplicates": null
   },
@@ -3347,7 +3485,7 @@
     "sha1": "a3f2524d1ffb81043ccfbf5206c77935b1387246",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "BIAA29~1",
     "collection": "committee",
     "meeting_no": 3,
@@ -3358,7 +3496,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_1d81fb3aed35.json.gz",
+    "n_chunks": 54,
     "note": null,
     "duplicates": null
   },
@@ -3370,7 +3509,7 @@
     "sha1": "15807c94f606b89b546983f90c98ea249f6ea864",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "BIBFCA~1",
     "collection": "committee",
     "meeting_no": 3,
@@ -3381,7 +3520,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_87e0ab68636c.json.gz",
+    "n_chunks": 3,
     "note": null,
     "duplicates": null
   },
@@ -3393,7 +3533,7 @@
     "sha1": "7f5eda115da8a1b088d3be3c8200b5a80f2312bd",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "BICFB4~1",
     "collection": "committee",
     "meeting_no": 3,
@@ -3404,7 +3544,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_011363cffe72.json.gz",
+    "n_chunks": 3,
     "note": null,
     "duplicates": null
   },
@@ -3416,7 +3557,7 @@
     "sha1": "9b65a98951c2cb04542cdfc9bcde0da9cbd452c4",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "BIS65R~1",
     "collection": "committee",
     "meeting_no": 3,
@@ -3427,7 +3568,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_143cf6546dd8.json.gz",
+    "n_chunks": 5,
     "note": null,
     "duplicates": null
   },
@@ -3439,7 +3581,7 @@
     "sha1": "e16f6bf130a432c6f1bb7dc69919c12e74c92bc8",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "BIS65R~2",
     "collection": "committee",
     "meeting_no": 3,
@@ -3450,7 +3592,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_5f7725e4819a.json.gz",
+    "n_chunks": 4,
     "note": null,
     "duplicates": null
   },
@@ -3462,7 +3605,7 @@
     "sha1": "d37461324ce0d7982022548825843015a34813ca",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "BIS65R~3",
     "collection": "committee",
     "meeting_no": 3,
@@ -3473,7 +3616,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_fdd5128d1377.json.gz",
+    "n_chunks": 8,
     "note": null,
     "duplicates": null
   },
@@ -3485,7 +3629,7 @@
     "sha1": "7eb7120845a2f9bd44df6765a90f4d8a8889c0b7",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "BIS65R~4",
     "collection": "committee",
     "meeting_no": 3,
@@ -3496,7 +3640,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_96743d44fd23.json.gz",
+    "n_chunks": 8,
     "note": null,
     "duplicates": null
   },
@@ -3508,7 +3653,7 @@
     "sha1": "1ec2918cde1e30e79e001ad7fcb7bcb6dc294d06",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "BIS67R~1",
     "collection": "committee",
     "meeting_no": 3,
@@ -3519,7 +3664,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_5b7ceb2a8952.json.gz",
+    "n_chunks": 29,
     "note": null,
     "duplicates": null
   },
@@ -3542,7 +3688,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_fb50f3b13bf7.json.gz",
+    "n_chunks": 40,
     "note": null,
     "duplicates": null
   },
@@ -3567,7 +3714,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_dc8b79f9a0c4.json.gz",
+    "n_chunks": 39,
     "note": null,
     "duplicates": null
   },
@@ -3591,6 +3739,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -3614,6 +3763,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -3636,7 +3786,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_f378fab3da08.json.gz",
+    "n_chunks": 9,
     "note": null,
     "duplicates": null
   },
@@ -3662,6 +3813,7 @@
       2568
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -3684,7 +3836,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_3ed3e3f372fb.json.gz",
+    "n_chunks": 95,
     "note": null,
     "duplicates": null
   },
@@ -3707,7 +3860,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_685ea9d4d730.json.gz",
+    "n_chunks": 22,
     "note": null,
     "duplicates": null
   },
@@ -3730,7 +3884,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_1e626c60d8ec.json.gz",
+    "n_chunks": 50,
     "note": null,
     "duplicates": null
   },
@@ -3753,7 +3908,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_a1e647bc2e15.json.gz",
+    "n_chunks": 6,
     "note": null,
     "duplicates": null
   },
@@ -3777,6 +3933,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -3799,7 +3956,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_a7b53e9eaa09.json.gz",
+    "n_chunks": 31,
     "note": null,
     "duplicates": null
   },
@@ -3823,6 +3981,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -3845,7 +4004,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_f29a50281709.json.gz",
+    "n_chunks": 1,
     "note": null,
     "duplicates": null
   },
@@ -3869,6 +4029,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -3892,6 +4053,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -3915,6 +4077,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -3937,7 +4100,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_34ba67a0de0e.json.gz",
+    "n_chunks": 1,
     "note": null,
     "duplicates": null
   },
@@ -3960,7 +4124,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_a7f415a48a97.json.gz",
+    "n_chunks": 9,
     "note": null,
     "duplicates": null
   },
@@ -3983,7 +4148,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_3ad02b1719a8.json.gz",
+    "n_chunks": 242,
     "note": null,
     "duplicates": null
   },
@@ -4008,7 +4174,8 @@
     "fiscal_years": [
       2565
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_ce0984d339f0.json.gz",
+    "n_chunks": 2,
     "note": null,
     "duplicates": null
   },
@@ -4031,7 +4198,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_9d455d7a4b39.json.gz",
+    "n_chunks": 27,
     "note": null,
     "duplicates": null
   },
@@ -4054,7 +4222,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_79bb170bcc45.json.gz",
+    "n_chunks": 18,
     "note": null,
     "duplicates": null
   },
@@ -4077,7 +4246,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_6b8134d5ff7f.json.gz",
+    "n_chunks": 4,
     "note": null,
     "duplicates": null
   },
@@ -4100,7 +4270,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_00def8cb2084.json.gz",
+    "n_chunks": 4,
     "note": null,
     "duplicates": null
   },
@@ -4123,7 +4294,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_c2e6bf11e2cf.json.gz",
+    "n_chunks": 43,
     "note": null,
     "duplicates": null
   },
@@ -4146,7 +4318,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_fedebfb9be8f.json.gz",
+    "n_chunks": 467,
     "note": null,
     "duplicates": null
   },
@@ -4170,6 +4343,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -4192,7 +4366,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_fa676a5a9382.json.gz",
+    "n_chunks": 2,
     "note": null,
     "duplicates": null
   },
@@ -4216,6 +4391,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -4239,6 +4415,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -4262,6 +4439,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -4284,7 +4462,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_29c0cfc42f55.json.gz",
+    "n_chunks": 4,
     "note": null,
     "duplicates": null
   },
@@ -4307,7 +4486,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_651b28493fe9.json.gz",
+    "n_chunks": 7,
     "note": null,
     "duplicates": null
   },
@@ -4331,6 +4511,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -4353,7 +4534,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_b32d1890e7e3.json.gz",
+    "n_chunks": 37,
     "note": null,
     "duplicates": null
   },
@@ -4376,7 +4558,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_251736f81954.json.gz",
+    "n_chunks": 28,
     "note": null,
     "duplicates": null
   },
@@ -4399,7 +4582,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_b2216ce7d082.json.gz",
+    "n_chunks": 1,
     "note": null,
     "duplicates": null
   },
@@ -4423,6 +4607,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -4445,7 +4630,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_9fb20144441e.json.gz",
+    "n_chunks": 5,
     "note": null,
     "duplicates": null
   },
@@ -4457,7 +4643,7 @@
     "sha1": "f5dad0e44a3106fef3b097e77ed235626a1892f7",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "3.งบรายจ่าย",
     "collection": "committee",
     "meeting_no": 7,
@@ -4468,7 +4654,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_71a5383659e1.json.gz",
+    "n_chunks": 244,
     "note": null,
     "duplicates": null
   },
@@ -4480,7 +4667,7 @@
     "sha1": "1e17a8bdcec41a24234996ad3dd7555b686ceda2",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "4.งบกลาง",
     "collection": "committee",
     "meeting_no": 7,
@@ -4491,7 +4678,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_33d16507b5b4.json.gz",
+    "n_chunks": 1,
     "note": null,
     "duplicates": null
   },
@@ -4514,7 +4702,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_63ad8d50e830.json.gz",
+    "n_chunks": 224,
     "note": null,
     "duplicates": null
   },
@@ -4538,6 +4727,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -4562,7 +4752,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_b963df4b2963.json.gz",
+    "n_chunks": 1,
     "note": null,
     "duplicates": null
   },
@@ -4585,7 +4776,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_85b2911907ce.json.gz",
+    "n_chunks": 32,
     "note": null,
     "duplicates": null
   },
@@ -4608,7 +4800,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_fa7abb2639e6.json.gz",
+    "n_chunks": 15,
     "note": null,
     "duplicates": null
   },
@@ -4631,7 +4824,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_1b50f9faf276.json.gz",
+    "n_chunks": 35,
     "note": null,
     "duplicates": null
   },
@@ -4654,7 +4848,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_ea4ac840b296.json.gz",
+    "n_chunks": 8,
     "note": null,
     "duplicates": null
   },
@@ -4678,6 +4873,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -4701,6 +4897,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -4724,6 +4921,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -4747,6 +4945,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -4769,7 +4968,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_75603398df85.json.gz",
+    "n_chunks": 26,
     "note": null,
     "duplicates": null
   },
@@ -4792,7 +4992,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_154af9f11150.json.gz",
+    "n_chunks": 77,
     "note": null,
     "duplicates": null
   },
@@ -4816,6 +5017,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -4839,6 +5041,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -4862,6 +5065,7 @@
     "level": null,
     "fiscal_years": [],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -4887,6 +5091,7 @@
       2569
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -4909,7 +5114,8 @@
     "gov_level": null,
     "level": null,
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_cbcdb6219139.json.gz",
+    "n_chunks": 9,
     "note": null,
     "duplicates": null
   },
@@ -4935,6 +5141,7 @@
       2569
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -4959,7 +5166,8 @@
     "fiscal_years": [
       2569
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_3d504d103824.json.gz",
+    "n_chunks": 377,
     "note": null,
     "duplicates": null
   },
@@ -4971,7 +5179,7 @@
     "sha1": "113188b4f6621bae184db58a5a1042b091fc12ed",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - Excel",
     "collection": "province_budget",
     "meeting_no": null,
@@ -4985,6 +5193,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - Excel.xlsx"
@@ -5012,6 +5221,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -5037,6 +5247,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/0-1 ตัวร่าง พ.ร.บ. งบ 2570.pdf"
@@ -5064,6 +5275,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/0-2 รายงานวิเคราะห์ผลกระทบ.pdf"
@@ -5091,6 +5303,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/0-3 สรุปผลการรับฟังความคิดเห็น.pdf"
@@ -5118,6 +5331,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/0-4 สรุปสาระสำคัญ.pdf"
@@ -5145,6 +5359,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/0-5 งบโดยสังเขป.pdf"
@@ -5172,6 +5387,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/1 รายรับรายจ่ายเปรียบเทียบ.pdf"
@@ -5198,7 +5414,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_6d256286164c.json.gz",
+    "n_chunks": 636,
     "note": null,
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/2 ประมาณการรายรับ.pdf"
@@ -5226,6 +5443,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-01 งบกลาง, สำนักนายก, กลาโหม.pdf"
@@ -5252,7 +5470,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_f5e11714e96e.json.gz",
+    "n_chunks": 1265,
     "note": null,
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-02 คลัง, ต่างประเทศ, ท่องเที่ยว, พัฒนาสังคม.pdf"
@@ -5280,6 +5499,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-03 อว. เล่ม 1.pdf"
@@ -5307,6 +5527,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-03 อว. เล่ม 2.pdf"
@@ -5334,6 +5555,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-03 อว. เล่ม 3.pdf"
@@ -5361,6 +5583,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-03 อว. เล่ม 4.pdf"
@@ -5388,6 +5611,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-03 อว. เล่ม 5.pdf"
@@ -5415,6 +5639,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-04 เกษตร.pdf"
@@ -5442,6 +5667,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-05 คมนาคม, ดิจิทัล.pdf"
@@ -5469,6 +5695,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-06 ทรัพยากรธรรมชาติ.pdf"
@@ -5496,6 +5723,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-07 พลังงาน, พาณิชย์.pdf"
@@ -5523,6 +5751,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-08 มหาดไทย.pdf"
@@ -5550,6 +5779,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-09 ยุติธรรม, แรงงาน, วัฒนธรรม.pdf"
@@ -5577,6 +5807,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-10 ศึกษาธิการ.pdf"
@@ -5604,6 +5835,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-11 สาธารณสุข.pdf"
@@ -5631,6 +5863,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-12 อุตสาหกรรม, ไม่มีสังกัด, ใต้นายก.pdf"
@@ -5658,6 +5891,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-13 จังหวัด เล่ม 1.pdf"
@@ -5685,6 +5919,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-13 จังหวัด เล่ม 2.pdf"
@@ -5712,6 +5947,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-14 รัฐวิสาหกิจ.pdf"
@@ -5739,6 +5975,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-15 รัฐสภา, ศาล, องค์กรอิสระ, อัยการ.pdf"
@@ -5766,6 +6003,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-16 อปท. เล่ม 1.pdf"
@@ -5793,6 +6031,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-16 อปท. เล่ม 2.pdf"
@@ -5820,6 +6059,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-16 อปท. เล่ม 3.pdf"
@@ -5847,6 +6087,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-16 อปท. เล่ม 4.pdf"
@@ -5874,6 +6115,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-17 อื่น ๆ, กาชาด, ในพระองค์.pdf"
@@ -5901,6 +6143,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-18 แผนงานบูรณาการ.pdf"
@@ -5928,6 +6171,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/3-19 บุคลากร, ทุนหมุนเวียน, หนี้, ชดใช้เงินคงคลัง.pdf"
@@ -5955,6 +6199,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/4 งบจำแนกตามยุทธศาสตร์.pdf"
@@ -5982,6 +6227,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/5 ภาวะเศรษฐกิจและการคลัง.pdf"
@@ -6010,6 +6256,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/6 การใช้จ่ายงบปี 2568.pdf"
@@ -6036,7 +6283,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_c1df5bef2c5e.json.gz",
+    "n_chunks": 2456,
     "note": null,
     "duplicates": [
       "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/7 เงินนอกงบประมาณ.pdf"
@@ -6050,7 +6298,7 @@
     "sha1": "94f2dd88ea028be1d87ec6901046a086cc3f5c74",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "ร่าง พ.ร.บ. งบ 2570 เฉพาะส่วนราชการที่มีรายการในสมุทรปราการ - Excel",
     "collection": "province_budget",
     "meeting_no": null,
@@ -6064,6 +6312,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -6075,7 +6324,7 @@
     "sha1": "b7e44c1a189efe3a8d43b9a5ac6492e4d446b65d",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "ร่าง พ.ร.บ. งบ 2570 เฉพาะเงินอุดหนุน อบจ. สมุทรปราการ - Excel",
     "collection": "province_budget",
     "meeting_no": null,
@@ -6089,6 +6338,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -6113,7 +6363,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_9f840c8588c9.json.gz",
+    "n_chunks": 36,
     "note": null,
     "duplicates": null
   },
@@ -6139,6 +6390,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6150,7 +6402,7 @@
     "sha1": "162c342e26cb74f2f29f3236ec5a8ff30f2d0f63",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "ร่างข้อบัญญัติงบ 2570 อบจ. สมุทรปราการ - Sheets",
     "collection": "province_budget",
     "meeting_no": null,
@@ -6164,6 +6416,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -6189,6 +6442,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6200,7 +6454,7 @@
     "sha1": "9f3f8bb085ab4c62e70b89fe8a644169adb4a51e",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "ร่างข้อบัญญัติงบ 2570 อบต. ราชาเทวะ - Sheets",
     "collection": "province_budget",
     "meeting_no": null,
@@ -6214,6 +6468,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -6238,7 +6493,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_f1c9753c283a.json.gz",
+    "n_chunks": 5030,
     "note": null,
     "duplicates": [
       "งบประมาณ เชียงใหม่/4 - งบเงินอุดหนุนเทศบาล + อบต. ในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 เฉพาะเงินอุดหนุน อบต. ในเชียงใหม่ - PDF.pdf"
@@ -6265,7 +6521,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_742ee51f3b05.json.gz",
+    "n_chunks": 30,
     "note": null,
     "duplicates": [
       "งบประมาณ เชียงใหม่/4 - งบเงินอุดหนุนเทศบาล + อบต. ในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 เฉพาะเงินอุดหนุนเทศบาล + อบต. ในเชียงใหม่ - สรุป.pdf"
@@ -6293,6 +6550,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6318,6 +6576,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6343,6 +6602,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6367,7 +6627,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_2ee755514e9d.json.gz",
+    "n_chunks": 788,
     "note": null,
     "duplicates": null
   },
@@ -6392,7 +6653,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_b3ed843a3daf.json.gz",
+    "n_chunks": 46,
     "note": null,
     "duplicates": null
   },
@@ -6417,7 +6679,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_c97e57fc784e.json.gz",
+    "n_chunks": 655,
     "note": null,
     "duplicates": null
   },
@@ -6442,7 +6705,8 @@
     "fiscal_years": [
       2569
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_000df1e657e4.json.gz",
+    "n_chunks": 2072,
     "note": null,
     "duplicates": null
   },
@@ -6468,6 +6732,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -6493,6 +6758,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6518,6 +6784,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6543,6 +6810,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6568,6 +6836,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6593,6 +6862,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6618,6 +6888,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6643,6 +6914,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -6668,6 +6940,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6693,6 +6966,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -6718,6 +6992,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6743,6 +7018,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6768,6 +7044,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6793,6 +7070,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6818,6 +7096,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6843,6 +7122,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6868,6 +7148,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6893,6 +7174,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6918,6 +7200,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6943,6 +7226,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6968,6 +7252,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -6993,6 +7278,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7018,6 +7304,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7043,6 +7330,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7068,6 +7356,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7093,6 +7382,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7118,6 +7408,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7143,6 +7434,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7168,6 +7460,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7193,6 +7486,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7218,6 +7512,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7243,6 +7538,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7268,6 +7564,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7293,6 +7590,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7318,6 +7616,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7343,6 +7642,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7368,6 +7668,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7394,6 +7695,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7419,6 +7721,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -7430,7 +7733,7 @@
     "sha1": "7b3b4d53b4267612f9bd2a77333721bbe8ec5015",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "ร่าง พ.ร.บ. งบ 2570 เฉพาะส่วนราชการที่มีรายการในเชียงใหม่ - Excel",
     "collection": "province_budget",
     "meeting_no": null,
@@ -7444,6 +7747,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -7455,7 +7759,7 @@
     "sha1": "e50832d42780237609dc7c74cb7e45cbe38baeec",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "ร่าง พ.ร.บ. งบ 2570 เฉพาะเงินอุดหนุน อบจ. เชียงใหม่ - Excel",
     "collection": "province_budget",
     "meeting_no": null,
@@ -7469,6 +7773,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -7493,7 +7798,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_abcbcdda8f34.json.gz",
+    "n_chunks": 77,
     "note": null,
     "duplicates": null
   },
@@ -7519,6 +7825,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7530,7 +7837,7 @@
     "sha1": "31f46da8c4598a4e2bae032325c45415124a06d6",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "ร่างข้อบัญญัติงบ 2570 อบจ. เชียงใหม่ - Sheets",
     "collection": "province_budget",
     "meeting_no": null,
@@ -7544,6 +7851,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -7566,7 +7874,8 @@
     "gov_level": "local",
     "level": "งบ อบจ. เชียงใหม่",
     "fiscal_years": [],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_2a5f006bfd26.json.gz",
+    "n_chunks": 41,
     "note": null,
     "duplicates": null
   },
@@ -7578,7 +7887,7 @@
     "sha1": "fd3f0d59a69cf434e345da2891edf82c01e28b18",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "ร่าง พ.ร.บ. งบ 2570 เฉพาะเงินอุดหนุน ทน. เชียงใหม่ - Excel",
     "collection": "province_budget",
     "meeting_no": null,
@@ -7592,6 +7901,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -7616,7 +7926,8 @@
     "fiscal_years": [
       2570
     ],
-    "text_chunks_file": null,
+    "text_chunks_file": "docs/d_798a8cd25cc9.json.gz",
+    "n_chunks": 29,
     "note": null,
     "duplicates": null
   },
@@ -7628,7 +7939,7 @@
     "sha1": "333c8d42e45e315af215d01cf087dcd6cb81465b",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "ร่างเทศบัญญัติงบ 2570 ทน. เชียงใหม่ - Excel",
     "collection": "province_budget",
     "meeting_no": null,
@@ -7642,6 +7953,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -7667,6 +7979,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7692,6 +8005,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7717,6 +8031,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": "OCR out of scope",
     "duplicates": null
   },
@@ -7742,6 +8057,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -7767,6 +8083,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   },
@@ -7778,7 +8095,7 @@
     "sha1": "b9472e3122590af9e0baae652ffa4011e897dad7",
     "pages": null,
     "has_text_layer": null,
-    "extracted": false,
+    "extracted": true,
     "title_guess": "ร่าง พ.ร.บ. งบ 2570 เฉพาะเงินอุดหนุนเทศบาลในเชียงใหม่ - Excel",
     "collection": "province_budget",
     "meeting_no": null,
@@ -7792,6 +8109,7 @@
       2570
     ],
     "text_chunks_file": null,
+    "n_chunks": null,
     "note": null,
     "duplicates": null
   }

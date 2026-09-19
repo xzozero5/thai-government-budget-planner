@@ -1,0 +1,1521 @@
+{
+  "dataset_field_coverage": [
+    {
+      "dataset": "act_2570_draft",
+      "n_org_mapped": 96470,
+      "n_province": 18080,
+      "n_qty_parsed": 10929,
+      "n_rows": 96470,
+      "n_unit_price": 8487,
+      "pct_org_mapped": 100.0,
+      "pct_province": 18.741577692546908,
+      "pct_qty_parsed": 11.328910542137452,
+      "pct_unit_price": 8.797553643619779
+    },
+    {
+      "dataset": "act_2570_province",
+      "n_org_mapped": 155,
+      "n_province": 730,
+      "n_qty_parsed": 51,
+      "n_rows": 730,
+      "n_unit_price": 6,
+      "pct_org_mapped": 21.232876712328768,
+      "pct_province": 100.0,
+      "pct_qty_parsed": 6.986301369863014,
+      "pct_unit_price": 0.821917808219178
+    },
+    {
+      "dataset": "committee_table",
+      "n_org_mapped": 1245,
+      "n_province": 3325,
+      "n_qty_parsed": 314,
+      "n_rows": 3325,
+      "n_unit_price": 309,
+      "pct_org_mapped": 37.44360902255639,
+      "pct_province": 100.0,
+      "pct_qty_parsed": 9.443609022556391,
+      "pct_unit_price": 9.293233082706767
+    },
+    {
+      "dataset": "local_ordinance_2570",
+      "n_org_mapped": 2301,
+      "n_province": 2646,
+      "n_qty_parsed": 4,
+      "n_rows": 2646,
+      "n_unit_price": 76,
+      "pct_org_mapped": 86.96145124716553,
+      "pct_province": 100.0,
+      "pct_qty_parsed": 0.15117157974300832,
+      "pct_unit_price": 2.872260015117158
+    },
+    {
+      "dataset": "local_subsidy_2570",
+      "n_org_mapped": 2720,
+      "n_province": 2720,
+      "n_qty_parsed": 319,
+      "n_rows": 2720,
+      "n_unit_price": 319,
+      "pct_org_mapped": 100.0,
+      "pct_province": 100.0,
+      "pct_qty_parsed": 11.727941176470589,
+      "pct_unit_price": 11.727941176470589
+    },
+    {
+      "dataset": "pbo_disbursement",
+      "n_org_mapped": 2770537,
+      "n_province": 2213488,
+      "n_qty_parsed": 461831,
+      "n_rows": 2887730,
+      "n_unit_price": 85864,
+      "pct_org_mapped": 95.94169122459509,
+      "pct_province": 76.65148750056272,
+      "pct_qty_parsed": 15.99287329494101,
+      "pct_unit_price": 2.9734081787424724
+    }
+  ],
+  "generated_at": "2026-09-19T15:51:59.164960+00:00",
+  "hard_failures": [],
+  "notable_statuses": [
+    "V1 PBO 2562: source_incomplete",
+    "V1 PBO 2567: no_oracle",
+    "V9 committee_table: org_unmapped 62.6% (>= 5.0%)",
+    "V9 local_ordinance_2570: org_unmapped 13.0% (>= 5.0%)"
+  ],
+  "pdf_text_layer": {
+    "n_extracted": 119,
+    "n_not_extracted": 143,
+    "n_pdf": 262,
+    "n_with_text_layer": 119,
+    "n_without_text_layer": 143
+  },
+  "total_output_bytes": 180555250,
+  "total_output_bytes_limit": 500000000,
+  "v10": {
+    "missing_rel_paths": [],
+    "n_pdf_in_raw": 262,
+    "n_pdf_in_sources": 262,
+    "passed": true,
+    "status": "ok"
+  },
+  "v1_by_year": {
+    "2558": {
+      "checks": [
+        {
+          "computed_baht": 2575000009900,
+          "diff_pct": 3.8446601941747576e-07,
+          "label": "พรบ. (ล้านบาท)",
+          "oracle_million": 2575000.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 2575000079100,
+          "diff_pct": 3.071844660194175e-06,
+          "label": "งบฯ หลังโอน/ปป. ทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 2575000.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 13998300,
+          "diff_pct": 0.0035717347201188673,
+          "label": "PO ทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 13.9988,
+          "passed": true
+        },
+        {
+          "computed_baht": 2378260128500,
+          "diff_pct": 4.192140421680706e-06,
+          "label": "เบิกจ่ายทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 2378260.0288,
+          "passed": true
+        },
+        {
+          "computed_baht": 2378274127000,
+          "diff_pct": 4.179501556442091e-06,
+          "label": "เบิกจ่ายรวม PO (ล้านบาท)",
+          "oracle_million": 2378274.0276,
+          "passed": true
+        },
+        {
+          "computed_baht": 338125129900,
+          "diff_pct": 8.754156368083154e-06,
+          "label": "เงินกันฯ สุทธิ (ล้านบาท)",
+          "oracle_million": 338125.1003,
+          "passed": true
+        },
+        {
+          "computed_baht": 223269717100,
+          "diff_pct": 1.728850968896791e-05,
+          "label": "เบิกจ่ายเหลื่อมปี (ล้านบาท)",
+          "oracle_million": 223269.6785,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": 0.0,
+          "label": "คงเหลือกรณีมีหนี้ผูกพัน (ล้านบาท)",
+          "oracle_million": 0.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": null,
+          "label": "คงเหลือกรณีไม่มีหนี้ผูกพัน (ล้านบาท)",
+          "oracle_million": null,
+          "passed": true
+        },
+        {
+          "computed_baht": 114855424200,
+          "diff_pct": 2.0895835498120126e-06,
+          "label": "คงเหลือ สรก.อยู่ระหว่างดำเนินการ (ล้านบาท)",
+          "oracle_million": 114855.4218,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": null,
+          "label": "คงเหลืออยู่ระหว่างกันและขยายรวม (ล้านบาท)",
+          "oracle_million": null,
+          "passed": true
+        },
+        {
+          "computed_baht": 114855424200,
+          "diff_pct": 2.0895835498120126e-06,
+          "label": "คงเหลือรวม (ล้านบาท)",
+          "oracle_million": 114855.4218,
+          "passed": true
+        }
+      ],
+      "coverage_pct": null,
+      "expected_rows": null,
+      "kind": "grand_total",
+      "ministry_checks": {},
+      "n_rows": null,
+      "notes": [],
+      "passed": true,
+      "status": "ok",
+      "year": 2558
+    },
+    "2559": {
+      "checks": [
+        {
+          "computed_baht": 2775999956900,
+          "diff_pct": 1.552593659942363e-06,
+          "label": "พรบ. (ล้านบาท)",
+          "oracle_million": 2776000.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 2776000086300,
+          "diff_pct": 3.1087896253602306e-06,
+          "label": "งบฯ หลังโอน/ปป. ทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 2776000.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 35920200,
+          "diff_pct": 0.00027839566148201144,
+          "label": "PO ทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 35.9201,
+          "passed": true
+        },
+        {
+          "computed_baht": 2578774567200,
+          "diff_pct": 4.8433859879812565e-06,
+          "label": "เบิกจ่ายทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 2578774.4423,
+          "passed": true
+        },
+        {
+          "computed_baht": 2578810487200,
+          "diff_pct": 4.839440767713274e-06,
+          "label": "เบิกจ่ายรวม PO (ล้านบาท)",
+          "oracle_million": 2578810.3624,
+          "passed": true
+        },
+        {
+          "computed_baht": 292045138500,
+          "diff_pct": 3.44125004445376e-05,
+          "label": "เงินกันฯ สุทธิ (ล้านบาท)",
+          "oracle_million": 292045.038,
+          "passed": true
+        },
+        {
+          "computed_baht": 228460055400,
+          "diff_pct": 4.1101293803728496e-05,
+          "label": "เบิกจ่ายเหลื่อมปี (ล้านบาท)",
+          "oracle_million": 228459.9615,
+          "passed": true
+        },
+        {
+          "computed_baht": 5097500,
+          "diff_pct": 0.0,
+          "label": "คงเหลือกรณีมีหนี้ผูกพัน (ล้านบาท)",
+          "oracle_million": 5.0975,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": null,
+          "label": "คงเหลือกรณีไม่มีหนี้ผูกพัน (ล้านบาท)",
+          "oracle_million": null,
+          "passed": true
+        },
+        {
+          "computed_baht": 63579980400,
+          "diff_pct": 2.2019510261241202e-06,
+          "label": "คงเหลือ สรก.อยู่ระหว่างดำเนินการ (ล้านบาท)",
+          "oracle_million": 63579.979,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": null,
+          "label": "คงเหลืออยู่ระหว่างกันและขยายรวม (ล้านบาท)",
+          "oracle_million": null,
+          "passed": true
+        },
+        {
+          "computed_baht": 63585077900,
+          "diff_pct": 2.3590441105454108e-06,
+          "label": "คงเหลือรวม (ล้านบาท)",
+          "oracle_million": 63585.0764,
+          "passed": true
+        }
+      ],
+      "coverage_pct": null,
+      "expected_rows": null,
+      "kind": "grand_total",
+      "ministry_checks": {},
+      "n_rows": null,
+      "notes": [],
+      "passed": true,
+      "status": "ok",
+      "year": 2559
+    },
+    "2560": {
+      "checks": [
+        {
+          "computed_baht": 2923000003400,
+          "diff_pct": 1.1631885049606569e-07,
+          "label": "พรบ. (ล้านบาท)",
+          "oracle_million": 2923000.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 2923000102000,
+          "diff_pct": 3.489565514881971e-06,
+          "label": "งบฯ หลังโอน/ปป. ทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 2923000.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 28125200,
+          "diff_pct": 0.002133363674505593,
+          "label": "PO ทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 28.1246,
+          "passed": true
+        },
+        {
+          "computed_baht": 2686563513300,
+          "diff_pct": 5.337674205144012e-06,
+          "label": "เบิกจ่ายทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 2686563.3699,
+          "passed": true
+        },
+        {
+          "computed_baht": 2686591638100,
+          "diff_pct": 5.345062704693976e-06,
+          "label": "เบิกจ่ายรวม PO (ล้านบาท)",
+          "oracle_million": 2686591.4945,
+          "passed": true
+        },
+        {
+          "computed_baht": 267002495400,
+          "diff_pct": 1.793991045718785e-05,
+          "label": "เงินกันฯ สุทธิ (ล้านบาท)",
+          "oracle_million": 267002.4475,
+          "passed": true
+        },
+        {
+          "computed_baht": 203953369600,
+          "diff_pct": 2.4466382833777428e-05,
+          "label": "เบิกจ่ายเหลื่อมปี (ล้านบาท)",
+          "oracle_million": 203953.3197,
+          "passed": true
+        },
+        {
+          "computed_baht": -64654800,
+          "diff_pct": 0.00015466731833163456,
+          "label": "คงเหลือกรณีมีหนี้ผูกพัน (ล้านบาท)",
+          "oracle_million": -64.6549,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": null,
+          "label": "คงเหลือกรณีไม่มีหนี้ผูกพัน (ล้านบาท)",
+          "oracle_million": null,
+          "passed": true
+        },
+        {
+          "computed_baht": 63113786500,
+          "diff_pct": 6.179315894782069e-06,
+          "label": "คงเหลือ สรก.อยู่ระหว่างดำเนินการ (ล้านบาท)",
+          "oracle_million": 63113.7826,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": null,
+          "label": "คงเหลืออยู่ระหว่างกันและขยายรวม (ล้านบาท)",
+          "oracle_million": null,
+          "passed": true
+        },
+        {
+          "computed_baht": 63049131600,
+          "diff_pct": 6.027046102928009e-06,
+          "label": "คงเหลือรวม (ล้านบาท)",
+          "oracle_million": 63049.1278,
+          "passed": true
+        }
+      ],
+      "coverage_pct": null,
+      "expected_rows": null,
+      "kind": "grand_total",
+      "ministry_checks": {},
+      "n_rows": null,
+      "notes": [],
+      "passed": true,
+      "status": "ok",
+      "year": 2560
+    },
+    "2561": {
+      "checks": [
+        {
+          "computed_baht": 3050000007000,
+          "diff_pct": 2.4974385188584003e-12,
+          "label": "พรบ. (รวมทั้งหมด)",
+          "oracle_million": 3050000.006999924,
+          "passed": true
+        }
+      ],
+      "coverage_pct": null,
+      "expected_rows": null,
+      "kind": "sheet1_ministry",
+      "ministry_checks": {
+        "กระทรวงกลาโหม": [
+          {
+            "computed_baht": 220523650900,
+            "diff_pct": 1.6606424571941485e-13,
+            "label": "พรบ.",
+            "oracle_million": 220523.65089999963,
+            "passed": true
+          }
+        ],
+        "กระทรวงการคลัง": [
+          {
+            "computed_baht": 238246894700,
+            "diff_pct": 0.0,
+            "label": "พรบ.",
+            "oracle_million": 238246.8947,
+            "passed": true
+          }
+        ],
+        "กระทรวงการต่างประเทศ": [
+          {
+            "computed_baht": 8761528400,
+            "diff_pct": 2.1769587972944305e-14,
+            "label": "พรบ.",
+            "oracle_million": 8761.528400000001,
+            "passed": true
+          }
+        ],
+        "กระทรวงการท่องเที่ยวและกีฬา": [
+          {
+            "computed_baht": 6729201600,
+            "diff_pct": 4.251652899236592e-14,
+            "label": "พรบ.",
+            "oracle_million": 6729.201599999997,
+            "passed": true
+          }
+        ],
+        "กระทรวงการพัฒนาสังคมและความมั่นคงของมนุษย์": [
+          {
+            "computed_baht": 13717537300,
+            "diff_pct": 3.198024368024672e-13,
+            "label": "พรบ.",
+            "oracle_million": 13717.537300000044,
+            "passed": true
+          }
+        ],
+        "กระทรวงคมนาคม": [
+          {
+            "computed_baht": 168767996400,
+            "diff_pct": 1.6274306087869421e-12,
+            "label": "พรบ.",
+            "oracle_million": 168767.99639999727,
+            "passed": true
+          }
+        ],
+        "กระทรวงดิจิทัลเพื่อเศรษฐกิจและสังคม": [
+          {
+            "computed_baht": 6571158100,
+            "diff_pct": 8.70781955229095e-14,
+            "label": "พรบ.",
+            "oracle_million": 6571.158099999994,
+            "passed": true
+          }
+        ],
+        "กระทรวงทรัพยากรธรรมชาติ และสิ่งแวดล้อม": [
+          {
+            "computed_baht": 33716655400,
+            "diff_pct": 5.770132245883325e-13,
+            "label": "พรบ.",
+            "oracle_million": 33716.65539999981,
+            "passed": true
+          }
+        ],
+        "กระทรวงพลังงาน": [
+          {
+            "computed_baht": 2221134400,
+            "diff_pct": 8.587272489285198e-14,
+            "label": "พรบ.",
+            "oracle_million": 2221.1344000000017,
+            "passed": true
+          }
+        ],
+        "กระทรวงพาณิชย์": [
+          {
+            "computed_baht": 7332152400,
+            "diff_pct": 3.902023298395637e-14,
+            "label": "พรบ.",
+            "oracle_million": 7332.152400000003,
+            "passed": true
+          }
+        ],
+        "กระทรวงมหาดไทย": [
+          {
+            "computed_baht": 386179349200,
+            "diff_pct": 2.0546335087407142e-13,
+            "label": "พรบ.",
+            "oracle_million": 386179.3491999992,
+            "passed": true
+          }
+        ],
+        "กระทรวงยุติธรรม": [
+          {
+            "computed_baht": 24480817700,
+            "diff_pct": 7.791196585776211e-14,
+            "label": "พรบ.",
+            "oracle_million": 24480.817700000018,
+            "passed": true
+          }
+        ],
+        "กระทรวงวัฒนธรรม": [
+          {
+            "computed_baht": 8170450600,
+            "diff_pct": 9.337789192740476e-14,
+            "label": "พรบ.",
+            "oracle_million": 8170.450600000007,
+            "passed": true
+          }
+        ],
+        "กระทรวงวิทยาศาสตร์และเทคโนโลยี": [
+          {
+            "computed_baht": 14275382800,
+            "diff_pct": 6.68055161649501e-14,
+            "label": "พรบ.",
+            "oracle_million": 14275.38279999999,
+            "passed": true
+          }
+        ],
+        "กระทรวงศึกษาธิการ": [
+          {
+            "computed_baht": 507947734700,
+            "diff_pct": 1.499600643853633e-11,
+            "label": "พรบ.",
+            "oracle_million": 507947.73469992384,
+            "passed": true
+          }
+        ],
+        "กระทรวงสาธารณสุข": [
+          {
+            "computed_baht": 134894005300,
+            "diff_pct": 2.8279220096854894e-13,
+            "label": "พรบ.",
+            "oracle_million": 134894.0052999996,
+            "passed": true
+          }
+        ],
+        "กระทรวงอุตสาหกรรม": [
+          {
+            "computed_baht": 5746781600,
+            "diff_pct": 1.6594928827750304e-14,
+            "label": "พรบ.",
+            "oracle_million": 5746.781599999999,
+            "passed": true
+          }
+        ],
+        "กระทรวงเกษตรและสหกรณ์": [
+          {
+            "computed_baht": 122572844100,
+            "diff_pct": 3.3736117215031323e-12,
+            "label": "พรบ.",
+            "oracle_million": 122572.84410000413,
+            "passed": true
+          }
+        ],
+        "กระทรวงแรงงาน": [
+          {
+            "computed_baht": 51679733700,
+            "diff_pct": 2.9525672773542165e-14,
+            "label": "พรบ.",
+            "oracle_million": 51679.73370000002,
+            "passed": true
+          }
+        ],
+        "กองทุนและเงินทุนหมุนเวียน": [
+          {
+            "computed_baht": 215235716000,
+            "diff_pct": 2.8357355082276392e-14,
+            "label": "พรบ.",
+            "oracle_million": 215235.71600000007,
+            "passed": true
+          }
+        ],
+        "งบกลาง": [
+          {
+            "computed_baht": 420183248600,
+            "diff_pct": 0.0,
+            "label": "พรบ.",
+            "oracle_million": 420183.2486,
+            "passed": true
+          }
+        ],
+        "จังหวัดและกลุ่มจังหวัด": [
+          {
+            "computed_baht": 31765370700,
+            "diff_pct": 9.96745405671818e-13,
+            "label": "พรบ.",
+            "oracle_million": 31765.370700000316,
+            "passed": true
+          }
+        ],
+        "รัฐวิสาหกิจ": [
+          {
+            "computed_baht": 154650761200,
+            "diff_pct": 7.893288823980265e-14,
+            "label": "พรบ.",
+            "oracle_million": 154650.7611999999,
+            "passed": true
+          }
+        ],
+        "รายจ่ายเพื่อชดใช้เงินคงคลัง": [
+          {
+            "computed_baht": 49641923000,
+            "diff_pct": 0.0,
+            "label": "พรบ.",
+            "oracle_million": 49641.923,
+            "passed": true
+          }
+        ],
+        "สภากาชาดไทย": [
+          {
+            "computed_baht": 8333269600,
+            "diff_pct": 0.0,
+            "label": "พรบ.",
+            "oracle_million": 8333.2696,
+            "passed": true
+          }
+        ],
+        "สำนักนายกรัฐมนตรี": [
+          {
+            "computed_baht": 33874736400,
+            "diff_pct": 1.2387305225458537e-13,
+            "label": "พรบ.",
+            "oracle_million": 33874.73639999996,
+            "passed": true
+          }
+        ],
+        "ส่วนราชการในพระองค์": [
+          {
+            "computed_baht": 4196323500,
+            "diff_pct": 1.1363212540766341e-14,
+            "label": "พรบ.",
+            "oracle_million": 4196.3234999999995,
+            "passed": true
+          }
+        ],
+        "ส่วนราชการไม่สังกัดสำนักนายกรัฐมนตรี กระทรวงหรือทบวง เเละหน่วยงานภายใต้การควบคุม": [
+          {
+            "computed_baht": 125572253000,
+            "diff_pct": 2.430280368147891e-14,
+            "label": "พรบ.",
+            "oracle_million": 125572.25299999997,
+            "passed": true
+          }
+        ],
+        "หน่วยงานของรัฐสภา": [
+          {
+            "computed_baht": 6203350700,
+            "diff_pct": 0.0,
+            "label": "พรบ.",
+            "oracle_million": 6203.3507,
+            "passed": true
+          }
+        ],
+        "หน่วยงานของศาล": [
+          {
+            "computed_baht": 21711957100,
+            "diff_pct": 5.2708706747007186e-14,
+            "label": "พรบ.",
+            "oracle_million": 21711.95709999999,
+            "passed": true
+          }
+        ],
+        "หน่วยงานอิสระของรัฐ": [
+          {
+            "computed_baht": 16096087900,
+            "diff_pct": 9.479812211077708e-14,
+            "label": "พรบ.",
+            "oracle_million": 16096.087899999984,
+            "passed": true
+          }
+        ]
+      },
+      "n_rows": null,
+      "notes": [],
+      "passed": true,
+      "status": "ok",
+      "year": 2561
+    },
+    "2562": {
+      "checks": [
+        {
+          "computed_baht": 2377340247000,
+          "diff_pct": 20.7553251,
+          "label": "พรบ. (ล้านบาท)",
+          "oracle_million": 3000000.0,
+          "passed": false
+        },
+        {
+          "computed_baht": 2381581475000,
+          "diff_pct": 20.613950833333334,
+          "label": "งบฯ หลังโอน/ปป. ทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 3000000.0,
+          "passed": false
+        },
+        {
+          "computed_baht": 416200,
+          "diff_pct": 0.0,
+          "label": "PO ทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 0.4162,
+          "passed": true
+        },
+        {
+          "computed_baht": 2224677627500,
+          "diff_pct": 20.066335277477343,
+          "label": "เบิกจ่ายทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 2783154.8012,
+          "passed": false
+        },
+        {
+          "computed_baht": 2224678043800,
+          "diff_pct": 20.066332273114277,
+          "label": "เบิกจ่ายรวม PO (ล้านบาท)",
+          "oracle_million": 2783155.2174,
+          "passed": false
+        },
+        {
+          "computed_baht": 266547699200,
+          "diff_pct": 19.46059200911753,
+          "label": "เงินกันฯ สุทธิ (ล้านบาท)",
+          "oracle_million": 330953.1394,
+          "passed": false
+        },
+        {
+          "computed_baht": 209865980100,
+          "diff_pct": 19.247829541647594,
+          "label": "เบิกจ่ายเหลื่อมปี (ล้านบาท)",
+          "oracle_million": 259888.9651,
+          "passed": false
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": 0.0,
+          "label": "คงเหลือกรณีมีหนี้ผูกพัน (ล้านบาท)",
+          "oracle_million": 0.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": 0.0,
+          "label": "คงเหลือกรณีไม่มีหนี้ผูกพัน (ล้านบาท)",
+          "oracle_million": 0.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 56681727400,
+          "diff_pct": 20.2386744680716,
+          "label": "คงเหลือ สรก.อยู่ระหว่างดำเนินการ (ล้านบาท)",
+          "oracle_million": 71064.1743,
+          "passed": false
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": null,
+          "label": "คงเหลืออยู่ระหว่างกันและขยายรวม (ล้านบาท)",
+          "oracle_million": null,
+          "passed": true
+        },
+        {
+          "computed_baht": 56681727400,
+          "diff_pct": 20.2386744680716,
+          "label": "คงเหลือรวม (ล้านบาท)",
+          "oracle_million": 71064.1743,
+          "passed": false
+        }
+      ],
+      "coverage_pct": 79.2446749,
+      "expected_rows": null,
+      "kind": "grand_total",
+      "ministry_checks": {},
+      "n_rows": null,
+      "notes": [
+        "known source gap (pbo_disbursement 2562): coverage 79.24% (บันทึกไว้ 79.24% ± 0.5 จุด) — PBO/2562.xlsx (sheet \"เบิกจ่ายภาพรวมทุกมิติ (3)\") ขาดข้อมูลทั้งกระทรวงของ 6 รายการข้างต้น (ไม่มีแถวเลย) และมีข้อมูลไม่ครบของกระทรวงเกษตรฯ/สำนักนายกฯ ทั้งที่ Grand Total ในไฟล์ระบุ 3,000,000 ล้านบาท (ตรงกับ พ.ร.บ. งบประมาณปี 2562 จริง) — ยังไม่ทราบสาเหตุที่แท้จริง (สงสัยว่าไฟล์ export จาก PBO ต้นทางไม่สมบูรณ์) ตัดสินใจ**เก็บข้อมูลปี 2562 ไว้ใช้งานต่อ** แต่ต้องแสดงคำเตือนชัดเจนใน UI/validation ทุกครั้ง (ดู docs/decisions/ADR-004.md). แยกจากปัญหาแถว 226-227 ที่คอลัมน์เงินเลื่อน/เสีย (พรบ.=607,006,457,005 ล้านบาท) ซึ่งถูก null ทิ้งเป็น quality_flag=corrupt_row ไปแล้วก่อนคำนวณ extracted_total_mthb นี้ (ไม่ใช่สาเหตุ ของช่องว่าง 20.8% ข้างต้น — ตรวจแยกกันแล้วว่าเป็นคนละปัญหา)"
+      ],
+      "passed": false,
+      "status": "source_incomplete",
+      "year": 2562
+    },
+    "2563": {
+      "checks": [
+        {
+          "computed_baht": 3199999956800,
+          "diff_pct": 1.35e-06,
+          "label": "พรบ. (ล้านบาท)",
+          "oracle_million": 3200000.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 3200000081200,
+          "diff_pct": 2.5375e-06,
+          "label": "งบฯ หลังโอน/ปป. ทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 3200000.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": 0.0,
+          "label": "PO ทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 0.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 2943851143400,
+          "diff_pct": 4.810026047969803e-06,
+          "label": "เบิกจ่ายทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 2943851.0018,
+          "passed": true
+        },
+        {
+          "computed_baht": 2943851143400,
+          "diff_pct": 4.810026047969803e-06,
+          "label": "เบิกจ่ายรวม PO (ล้านบาท)",
+          "oracle_million": 2943851.0018,
+          "passed": true
+        },
+        {
+          "computed_baht": 246665981600,
+          "diff_pct": 3.883796078622559e-05,
+          "label": "เงินกันฯ สุทธิ (ล้านบาท)",
+          "oracle_million": 246665.8858,
+          "passed": true
+        },
+        {
+          "computed_baht": 224870264500,
+          "diff_pct": 4.1179316588586645e-05,
+          "label": "เบิกจ่ายเหลื่อมปี (ล้านบาท)",
+          "oracle_million": 224870.1719,
+          "passed": true
+        },
+        {
+          "computed_baht": 19918965500,
+          "diff_pct": 2.1587471137802107e-05,
+          "label": "คงเหลือกรณีมีหนี้ผูกพัน (ล้านบาท)",
+          "oracle_million": 19918.9612,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": 0.0,
+          "label": "คงเหลือกรณีไม่มีหนี้ผูกพัน (ล้านบาท)",
+          "oracle_million": 0.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 1876752800,
+          "diff_pct": 5.32835253147631e-06,
+          "label": "คงเหลือ สรก.อยู่ระหว่างดำเนินการ (ล้านบาท)",
+          "oracle_million": 1876.7527,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": null,
+          "label": "คงเหลืออยู่ระหว่างกันและขยายรวม (ล้านบาท)",
+          "oracle_million": null,
+          "passed": true
+        },
+        {
+          "computed_baht": 21795717800,
+          "diff_pct": 1.789342628506424e-05,
+          "label": "คงเหลือรวม (ล้านบาท)",
+          "oracle_million": 21795.7139,
+          "passed": true
+        }
+      ],
+      "coverage_pct": null,
+      "expected_rows": null,
+      "kind": "grand_total",
+      "ministry_checks": {},
+      "n_rows": null,
+      "notes": [],
+      "passed": true,
+      "status": "ok",
+      "year": 2563
+    },
+    "2564": {
+      "checks": [
+        {
+          "computed_baht": 3285962487700,
+          "diff_pct": 2.4345987056828413e-07,
+          "label": "พรบ. (ล้านบาท)",
+          "oracle_million": 3285962.4797,
+          "passed": true
+        },
+        {
+          "computed_baht": 3285962617000,
+          "diff_pct": 4.178380028628176e-06,
+          "label": "งบฯ หลังโอน/ปป. ทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 3285962.4797,
+          "passed": true
+        },
+        {
+          "computed_baht": 15000,
+          "diff_pct": 0.6711409395973155,
+          "label": "PO ทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 0.0149,
+          "passed": true
+        },
+        {
+          "computed_baht": 3012143564000,
+          "diff_pct": 5.7467383698582605e-06,
+          "label": "เบิกจ่ายทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 3012143.3909,
+          "passed": true
+        },
+        {
+          "computed_baht": 3012143578800,
+          "diff_pct": 5.743418446375486e-06,
+          "label": "เบิกจ่ายรวม PO (ล้านบาท)",
+          "oracle_million": 3012143.4058,
+          "passed": true
+        },
+        {
+          "computed_baht": 197488491800,
+          "diff_pct": 6.638365903454481e-05,
+          "label": "เงินกันฯ สุทธิ (ล้านบาท)",
+          "oracle_million": 197488.3607,
+          "passed": true
+        },
+        {
+          "computed_baht": 196497366300,
+          "diff_pct": 6.676938733169991e-05,
+          "label": "เบิกจ่ายเหลื่อมปี (ล้านบาท)",
+          "oracle_million": 196497.2351,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": 0.0,
+          "label": "คงเหลือกรณีมีหนี้ผูกพัน (ล้านบาท)",
+          "oracle_million": 0.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": null,
+          "label": "คงเหลือกรณีไม่มีหนี้ผูกพัน (ล้านบาท)",
+          "oracle_million": null,
+          "passed": true
+        },
+        {
+          "computed_baht": 991125600,
+          "diff_pct": 0.0,
+          "label": "คงเหลือ สรก.อยู่ระหว่างดำเนินการ (ล้านบาท)",
+          "oracle_million": 991.1256,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": null,
+          "label": "คงเหลืออยู่ระหว่างกันและขยายรวม (ล้านบาท)",
+          "oracle_million": null,
+          "passed": true
+        },
+        {
+          "computed_baht": 991125600,
+          "diff_pct": 0.0,
+          "label": "คงเหลือรวม (ล้านบาท)",
+          "oracle_million": 991.1256,
+          "passed": true
+        }
+      ],
+      "coverage_pct": null,
+      "expected_rows": null,
+      "kind": "grand_total",
+      "ministry_checks": {},
+      "n_rows": null,
+      "notes": [],
+      "passed": true,
+      "status": "ok",
+      "year": 2564
+    },
+    "2565": {
+      "checks": [
+        {
+          "computed_baht": 3100000000000,
+          "diff_pct": 0.0,
+          "label": "พรบ. (ล้านบาท)",
+          "oracle_million": 3100000.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 3100000097300,
+          "diff_pct": 3.1387096774193545e-06,
+          "label": "งบฯ หลังโอน/ปป. ทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 3100000.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 17300,
+          "diff_pct": 0.5747126436781609,
+          "label": "PO ทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 0.0174,
+          "passed": true
+        },
+        {
+          "computed_baht": 2932562902000,
+          "diff_pct": 4.9035608734342685e-06,
+          "label": "เบิกจ่ายทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 2932562.7582,
+          "passed": true
+        },
+        {
+          "computed_baht": 2932562919500,
+          "diff_pct": 4.90697083101855e-06,
+          "label": "เบิกจ่ายรวม PO (ล้านบาท)",
+          "oracle_million": 2932562.7756,
+          "passed": true
+        },
+        {
+          "computed_baht": 236883718300,
+          "diff_pct": 3.064795789741596e-05,
+          "label": "เงินกันฯ สุทธิ (ล้านบาท)",
+          "oracle_million": 236883.6457,
+          "passed": true
+        },
+        {
+          "computed_baht": 213677558100,
+          "diff_pct": 3.421043634990369e-05,
+          "label": "เบิกจ่ายเหลื่อมปี (ล้านบาท)",
+          "oracle_million": 213677.485,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": 0.0,
+          "label": "คงเหลือกรณีมีหนี้ผูกพัน (ล้านบาท)",
+          "oracle_million": 0.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": 0.0,
+          "label": "คงเหลือกรณีไม่มีหนี้ผูกพัน (ล้านบาท)",
+          "oracle_million": 0.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 26518800,
+          "diff_pct": 0.0,
+          "label": "คงเหลือ สรก.อยู่ระหว่างดำเนินการ (ล้านบาท)",
+          "oracle_million": 26.5188,
+          "passed": true
+        },
+        {
+          "computed_baht": 1808369100,
+          "diff_pct": 0.00013824592246416612,
+          "label": "คงเหลืออยู่ระหว่างกันและขยายรวม (ล้านบาท)",
+          "oracle_million": 1808.3716,
+          "passed": true
+        },
+        {
+          "computed_baht": 23206164500,
+          "diff_pct": 1.6374962016013274e-05,
+          "label": "คงเหลือรวม (ล้านบาท)",
+          "oracle_million": 23206.1607,
+          "passed": true
+        }
+      ],
+      "coverage_pct": null,
+      "expected_rows": null,
+      "kind": "grand_total",
+      "ministry_checks": {},
+      "n_rows": null,
+      "notes": [],
+      "passed": true,
+      "status": "ok",
+      "year": 2565
+    },
+    "2566": {
+      "checks": [
+        {
+          "computed_baht": 3185000002500,
+          "diff_pct": 7.849293563579278e-08,
+          "label": "พรบ. (ล้านบาท)",
+          "oracle_million": 3185000.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 3185000116600,
+          "diff_pct": 3.6609105180533756e-06,
+          "label": "งบฯ หลังโอน/ปป. ทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 3185000.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 1388300,
+          "diff_pct": 0.0,
+          "label": "PO ทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 1.3883,
+          "passed": true
+        },
+        {
+          "computed_baht": 3088425110700,
+          "diff_pct": 4.630191812835084e-06,
+          "label": "เบิกจ่ายทั้งสิ้น (ล้านบาท)",
+          "oracle_million": 3088424.9677,
+          "passed": true
+        },
+        {
+          "computed_baht": 3088426499100,
+          "diff_pct": 4.6334276264024995e-06,
+          "label": "เบิกจ่ายรวม PO (ล้านบาท)",
+          "oracle_million": 3088426.356,
+          "passed": true
+        },
+        {
+          "computed_baht": 190108325500,
+          "diff_pct": 2.2723891603958804e-05,
+          "label": "เงินกันฯ สุทธิ (ล้านบาท)",
+          "oracle_million": 190108.2823,
+          "passed": true
+        },
+        {
+          "computed_baht": 173901383800,
+          "diff_pct": 3.0247037004855313e-05,
+          "label": "เบิกจ่ายเหลื่อมปี (ล้านบาท)",
+          "oracle_million": 173901.3312,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": 0.0,
+          "label": "คงเหลือกรณีมีหนี้ผูกพัน (ล้านบาท)",
+          "oracle_million": 0.0,
+          "passed": true
+        },
+        {
+          "computed_baht": 0,
+          "diff_pct": null,
+          "label": "คงเหลือกรณีไม่มีหนี้ผูกพัน (ล้านบาท)",
+          "oracle_million": null,
+          "passed": true
+        },
+        {
+          "computed_baht": 16110300,
+          "diff_pct": 1.1561827832076109e-14,
+          "label": "คงเหลือ สรก.อยู่ระหว่างดำเนินการ (ล้านบาท)",
+          "oracle_million": 16.1103,
+          "passed": true
+        },
+        {
+          "computed_baht": 180351200,
+          "diff_pct": 0.00022178997819804515,
+          "label": "คงเหลืออยู่ระหว่างกันและขยายรวม (ล้านบาท)",
+          "oracle_million": 180.3508,
+          "passed": true
+        },
+        {
+          "computed_baht": 16206972500,
+          "diff_pct": 0.00013265912878986306,
+          "label": "คงเหลือรวม (ล้านบาท)",
+          "oracle_million": 16206.951,
+          "passed": true
+        }
+      ],
+      "coverage_pct": null,
+      "expected_rows": null,
+      "kind": "grand_total",
+      "ministry_checks": {},
+      "n_rows": null,
+      "notes": [],
+      "passed": true,
+      "status": "ok",
+      "year": 2566
+    },
+    "2567": {
+      "checks": [],
+      "coverage_pct": null,
+      "expected_rows": 221571,
+      "kind": "none",
+      "ministry_checks": {},
+      "n_rows": 221571,
+      "notes": [
+        "ไม่มี oracle ในไฟล์ต้นทาง (02 §A1) — ตรวจเฉพาะจำนวนแถว (soft rule)"
+      ],
+      "passed": true,
+      "status": "no_oracle",
+      "year": 2567
+    },
+    "2568": {
+      "checks": [
+        {
+          "computed_baht": 25047722700,
+          "diff_pct": 1.5229716934006934e-14,
+          "label": "current.amount_thb",
+          "oracle_million": 25047.722700000002,
+          "passed": true
+        },
+        {
+          "computed_baht": 25099261600,
+          "diff_pct": 1.5198444186999506e-14,
+          "label": "current.revised_thb",
+          "oracle_million": 25099.261600000005,
+          "passed": true
+        },
+        {
+          "computed_baht": 22747024000,
+          "diff_pct": 0.0,
+          "label": "current.disbursed_thb",
+          "oracle_million": 22747.024,
+          "passed": true
+        },
+        {
+          "computed_baht": 10699726300,
+          "diff_pct": 3.565228827979461e-14,
+          "label": "capital.amount_thb",
+          "oracle_million": 10699.726299999997,
+          "passed": true
+        },
+        {
+          "computed_baht": 10648188100,
+          "diff_pct": 0.0,
+          "label": "capital.revised_thb",
+          "oracle_million": 10648.1881,
+          "passed": true
+        },
+        {
+          "computed_baht": 6508636700,
+          "diff_pct": 1.4652443520257473e-14,
+          "label": "capital.disbursed_thb",
+          "oracle_million": 6508.636700000001,
+          "passed": true
+        },
+        {
+          "computed_baht": 35747449000,
+          "diff_pct": 2.1342486651984597e-14,
+          "label": "total.amount_thb",
+          "oracle_million": 35747.44899999999,
+          "passed": true
+        },
+        {
+          "computed_baht": 35747449700,
+          "diff_pct": 0.0,
+          "label": "total.revised_thb",
+          "oracle_million": 35747.4497,
+          "passed": true
+        },
+        {
+          "computed_baht": 29255660700,
+          "diff_pct": 0.0,
+          "label": "total.disbursed_thb",
+          "oracle_million": 29255.6607,
+          "passed": true
+        }
+      ],
+      "coverage_pct": null,
+      "expected_rows": null,
+      "kind": "sheet1_total",
+      "ministry_checks": {},
+      "n_rows": null,
+      "notes": [],
+      "passed": true,
+      "status": "ok",
+      "year": 2568
+    }
+  },
+  "v2": [
+    {
+      "dataset": "act_2570_province",
+      "format": "B",
+      "match_pct_to_draft": 100.0,
+      "n_rows": 155,
+      "notes": [],
+      "passed": true,
+      "rel_path": "งบประมาณ สมุทรปราการ/1 - งบฟังก์ชันที่มาลงในสมุทรปราการ/ร่าง พ.ร.บ. งบ 2570 เฉพาะส่วนราชการที่มีรายการในสมุทรปราการ - Excel.xlsx",
+      "status": "no_oracle",
+      "title_amount_thb": null,
+      "title_n": null,
+      "total_amount_thb": 6075051600,
+      "unmatched_examples": []
+    },
+    {
+      "dataset": "local_subsidy_2570",
+      "format": "B",
+      "match_pct_to_draft": 100.0,
+      "n_rows": 3,
+      "notes": [],
+      "passed": true,
+      "rel_path": "งบประมาณ สมุทรปราการ/2 - งบ อบจ. สมุทรปราการ/ร่าง พ.ร.บ. งบ 2570 เฉพาะเงินอุดหนุน อบจ. สมุทรปราการ - Excel.xlsx",
+      "status": "no_oracle",
+      "title_amount_thb": null,
+      "title_n": null,
+      "total_amount_thb": 22223100,
+      "unmatched_examples": []
+    },
+    {
+      "dataset": "act_2570_province",
+      "format": "A",
+      "match_pct_to_draft": 100.0,
+      "n_rows": 575,
+      "notes": [],
+      "passed": true,
+      "rel_path": "งบประมาณ เชียงใหม่/1 - งบฟังก์ชันที่มาลงในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 เฉพาะส่วนราชการที่มีรายการในเชียงใหม่ - Excel.xlsx",
+      "status": "ok",
+      "title_amount_thb": 9043395000,
+      "title_n": 575,
+      "total_amount_thb": 9043395000,
+      "unmatched_examples": []
+    },
+    {
+      "dataset": "local_subsidy_2570",
+      "format": "B",
+      "match_pct_to_draft": 100.0,
+      "n_rows": 17,
+      "notes": [],
+      "passed": true,
+      "rel_path": "งบประมาณ เชียงใหม่/2 - งบ อบจ. เชียงใหม่/ร่าง พ.ร.บ. งบ 2570 เฉพาะเงินอุดหนุน อบจ. เชียงใหม่ - Excel.xlsx",
+      "status": "no_oracle",
+      "title_amount_thb": null,
+      "title_n": null,
+      "total_amount_thb": 839827200,
+      "unmatched_examples": []
+    },
+    {
+      "dataset": "local_subsidy_2570",
+      "format": "B",
+      "match_pct_to_draft": 100.0,
+      "n_rows": 21,
+      "notes": [],
+      "passed": true,
+      "rel_path": "งบประมาณ เชียงใหม่/3 - งบเทศบาลนครเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 เฉพาะเงินอุดหนุน ทน. เชียงใหม่ - Excel.xlsx",
+      "status": "no_oracle",
+      "title_amount_thb": null,
+      "title_n": null,
+      "total_amount_thb": 618267900,
+      "unmatched_examples": []
+    },
+    {
+      "dataset": "local_subsidy_2570",
+      "format": "B",
+      "match_pct_to_draft": 100.0,
+      "n_rows": 2679,
+      "notes": [],
+      "passed": true,
+      "rel_path": "งบประมาณ เชียงใหม่/4 - งบเงินอุดหนุนเทศบาล + อบต. ในเชียงใหม่/ร่าง พ.ร.บ. งบ 2570 เฉพาะเงินอุดหนุนเทศบาลในเชียงใหม่ - Excel.xlsx",
+      "status": "no_oracle",
+      "title_amount_thb": null,
+      "title_n": null,
+      "total_amount_thb": 6446149100,
+      "unmatched_examples": []
+    }
+  ],
+  "v3": {
+    "files": [
+      {
+        "computed_total_thb": 613887400,
+        "diff_pct": 0.20881964718810347,
+        "n_group_mismatches": 10,
+        "n_rows": 345,
+        "oracle_total_thb": 615172000.0,
+        "passed": true,
+        "rel_path": "งบประมาณ สมุทรปราการ/3 - งบ อบต. ราชาเทวะ/ร่างข้อบัญญัติงบ 2570 อบต. ราชาเทวะ - Sheets.xlsx",
+        "status": "ok"
+      }
+    ],
+    "passed": true
+  },
+  "v4_by_dataset": {
+    "act_2570_draft": {
+      "duplicates": [],
+      "n_rows": 96470,
+      "n_unique": 96470,
+      "passed": true
+    },
+    "act_2570_province": {
+      "duplicates": [],
+      "n_rows": 730,
+      "n_unique": 730,
+      "passed": true
+    },
+    "committee_table": {
+      "duplicates": [],
+      "n_rows": 3325,
+      "n_unique": 3325,
+      "passed": true
+    },
+    "local_ordinance_2570": {
+      "duplicates": [],
+      "n_rows": 2646,
+      "n_unique": 2646,
+      "passed": true
+    },
+    "local_subsidy_2570": {
+      "duplicates": [],
+      "n_rows": 2720,
+      "n_unique": 2720,
+      "passed": true
+    },
+    "pbo_disbursement": {
+      "duplicates": [],
+      "n_rows": 2887730,
+      "n_unique": 2887730,
+      "passed": true
+    }
+  },
+  "v5": {
+    "missing_doc_ids": [],
+    "n_rows_checked": 2993621,
+    "passed": true,
+    "status": "ok"
+  },
+  "v6": {
+    "max_bytes": 24000000,
+    "n_files": 795,
+    "oversized": [],
+    "passed": true
+  },
+  "v7_by_dataset": {
+    "act_2570_draft": {
+      "dataset": "act_2570_draft",
+      "examples_out_of_range": [],
+      "n_null_disallowed": 0,
+      "n_out_of_range": 0,
+      "n_rows": 96470,
+      "passed": true
+    },
+    "act_2570_province": {
+      "dataset": "act_2570_province",
+      "examples_out_of_range": [],
+      "n_null_disallowed": 0,
+      "n_out_of_range": 0,
+      "n_rows": 730,
+      "passed": true
+    },
+    "committee_table": {
+      "dataset": "committee_table",
+      "examples_out_of_range": [],
+      "n_null_disallowed": 0,
+      "n_out_of_range": 0,
+      "n_rows": 3325,
+      "passed": true
+    },
+    "local_ordinance_2570": {
+      "dataset": "local_ordinance_2570",
+      "examples_out_of_range": [],
+      "n_null_disallowed": 0,
+      "n_out_of_range": 0,
+      "n_rows": 2646,
+      "passed": true
+    },
+    "local_subsidy_2570": {
+      "dataset": "local_subsidy_2570",
+      "examples_out_of_range": [],
+      "n_null_disallowed": 0,
+      "n_out_of_range": 0,
+      "n_rows": 2720,
+      "passed": true
+    },
+    "pbo_disbursement": {
+      "dataset": "pbo_disbursement",
+      "examples_out_of_range": [],
+      "n_null_disallowed": 0,
+      "n_out_of_range": 0,
+      "n_rows": 2887730,
+      "passed": true
+    }
+  },
+  "v8": {
+    "examples": [
+      {
+        "item_key": "ค่าที่ดินและสิ่งก่อสร้าง ที่มีราคาต่อหน่วยต่ำกว่า 10 ล้านบาท",
+        "threshold_p995_x10": 559914240.0000013,
+        "unit_price_thb": 24396105200.0
+      }
+    ],
+    "n_item_keys_checked": 45584,
+    "n_outlier_rows": 1,
+    "n_rows_checked": 86734
+  },
+  "v9_by_dataset": [
+    {
+      "dataset": "act_2570_draft",
+      "n_rows": 96470,
+      "n_unmapped": 0,
+      "pct_unmapped": 0.0
+    },
+    {
+      "dataset": "act_2570_province",
+      "n_rows": 730,
+      "n_unmapped": 0,
+      "pct_unmapped": 0.0
+    },
+    {
+      "dataset": "committee_table",
+      "n_rows": 3325,
+      "n_unmapped": 2080,
+      "pct_unmapped": 62.55639097744361
+    },
+    {
+      "dataset": "local_ordinance_2570",
+      "n_rows": 2646,
+      "n_unmapped": 345,
+      "pct_unmapped": 13.038548752834467
+    },
+    {
+      "dataset": "local_subsidy_2570",
+      "n_rows": 2720,
+      "n_unmapped": 0,
+      "pct_unmapped": 0.0
+    },
+    {
+      "dataset": "pbo_disbursement",
+      "n_rows": 2887730,
+      "n_unmapped": 117193,
+      "pct_unmapped": 4.058308775404903
+    }
+  ]
+}
