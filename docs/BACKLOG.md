@@ -14,13 +14,13 @@
 ## Phase 1 — Data pipeline (เป้า: 2–3 วัน) — อ่าน `03-DATA-PIPELINE.md`
 - [x] T-101 `data-engineer` `inventory.py` + `tgbp inventory` → `sources.json` ครบ 318 ไฟล์, PDF text-layer detection, parse metadata จากโฟลเดอร์ (unicode normalize U+200B); test
 - [x] T-102 `data-engineer` `normalize/thai_text.py`, `money.py` + tests
-- [~] T-103 `data-engineer` `item_parser.py` + fixture 200 ชื่อจริง (คัดจาก PBO 2566 ด้วยสคริปต์ sample แบบ stratified ตามงบรายจ่าย) + tests ≥ 95 %/90 %
+- [x] T-103 `data-engineer` `item_parser.py` + fixture 200 ชื่อจริง (คัดจาก PBO 2566 ด้วยสคริปต์ sample แบบ stratified ตามงบรายจ่าย) + tests ≥ 95 %/90 %
 - [x] T-104 `data-engineer` `org_master.py` จาก A2 Data Dict + aliases + fuzzy; test
-- [~] T-105 `data-engineer` `extract/pbo.py` streaming 11 ปี → `.cache/pbo/*.parquet`; test ด้วย fixture gotchas
-- [ ] T-106 `data-engineer` `extract/act2570.py` (A2 + A3 header detector + dedupe) ; test
-- [ ] T-107 `data-engineer` `extract/local_sheets.py` (ราชาเทวะ, อบจ. ชม., generic mapper สำหรับที่เหลือ) ; test
-- [ ] T-108 `data-engineer` `extract/committee_xlsx.py` (generic table detector, xls→xlrd/libreoffice) + `office_text.py` (docx/pptx) ; test
-- [ ] T-109 `data-engineer` `extract/pdf_text.py` (เฉพาะ has_text_layer, ≤ 100 MB; pdfplumber text+tables → DocChunk; ตาราง OPEN SSO/ราคากลาง → committee_table ถ้า map ได้) ; test
+- [x] T-105 `data-engineer` `extract/pbo.py` streaming 11 ปี → `.cache/pbo/*.parquet`; test ด้วย fixture gotchas
+- [~] T-106 `data-engineer` `extract/act2570.py` (A2 + A3 header detector + dedupe) ; test
+- [~] T-107 `data-engineer` `extract/local_sheets.py` (ราชาเทวะ, อบจ. ชม., generic mapper สำหรับที่เหลือ) ; test
+- [~] T-108 `data-engineer` `extract/committee_xlsx.py` (generic table detector, xls→xlrd/libreoffice) + `office_text.py` (docx/pptx) ; test
+- [~] T-109 `data-engineer` `extract/pdf_text.py` (เฉพาะ has_text_layer, ≤ 100 MB; pdfplumber text+tables → DocChunk; ตาราง OPEN SSO/ราคากลาง → committee_table ถ้า map ได้) ; test
 - [ ] T-110 `data-engineer` `validate.py` V1–V10 + `publish.py` (shards < 24 MB, catalog, facets, orgs, manifest sha256, docs chunks) ; test; รัน `tgbp build --dataset all` จริง → บันทึกขนาดจริงลง 02 §E; ยอดรวม `web/public/data/` ต้อง ≤ 500 MB (CLAUDE.md §5.1) มิฉะนั้นเพิ่ม compression/ตัดคอลัมน์ก่อน commit; commit data แยก `data: publish <date>` แล้ว push
 - [~] T-111 `data-engineer` `econ/indicators.json` — ดึงจากแหล่งเปิด (ธปท., สศช., สนค. กระทรวงพาณิชย์, กระทรวงแรงงาน, สนพ./EPPO, สำนักงบประมาณ) ด้วย web search/fetch ของ Claude Code; ทุกค่า `verified:false` + `source_url` + `retrieved_at`; เขียน `docs/econ-sources.md` อธิบายที่มาและวิธีอัปเดต
 - [ ] T-112 `data-engineer` `tgbp sample --rows 1000` → `web/tests/fixtures/data/` (commit)

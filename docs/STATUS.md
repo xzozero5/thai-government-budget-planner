@@ -3,10 +3,19 @@
 รูปแบบ entry: `## YYYY-MM-DD HH:MM (Asia/Bangkok) — <ใคร/agent> — <phase/task>` แล้วตามด้วย ทำอะไร / ไฟล์ที่แตะ / test / ค้าง / ไม่ยืนยัน
 
 ## สถานะปัจจุบัน
-- Phase: **1 (data pipeline) กำลังทำ** — เสร็จ: T-101, T-102, T-104, T-111 (บางส่วน) · กำลังทำ: T-103 (รอบแก้หลัง hold-out), T-105 (PBO extract) · ถัดไป: T-106..T-109 (ขนาน) → T-110 → T-112 → T-113
+- Phase: **1 (data pipeline) — PAUSED 2569-09-19 ~19:00** (คุณนิวสั่งพักเพราะใกล้ติด usage limit; กลับมาทำต่อได้ทันที)
+- เสร็จ + commit แล้ว: T-101, T-102, T-103, T-104, T-105, T-111 (บางส่วน — ขาดน้ำมัน/ค่าแรง)
+- **ค้างกลางทาง (ยังไม่ commit, ไฟล์อยู่บนดิสก์)** — 4 agents ถูกสั่งหยุดที่ safe point:
+  - T-106 `extract/act2570.py` + `tests/extract/test_act2570.py` → cache `.cache/act2570/`
+  - T-107 `extract/local_sheets.py` + `tests/extract/test_local_sheets.py` → `.cache/local/`
+  - T-108 `extract/committee_xlsx.py`, `extract/office_text.py` + tests → `.cache/committee/`, `.cache/docs/`
+  - T-109 `extract/pdf_text.py` + `tests/extract/test_pdf_text.py` → `.cache/docs/` (+ `_pdf_report.json`, `_pdf_index.json`; resume ได้)
+  - กติกาที่ให้ไว้: ห้ามแตะ `cli.py`/`schema.py`/`validate.py`/`pyproject.toml`/`conftest.py`; แต่ละตัว export `extract_<x>(cfg, *, cache_dir=None)`; test ต้องเขียนลง `tmp_path` เท่านั้น
+- **วิธีทำต่อ (main thread)**: (1) `git status` ดูไฟล์ untracked ใต้ `pipeline/` (2) ต่อ task: รัน `ruff check` + `pytest tests/extract/test_<x>.py`, เปิดดูรายงาน/ cache, **ตรวจซ้ำเองกับไฟล์จริง** (agent เคยรายงานคลาดเคลื่อน 3 ครั้ง: test isolation, cache 2566 ถูกทับ, fixture 100 % แบบวงกลม) แล้วค่อย commit ทีละ task (3) wire `tgbp extract --dataset act2570|local|committee|office|pdf|all` ใน `cli.py` + ย้าย `check_v2`/`check_v3` เข้า `validate.py` (4) T-110: normalize stage (item_parser + org_master กับ 2.9 ล้านแถว — ใช้ multiprocessing/ cache ต่อ distinct name), validate V1–V10, publish (shards < 24 MB, catalog, trends, facets + `coverage_notes` จาก ADR-004, orgs, docs chunks, econ series view, manifest sha256, อัปเดต `sources.json.extracted/text_chunks_file`), รัน `tgbp build --dataset all` จริง, วัดขนาดรวม ≤ 500 MB → 02 §E (5) T-112 sample fixtures (6) T-113 po review (7) STATUS/BACKLOG + commit `pipeline: phase 1 complete`
 - Phase 0: เสร็จ ยกเว้น AC สุดท้ายของ T-004 (รอคนเปิด Pages)
 - Blockers: ไม่มี
-- `[ASK-HUMAN]` ค้าง: **ข้อ 1 — เปิด GitHub Pages**: repo → Settings → Pages → Build and deployment → Source = **GitHub Actions** แล้ว re-run workflow `deploy` — main thread ไม่มี `gh`/token จึงเปิดเองไม่ได้ (deploy run `35427525874` ล้มที่ `actions/configure-pages`: "Get Pages site failed … Not Found")
+- `[ASK-HUMAN]` ค้าง: **ข้อ 1 — เปิด GitHub Pages**: repo → Settings → Pages → Build and deployment → Source = **GitHub Actions** แล้ว re-run workflow `deploy` — main thread ไม่มี `gh`/token จึงเปิดเองไม่ได้
+- แจ้งคุณนิว (ไม่บล็อก): `PBO/2562.xlsx` ต้นทางไม่ครบ (coverage 79.24 %, ขาด 6 กระทรวง) → ADR-004; ถ้ามีไฟล์ฉบับครบให้นำมาแทน
 
 ## Open questions / `[UNVERIFIED]` ที่ยังค้าง
 - โครงสร้างไฟล์ A3 (subset จังหวัดอื่น ๆ), A4 (อบจ. สป., ทน. ชม.), A5 (xlsx/xls ใน กมธ.) — ยืนยันใน T-101/T-106..T-108
@@ -21,6 +30,14 @@
 - GitHub Pages: ยังไม่เปิด → CSP meta/Accept-Ranges บน URL จริงยังไม่ได้วัด (T-004 AC สุดท้าย, S1, T-605)
 
 ## Log
+
+## 2569-09-19 19:00 (Asia/Bangkok) — Claude Code main thread — Phase 1 ช่วงสอง + PAUSE
+- **T-103** เสร็จ: item_parser + fixture 220 เคส (200 จาก PBO 2566 + hold-out 2563/2560/2568 ที่ label มือ). main thread รัน hold-out อิสระ 2 รอบ (2563: พบบั๊ก 7 แบบ → ตีกลับ; 2565 หลังแก้: province 17/18 [ที่พลาด = ชื่อมี 2 จังหวัด], qty/unit ผิด 0/22) แล้วเพิ่ม `_canon_key` เอง (เว้นวรรคเลข–อักษรไทย, ตัด "จำนวน"/"ความยาว"/"พื้นที่รับประโยชน์" ที่ค้าง) เพื่อให้รายการเดียวกัน group กันได้. ข้อจำกัดที่รู้: ชื่อจังหวัดที่ฝังในชื่อหน่วยงานโดยไม่มี marker, `บ้าน` กำกวม, เคสสถานที่ล้วน → fallback คงข้อความเต็ม
+- **T-105** เสร็จ: extract PBO 11 ปี = **2,887,730 แถว**; V1 ตรง oracle ทุกปีที่มี (max diff < 0.004 %; 2564/2565 คอลัมน์ PO ต่าง 100 บาท ผ่านด้วย abs floor 1,000 บาท); 2567 `no_oracle` (221,571 แถว, รวม พรบ. 3,602,000); **2562 `source_incomplete`** coverage 79.24 % (ขาด กลาโหม, คลัง, ต่างประเทศ, ท่องเที่ยวฯ, พม., ชดใช้เงินคงคลัง; เกษตรฯ 20.3 %, สำนักนายกฯ 6.6 %) → **ADR-004** เก็บพร้อมป้าย; แถว 226 คอลัมน์เลื่อน → `corrupt_row`; V4 unique ครบ. main thread จับบั๊กที่ agent ไม่รายงาน: rawdata test เขียนทับ `.cache/pbo/2566.parquet` เหลือ 5,000 แถว → แก้เป็น `.partial.parquet` + test ใช้ `tmp_path`; ยืนยันจำนวนแถว/ยอดรวมทั้ง 11 ปีเองหลังรัน pytest
+- org_master: ปิด fuzzy สำหรับชื่อ อปท. แล้ว (+test คลองโยง/คลองยาง)
+- Test ที่ main thread รันเอง ณ commit `25c3845`: pipeline pytest 183 passed, ruff ผ่าน
+- สั่ง T-106..T-109 ขนาน 4 agents แล้ว **PAUSE** ตามคำสั่งคุณนิว — ดู "วิธีทำต่อ" ด้านบน
+- Commits: `3108188`(ADR-004) `3f923d3`(T-103) `25c3845`(T-105)
 
 ## 2569-09-19 16:30 (Asia/Bangkok) — Claude Code main thread (+ data-engineer ×4, explorer) — Phase 1 ช่วงแรก
 - **ข้อเท็จจริงใหม่ที่แก้เอกสาร** (main thread สแกนไฟล์จริงเอง หลังรายงาน explorer ไม่คงเส้นคงวา): PBO ปี **2561/2567/2568 ไม่มีแถว Grand Total** (inventory เดิมผิด) → 02 §A1, 03 §4.1, **V1 ใหม่** (Grand Total / Sheet1 ปี 2561 รวม 3,050,000.007 ล้านบาท / Sheet1 ปี 2568 เฉพาะสำนักนายกฯ / 2567 `no_oracle`); header 22 คอลัมน์เหมือนกันทุกปี, 2567 มีคอลัมน์ขยะ 23–30
