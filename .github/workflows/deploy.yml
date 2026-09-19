@@ -1,0 +1,66 @@
+name: deploy
+
+# Deploy web/dist → GitHub Pages หลัง ci ผ่านบน main (docs/04-ARCHITECTURE.md §D8, docs/07-TESTING.md §5)
+# ห้ามรัน pipeline ที่นี่ — web/public/data/** ถูก commit มาแล้ว
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+        working-directory: web
+      - run: npm run build
+        working-directory: web
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Post-deploy smoke
+        env:
+          SITE: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -u
+          code=$(curl -s -o /dev/null -w '%{http_code}' "$SITE")
+          echo "GET $SITE -> $code"
+          [ "$code" = "200" ] || { echo "::error::หน้าแรกไม่ตอบ 200"; exit 1; }
+          headers=$(curl -sI "${SITE}data/manifest.json")
+          echo "$headers"
+          if ! echo "$headers" | head -1 | grep -q ' 200'; then
+            echo "::warning::ยังไม่มี data/manifest.json (ปกติจนกว่า Phase 1 จะ publish)"
+          elif ! echo "$headers" | grep -qi '^accept-ranges: *bytes'; then
+            echo "::warning::manifest.json ไม่มี Accept-Ranges: bytes — ดู S1 / ADR-002 fallback"
+          fi
