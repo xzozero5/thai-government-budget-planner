@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "eval": "node tests/eval/run-eval.mjs",
+    "guard:n2": "node tests/eval/guard-n2.mjs",
     "lint": "eslint .",
     "typecheck": "tsc -b --noEmit",
     "format": "prettier --write ."

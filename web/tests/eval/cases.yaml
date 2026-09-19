@@ -1,0 +1,439 @@
+# T-306 — ชุดโจทย์ eval (05-FEATURES.md §6) — 20 โจทย์ครบตามสเปก
+#
+# หมายเหตุการอ่านไฟล์นี้:
+# - `run_tier: core8` = 8 โจทย์ที่รันจริงรอบแรกของ T-306 (ตาม docs/api-budget.md เพดาน 1.80 USD)
+#   ที่เหลือ `run_tier: extended` รายงานเป็น `not_run (budget)` ใน docs/eval-report.md รอบนี้
+# - `model`/`effort` ผูกกับ ADR-006: Haiku 4.5 ห้ามส่ง `effort` (runner/agent ไม่ส่งให้อยู่แล้วเพราะ
+#   `getModelCapability(...).supportsEffort === false`) — ใส่ `effort` เฉพาะโจทย์ที่ `model` เป็น Sonnet
+# - `web_search: true` มีแค่ 2 โจทย์ (equip-notebook-office, it-system-document-management) ตาม
+#   docs/api-budget.md "web search ≤ ครั้งที่จำเป็น" — ทั้งคู่อยู่ extended (ไม่รันรอบนี้) เพื่อคุมความ
+#   ซับซ้อนของ core8 รอบแรก (จะเปิดในรอบ T-604/extended run ถัดไป)
+# - `prompt_sequence` ออกแบบให้จบใน ≤ 2 user turns เสมอ: ข้อความแรกให้ requirement ครบ + วรรคท้าย
+#   "ถ้าขาดข้อมูลให้ใช้สมมติฐานที่เหมาะสมแล้วสรุปเป็นข้อเสนอเลย"; turn ที่ 2 (ใช้เฉพาะเมื่อโมเดลยังถามต่อ)
+#   คือ "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย" คำต่อคำ — runner ส่ง turn 2 เสมอถ้า `prompt_sequence` มี 2 ข้อความ
+#   (ไม่ตรวจว่าโมเดล "ถามจริงไหม" ก่อนส่ง เพื่อความง่ายของ dry-run/real run รอบแรก)
+# - `expected.must_call_tools`/`must_not_call_tools` ใช้ชื่อ tool ตรงกับ `ai/tools/index.ts#TOOL_REGISTRY`
+# - `expected.must_not_claim`/`must_mention` เป็น regex (ECMAScript, ไม่มี flag พิเศษ — score.mjs รันด้วย
+#   `new RegExp(pattern, 'u')`) ตรวจกับ (ก) ข้อความ assistant ที่ต่อกันทุก turn (ข) `JSON.stringify(proposal)`
+#   ถ้ามี — เป็น judge แบบ rule-based ตาม ADR-006 ข้อ 10/07-TESTING.md §4 ไม่ใช่ LLM-as-judge
+# - `must_cite_dataset` เป็น "ชุดที่ยอมรับได้" (permissive — มีสักตัวในผลลัพธ์ก็พอ) เพราะยืนยัน dataset
+#   จริงของทุก source_id ที่โมเดลจะเลือกอ้างล่วงหน้าไม่ได้ทั้งหมด (ตรวจ grounding คร่าว ๆ ด้วย
+#   `web/public/data/catalog/items.json.gz` ในสรุปงานนี้ — ดู PR/รายงานปิดงาน T-306 จังหวะที่ 1)
+
+- id: equip-aircon-18000btu
+  title: "ครุภัณฑ์ — เครื่องปรับอากาศ 18000 บีทียู (สำนักงาน อบต.)"
+  mode: draft
+  prompt_sequence:
+    - >-
+      อบต. ของเราจะซื้อเครื่องปรับอากาศแบบแยกส่วน ขนาด 18,000 บีทียู ติดตั้งที่ห้องประชุมสำนักงาน
+      จำนวน 4 เครื่อง ปีงบประมาณ 2569 ช่วยประเมินราคาที่เหมาะสมโดยเทียบกับที่หน่วยงานรัฐอื่นเคยจัดซื้อ
+      พร้อมทำเป็นข้อเสนอ BOQ ให้เลย ถ้าข้อมูลส่วนไหนไม่ครบให้ใช้สมมติฐานที่เหมาะสมแล้วสรุปเป็นข้อเสนอเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 1
+    must_have_basis: ["historical"]
+    must_cite_dataset: ["pbo_disbursement"]
+    must_call_tools: ["search_catalog", "query_budget_lines", "emit_proposal"]
+    must_not_claim: []
+    must_mention: ["18,?000|18000"]
+    max_grand_total_thb: 400000
+    min_grand_total_thb: 60000
+  run_tier: core8
+  model: claude-haiku-4-5-20251001
+
+- id: equip-notebook-office
+  title: "ครุภัณฑ์ — โน้ตบุ๊กสำนักงานสเปคใหม่ (ต้องใช้ราคาตลาดปัจจุบัน)"
+  mode: draft
+  prompt_sequence:
+    - >-
+      หน่วยงานจะซื้อโน้ตบุ๊กสำหรับงานเอกสารทั่วไป สเปค CPU Intel Core i5 รุ่นปัจจุบัน, RAM 16GB,
+      SSD 512GB จำนวน 10 เครื่อง เนื่องจากสเปคนี้เพิ่งมีขายในตลาดไม่กี่ปีนี้ ช่วยค้นราคาตลาดปัจจุบัน
+      มาประกอบข้อเสนอ ถ้าไม่มีข้อมูลในอดีตที่เทียบได้ ให้ใช้ราคาตลาดแทนแล้วสรุปเป็นข้อเสนอเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: true
+  expected:
+    min_boq_lines: 1
+    must_have_basis: ["market"]
+    must_cite_dataset: []
+    must_call_tools: ["search_catalog", "emit_proposal"]
+    must_not_claim: []
+    must_mention: ["ราคาตลาด|web_search|เว็บไซต์|ร้านค้า"]
+  run_tier: extended
+  model: claude-haiku-4-5-20251001
+
+- id: equip-truck-diesel-1ton
+  title: "ครุภัณฑ์ — รถบรรทุกดีเซล ขนาด 1 ตัน"
+  mode: draft
+  prompt_sequence:
+    - >-
+      กรมของเราจะจัดซื้อรถบรรทุกดีเซล ขนาด 1 ตัน แบบขับเคลื่อน 2 ล้อ จำนวน 2 คัน ปีงบประมาณ 2569
+      สำหรับงานขนส่งพัสดุ ช่วยเทียบราคากับที่ส่วนราชการเคยจัดซื้อในอดีตแล้วทำเป็นข้อเสนอ BOQ
+      ถ้าข้อมูลไม่ครบให้ใช้สมมติฐานที่เหมาะสมแล้วสรุปเป็นข้อเสนอเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 1
+    must_have_basis: ["historical"]
+    must_cite_dataset: ["pbo_disbursement"]
+    must_call_tools: ["search_catalog", "query_budget_lines", "emit_proposal"]
+    must_not_claim: []
+    must_mention: ["ดีเซล|1\\s*ตัน"]
+  run_tier: extended
+  model: claude-haiku-4-5-20251001
+
+- id: construction-road-concrete
+  title: "สิ่งก่อสร้าง — ถนนคอนกรีตเสริมเหล็ก (คสล.) สายบ้าน–นา"
+  mode: draft
+  prompt_sequence:
+    - >-
+      อบต. จะก่อสร้างถนนคอนกรีตเสริมเหล็ก (คสล.) ความกว้าง 5 เมตร ความยาว 800 เมตร หนา 0.15 เมตร
+      เชื่อมหมู่บ้านกับพื้นที่นา ปีงบประมาณ 2569 ช่วยเทียบต้นทุนต่อกิโลเมตรกับโครงการถนน คสล. ที่
+      หน่วยงานท้องถิ่นอื่นเคยทำ แล้วทำข้อเสนอ BOQ พร้อมภาพประกอบแนวคิด ถ้าข้อมูลไม่ครบให้ใช้สมมติฐาน
+      ที่เหมาะสมแล้วสรุปเป็นข้อเสนอเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 2
+    must_have_basis: ["historical"]
+    must_cite_dataset: ["pbo_disbursement", "act_2570_draft", "act_2570_province", "local_ordinance_2570"]
+    must_call_tools: ["search_catalog", "query_budget_lines", "emit_proposal"]
+    must_not_claim: []
+    must_mention: ["คสล\\.|คอนกรีตเสริมเหล็ก"]
+  run_tier: extended
+  model: claude-haiku-4-5-20251001
+
+- id: construction-weir-low-specificity
+  title: "สิ่งก่อสร้าง — ฝายน้ำล้นของ อบต. (เคสบังคับ T-113: low_specificity ห้ามหยิบ median ~25 ล้าน)"
+  mode: draft
+  prompt_sequence:
+    - >-
+      อบต. ขนาดเล็กของเราจะสร้างฝายน้ำล้นขนาดเล็กกั้นลำห้วยในหมู่บ้าน ความสูงประมาณ 1.5 เมตร
+      ความยาวสันฝาย 8 เมตร เป็นฝายคอนกรีตแบบง่าย ไม่ใช่เขื่อนหรือฝายชลประทานขนาดใหญ่ ปีงบประมาณ 2569
+      ช่วยประเมินงบประมาณที่เหมาะสมโดยเทียบกับฝายขนาดใกล้เคียงกันที่เคยมีการจัดสรรงบมาก่อน แล้วทำข้อเสนอ
+      BOQ ให้เลย ถ้าข้อมูลไม่ครบให้ใช้สมมติฐานที่เหมาะสมแล้วสรุปเป็นข้อเสนอเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 1
+    must_have_basis: ["estimate"]
+    must_cite_dataset: ["pbo_disbursement", "act_2570_draft"]
+    must_call_tools: ["search_catalog", "emit_proposal"]
+    must_not_claim: ["25,000,000|25 ?ล้านบาทถ้วน|ราคามาตรฐานของฝายอยู่ที่ 25 ?ล้าน"]
+    must_mention: ["p25|ช่วงราคา|ขนาด.{0,20}(ใกล้เคียง|เท่าไร|เท่าไหร่)|ถามขนาด|สเปค"]
+    max_grand_total_thb: 5000000
+  run_tier: core8
+  model: claude-sonnet-5
+  effort: medium
+
+- id: construction-sport-field
+  title: "สิ่งก่อสร้าง — ลานกีฬาอเนกประสงค์ประจำหมู่บ้าน"
+  mode: draft
+  prompt_sequence:
+    - >-
+      อบต. จะสร้างลานกีฬาอเนกประสงค์ (คอนกรีต) ขนาด 20x40 เมตร พร้อมเสาไฟส่องสว่างและรั้วรอบ
+      สำหรับใช้เล่นกีฬาและจัดกิจกรรมชุมชน ปีงบประมาณ 2569 ช่วยเทียบราคากับโครงการลักษณะเดียวกันที่
+      หน่วยงานท้องถิ่นอื่นเคยทำ แล้วทำข้อเสนอ BOQ ถ้าข้อมูลไม่ครบให้ใช้สมมติฐานที่เหมาะสมแล้วสรุปเป็น
+      ข้อเสนอเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 2
+    must_have_basis: ["historical"]
+    must_cite_dataset: ["pbo_disbursement", "local_ordinance_2570", "local_subsidy_2570"]
+    must_call_tools: ["search_catalog", "emit_proposal"]
+    must_not_claim: []
+    must_mention: ["ลานกีฬา"]
+  run_tier: extended
+  model: claude-haiku-4-5-20251001
+
+- id: construction-building-3floor
+  title: "สิ่งก่อสร้าง — อาคารเรียน 3 ชั้น"
+  mode: draft
+  prompt_sequence:
+    - >-
+      โรงเรียนของเราจะก่อสร้างอาคารเรียน 3 ชั้น 12 ห้องเรียน โครงสร้างคอนกรีตเสริมเหล็ก
+      ปีงบประมาณ 2569 ช่วยเทียบต้นทุนกับอาคารเรียนลักษณะใกล้เคียงกันที่หน่วยงานรัฐเคยก่อสร้าง
+      แล้วทำข้อเสนอ BOQ พร้อมภาพประกอบแนวคิดอาคาร ถ้าข้อมูลไม่ครบให้ใช้สมมติฐานที่เหมาะสมแล้วสรุปเป็น
+      ข้อเสนอเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 1
+    must_have_basis: ["historical"]
+    must_cite_dataset: ["pbo_disbursement"]
+    must_call_tools: ["search_catalog", "query_budget_lines", "emit_proposal"]
+    must_not_claim: []
+    must_mention: ["อาคารเรียน|3 ?ชั้น"]
+  run_tier: extended
+  model: claude-haiku-4-5-20251001
+
+- id: training-vocational-program
+  title: "ฝึกอบรม — โครงการฝึกอบรมอาชีพระยะสั้นให้ประชาชน"
+  mode: draft
+  prompt_sequence:
+    - >-
+      อบต. จะจัดโครงการฝึกอบรมอาชีพระยะสั้น (เช่น ทำขนม/เสริมสวย) ให้ประชาชนในพื้นที่ จำนวน 100 คน
+      ระยะเวลา 3 วัน ปีงบประมาณ 2569 ช่วยเทียบค่าใช้จ่ายกับโครงการฝึกอบรมลักษณะเดียวกันที่หน่วยงาน
+      ท้องถิ่นอื่นเคยจัด (ค่าวิทยากร ค่าอาหาร ค่าวัสดุฝึก) แล้วทำข้อเสนอ BOQ ถ้าข้อมูลไม่ครบให้ใช้
+      สมมติฐานที่เหมาะสมแล้วสรุปเป็นข้อเสนอเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 2
+    must_have_basis: ["historical"]
+    must_cite_dataset: ["local_ordinance_2570", "local_subsidy_2570", "pbo_disbursement"]
+    must_call_tools: ["search_catalog", "emit_proposal"]
+    must_not_claim: []
+    must_mention: ["ฝึกอบรม|วิทยากร"]
+  run_tier: extended
+  model: claude-haiku-4-5-20251001
+
+- id: it-system-document-management
+  title: "ระบบ IT — ระบบสารสนเทศจัดการเอกสารอิเล็กทรอนิกส์ (ต้องใช้ราคาตลาด)"
+  mode: draft
+  prompt_sequence:
+    - >-
+      หน่วยงานจะจัดหาระบบสารสนเทศจัดการเอกสารอิเล็กทรอนิกส์ (e-Document) แบบ SaaS รองรับผู้ใช้งาน
+      200 คน สัญญา 1 ปี เนื่องจากเป็นบริการซอฟต์แวร์ปัจจุบันที่ไม่มีในข้อมูลงบเก่า ช่วยค้นราคาตลาด
+      ปัจจุบันของบริการลักษณะนี้มาประกอบข้อเสนอ ถ้าไม่มีข้อมูลในอดีตที่เทียบได้ ให้ใช้ราคาตลาดแทนแล้ว
+      สรุปเป็นข้อเสนอเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: true
+  expected:
+    min_boq_lines: 1
+    must_have_basis: ["market"]
+    must_cite_dataset: []
+    must_call_tools: ["search_catalog", "emit_proposal"]
+    must_not_claim: []
+    must_mention: ["ราคาตลาด|เว็บไซต์|SaaS|e-Document|อีดอคิวเมนต์"]
+  run_tier: extended
+  model: claude-haiku-4-5-20251001
+
+- id: local-tradition-festival
+  title: "งบท้องถิ่น — อบต. จัดงานประเพณีลอยกระทงประจำปี"
+  mode: draft
+  prompt_sequence:
+    - >-
+      อบต. จะจัดงานประเพณีลอยกระทงประจำปี มีขบวนแห่ การประกวดนางนพมาศ เวทีการแสดง และไฟประดับ
+      คาดว่ามีผู้ร่วมงานประมาณ 2,000 คน ปีงบประมาณ 2569 ช่วยเทียบงบประมาณกับงานประเพณีลักษณะเดียวกัน
+      ที่ อปท. อื่นเคยจัด แล้วทำข้อเสนอ BOQ ถ้าข้อมูลไม่ครบให้ใช้สมมติฐานที่เหมาะสมแล้วสรุปเป็นข้อเสนอเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 2
+    must_have_basis: ["historical"]
+    must_cite_dataset: ["local_ordinance_2570", "local_subsidy_2570", "committee_table"]
+    must_call_tools: ["search_catalog", "emit_proposal"]
+    must_not_claim: []
+    must_mention: ["ประเพณี|ลอยกระทง"]
+  run_tier: extended
+  model: claude-haiku-4-5-20251001
+
+- id: longtail-item-keyword-fallback
+  title: "เคสบังคับ T-113 — รายการหางยาวที่ไม่อยู่ใน catalog (ต้องลอง query_budget_lines ด้วย keyword ก่อนสรุปว่าไม่พบ)"
+  mode: draft
+  prompt_sequence:
+    - >-
+      กรมของเราเคยได้งบปรับปรุงระบบระบายน้ำเสียของโรงฆ่าสัตว์ประจำตำบล ในปีงบประมาณ 2566-2567
+      ช่วยค้นดูว่ามีหน่วยงานรัฐเคยตั้งงบรายการลักษณะนี้มาก่อนหรือไม่ (คำอธิบายอาจเป็นชื่อเฉพาะที่ไม่ตรง
+      กับหมวดครุภัณฑ์ทั่วไป) แล้วช่วยประเมินงบสำหรับปีงบประมาณ 2569 ถ้าค้นแล้วไม่พบให้บอกตรง ๆ ว่าไม่พบ
+      พร้อมใช้สมมติฐานที่เหมาะสมแล้วสรุปเป็นข้อเสนอเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 1
+    must_have_basis: ["estimate"]
+    must_cite_dataset: []
+    must_call_tools: ["search_catalog", "query_budget_lines", "emit_proposal"]
+    must_not_claim: ["ไม่เคยมีการตั้งงบ(ลักษณะนี้)?มาก่อนอย่างแน่นอน|ไม่มีหน่วยงานใดเคยทำ(โครงการ)?(ลักษณะ)?นี้"]
+    must_mention: ["ไม่พบ|ไม่พบข้อมูล"]
+  run_tier: core8
+  model: claude-haiku-4-5-20251001
+
+- id: fiscal-year-2562-gap
+  title: "เคสบังคับ T-113 — รายการที่ข้อมูลปี 2562 ไม่ครบ (ADR-004: ห้ามสรุปว่า \"ไม่มีงบ\")"
+  mode: draft
+  prompt_sequence:
+    - >-
+      ต้องการเทียบราคาการจัดซื้อรถบรรทุกของกระทรวงกลาโหมย้อนหลังหลายปี โดยเฉพาะปีงบประมาณ 2562
+      เป็นปีอ้างอิงหลัก ถ้าปี 2562 ไม่มีข้อมูลของกระทรวงนี้ในระบบ ให้บอกตรง ๆ พร้อมชี้แจงเหตุผลเท่าที่
+      ทราบ แล้วใช้ปีอื่นที่มีข้อมูลแทนได้เลย ช่วยทำข้อเสนอเปรียบเทียบราคาให้ ถ้าข้อมูลส่วนไหนไม่ครบให้ใช้
+      สมมติฐานที่เหมาะสมแล้วสรุปเป็นข้อเสนอเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 1
+    must_have_basis: ["historical"]
+    must_cite_dataset: ["pbo_disbursement"]
+    must_call_tools: ["search_catalog", "query_budget_lines", "emit_proposal"]
+    must_not_claim: ["ไม่เคยมีงบ(ด้าน)?(นี้)?ในปี ?2562|กลาโหมไม่เคยได้รับงบ"]
+    must_mention: ["2562.{0,80}(ไม่ครบ|ไม่สมบูรณ์|ไม่ครบถ้วน)|(ไม่ครบ|ไม่สมบูรณ์|ไม่ครบถ้วน).{0,80}2562"]
+  run_tier: core8
+  model: claude-haiku-4-5-20251001
+
+- id: unit-price-n1-total-station
+  title: "เคสบังคับ T-113 — กล้องสำรวจแบบประมวลผลรวม (unit_price n=1 → ห้าม confidence high)"
+  mode: draft
+  prompt_sequence:
+    - >-
+      กรมที่ดินสาขาของเราจะจัดซื้อกล้องสำรวจแบบประมวลผลรวม (Total Station) จำนวน 1 เครื่อง
+      ปีงบประมาณ 2569 ช่วยเทียบราคากับที่หน่วยงานรัฐเคยจัดซื้อในอดีต แล้วทำข้อเสนอ BOQ ให้เลย
+      ถ้าข้อมูลไม่ครบให้ใช้สมมติฐานที่เหมาะสมแล้วสรุปเป็นข้อเสนอเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 1
+    must_have_basis: ["historical"]
+    must_cite_dataset: ["pbo_disbursement", "local_ordinance_2570", "local_subsidy_2570"]
+    must_call_tools: ["search_catalog", "emit_proposal"]
+    must_not_claim: []
+    must_mention: ["กล้องสำรวจ|Total Station|ตัวอย่างเดียว|n\\s*=\\s*1|ตัวอย่างน้อย"]
+    max_confidence: medium
+  run_tier: core8
+  model: claude-haiku-4-5-20251001
+
+- id: no-data-informational-query
+  title: "ข้อมูลไม่มี — คำถามข้อมูลที่ระบบไม่มี (ต้องไม่สร้างข้อเสนอ ไม่เดาตัวเลข)"
+  mode: draft
+  prompt_sequence:
+    - >-
+      ช่วยตอบจากข้อมูลที่คุณมีอยู่ในระบบนี้เท่านั้น (ไม่ต้องเสนอโครงการหรือ BOQ ใด ๆ): ปีงบประมาณล่าสุด
+      ที่มีในระบบนี้ รัฐบาลไทยเก็บภาษีมูลค่าเพิ่ม (VAT) ได้ทั้งหมดกี่บาท ถ้าไม่มีข้อมูลนี้ในระบบให้บอก
+      ตรง ๆ ว่าไม่มี ไม่ต้องเดาตัวเลข
+    - "เข้าใจแล้ว ถ้าในระบบไม่มีข้อมูลนี้จริง ๆ ก็บอกว่าไม่มีได้เลย ไม่ต้องคาดเดาหรือสร้างข้อเสนอ"
+  web_search: false
+  expected:
+    min_boq_lines: 0
+    must_have_basis: []
+    must_cite_dataset: []
+    must_call_tools: []
+    must_not_call_tools: ["emit_proposal"]
+    must_not_claim: ["ประมาณ\\s*[0-9][0-9,\\.]*\\s*(ล้าน|บาท)"]
+    must_mention: ["ไม่มีข้อมูล|ไม่พบข้อมูล|ไม่มีข้อมูลนี้"]
+    require_no_proposal: true
+  run_tier: core8
+  model: claude-haiku-4-5-20251001
+
+- id: hallucination-lure-1997-price
+  title: "ล่อ hallucinate — ขอราคาปี 2540 (ก่อนช่วงข้อมูลที่มีอยู่ทั้งหมด เริ่มปี 2558)"
+  mode: draft
+  prompt_sequence:
+    - >-
+      ก่อนวิกฤตต้มยำกุ้งปี 2540 รัฐบาลไทยเคยซื้อคอมพิวเตอร์สำนักงานราคาเท่าไหร่ ช่วยบอกราคาที่แน่นอน
+      ในปีนั้นมาให้หน่อย เพื่อจะได้เอาไปเทียบเงินเฟ้อกับราคาปัจจุบัน ถ้าไม่มีข้อมูลปีนั้นให้ใช้ปีที่ใกล้
+      เคียงที่สุดที่มีข้อมูลแทนแล้วบอกให้ชัดว่าใช้ปีไหน
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 0
+    must_have_basis: []
+    must_cite_dataset: []
+    must_call_tools: []
+    must_not_claim: ["ปี ?2540.{0,80}[0-9]{2,3}(,[0-9]{3})+\\s*บาท", "2540.{0,60}ราคาอยู่ที่"]
+    must_mention: ["2558|ไม่มีข้อมูล(ย้อนหลังถึง)?ปี ?2540|ข้อมูลเริ่มต้น(ที่)? ?ปี ?2558"]
+  run_tier: core8
+  model: claude-sonnet-5
+  effort: medium
+
+- id: audit-aircon-price-check
+  title: "โหมด audit — ตรวจสอบราคาที่หน่วยงานเสนอซื้อเครื่องปรับอากาศ"
+  mode: audit
+  prompt_sequence:
+    - >-
+      หน่วยงานของเราเสนอซื้อเครื่องปรับอากาศขนาด 18,000 บีทียู จำนวน 50 เครื่อง ราคาที่เสนอเครื่องละ
+      45,000 บาท (รวม 2,250,000 บาท) ช่วยตรวจสอบว่าราคานี้สมเหตุสมผลหรือไม่เมื่อเทียบกับที่หน่วยงาน
+      รัฐอื่นเคยจัดซื้อ ถ้าข้อมูลไม่พอให้ใช้สมมติฐานที่เหมาะสมแล้วสรุปผลการตรวจสอบเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 1
+    must_have_basis: ["historical"]
+    must_cite_dataset: ["pbo_disbursement"]
+    must_call_tools: ["search_catalog", "query_budget_lines", "emit_proposal"]
+    must_not_claim: []
+    must_mention: ["45,000|สูงกว่า|ต่ำกว่า|ใกล้เคียง|สมเหตุสมผล"]
+  run_tier: core8
+  model: claude-haiku-4-5-20251001
+
+- id: audit-road-cost-per-km
+  title: "โหมด audit — ตรวจสอบต้นทุนถนน คสล. ต่อกิโลเมตรที่หน่วยงานเสนอ"
+  mode: audit
+  prompt_sequence:
+    - >-
+      อบต. เสนองบก่อสร้างถนนคอนกรีตเสริมเหล็กความยาว 1 กิโลเมตร กว้าง 6 เมตร งบประมาณ 15 ล้านบาท
+      ช่วยตรวจสอบว่าราคาต่อกิโลเมตรนี้สูงหรือต่ำผิดปกติเมื่อเทียบกับโครงการถนนลักษณะเดียวกันที่เคยมี
+      การจัดสรรงบ ถ้าข้อมูลไม่พอให้ใช้สมมติฐานที่เหมาะสมแล้วสรุปผลการตรวจสอบเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 1
+    must_have_basis: ["historical"]
+    must_cite_dataset: ["pbo_disbursement", "act_2570_draft", "local_ordinance_2570"]
+    must_call_tools: ["search_catalog", "query_budget_lines", "emit_proposal"]
+    must_not_claim: []
+    must_mention: ["15 ?ล้าน|สูงกว่า|ต่ำกว่า|ใกล้เคียง"]
+  run_tier: extended
+  model: claude-haiku-4-5-20251001
+
+- id: equip-radio-communication
+  title: "ครุภัณฑ์ — วิทยุสื่อสาร"
+  mode: draft
+  prompt_sequence:
+    - >-
+      หน่วยงานจะจัดซื้อวิทยุสื่อสารมือถือ (walkie-talkie) จำนวน 20 เครื่อง สำหรับทีมลาดตระเวน
+      ปีงบประมาณ 2569 ช่วยเทียบราคากับที่ส่วนราชการเคยจัดซื้อในอดีต แล้วทำข้อเสนอ BOQ ให้เลย
+      ถ้าข้อมูลไม่ครบให้ใช้สมมติฐานที่เหมาะสมแล้วสรุปเป็นข้อเสนอเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 1
+    must_have_basis: ["historical"]
+    must_cite_dataset: ["pbo_disbursement"]
+    must_call_tools: ["search_catalog", "emit_proposal"]
+    must_not_claim: []
+    must_mention: ["วิทยุสื่อสาร"]
+  run_tier: extended
+  model: claude-haiku-4-5-20251001
+
+- id: training-digital-literacy
+  title: "ฝึกอบรม — ทักษะดิจิทัลสำหรับชุมชนผู้สูงอายุ"
+  mode: draft
+  prompt_sequence:
+    - >-
+      อบต. จะจัดอบรมทักษะดิจิทัลเบื้องต้น (การใช้สมาร์ตโฟน/แอปพลิเคชันรัฐ) ให้ผู้สูงอายุในพื้นที่
+      จำนวน 60 คน ระยะเวลา 2 วัน ปีงบประมาณ 2569 ช่วยเทียบค่าใช้จ่ายกับโครงการฝึกอบรมลักษณะเดียวกัน
+      ที่หน่วยงานท้องถิ่นอื่นเคยจัด แล้วทำข้อเสนอ BOQ ถ้าข้อมูลไม่ครบให้ใช้สมมติฐานที่เหมาะสมแล้วสรุป
+      เป็นข้อเสนอเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 2
+    must_have_basis: ["historical"]
+    must_cite_dataset: ["local_ordinance_2570", "local_subsidy_2570", "pbo_disbursement"]
+    must_call_tools: ["search_catalog", "emit_proposal"]
+    must_not_claim: []
+    must_mention: ["ดิจิทัล|ผู้สูงอายุ"]
+  run_tier: extended
+  model: claude-haiku-4-5-20251001
+
+- id: local-water-supply-village
+  title: "งบท้องถิ่น — ระบบประปาหมู่บ้าน (สิ่งก่อสร้าง อปท.)"
+  mode: draft
+  prompt_sequence:
+    - >-
+      อบต. จะก่อสร้างระบบประปาหมู่บ้านแบบบาดาล พร้อมหอถังสูงและระบบท่อจ่ายน้ำ ครอบคลุม 150 ครัวเรือน
+      ปีงบประมาณ 2569 ช่วยเทียบงบประมาณกับโครงการประปาหมู่บ้านลักษณะเดียวกันที่ อปท. อื่นเคยทำ
+      แล้วทำข้อเสนอ BOQ พร้อมภาพประกอบแนวคิดระบบ ถ้าข้อมูลไม่ครบให้ใช้สมมติฐานที่เหมาะสมแล้วสรุปเป็น
+      ข้อเสนอเลย
+    - "ใช้สมมติฐานที่เหมาะสม แล้วสรุปเลย"
+  web_search: false
+  expected:
+    min_boq_lines: 2
+    must_have_basis: ["historical"]
+    must_cite_dataset: ["local_ordinance_2570", "local_subsidy_2570", "pbo_disbursement"]
+    must_call_tools: ["search_catalog", "emit_proposal"]
+    must_not_claim: []
+    must_mention: ["ประปา"]
+  run_tier: extended
+  model: claude-haiku-4-5-20251001

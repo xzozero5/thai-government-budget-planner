@@ -1,0 +1,3 @@
+# T-306 — transcript เต็มของแต่ละ case + report ของ dry-run (ผลปลอม ห้ามอยู่ในเอกสารจริง)
+# ledger (api-spend.json), cases.yaml, run-eval.mjs, score.mjs commit ได้ตามปกติ
+out/

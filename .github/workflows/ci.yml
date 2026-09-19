@@ -52,6 +52,13 @@ jobs:
       - run: npm run build
       - name: ตรวจว่า dist/index.html มี CSP meta
         run: grep -q 'http-equiv="Content-Security-Policy"' dist/index.html
+      - name: ตรวจว่า production bundle ไม่มี harness/fake client ของ eval (T-306)
+        run: |
+          if grep -rlE "__evalHarness|__ai-eval|createFakeAnthropicClient|installToolCapture" dist --include=*.js --include=*.html; then
+            echo "พบโค้ด harness ใน production bundle" && exit 1
+          fi
+      - name: Guard N2 — VITE_EVAL_ANTHROPIC_API_KEY ต้องไม่ถูก inline เข้า bundle (T-306)
+        run: npm run guard:n2
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
