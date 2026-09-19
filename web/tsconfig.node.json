@@ -25,6 +25,7 @@
     "playwright.config.ts",
     "tailwind.config.ts",
     "vite-plugins",
-    "tests/e2e"
+    "tests/e2e",
+    "scripts"
   ]
 }
