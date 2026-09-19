@@ -90,6 +90,39 @@ const COLOR_ATTRS = new Set([
 /** ค่าที่ไม่ใช่สีจริง — ไม่ต้องเทียบ palette */
 const NON_COLOR_VALUES = new Set(['none', 'transparent', 'currentcolor', 'inherit']);
 
+/** attribute ที่ browser ตีความค่าเป็น paint server / URL reference ได้ (fill="url(…)", filter="url(…)" …) */
+const REFERENCE_ATTRS = new Set([
+  'fill',
+  'stroke',
+  'stop-color',
+  'flood-color',
+  'lighting-color',
+  'color',
+  'filter',
+  'mask',
+  'clip-path',
+  'marker',
+  'marker-start',
+  'marker-mid',
+  'marker-end',
+  'cursor',
+]);
+
+/**
+ * allowlist grammar ของ REFERENCE_ATTRS (T-206): keyword/ชื่อสี (a-z ล้วน) · #hex · rgb()/rgba()/hsl()/hsla()
+ * ที่ข้างในมีแต่ตัวเลข/%/,/ช่องว่าง/`/`/`deg` · `url(#id)` (ตามด้วยสี fallback ได้) — อย่างอื่นทั้งหมดถูกตัด
+ * (blocklist ใช้ไม่ได้: `\000075rl(` ถูก browser ถอดเป็น `url(` ตอน parse ค่า แล้ว Chromium ยิง request ออกจริง)
+ */
+const LOCAL_URL_REF = String.raw`url\(\s*#[A-Za-z_][\w.:-]*\s*\)`;
+const COLOR_TOKEN = String.raw`(?:[a-zA-Z]{1,30}|#[0-9a-fA-F]{3,8}|(?:rgb|rgba|hsl|hsla)\((?:[\d.%,\s/+-]|deg)+\))`;
+const ALLOWED_REFERENCE_VALUE = new RegExp(
+  String.raw`^\s*(?:${LOCAL_URL_REF}(?:\s+${COLOR_TOKEN})?|${COLOR_TOKEN})\s*$`,
+);
+
+function isAllowedReferenceValue(value: string): boolean {
+  return ALLOWED_REFERENCE_VALUE.test(value);
+}
+
 const URL_FN_PATTERN = /url\(\s*(['"]?)([^'")]*)\1\s*\)/gi;
 
 // ---------------------------------------------------------------------------
@@ -213,6 +246,18 @@ function stripDisallowedNodesDeep(
       }
       if (nameLower === 'xmlns' || nameLower.startsWith('xmlns:')) {
         continue; // namespace URI ไม่ใช่การโหลดทรัพยากร
+      }
+      // T-206 (architect): CSS escape — ห้ามมี backslash ในค่า attribute ใด ๆ (SVG ที่ถูกต้องไม่ต้องใช้)
+      // และ attribute ที่รับ paint/URL reference ต้องผ่าน allowlist grammar (ดู REFERENCE_ATTRS)
+      if (value.includes('\\')) {
+        el.removeAttribute(name);
+        warnings.push(`ลบ attribute "${name}" ออกจาก <${tagLower}> (พบ backslash/CSS escape)`);
+        continue;
+      }
+      if (REFERENCE_ATTRS.has(nameLower) && !isAllowedReferenceValue(value)) {
+        el.removeAttribute(name);
+        warnings.push(`ลบ attribute "${name}" ออกจาก <${tagLower}> (ค่าไม่อยู่ในรูปแบบที่อนุญาต)`);
+        continue;
       }
       if (
         hasDangerousScheme(value) ||

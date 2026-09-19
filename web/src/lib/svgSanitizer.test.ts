@@ -326,6 +326,78 @@ describe('sanitizeSvg — defense-in-depth (สิ่งที่ DOMPurify ค�
     expect(ok.svg).toContain('xmlns="http://www.w3.org/2000/svg"');
   });
 
+  // T-206 (architect): CSS escape bypass — Chromium ถอด `\000075rl(` เป็น `url(` แล้วยิง request ออกจริง
+  const cssEscapeAttacks: [string, string][] = [
+    [
+      'fill',
+      String.raw`<rect fill="\000075rl(\00002f\00002fevil.example/g.svg#g)" width="1" height="1"/>`,
+    ],
+    ['stroke', String.raw`<rect stroke="\75 rl(//evil.example/s.svg#s)" width="1" height="1"/>`],
+    [
+      'filter',
+      String.raw`<g filter="\000075rl(\00002f\00002fevil.example/f.svg#f)"><rect width="1" height="1"/></g>`,
+    ],
+    ['mask', String.raw`<rect mask="\000075rl(//evil.example/m.svg#m)" width="1" height="1"/>`],
+    [
+      'clip-path',
+      String.raw`<rect clip-path="\000075rl(//evil.example/c.svg#c)" width="1" height="1"/>`,
+    ],
+    [
+      'marker-start',
+      String.raw`<path d="M0 0L1 1" marker-start="\000075rl(//evil.example/mk.svg#k)"/>`,
+    ],
+    [
+      'stop-color',
+      String.raw`<linearGradient id="g"><stop stop-color="\000075rl(//evil.example/x)"/></linearGradient>`,
+    ],
+  ];
+  it.each(cssEscapeAttacks)('CSS escape ใน %s ถูกตัดทิ้ง', (attr, inner) => {
+    const result = sanitizeSvg(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">${inner}</svg>`,
+    );
+    if (!result.ok) return; // ปฏิเสธทั้งไฟล์ = ปลอดภัย
+    expect(result.svg.includes('\\')).toBe(false);
+    expect(result.svg).not.toMatch(/evil\.example/i);
+    expect(result.svg).not.toMatch(new RegExp(`${attr}\\s*=`, 'i'));
+  });
+
+  it.each([
+    'none',
+    'currentColor',
+    'red',
+    '#0033A0',
+    '#fff',
+    'rgb(0, 51, 160)',
+    'rgba(0,51,160,0.5)',
+    'hsl(210 50% 40%)',
+    'url(#grad)',
+    'url(#grad) #ffffff',
+  ])('ค่า paint ที่ถูกต้อง "%s" ยังอยู่', (paint) => {
+    const ok = expectOk(
+      sanitizeSvg(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><defs>' +
+          '<linearGradient id="grad"><stop offset="0" stop-color="#0033A0"/></linearGradient></defs>' +
+          `<rect width="5" height="5" fill="${paint}"/></svg>`,
+      ),
+    );
+    expect(ok.svg).toContain(`fill="${paint}"`);
+  });
+
+  it.each([
+    'expression(alert(1))',
+    'url(#a) url(//evil.example/x)',
+    'var(--x, url(//evil.example))',
+    'attr(data-x url)',
+    'URL(//evil.example/x)',
+  ])('ค่า paint นอก grammar "%s" ถูกตัด', (paint) => {
+    const ok = expectOk(
+      sanitizeSvg(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="5" height="5" fill="${paint}"/></svg>`,
+      ),
+    );
+    expect(ok.svg).not.toMatch(/fill\s*=/i);
+  });
+
   it('attribute แบบตัวพิมพ์ผสม STYLE/OnLoad — ต้องถูกตัดเหมือนตัวพิมพ์เล็ก', () => {
     const svg =
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10" OnLoad="alert(1)">' +
