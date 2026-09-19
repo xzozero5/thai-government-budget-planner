@@ -53,15 +53,15 @@
 
 ## Phase 4 — UI (เป้า: 3 วัน) — อ่าน `06-UI-SPEC.md`
 - [ ] T-401 `ui-designer` deliverables 06 §7 (tokens ธงชาติ+ตรวจค่ามาตรฐานสี, wireframes, copy.th.json, components.md, motion.md, illustration-style.md + few-shot SVG)
-- [ ] T-402 `frontend-dev` `components/ui/*` primitives + stories/tests พื้นฐาน
-- [ ] T-403 `frontend-dev` stores (`session`, `chat`, `proposal`, `toolLog`, `data`) + tests (no-persist, idle clear)
+- [ ] T-402 `frontend-dev` `components/ui/*` primitives + stories/tests พื้นฐาน — **T-307 (บังคับทั้ง Phase 4)**: ห้าม `dangerouslySetInnerHTML` ทั้ง repo (บังคับด้วย ESLint `react/no-danger` หรือ `no-restricted-syntax`); ทุก field จากโมเดล/ข้อมูลดิบ render เป็น text node; ถ้าจะ render markdown จากโมเดล ต้องเป็น renderer ที่ไม่ผ่าน HTML (ไม่มี raw HTML, ลิงก์ผ่าน `ExternalLink` เท่านั้น)
+- [ ] T-403 `frontend-dev` stores (`session`, `chat`, `proposal`, `toolLog`, `data`) + tests (no-persist, idle clear) — **T-307 H1 (บังคับ)**: instance ของ `Anthropic` client มี `apiKey` เป็น own enumerable property → **ห้ามเก็บ client/key ใน Zustand store หรือ state ใดที่ serialize/persist/devtools ได้**; เก็บใน module scope ของ `ai/` (หรือ closure) เท่านั้น, store เก็บแค่ `hasKey: boolean` + model; ล้าง key ตอน `pagehide` และ idle 60 นาที; test: snapshot ของทุก store + ไฟล์ `.tgbp.json` ที่ save + ข้อความ error ที่แสดง ต้องไม่มีสตริงรูป key
 - [ ] T-404 `frontend-dev` KeyGate page (4.1) + `/about`
-- [ ] T-405 `frontend-dev` Workspace layout + Chat pane (4.2) รวม tool activity cards, quick replies, streaming, cancel
+- [ ] T-405 `frontend-dev` Workspace layout + Chat pane (4.2) รวม tool activity cards, quick replies, streaming, cancel; **T-307**: แสดง query ของ `web_search` ทุกครั้งใน tool activity card + สวิตช์ปิด web search (`enableWebSearch:false` มีแล้วใน `runAgentTurn`); เพดานเงินต่อ turn/session ปรับได้ใน settings (default 0.50 / 3.00 USD) และแสดงยอดใช้สะสม
 - [ ] T-406 `frontend-dev` Proposal pane (4.3) + BOQ table (inline edit, recompute, "ให้ AI ทบทวน", version selector)
-- [ ] T-407 `frontend-dev` Citation drawer (4.4) ทุกประเภท + "ดูแถวใกล้เคียง" + `ExternalLink` component (US-4.3: เปิดแท็บใหม่, https-only, copy URL) ใช้ใน BOQ chip/drawer/แชท — drawer แสดง `item_name_raw` เต็ม (ไม่มี `item_name`/`location_text` ใน shard), badge ของ quality flags + ข้อความ "ตัวเลขถอดจาก OCR ของต้นทาง โปรดตรวจหน้า N", ป้าย "เอกสารสแกน ระบบไม่ได้อ่านเนื้อหา"
+- [ ] T-407 `frontend-dev` Citation drawer (4.4) ทุกประเภท + "ดูแถวใกล้เคียง" + `ExternalLink` component (US-4.3: เปิดแท็บใหม่, https-only, copy URL) ใช้ใน BOQ chip/drawer/แชท — drawer แสดง `item_name_raw` เต็ม (ไม่มี `item_name`/`location_text` ใน shard), badge ของ quality flags + ข้อความ "ตัวเลขถอดจาก OCR ของต้นทาง โปรดตรวจหน้า N", ป้าย "เอกสารสแกน ระบบไม่ได้อ่านเนื้อหา"; **T-307**: `ExternalLink` = https-only + `rel="noopener noreferrer"` + `target="_blank"` + ไม่ prefetch + **ไม่โหลด favicon/รูป/preview จากโดเมนนั้น**
 - [ ] T-408 `frontend-dev` Data loading indicator, toasts, keyboard shortcuts, responsive/mobile; แสดง progress ของการ prefetch DuckDB/ดัชนีค้นหา (lazy ~12 MB gz รวม) ระหว่าง AI ถามคำถาม
 - [ ] T-411 `frontend-dev` Motion layer ตาม `docs/ui/motion.md` (`motion`, reduced-motion guard, count-up, skeletons, button states) ; tests prop-level
-- [ ] T-412 `frontend-dev` `Sparkline`, `TrendChart`, `StatCard` (Recharts) + `IllustrationFrame` (sanitized SVG, lightbox, สร้างใหม่/ซ่อน) และต่อเข้า Proposal pane/BOQ/drawer ; tests
+- [ ] T-412 `frontend-dev` `Sparkline`, `TrendChart`, `StatCard` (Recharts) + `IllustrationFrame` (sanitized SVG, lightbox, สร้างใหม่/ซ่อน) และต่อเข้า Proposal pane/BOQ/drawer ; tests; **T-307**: SVG ต้องผ่าน `sanitizeSvg(...).node()` เท่านั้น (ห้ามนำสตริง `.svg` ไป innerHTML); เพิ่ม **e2e ใน Chromium จริง** ของชุดโจมตี sanitizer (CSS escape, `image-set()`, `feImage`, entity) พร้อม server ปลอมที่ยืนยันว่าไม่มี request ออก — ตอนนี้ยืนยันแค่ใน jsdom
 - [ ] T-409 `qa-engineer` e2e happy path + storage audit (07 §3.3 ข้อ 1–3) กับ mock API
 - [ ] T-410 `po` + `ui-designer` review ตาม 06 §1/§5; แก้ copy; STATUS
 
