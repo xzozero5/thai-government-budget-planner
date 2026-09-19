@@ -1,6 +1,6 @@
 # TGBP validation report
 
-สร้างเมื่อ: 2026-09-19T15:51:59.164960+00:00
+สร้างเมื่อ: 2026-09-19T18:38:07.750249+00:00
 
 ## สถานะรวม: **PASS**
 
@@ -68,9 +68,9 @@
 | local_subsidy_2570 | 2,720 | 0 | 0 | True |
 | pbo_disbursement | 2,887,730 | 0 | 0 | True |
 
-## V6 — ไม่มีไฟล์ output > 24 MB: PASS (795 ไฟล์ตรวจ)
+## V6 — ไม่มีไฟล์ output > 24 MB: PASS (797 ไฟล์ตรวจ)
 
-## รวมขนาด web/public/data/: 180,555,250 bytes (เพดาน 500,000,000)
+## รวมขนาด web/public/data/: 184,176,246 bytes (เพดาน 500,000,000)
 
 ## V8 — unit_price outlier (soft): 1 แถว จาก 45,584 item_key
 

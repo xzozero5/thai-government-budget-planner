@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "data_version": "cd15fb2dd39b45a9a1c9dcab321802828e15ff61bdef59a6b8c2b4f663729140",
-  "built_at": "2026-09-19T15:51:49.696859+00:00",
+  "built_at": "2026-09-19T18:38:00.135097+00:00",
   "sample": false,
   "totals": {
-    "files": 794,
-    "bytes": 180308492,
+    "files": 796,
+    "bytes": 183928822,
     "rows_by_dataset": {
       "pbo_disbursement": 2887730,
       "act_2570_draft": 96470,
@@ -3937,6 +3937,16 @@
       "province": null
     },
     {
+      "path": "catalog/items-slim.json.gz",
+      "bytes": 1967634,
+      "sha256": "95ddcf67614c8f88277b1efe8d235bf1da71799a5996cb3809733576b39a31cf",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
       "path": "catalog/items.json.gz",
       "bytes": 5396799,
       "sha256": "2129c0c7f7711434f9885a39cf1a744169f19bc31657acd85ed231a4b9917aa8",
@@ -3950,6 +3960,16 @@
       "path": "catalog/orgs.json",
       "bytes": 665712,
       "sha256": "5d8462e3c21fd272a0adb17dbfbaf02f40b4544bab7372fb051d67e373fc5a6d",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/search-index.json.gz",
+      "bytes": 1652696,
+      "sha256": "b38b439b367b7675c11bbd8e014bf1f5da04eab0a5c0de399cd20e7ee92fd93d",
       "rows": null,
       "dataset": null,
       "fiscal_year_be": null,
@@ -8012,6 +8032,10 @@
       "decision_ref": "03-DATA-PIPELINE.md §6 V9"
     }
   ],
+  "search_index": {
+    "built": true,
+    "tokenizer_version": "thai-fold-v1"
+  },
   "catalog_threshold": {
     "min_lines": 6,
     "min_years": 4,
