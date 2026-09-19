@@ -498,6 +498,31 @@ def test_write_inventory_appendix_creates_markdown(tmp_path: Path) -> None:
     assert "นับตาม collection" in content
 
 
+def test_write_sources_json_uses_lf_line_endings_not_crlf(tmp_path: Path) -> None:
+    """sha256 ของ `sources.json` ต้อง deterministic ข้าม OS — ห้ามมี `\\r\\n` แม้รันบน Windows"""
+    config_path = _write_config(tmp_path)
+    cfg = PipelineConfig.load(config_path)
+    _build_fixture_tree(cfg)
+
+    docs, _stats = scan_raw_dir(cfg, probe_pdf=False)
+    out_path = write_sources_json(cfg, docs)
+
+    raw_bytes = out_path.read_bytes()
+    assert b"\r\n" not in raw_bytes
+
+
+def test_write_inventory_appendix_uses_lf_line_endings_not_crlf(tmp_path: Path) -> None:
+    config_path = _write_config(tmp_path)
+    cfg = PipelineConfig.load(config_path)
+    _build_fixture_tree(cfg)
+
+    docs, stats = scan_raw_dir(cfg, probe_pdf=True)
+    out_path = write_inventory_appendix(cfg, docs, stats)
+
+    raw_bytes = out_path.read_bytes()
+    assert b"\r\n" not in raw_bytes
+
+
 def test_sources_json_never_written_under_raw_dir(tmp_path: Path) -> None:
     """N6 guard: `assert_writable_path` ต้อง raise ถ้า output_dir ถูกตั้งให้ชี้เข้าไปใน raw dir"""
     pipeline_dir = tmp_path / "pipeline"

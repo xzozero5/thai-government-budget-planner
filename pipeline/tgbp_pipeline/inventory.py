@@ -616,6 +616,7 @@ def write_sources_json(cfg: PipelineConfig, docs: list[SourceDoc]) -> Path:
     out_path.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=False),
         encoding="utf-8",
+        newline="\n",
     )
     return out_path
 
@@ -683,5 +684,5 @@ def write_inventory_appendix(
             lines.append(f"| `{doc.rel_path}` | {doc.pages} |")
     lines.append("")
 
-    out_path.write_text("\n".join(lines), encoding="utf-8")
+    out_path.write_text("\n".join(lines), encoding="utf-8", newline="\n")
     return out_path
