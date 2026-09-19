@@ -1,0 +1,485 @@
+{
+  "spike": "S5-offline",
+  "chromium": "153.0.8010.12",
+  "when": "2026-09-19T16:51:44.337Z",
+  "sanitize": {
+    "results": [
+      {
+        "name": "01-script",
+        "bytes_in": 178,
+        "bytes_out": 118,
+        "before": {
+          "tags": {
+            "svg": 1,
+            "script": 1,
+            "rect": 1
+          },
+          "attrs": {
+            "xmlns": 1,
+            "viewbox": 1,
+            "width": 1,
+            "height": 1,
+            "fill": 1
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg"
+          ]
+        },
+        "after": {
+          "tags": {
+            "svg": 1,
+            "rect": 1
+          },
+          "attrs": {
+            "xmlns": 1,
+            "viewbox": 1,
+            "width": 1,
+            "height": 1,
+            "fill": 1
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg"
+          ]
+        },
+        "removed_tags": [
+          "script"
+        ],
+        "clean_head": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><rect width=\"100\" height=\"100\" fill=\"#123\"></rect></svg>"
+      },
+      {
+        "name": "02-events",
+        "bytes_in": 233,
+        "bytes_out": 168,
+        "before": {
+          "tags": {
+            "svg": 1,
+            "rect": 1,
+            "circle": 1
+          },
+          "attrs": {
+            "xmlns": 1,
+            "viewbox": 1,
+            "onload": 1,
+            "width": 1,
+            "height": 1,
+            "fill": 2,
+            "onclick": 1,
+            "onmouseover": 1,
+            "cx": 1,
+            "cy": 1,
+            "r": 1,
+            "onbegin": 1
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg",
+            "event-attr svg@onload",
+            "event-attr rect@onclick",
+            "event-attr rect@onmouseover",
+            "event-attr circle@onbegin"
+          ]
+        },
+        "after": {
+          "tags": {
+            "svg": 1,
+            "rect": 1,
+            "circle": 1
+          },
+          "attrs": {
+            "xmlns": 1,
+            "viewbox": 1,
+            "width": 1,
+            "height": 1,
+            "fill": 2,
+            "cx": 1,
+            "cy": 1,
+            "r": 1
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg"
+          ]
+        },
+        "removed_tags": [],
+        "clean_head": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><rect width=\"50\" height=\"50\" fill=\"#0a0\"></rect><circle cx=\"70\" cy=\"70\" r=\"20\" fill=\"#a00\"></circle></svg>"
+      },
+      {
+        "name": "03-foreignObject",
+        "bytes_in": 292,
+        "bytes_out": 116,
+        "before": {
+          "tags": {
+            "svg": 1,
+            "foreignobject": 1,
+            "iframe": 1,
+            "img": 1,
+            "rect": 1
+          },
+          "attrs": {
+            "xmlns": 1,
+            "viewbox": 1,
+            "width": 2,
+            "height": 2,
+            "src": 2,
+            "onerror": 1,
+            "fill": 1
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg",
+            "external-url in iframe@src=https://evil.example/",
+            "event-attr img@onerror"
+          ]
+        },
+        "after": {
+          "tags": {
+            "svg": 1,
+            "rect": 1
+          },
+          "attrs": {
+            "xmlns": 1,
+            "viewbox": 1,
+            "width": 1,
+            "height": 1,
+            "fill": 1
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg"
+          ]
+        },
+        "removed_tags": [
+          "foreignobject",
+          "iframe",
+          "img"
+        ],
+        "clean_head": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 100\"><rect width=\"10\" height=\"10\" fill=\"#000\"></rect></svg>"
+      },
+      {
+        "name": "04-external-href",
+        "bytes_in": 420,
+        "bytes_out": 157,
+        "before": {
+          "tags": {
+            "svg": 1,
+            "image": 2,
+            "use": 1,
+            "a": 2,
+            "text": 1
+          },
+          "attrs": {
+            "xmlns": 1,
+            "xmlns:xlink": 1,
+            "viewbox": 1,
+            "href": 2,
+            "width": 2,
+            "height": 2,
+            "xlink:href": 3,
+            "x": 2,
+            "y": 1
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg",
+            "external-url in svg@xmlns:xlink=http://www.w3.org/1999/xlink",
+            "external-url in image@href=https://evil.example/track.png",
+            "href left in image",
+            "external-url in image@xlink:href=https://evil.example/t2.png",
+            "external-url in use@xlink:href=https://evil.example/sprite.svg#a",
+            "href left in use",
+            "javascript: in a@href",
+            "href left in a",
+            "external-url in a@xlink:href=https://evil.example/"
+          ]
+        },
+        "after": {
+          "tags": {
+            "svg": 1,
+            "a": 2,
+            "text": 1
+          },
+          "attrs": {
+            "xmlns": 1,
+            "xmlns:xlink": 1,
+            "viewbox": 1,
+            "x": 1,
+            "y": 1
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg",
+            "external-url in svg@xmlns:xlink=http://www.w3.org/1999/xlink"
+          ]
+        },
+        "removed_tags": [
+          "image",
+          "use"
+        ],
+        "clean_head": "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" viewBox=\"0 0 200 100\"><a><text x=\"5\" y=\"90\">click</text></a><a>x</a></svg>"
+      },
+      {
+        "name": "05-style-url",
+        "bytes_in": 296,
+        "bytes_out": 302,
+        "before": {
+          "tags": {
+            "svg": 1,
+            "style": 1,
+            "rect": 1,
+            "text": 1
+          },
+          "attrs": {
+            "xmlns": 1,
+            "viewbox": 1,
+            "width": 1,
+            "height": 1,
+            "x": 1,
+            "y": 1
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg",
+            "style @import",
+            "style url(http…)"
+          ]
+        },
+        "after": {
+          "tags": {
+            "svg": 1,
+            "style": 1,
+            "rect": 1,
+            "text": 1
+          },
+          "attrs": {
+            "xmlns": 1,
+            "viewbox": 1,
+            "width": 1,
+            "height": 1,
+            "x": 1,
+            "y": 1
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg",
+            "style @import",
+            "style url(http…)"
+          ]
+        },
+        "removed_tags": [],
+        "clean_head": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><style>@import url(\"https://evil.example/x.css\"); rect { fill: url(https://evil.example/p.svg#g); } text { background-image: url('https://evil.example/b.png')"
+      },
+      {
+        "name": "06-datauri-and-smil",
+        "bytes_in": 427,
+        "bytes_out": 146,
+        "before": {
+          "tags": {
+            "svg": 1,
+            "image": 1,
+            "a": 1,
+            "animate": 1,
+            "text": 1,
+            "set": 1
+          },
+          "attrs": {
+            "xmlns": 1,
+            "xmlns:xlink": 1,
+            "viewbox": 1,
+            "href": 1,
+            "width": 1,
+            "height": 1,
+            "attributename": 2,
+            "values": 1,
+            "begin": 1,
+            "x": 1,
+            "y": 1,
+            "to": 1
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg",
+            "external-url in svg@xmlns:xlink=http://www.w3.org/1999/xlink",
+            "href left in image",
+            "javascript: in animate@values"
+          ]
+        },
+        "after": {
+          "tags": {
+            "svg": 1,
+            "a": 1,
+            "text": 1
+          },
+          "attrs": {
+            "xmlns": 1,
+            "xmlns:xlink": 1,
+            "viewbox": 1,
+            "x": 1,
+            "y": 1
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg",
+            "external-url in svg@xmlns:xlink=http://www.w3.org/1999/xlink"
+          ]
+        },
+        "removed_tags": [
+          "image",
+          "animate",
+          "set"
+        ],
+        "clean_head": "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" viewBox=\"0 0 100 100\"><a><text x=\"5\" y=\"90\">go</text></a></svg>"
+      },
+      {
+        "name": "07-clean-diagram",
+        "bytes_in": 819,
+        "bytes_out": 873,
+        "before": {
+          "tags": {
+            "svg": 1,
+            "defs": 1,
+            "lineargradient": 1,
+            "stop": 2,
+            "filter": 1,
+            "fegaussianblur": 1,
+            "rect": 2,
+            "path": 1,
+            "circle": 1,
+            "text": 2,
+            "g": 1
+          },
+          "attrs": {
+            "xmlns": 1,
+            "viewbox": 1,
+            "width": 3,
+            "height": 3,
+            "id": 2,
+            "x1": 1,
+            "y1": 1,
+            "x2": 1,
+            "y2": 1,
+            "offset": 2,
+            "stop-color": 2,
+            "stddeviation": 1,
+            "fill": 6,
+            "x": 2,
+            "y": 2,
+            "stroke": 2,
+            "d": 1,
+            "stroke-width": 1,
+            "cx": 1,
+            "cy": 1,
+            "r": 1,
+            "filter": 1,
+            "text-anchor": 1,
+            "font-family": 1,
+            "font-size": 2,
+            "transform": 1
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg"
+          ]
+        },
+        "after": {
+          "tags": {
+            "svg": 1,
+            "defs": 1,
+            "lineargradient": 1,
+            "stop": 2,
+            "filter": 1,
+            "fegaussianblur": 1,
+            "rect": 2,
+            "path": 1,
+            "circle": 1,
+            "text": 2,
+            "g": 1
+          },
+          "attrs": {
+            "xmlns": 1,
+            "viewbox": 1,
+            "width": 3,
+            "height": 3,
+            "id": 2,
+            "x1": 1,
+            "y1": 1,
+            "x2": 1,
+            "y2": 1,
+            "offset": 2,
+            "stop-color": 2,
+            "stddeviation": 1,
+            "fill": 6,
+            "x": 2,
+            "y": 2,
+            "stroke": 2,
+            "d": 1,
+            "stroke-width": 1,
+            "cx": 1,
+            "cy": 1,
+            "r": 1,
+            "filter": 1,
+            "text-anchor": 1,
+            "font-family": 1,
+            "font-size": 2,
+            "transform": 1
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg"
+          ]
+        },
+        "removed_tags": [],
+        "clean_head": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 400 240\" width=\"400\" height=\"240\"><defs><linearGradient id=\"g1\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#9ec5fe\"></stop><stop offset=\"1\" stop-color=\"#"
+      }
+    ],
+    "dompurify_version": "3.4.15",
+    "removed_report": 1
+  },
+  "png_dataurl": {
+    "via": "data",
+    "loaded": true,
+    "canvas": {
+      "w": 800,
+      "h": 480
+    },
+    "tainted": false,
+    "error": null,
+    "png_bytes": 42438,
+    "ms": 1566.6000001430511,
+    "png_head": "data:image/png;base64,iVBORw0KGgoAAAANSU"
+  },
+  "png_blob_strictcsp": {
+    "via": "blob",
+    "loaded": false,
+    "error": "img error",
+    "ms": 1
+  },
+  "thai_font_in_svg": {
+    "sarabun_not_embedded": {
+      "family": "Sarabun",
+      "dark_pixels": 1213,
+      "png_bytes": 3831
+    },
+    "sans_serif": {
+      "family": "sans-serif",
+      "dark_pixels": 1213,
+      "png_bytes": 3843
+    },
+    "tahoma": {
+      "family": "Tahoma, sans-serif",
+      "dark_pixels": 1213,
+      "png_bytes": 3843
+    }
+  },
+  "png_into_pdf": {
+    "ms_render": 90.80000019073486,
+    "pdf_bytes": 23169,
+    "image_ops": 1,
+    "num_pages": 1
+  },
+  "csp_violations": [
+    "Loading the image 'blob:http://localhost:5199/5c5a1625-e55b-4582-9f0d-22037f63cff0' violates the following Content Security Policy directive: \"img-src 'self' data:\". The action has been blocked.",
+    "Connecting to 'data:application/octet-stream;base64,AGFzbQEAAAABugM3YAF/AGACf38AYAF/AX9gA39/fwBgAn98AGACf38Bf2ADf39/AX9gBH9/f30BfWADf398AGAAAGAEf39/fwBgAX8BfGACf38BfGAFf39/f38Bf2AAAX9gA39/fwF9YAZ/f31/",
+    "Fetch API cannot load data:application/octet-stream;base64,AGFzbQEAAAABugM3YAF/AGACf38AYAF/AX9gA39/fwBgAn98AGACf38Bf2ADf39/AX9gBH9/f30BfWADf398AGAAAGAEf39/fwBgAX8BfGACf38BfGAFf39/f38Bf2AAAX9gA39/fwF9Y"
+  ],
+  "png_blob_relaxedcsp": {
+    "via": "blob",
+    "loaded": true,
+    "canvas": {
+      "w": 800,
+      "h": 480
+    },
+    "tainted": false,
+    "error": null,
+    "png_bytes": 42438,
+    "ms": 14.699999809265137,
+    "png_head": "data:image/png;base64,iVBORw0KGgoAAAANSU"
+  }
+}

@@ -1,0 +1,138 @@
+{
+  "spike": "S1-rowgroup",
+  "chromium": "153.0.8010.12",
+  "when": "2026-09-19T16:35:35.309Z",
+  "cases": {
+    "W1_agency_rg2_only": {
+      "sql": "SELECT count(*) AS n, min(source_id) FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet') WHERE agency = 'โรงเรียนมหิดลวิทยานุสรณ์'",
+      "ms": 84.5,
+      "rows": [
+        {
+          "n": 39,
+          "min(source_id)": "0a8b0f46974f3424"
+        }
+      ],
+      "requests": 9,
+      "bytes": 383941,
+      "ranges": [
+        "bytes=0-0",
+        "bytes=0-",
+        "bytes=6160384-6167491",
+        "bytes=6144000-6160383",
+        "bytes=5521408-5537791",
+        "bytes=5275648-5292031",
+        "bytes=5292032-5357567",
+        "bytes=5357568-5619711"
+      ]
+    },
+    "W2_agency_all_rg": {
+      "sql": "SELECT count(*) AS n, min(source_id) FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet') WHERE agency = 'สำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน'",
+      "ms": 124.59999990463257,
+      "rows": [
+        {
+          "n": 139938,
+          "min(source_id)": "00003e08bbc72fb3"
+        }
+      ],
+      "requests": 19,
+      "bytes": 3201989,
+      "ranges": [
+        "bytes=0-0",
+        "bytes=0-",
+        "bytes=6160384-6167491",
+        "bytes=6144000-6160383",
+        "bytes=704512-720895",
+        "bytes=0-16383",
+        "bytes=16384-81919",
+        "bytes=81920-344063",
+        "bytes=344064-1392639",
+        "bytes=3375104-3391487",
+        "bytes=2670592-2686975",
+        "bytes=2686976-2752511",
+        "bytes=2752512-3014655",
+        "bytes=3014656-4063231",
+        "bytes=5521408-5537791",
+        "bytes=5275648-5292031",
+        "bytes=5292032-5357567",
+        "bytes=5357568-5619711"
+      ]
+    },
+    "W3_item_key_eq": {
+      "sql": "SELECT count(*) AS n, min(source_id) FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet') WHERE item_key = 'เครื่องตัดหญ้า'",
+      "ms": 142.70000004768372,
+      "rows": [
+        {
+          "n": 3753,
+          "min(source_id)": "00121e7f573ed838"
+        }
+      ],
+      "requests": 20,
+      "bytes": 2530245,
+      "ranges": [
+        "bytes=0-0",
+        "bytes=0-",
+        "bytes=6160384-6167491",
+        "bytes=6144000-6160383",
+        "bytes=1998848-2015231",
+        "bytes=2015232-2080767",
+        "bytes=2080768-2342911",
+        "bytes=4669440-4685823",
+        "bytes=4685824-4751359",
+        "bytes=2670592-2686975",
+        "bytes=2686976-2752511",
+        "bytes=2752512-3014655",
+        "bytes=3014656-4063231",
+        "bytes=4751360-5013503",
+        "bytes=5881856-5898239",
+        "bytes=5898240-5963775",
+        "bytes=5275648-5292031",
+        "bytes=5292032-5357567",
+        "bytes=5357568-5619711"
+      ]
+    },
+    "W4_baseline_col": {
+      "sql": "SELECT count(DISTINCT item_key) AS n FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet')",
+      "ms": 115.80000019073486,
+      "rows": [
+        {
+          "n": 19041
+        }
+      ],
+      "requests": 13,
+      "bytes": 793541,
+      "ranges": [
+        "bytes=0-0",
+        "bytes=0-",
+        "bytes=6160384-6167491",
+        "bytes=6144000-6160383",
+        "bytes=1998848-2015231",
+        "bytes=2015232-2080767",
+        "bytes=2080768-2342911",
+        "bytes=4669440-4685823",
+        "bytes=4685824-4751359",
+        "bytes=4751360-5013503",
+        "bytes=5881856-5898239",
+        "bytes=5898240-5963775"
+      ]
+    },
+    "W5_amount_high": {
+      "sql": "SELECT count(*) AS n FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet') WHERE amount_thb > 200000000000",
+      "ms": 79.89999985694885,
+      "rows": [
+        {
+          "n": 1
+        }
+      ],
+      "requests": 7,
+      "bytes": 105413,
+      "ranges": [
+        "bytes=0-0",
+        "bytes=0-",
+        "bytes=6160384-6167491",
+        "bytes=6144000-6160383",
+        "bytes=2129920-2146303",
+        "bytes=2146304-2211839"
+      ]
+    }
+  }
+}

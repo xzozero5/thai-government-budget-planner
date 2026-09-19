@@ -1,0 +1,9 @@
+node_modules/
+dist/
+bundle-probe/out/
+# extension wasm ของ duckdb (3.0 MB) — ดาวน์โหลดใหม่ได้ ดูคำสั่งใน README
+vendor/
+# หลักฐานภาพ/PDF ของ S4/S5 (สร้างซ้ำได้ด้วย runner) — เก็บเฉพาะ SVG (ใช้เป็น few-shot/test ต่อได้) และ results/*.json
+s4/out/
+s5/out/*.png
+s5/out/*.pdf

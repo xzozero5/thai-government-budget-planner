@@ -1,0 +1,3947 @@
+{
+  "spike": "S1",
+  "chromium": "153.0.8010.12",
+  "when": "2026-09-19T16:33:38.666Z",
+  "matrix": {
+    "A-local-range": {
+      "fs": {
+        "extensionRepo": "http://localhost:5199/duckdb-ext",
+        "forceFullHTTPReads": false,
+        "allowFullHTTPReads": true,
+        "reliableHeadRequests": true
+      },
+      "base": "http://localhost:5199/data",
+      "queries": {
+        "Q0_count": {
+          "sql": "SELECT count(*) AS n FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet')",
+          "init_ms": 644.6000001430511,
+          "init_instantiate_ms": 440.39999985694885,
+          "init_open_ms": 75.10000014305115,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2889863,
+            "totalJSHeapSize": 4190051
+          },
+          "cold_ms": 48.799999952316284,
+          "cold_rows": 1,
+          "cold_sample": {
+            "n": 151878
+          },
+          "cold_xhr": {
+            "requests": 5,
+            "bytes": 23493,
+            "range_requests": 4,
+            "status_206": 4,
+            "methods": {
+              "HEAD": 2,
+              "GET": 3
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 6
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-0",
+                "status": 206,
+                "len": 1,
+                "ms": 4
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 206,
+                "len": 0,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6160384-6167491",
+                "status": 206,
+                "len": 7108,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6144000-6160383",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              }
+            ]
+          },
+          "cold_server": {
+            "requests": 5,
+            "bytes": 23493
+          },
+          "warm": [
+            {
+              "ms": 5.800000190734863,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 6.099999904632568,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 5.3999998569488525,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "28.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2902856,
+            "totalJSHeapSize": 5766724
+          },
+          "page_errors": []
+        },
+        "Q1_in_keys": {
+          "sql": "SELECT source_id, agency, item_name_raw, item_qty, amount_thb, unit_price_thb, source_row FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20",
+          "init_ms": 670.8000001907349,
+          "init_instantiate_ms": 450.10000014305115,
+          "init_open_ms": 85.19999980926514,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2872395,
+            "totalJSHeapSize": 4190051
+          },
+          "cold_ms": 230,
+          "cold_rows": 50,
+          "cold_sample": {
+            "source_id": "00d6fdc71065be13",
+            "agency": "สำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน",
+            "item_name_raw": "เครื่องปรับอากาศ แบบแยกส่วนชนิดตั้งพื้นหรือชนิดแขวน (มีระบบฟอกอากาศ) ขนาด 24,000บีทียู. โรงเรียนเขาพนมแบกศึกษา ตำบลป่าเว อำเภอไชยาจังหวัดสุราษฎร์ธานี",
+            "item_qty": null,
+            "amount_thb": null,
+            "unit_price_thb": null,
+            "source_row": 238061
+          },
+          "cold_xhr": {
+            "requests": 22,
+            "bytes": 7773125,
+            "range_requests": 21,
+            "status_206": 21,
+            "methods": {
+              "HEAD": 2,
+              "GET": 20
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 7
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-0",
+                "status": 206,
+                "len": 1,
+                "ms": 7
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 206,
+                "len": 0,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6160384-6167491",
+                "status": 206,
+                "len": 7108,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6144000-6160383",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1998848-2015231",
+                "status": 206,
+                "len": 16384,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2015232-2080767",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-16383",
+                "status": 206,
+                "len": 16384,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=16384-81919",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=81920-344063",
+                "status": 206,
+                "len": 262144,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=344064-1392639",
+                "status": 206,
+                "len": 1048576,
+                "ms": 7
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2113536-2129919",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2129920-2195455",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2375680-2392063",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2392064-2457599",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2457600-2719743",
+                "status": 206,
+                "len": 262144,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1392640-5586943",
+                "status": 206,
+                "len": 4194304,
+                "ms": 20
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2080768-2342911",
+                "status": 206,
+                "len": 262144,
+                "ms": 5
+              },
+              {
+                "m": "GET",
+                "range": "bytes=589824-606207",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=606208-671743",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=671744-933887",
+                "status": 206,
+                "len": 262144,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2719744-3768319",
+                "status": 206,
+                "len": 1048576,
+                "ms": 7
+              }
+            ]
+          },
+          "cold_server": {
+            "requests": 22,
+            "bytes": 7773125
+          },
+          "warm": [
+            {
+              "ms": 74.59999990463257,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 68.39999985694885,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 68.10000014305115,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "408.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 3077624,
+            "totalJSHeapSize": 5891836
+          },
+          "page_errors": []
+        },
+        "Q1b_in_keys_narrow": {
+          "sql": "SELECT source_id, amount_thb, unit_price_thb FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet') WHERE item_key IN ('เครื่องปรับ",
+          "init_ms": 690.2999999523163,
+          "init_instantiate_ms": 488.39999985694885,
+          "init_open_ms": 74,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2903675,
+            "totalJSHeapSize": 4190051
+          },
+          "cold_ms": 149.5,
+          "cold_rows": 50,
+          "cold_sample": {
+            "source_id": "00d6fdc71065be13",
+            "amount_thb": null,
+            "unit_price_thb": null
+          },
+          "cold_xhr": {
+            "requests": 21,
+            "bytes": 3578821,
+            "range_requests": 20,
+            "status_206": 20,
+            "methods": {
+              "HEAD": 2,
+              "GET": 19
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 6
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-0",
+                "status": 206,
+                "len": 1,
+                "ms": 4
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 206,
+                "len": 0,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6160384-6167491",
+                "status": 206,
+                "len": 7108,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6144000-6160383",
+                "status": 206,
+                "len": 16384,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1998848-2015231",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2015232-2080767",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-16383",
+                "status": 206,
+                "len": 16384,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=16384-81919",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=81920-344063",
+                "status": 206,
+                "len": 262144,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=344064-1392639",
+                "status": 206,
+                "len": 1048576,
+                "ms": 6
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2129920-2146303",
+                "status": 206,
+                "len": 16384,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2146304-2211839",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2080768-2342911",
+                "status": 206,
+                "len": 262144,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4669440-4685823",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4685824-4751359",
+                "status": 206,
+                "len": 65536,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2670592-2686975",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2686976-2752511",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2752512-3014655",
+                "status": 206,
+                "len": 262144,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=3014656-4063231",
+                "status": 206,
+                "len": 1048576,
+                "ms": 6
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4751360-5013503",
+                "status": 206,
+                "len": 262144,
+                "ms": 4
+              }
+            ]
+          },
+          "cold_server": {
+            "requests": 21,
+            "bytes": 3578821
+          },
+          "warm": [
+            {
+              "ms": 25.40000009536743,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 25.40000009536743,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 26,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "176.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2959505,
+            "totalJSHeapSize": 5513309
+          },
+          "page_errors": []
+        },
+        "Q2_like": {
+          "sql": "SELECT item_key, count(*) AS n, median(unit_price_thb) AS med_unit_price FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet') WHE",
+          "init_ms": 703.7000000476837,
+          "init_instantiate_ms": 488,
+          "init_open_ms": 74.60000014305115,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2898143,
+            "totalJSHeapSize": 4190051
+          },
+          "cold_ms": 124.79999995231628,
+          "cold_rows": 20,
+          "cold_sample": {
+            "item_key": "เครื่องปรับอากาศ แบบแยกส่วนชนิดตั้งพื้นหรือชนิดแขวน มีระบบฟอกอากาศ ขนาด 24000 บีทียู",
+            "n": 445,
+            "med_unit_price": null
+          },
+          "cold_xhr": {
+            "requests": 15,
+            "bytes": 1013641,
+            "range_requests": 14,
+            "status_206": 14,
+            "methods": {
+              "HEAD": 2,
+              "GET": 13
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 5
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-0",
+                "status": 206,
+                "len": 1,
+                "ms": 3
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 206,
+                "len": 0,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6160384-6167491",
+                "status": 206,
+                "len": 7108,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6144000-6160383",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1998848-2015231",
+                "status": 206,
+                "len": 16384,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2015232-2080767",
+                "status": 206,
+                "len": 65536,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2080768-2342911",
+                "status": 206,
+                "len": 262144,
+                "ms": 5
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4669440-4685823",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4685824-4751359",
+                "status": 206,
+                "len": 65536,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4784128-4800511",
+                "status": 206,
+                "len": 16384,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4751360-5013503",
+                "status": 206,
+                "len": 262144,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5881856-5898239",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5898240-5963775",
+                "status": 206,
+                "len": 65536,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5963776-6167491",
+                "status": 206,
+                "len": 203716,
+                "ms": 3
+              }
+            ]
+          },
+          "cold_server": {
+            "requests": 15,
+            "bytes": 1013641
+          },
+          "warm": [
+            {
+              "ms": 21.399999856948853,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 22.299999952316284,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 20.5,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "124.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2961583,
+            "totalJSHeapSize": 5525815
+          },
+          "page_errors": []
+        },
+        "Q3_agg_3shards": {
+          "sql": "SELECT fiscal_year_be, count(*) AS n, sum(amount_thb) AS total FROM read_parquet(['http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet', 'http://loca",
+          "init_ms": 640.7000000476837,
+          "init_instantiate_ms": 439.10000014305115,
+          "init_open_ms": 77.09999990463257,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2891255,
+            "totalJSHeapSize": 4190051
+          },
+          "cold_ms": 144.20000004768372,
+          "cold_rows": 3,
+          "cold_sample": {
+            "fiscal_year_be": 2564,
+            "n": 151878,
+            "total": "\"356449689400\""
+          },
+          "cold_xhr": {
+            "requests": 32,
+            "bytes": 640619,
+            "range_requests": 29,
+            "status_206": 29,
+            "methods": {
+              "HEAD": 6,
+              "GET": 26
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 7
+              },
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-0",
+                "status": 206,
+                "len": 1,
+                "ms": 3
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 206,
+                "len": 0,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6160384-6167491",
+                "status": 206,
+                "len": 7108,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6144000-6160383",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=704512-720895",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2129920-2146303",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2146304-2211839",
+                "status": 206,
+                "len": 65536,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=3375104-3391487",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4751360-4767743",
+                "status": 206,
+                "len": 16384,
+                "ms": 5
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4767744-4833279",
+                "status": 206,
+                "len": 65536,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5521408-5537791",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5947392-5963775",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5963776-6029311",
+                "status": 206,
+                "len": 65536,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-0",
+                "status": 206,
+                "len": 1,
+                "ms": 1
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 206,
+                "len": 0,
+                "ms": 1
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2932736-2933450",
+                "status": 206,
+                "len": 715,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2916352-2932735",
+                "status": 206,
+                "len": 16384,
+                "ms": 1
+              },
+              {
+                "m": "GET",
+                "range": "bytes=688128-704511",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1966080-1982463",
+                "status": 206,
+                "len": 16384,
+                "ms": 1
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1982464-2047999",
+                "status": 206,
+                "len": 65536,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2719744-2736127",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2818048-2834431",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2834432-2899967",
+                "status": 206,
+                "len": 65536,
+                "ms": 1
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-0",
+                "status": 206,
+                "len": 1,
+                "ms": 2
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 206,
+                "len": 0,
+                "ms": 1
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2359296-2369496",
+                "status": 206,
+                "len": 10201,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=589824-606207",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1736704-1753087",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1753088-1818623",
+                "status": 206,
+                "len": 65536,
+                "ms": 2
+              }
+            ]
+          },
+          "cold_server": {
+            "requests": 32,
+            "bytes": 640619
+          },
+          "warm": [
+            {
+              "ms": 20.100000143051147,
+              "requests": 3,
+              "bytes": 0
+            },
+            {
+              "ms": 17.5,
+              "requests": 3,
+              "bytes": 0
+            },
+            {
+              "ms": 16.40000009536743,
+              "requests": 3,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "256.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2935664,
+            "totalJSHeapSize": 5244096
+          },
+          "page_errors": []
+        }
+      }
+    },
+    "B-local-range-strict": {
+      "fs": {
+        "extensionRepo": "http://localhost:5199/duckdb-ext",
+        "forceFullHTTPReads": false,
+        "allowFullHTTPReads": false,
+        "reliableHeadRequests": true
+      },
+      "base": "http://localhost:5199/data",
+      "queries": {
+        "Q0_count": {
+          "sql": "SELECT count(*) AS n FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet')",
+          "init_ms": 666.5,
+          "init_instantiate_ms": 459.2999999523163,
+          "init_open_ms": 73.29999995231628,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2894455,
+            "totalJSHeapSize": 4190051
+          },
+          "cold_ms": 42.5,
+          "cold_rows": 1,
+          "cold_sample": {
+            "n": 151878
+          },
+          "cold_xhr": {
+            "requests": 4,
+            "bytes": 23492,
+            "range_requests": 3,
+            "status_206": 3,
+            "methods": {
+              "HEAD": 2,
+              "GET": 2
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 5
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 206,
+                "len": 0,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6160384-6167491",
+                "status": 206,
+                "len": 7108,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6144000-6160383",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              }
+            ]
+          },
+          "cold_server": {
+            "requests": 4,
+            "bytes": 23492
+          },
+          "warm": [
+            {
+              "ms": 5.299999952316284,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 5.5,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 5.200000047683716,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "28.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2896708,
+            "totalJSHeapSize": 6028868
+          },
+          "page_errors": []
+        },
+        "Q1_in_keys": {
+          "sql": "SELECT source_id, agency, item_name_raw, item_qty, amount_thb, unit_price_thb, source_row FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20",
+          "init_ms": 667.3999998569489,
+          "init_instantiate_ms": 461,
+          "init_open_ms": 73.80000019073486,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2902299,
+            "totalJSHeapSize": 4190051
+          },
+          "cold_ms": 213,
+          "cold_rows": 50,
+          "cold_sample": {
+            "source_id": "00d6fdc71065be13",
+            "agency": "สำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน",
+            "item_name_raw": "เครื่องปรับอากาศ แบบแยกส่วนชนิดตั้งพื้นหรือชนิดแขวน (มีระบบฟอกอากาศ) ขนาด 24,000บีทียู. โรงเรียนเขาพนมแบกศึกษา ตำบลป่าเว อำเภอไชยาจังหวัดสุราษฎร์ธานี",
+            "item_qty": null,
+            "amount_thb": null,
+            "unit_price_thb": null,
+            "source_row": 238061
+          },
+          "cold_xhr": {
+            "requests": 21,
+            "bytes": 7773124,
+            "range_requests": 20,
+            "status_206": 20,
+            "methods": {
+              "HEAD": 2,
+              "GET": 19
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 7
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 206,
+                "len": 0,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6160384-6167491",
+                "status": 206,
+                "len": 7108,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6144000-6160383",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1998848-2015231",
+                "status": 206,
+                "len": 16384,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2015232-2080767",
+                "status": 206,
+                "len": 65536,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-16383",
+                "status": 206,
+                "len": 16384,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=16384-81919",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=81920-344063",
+                "status": 206,
+                "len": 262144,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=344064-1392639",
+                "status": 206,
+                "len": 1048576,
+                "ms": 6
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2113536-2129919",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2129920-2195455",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2375680-2392063",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2392064-2457599",
+                "status": 206,
+                "len": 65536,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2457600-2719743",
+                "status": 206,
+                "len": 262144,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1392640-5586943",
+                "status": 206,
+                "len": 4194304,
+                "ms": 18
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2080768-2342911",
+                "status": 206,
+                "len": 262144,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=589824-606207",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=606208-671743",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=671744-933887",
+                "status": 206,
+                "len": 262144,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2719744-3768319",
+                "status": 206,
+                "len": 1048576,
+                "ms": 6
+              }
+            ]
+          },
+          "cold_server": {
+            "requests": 21,
+            "bytes": 7773124
+          },
+          "warm": [
+            {
+              "ms": 75.89999985694885,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 67.40000009536743,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 69.60000014305115,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "408.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 3117060,
+            "totalJSHeapSize": 5891836
+          },
+          "page_errors": []
+        },
+        "Q1b_in_keys_narrow": {
+          "sql": "SELECT source_id, amount_thb, unit_price_thb FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet') WHERE item_key IN ('เครื่องปรับ",
+          "init_ms": 683,
+          "init_instantiate_ms": 475.90000009536743,
+          "init_open_ms": 75.29999995231628,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2896303,
+            "totalJSHeapSize": 4190051
+          },
+          "cold_ms": 148.59999990463257,
+          "cold_rows": 50,
+          "cold_sample": {
+            "source_id": "00d6fdc71065be13",
+            "amount_thb": null,
+            "unit_price_thb": null
+          },
+          "cold_xhr": {
+            "requests": 20,
+            "bytes": 3578820,
+            "range_requests": 19,
+            "status_206": 19,
+            "methods": {
+              "HEAD": 2,
+              "GET": 18
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 6
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 206,
+                "len": 0,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6160384-6167491",
+                "status": 206,
+                "len": 7108,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6144000-6160383",
+                "status": 206,
+                "len": 16384,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1998848-2015231",
+                "status": 206,
+                "len": 16384,
+                "ms": 6
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2015232-2080767",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-16383",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=16384-81919",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=81920-344063",
+                "status": 206,
+                "len": 262144,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=344064-1392639",
+                "status": 206,
+                "len": 1048576,
+                "ms": 6
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2129920-2146303",
+                "status": 206,
+                "len": 16384,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2146304-2211839",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2080768-2342911",
+                "status": 206,
+                "len": 262144,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4669440-4685823",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4685824-4751359",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2670592-2686975",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2686976-2752511",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2752512-3014655",
+                "status": 206,
+                "len": 262144,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=3014656-4063231",
+                "status": 206,
+                "len": 1048576,
+                "ms": 6
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4751360-5013503",
+                "status": 206,
+                "len": 262144,
+                "ms": 4
+              }
+            ]
+          },
+          "cold_server": {
+            "requests": 20,
+            "bytes": 3578820
+          },
+          "warm": [
+            {
+              "ms": 25.299999952316284,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 27.299999952316284,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 23,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "176.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2940969,
+            "totalJSHeapSize": 5251165
+          },
+          "page_errors": []
+        },
+        "Q2_like": {
+          "sql": "SELECT item_key, count(*) AS n, median(unit_price_thb) AS med_unit_price FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet') WHE",
+          "init_ms": 711.6999998092651,
+          "init_instantiate_ms": 496.09999990463257,
+          "init_open_ms": 77,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2902299,
+            "totalJSHeapSize": 4190051
+          },
+          "cold_ms": 127.5,
+          "cold_rows": 20,
+          "cold_sample": {
+            "item_key": "เครื่องปรับอากาศ แบบแยกส่วนชนิดตั้งพื้นหรือชนิดแขวน มีระบบฟอกอากาศ ขนาด 24000 บีทียู",
+            "n": 445,
+            "med_unit_price": null
+          },
+          "cold_xhr": {
+            "requests": 14,
+            "bytes": 1013640,
+            "range_requests": 13,
+            "status_206": 13,
+            "methods": {
+              "HEAD": 2,
+              "GET": 12
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 7
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 206,
+                "len": 0,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6160384-6167491",
+                "status": 206,
+                "len": 7108,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6144000-6160383",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1998848-2015231",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2015232-2080767",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2080768-2342911",
+                "status": 206,
+                "len": 262144,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4669440-4685823",
+                "status": 206,
+                "len": 16384,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4685824-4751359",
+                "status": 206,
+                "len": 65536,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4784128-4800511",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4751360-5013503",
+                "status": 206,
+                "len": 262144,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5881856-5898239",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5898240-5963775",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5963776-6167491",
+                "status": 206,
+                "len": 203716,
+                "ms": 3
+              }
+            ]
+          },
+          "cold_server": {
+            "requests": 14,
+            "bytes": 1013640
+          },
+          "warm": [
+            {
+              "ms": 23.299999952316284,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 21.09999990463257,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 22.600000143051147,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "124.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2971007,
+            "totalJSHeapSize": 5263671
+          },
+          "page_errors": []
+        },
+        "Q3_agg_3shards": {
+          "sql": "SELECT fiscal_year_be, count(*) AS n, sum(amount_thb) AS total FROM read_parquet(['http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet', 'http://loca",
+          "init_ms": 680.1000001430511,
+          "init_instantiate_ms": 476.2000000476837,
+          "init_open_ms": 76.20000004768372,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2899987,
+            "totalJSHeapSize": 4190051
+          },
+          "cold_ms": 137.79999995231628,
+          "cold_rows": 3,
+          "cold_sample": {
+            "fiscal_year_be": 2564,
+            "n": 151878,
+            "total": "\"356449689400\""
+          },
+          "cold_xhr": {
+            "requests": 29,
+            "bytes": 640616,
+            "range_requests": 26,
+            "status_206": 26,
+            "methods": {
+              "HEAD": 6,
+              "GET": 23
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 6
+              },
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 1
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 206,
+                "len": 0,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6160384-6167491",
+                "status": 206,
+                "len": 7108,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6144000-6160383",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=704512-720895",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2129920-2146303",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2146304-2211839",
+                "status": 206,
+                "len": 65536,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=3375104-3391487",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4751360-4767743",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4767744-4833279",
+                "status": 206,
+                "len": 65536,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5521408-5537791",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5947392-5963775",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5963776-6029311",
+                "status": 206,
+                "len": 65536,
+                "ms": 2
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 206,
+                "len": 0,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2932736-2933450",
+                "status": 206,
+                "len": 715,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2916352-2932735",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=688128-704511",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1966080-1982463",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1982464-2047999",
+                "status": 206,
+                "len": 65536,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2719744-2736127",
+                "status": 206,
+                "len": 16384,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2818048-2834431",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2834432-2899967",
+                "status": 206,
+                "len": 65536,
+                "ms": 2
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 206,
+                "len": 0,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2359296-2369496",
+                "status": 206,
+                "len": 10201,
+                "ms": 1
+              },
+              {
+                "m": "GET",
+                "range": "bytes=589824-606207",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1736704-1753087",
+                "status": 206,
+                "len": 16384,
+                "ms": 2
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1753088-1818623",
+                "status": 206,
+                "len": 65536,
+                "ms": 2
+              }
+            ]
+          },
+          "cold_server": {
+            "requests": 29,
+            "bytes": 640616
+          },
+          "warm": [
+            {
+              "ms": 20.09999990463257,
+              "requests": 3,
+              "bytes": 0
+            },
+            {
+              "ms": 18.299999952316284,
+              "requests": 3,
+              "bytes": 0
+            },
+            {
+              "ms": 18,
+              "requests": 3,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "256.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2918552,
+            "totalJSHeapSize": 5244096
+          },
+          "page_errors": []
+        }
+      }
+    },
+    "C-local-default-fullread": {
+      "fs": {
+        "extensionRepo": "http://localhost:5199/duckdb-ext"
+      },
+      "base": "http://localhost:5199/data",
+      "queries": {
+        "Q0_count": {
+          "sql": "SELECT count(*) AS n FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet')",
+          "init_ms": 672.5999999046326,
+          "init_instantiate_ms": 447.59999990463257,
+          "init_open_ms": 83.20000004768372,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2864411,
+            "totalJSHeapSize": 4190051
+          },
+          "cold_ms": 60.60000014305115,
+          "cold_rows": 1,
+          "cold_sample": {
+            "n": 151878
+          },
+          "cold_xhr": {
+            "requests": 2,
+            "bytes": 6167492,
+            "range_requests": 0,
+            "status_206": 0,
+            "methods": {
+              "HEAD": 1,
+              "GET": 1
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 5
+              },
+              {
+                "m": "GET",
+                "range": null,
+                "status": 200,
+                "len": 6167492,
+                "ms": 24
+              }
+            ]
+          },
+          "cold_server": {
+            "requests": 2,
+            "bytes": 6167492
+          },
+          "warm": [
+            {
+              "ms": 6.599999904632568,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 5.900000095367432,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 5.699999809265137,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "28.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2843108,
+            "totalJSHeapSize": 6028868
+          },
+          "page_errors": []
+        },
+        "Q1_in_keys": {
+          "sql": "SELECT source_id, agency, item_name_raw, item_qty, amount_thb, unit_price_thb, source_row FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20",
+          "init_ms": 681.3000001907349,
+          "init_instantiate_ms": 468.7000000476837,
+          "init_open_ms": 77.90000009536743,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2895691,
+            "totalJSHeapSize": 4190051
+          },
+          "cold_ms": 153,
+          "cold_rows": 50,
+          "cold_sample": {
+            "source_id": "00d6fdc71065be13",
+            "agency": "สำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน",
+            "item_name_raw": "เครื่องปรับอากาศ แบบแยกส่วนชนิดตั้งพื้นหรือชนิดแขวน (มีระบบฟอกอากาศ) ขนาด 24,000บีทียู. โรงเรียนเขาพนมแบกศึกษา ตำบลป่าเว อำเภอไชยาจังหวัดสุราษฎร์ธานี",
+            "item_qty": null,
+            "amount_thb": null,
+            "unit_price_thb": null,
+            "source_row": 238061
+          },
+          "cold_xhr": {
+            "requests": 2,
+            "bytes": 6167492,
+            "range_requests": 0,
+            "status_206": 0,
+            "methods": {
+              "HEAD": 1,
+              "GET": 1
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 6
+              },
+              {
+                "m": "GET",
+                "range": null,
+                "status": 200,
+                "len": 6167492,
+                "ms": 27
+              }
+            ]
+          },
+          "cold_server": {
+            "requests": 2,
+            "bytes": 6167492
+          },
+          "warm": [
+            {
+              "ms": 77.90000009536743,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 74,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 71.39999985694885,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "408.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 3075704,
+            "totalJSHeapSize": 5891836
+          },
+          "page_errors": []
+        },
+        "Q1b_in_keys_narrow": {
+          "sql": "SELECT source_id, amount_thb, unit_price_thb FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet') WHERE item_key IN ('เครื่องปรับ",
+          "init_ms": 705.5,
+          "init_instantiate_ms": 470.2000000476837,
+          "init_open_ms": 80.29999995231628,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2898899,
+            "totalJSHeapSize": 4190051
+          },
+          "cold_ms": 109.29999995231628,
+          "cold_rows": 50,
+          "cold_sample": {
+            "source_id": "00d6fdc71065be13",
+            "amount_thb": null,
+            "unit_price_thb": null
+          },
+          "cold_xhr": {
+            "requests": 2,
+            "bytes": 6167492,
+            "range_requests": 0,
+            "status_206": 0,
+            "methods": {
+              "HEAD": 1,
+              "GET": 1
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 6
+              },
+              {
+                "m": "GET",
+                "range": null,
+                "status": 200,
+                "len": 6167492,
+                "ms": 31
+              }
+            ]
+          },
+          "cold_server": {
+            "requests": 2,
+            "bytes": 6167492
+          },
+          "warm": [
+            {
+              "ms": 26.700000047683716,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 30.09999990463257,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 25.09999990463257,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "176.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2943829,
+            "totalJSHeapSize": 5513309
+          },
+          "page_errors": []
+        },
+        "Q2_like": {
+          "sql": "SELECT item_key, count(*) AS n, median(unit_price_thb) AS med_unit_price FROM read_parquet('http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet') WHE",
+          "init_ms": 711.7999999523163,
+          "init_instantiate_ms": 493.09999990463257,
+          "init_open_ms": 80.10000014305115,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2901199,
+            "totalJSHeapSize": 4190051
+          },
+          "cold_ms": 109.79999995231628,
+          "cold_rows": 20,
+          "cold_sample": {
+            "item_key": "เครื่องปรับอากาศ แบบแยกส่วนชนิดตั้งพื้นหรือชนิดแขวน มีระบบฟอกอากาศ ขนาด 24000 บีทียู",
+            "n": 445,
+            "med_unit_price": null
+          },
+          "cold_xhr": {
+            "requests": 2,
+            "bytes": 6167492,
+            "range_requests": 0,
+            "status_206": 0,
+            "methods": {
+              "HEAD": 1,
+              "GET": 1
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 6
+              },
+              {
+                "m": "GET",
+                "range": null,
+                "status": 200,
+                "len": 6167492,
+                "ms": 27
+              }
+            ]
+          },
+          "cold_server": {
+            "requests": 2,
+            "bytes": 6167492
+          },
+          "warm": [
+            {
+              "ms": 21,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 25.700000047683716,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 21.90000009536743,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "124.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2961731,
+            "totalJSHeapSize": 5525815
+          },
+          "page_errors": []
+        },
+        "Q3_agg_3shards": {
+          "sql": "SELECT fiscal_year_be, count(*) AS n, sum(amount_thb) AS total FROM read_parquet(['http://localhost:5199/data/budget_lines/pbo/2564/20000.parquet', 'http://loca",
+          "init_ms": 715.2000000476837,
+          "init_instantiate_ms": 499.7000000476837,
+          "init_open_ms": 81.60000014305115,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2903511,
+            "totalJSHeapSize": 4190051
+          },
+          "cold_ms": 140.60000014305115,
+          "cold_rows": 3,
+          "cold_sample": {
+            "fiscal_year_be": 2564,
+            "n": 151878,
+            "total": "\"356449689400\""
+          },
+          "cold_xhr": {
+            "requests": 6,
+            "bytes": 11470440,
+            "range_requests": 0,
+            "status_206": 0,
+            "methods": {
+              "HEAD": 3,
+              "GET": 3
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 6
+              },
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": null,
+                "status": 200,
+                "len": 6167492,
+                "ms": 33
+              },
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 4
+              },
+              {
+                "m": "GET",
+                "range": null,
+                "status": 200,
+                "len": 2933451,
+                "ms": 15
+              },
+              {
+                "m": "GET",
+                "range": null,
+                "status": 200,
+                "len": 2369497,
+                "ms": 14
+              }
+            ]
+          },
+          "cold_server": {
+            "requests": 6,
+            "bytes": 11470440
+          },
+          "warm": [
+            {
+              "ms": 20.199999809265137,
+              "requests": 3,
+              "bytes": 0
+            },
+            {
+              "ms": 19.300000190734863,
+              "requests": 3,
+              "bytes": 0
+            },
+            {
+              "ms": 20.100000143051147,
+              "requests": 3,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "256.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2944524,
+            "totalJSHeapSize": 5244096
+          },
+          "page_errors": []
+        }
+      }
+    },
+    "D-pages-range": {
+      "fs": {
+        "extensionRepo": "http://localhost:5199/duckdb-ext",
+        "forceFullHTTPReads": false,
+        "allowFullHTTPReads": true,
+        "reliableHeadRequests": true
+      },
+      "base": "https://xzozero5.github.io/thai-government-budget-planner/data",
+      "queries": {
+        "Q0_count": {
+          "sql": "SELECT count(*) AS n FROM read_parquet('https://xzozero5.github.io/thai-government-budget-planner/data/budget_lines/pbo/2564/20000.parquet')",
+          "init_ms": 719.5999999046326,
+          "init_instantiate_ms": 506.2000000476837,
+          "init_open_ms": 78.70000004768372,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2901370,
+            "totalJSHeapSize": 4190058
+          },
+          "cold_ms": 400.90000009536743,
+          "cold_rows": 1,
+          "cold_sample": {
+            "n": 151878
+          },
+          "cold_xhr": {
+            "requests": 5,
+            "bytes": 23493,
+            "range_requests": 4,
+            "status_206": 3,
+            "methods": {
+              "HEAD": 2,
+              "GET": 3
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 315
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-0",
+                "status": 206,
+                "len": 1,
+                "ms": 13
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 200,
+                "len": 0,
+                "ms": 13
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6160384-6167491",
+                "status": 206,
+                "len": 7108,
+                "ms": 14
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6144000-6160383",
+                "status": 206,
+                "len": 16384,
+                "ms": 16
+              }
+            ]
+          },
+          "cold_server": null,
+          "warm": [
+            {
+              "ms": 19.5,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 15.5,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 15.700000047683716,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "28.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2886671,
+            "totalJSHeapSize": 5766731
+          },
+          "page_errors": []
+        },
+        "Q1_in_keys": {
+          "sql": "SELECT source_id, agency, item_name_raw, item_qty, amount_thb, unit_price_thb, source_row FROM read_parquet('https://xzozero5.github.io/thai-government-budget-p",
+          "init_ms": 684.6000001430511,
+          "init_instantiate_ms": 471.89999985694885,
+          "init_open_ms": 75.60000014305115,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2900910,
+            "totalJSHeapSize": 4190058
+          },
+          "cold_ms": 1542.2000000476837,
+          "cold_rows": 50,
+          "cold_sample": {
+            "source_id": "00d6fdc71065be13",
+            "agency": "สำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน",
+            "item_name_raw": "เครื่องปรับอากาศ แบบแยกส่วนชนิดตั้งพื้นหรือชนิดแขวน (มีระบบฟอกอากาศ) ขนาด 24,000บีทียู. โรงเรียนเขาพนมแบกศึกษา ตำบลป่าเว อำเภอไชยาจังหวัดสุราษฎร์ธานี",
+            "item_qty": null,
+            "amount_thb": null,
+            "unit_price_thb": null,
+            "source_row": 238061
+          },
+          "cold_xhr": {
+            "requests": 22,
+            "bytes": 7773125,
+            "range_requests": 21,
+            "status_206": 20,
+            "methods": {
+              "HEAD": 2,
+              "GET": 20
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 65
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-0",
+                "status": 206,
+                "len": 1,
+                "ms": 14
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 200,
+                "len": 0,
+                "ms": 14
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6160384-6167491",
+                "status": 206,
+                "len": 7108,
+                "ms": 15
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6144000-6160383",
+                "status": 206,
+                "len": 16384,
+                "ms": 18
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1998848-2015231",
+                "status": 206,
+                "len": 16384,
+                "ms": 18
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2015232-2080767",
+                "status": 206,
+                "len": 65536,
+                "ms": 28
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-16383",
+                "status": 206,
+                "len": 16384,
+                "ms": 17
+              },
+              {
+                "m": "GET",
+                "range": "bytes=16384-81919",
+                "status": 206,
+                "len": 65536,
+                "ms": 24
+              },
+              {
+                "m": "GET",
+                "range": "bytes=81920-344063",
+                "status": 206,
+                "len": 262144,
+                "ms": 54
+              },
+              {
+                "m": "GET",
+                "range": "bytes=344064-1392639",
+                "status": 206,
+                "len": 1048576,
+                "ms": 221
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2113536-2129919",
+                "status": 206,
+                "len": 16384,
+                "ms": 19
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2129920-2195455",
+                "status": 206,
+                "len": 65536,
+                "ms": 24
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2375680-2392063",
+                "status": 206,
+                "len": 16384,
+                "ms": 13
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2392064-2457599",
+                "status": 206,
+                "len": 65536,
+                "ms": 21
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2457600-2719743",
+                "status": 206,
+                "len": 262144,
+                "ms": 55
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1392640-5586943",
+                "status": 206,
+                "len": 4194304,
+                "ms": 787
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2080768-2342911",
+                "status": 206,
+                "len": 262144,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=589824-606207",
+                "status": 206,
+                "len": 16384,
+                "ms": 1
+              },
+              {
+                "m": "GET",
+                "range": "bytes=606208-671743",
+                "status": 206,
+                "len": 65536,
+                "ms": 1
+              },
+              {
+                "m": "GET",
+                "range": "bytes=671744-933887",
+                "status": 206,
+                "len": 262144,
+                "ms": 3
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2719744-3768319",
+                "status": 206,
+                "len": 1048576,
+                "ms": 5
+              }
+            ]
+          },
+          "cold_server": null,
+          "warm": [
+            {
+              "ms": 87.5,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 96.79999995231628,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 109.70000004768372,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "408.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 3106407,
+            "totalJSHeapSize": 4843267
+          },
+          "page_errors": []
+        },
+        "Q1b_in_keys_narrow": {
+          "sql": "SELECT source_id, amount_thb, unit_price_thb FROM read_parquet('https://xzozero5.github.io/thai-government-budget-planner/data/budget_lines/pbo/2564/20000.parqu",
+          "init_ms": 709.4000000953674,
+          "init_instantiate_ms": 485.7999999523163,
+          "init_open_ms": 86.40000009536743,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2902690,
+            "totalJSHeapSize": 4190058
+          },
+          "cold_ms": 1013.5,
+          "cold_rows": 50,
+          "cold_sample": {
+            "source_id": "00d6fdc71065be13",
+            "amount_thb": null,
+            "unit_price_thb": null
+          },
+          "cold_xhr": {
+            "requests": 21,
+            "bytes": 3578821,
+            "range_requests": 20,
+            "status_206": 19,
+            "methods": {
+              "HEAD": 2,
+              "GET": 19
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 53
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-0",
+                "status": 206,
+                "len": 1,
+                "ms": 14
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 200,
+                "len": 0,
+                "ms": 13
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6160384-6167491",
+                "status": 206,
+                "len": 7108,
+                "ms": 19
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6144000-6160383",
+                "status": 206,
+                "len": 16384,
+                "ms": 24
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1998848-2015231",
+                "status": 206,
+                "len": 16384,
+                "ms": 16
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2015232-2080767",
+                "status": 206,
+                "len": 65536,
+                "ms": 26
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-16383",
+                "status": 206,
+                "len": 16384,
+                "ms": 16
+              },
+              {
+                "m": "GET",
+                "range": "bytes=16384-81919",
+                "status": 206,
+                "len": 65536,
+                "ms": 22
+              },
+              {
+                "m": "GET",
+                "range": "bytes=81920-344063",
+                "status": 206,
+                "len": 262144,
+                "ms": 61
+              },
+              {
+                "m": "GET",
+                "range": "bytes=344064-1392639",
+                "status": 206,
+                "len": 1048576,
+                "ms": 202
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2129920-2146303",
+                "status": 206,
+                "len": 16384,
+                "ms": 17
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2146304-2211839",
+                "status": 206,
+                "len": 65536,
+                "ms": 24
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2080768-2342911",
+                "status": 206,
+                "len": 262144,
+                "ms": 53
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4669440-4685823",
+                "status": 206,
+                "len": 16384,
+                "ms": 22
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4685824-4751359",
+                "status": 206,
+                "len": 65536,
+                "ms": 21
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2670592-2686975",
+                "status": 206,
+                "len": 16384,
+                "ms": 15
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2686976-2752511",
+                "status": 206,
+                "len": 65536,
+                "ms": 22
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2752512-3014655",
+                "status": 206,
+                "len": 262144,
+                "ms": 58
+              },
+              {
+                "m": "GET",
+                "range": "bytes=3014656-4063231",
+                "status": 206,
+                "len": 1048576,
+                "ms": 197
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4751360-5013503",
+                "status": 206,
+                "len": 262144,
+                "ms": 54
+              }
+            ]
+          },
+          "cold_server": null,
+          "warm": [
+            {
+              "ms": 40,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 33.60000014305115,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 35.40000009536743,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "176.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2945412,
+            "totalJSHeapSize": 5513316
+          },
+          "page_errors": []
+        },
+        "Q2_like": {
+          "sql": "SELECT item_key, count(*) AS n, median(unit_price_thb) AS med_unit_price FROM read_parquet('https://xzozero5.github.io/thai-government-budget-planner/data/budge",
+          "init_ms": 683.0999999046326,
+          "init_instantiate_ms": 473.90000009536743,
+          "init_open_ms": 75.40000009536743,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2897690,
+            "totalJSHeapSize": 4190058
+          },
+          "cold_ms": 469.40000009536743,
+          "cold_rows": 20,
+          "cold_sample": {
+            "item_key": "เครื่องปรับอากาศ แบบแยกส่วนชนิดตั้งพื้นหรือชนิดแขวน มีระบบฟอกอากาศ ขนาด 24000 บีทียู",
+            "n": 445,
+            "med_unit_price": null
+          },
+          "cold_xhr": {
+            "requests": 15,
+            "bytes": 1013641,
+            "range_requests": 14,
+            "status_206": 13,
+            "methods": {
+              "HEAD": 2,
+              "GET": 13
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 44
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-0",
+                "status": 206,
+                "len": 1,
+                "ms": 15
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 200,
+                "len": 0,
+                "ms": 14
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6160384-6167491",
+                "status": 206,
+                "len": 7108,
+                "ms": 16
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6144000-6160383",
+                "status": 206,
+                "len": 16384,
+                "ms": 16
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1998848-2015231",
+                "status": 206,
+                "len": 16384,
+                "ms": 19
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2015232-2080767",
+                "status": 206,
+                "len": 65536,
+                "ms": 30
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2080768-2342911",
+                "status": 206,
+                "len": 262144,
+                "ms": 55
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4669440-4685823",
+                "status": 206,
+                "len": 16384,
+                "ms": 14
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4685824-4751359",
+                "status": 206,
+                "len": 65536,
+                "ms": 32
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4784128-4800511",
+                "status": 206,
+                "len": 16384,
+                "ms": 13
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4751360-5013503",
+                "status": 206,
+                "len": 262144,
+                "ms": 60
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5881856-5898239",
+                "status": 206,
+                "len": 16384,
+                "ms": 15
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5898240-5963775",
+                "status": 206,
+                "len": 65536,
+                "ms": 21
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5963776-6167491",
+                "status": 206,
+                "len": 203716,
+                "ms": 35
+              }
+            ]
+          },
+          "cold_server": null,
+          "warm": [
+            {
+              "ms": 33.299999952316284,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 29,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 31.300000190734863,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "124.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2943722,
+            "totalJSHeapSize": 5263678
+          },
+          "page_errors": []
+        },
+        "Q3_agg_3shards": {
+          "sql": "SELECT fiscal_year_be, count(*) AS n, sum(amount_thb) AS total FROM read_parquet(['https://xzozero5.github.io/thai-government-budget-planner/data/budget_lines/p",
+          "init_ms": 718.6000001430511,
+          "init_instantiate_ms": 498.5,
+          "init_open_ms": 76.79999995231628,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2898598,
+            "totalJSHeapSize": 4190058
+          },
+          "cold_ms": 1234.7999999523163,
+          "cold_rows": 3,
+          "cold_sample": {
+            "fiscal_year_be": 2564,
+            "n": 151878,
+            "total": "\"356449689400\""
+          },
+          "cold_xhr": {
+            "requests": 32,
+            "bytes": 640619,
+            "range_requests": 29,
+            "status_206": 26,
+            "methods": {
+              "HEAD": 6,
+              "GET": 26
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 50
+              },
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 325
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-0",
+                "status": 206,
+                "len": 1,
+                "ms": 14
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 200,
+                "len": 0,
+                "ms": 13
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6160384-6167491",
+                "status": 206,
+                "len": 7108,
+                "ms": 16
+              },
+              {
+                "m": "GET",
+                "range": "bytes=6144000-6160383",
+                "status": 206,
+                "len": 16384,
+                "ms": 17
+              },
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 282
+              },
+              {
+                "m": "GET",
+                "range": "bytes=704512-720895",
+                "status": 206,
+                "len": 16384,
+                "ms": 21
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2129920-2146303",
+                "status": 206,
+                "len": 16384,
+                "ms": 16
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2146304-2211839",
+                "status": 206,
+                "len": 65536,
+                "ms": 26
+              },
+              {
+                "m": "GET",
+                "range": "bytes=3375104-3391487",
+                "status": 206,
+                "len": 16384,
+                "ms": 16
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4751360-4767743",
+                "status": 206,
+                "len": 16384,
+                "ms": 17
+              },
+              {
+                "m": "GET",
+                "range": "bytes=4767744-4833279",
+                "status": 206,
+                "len": 65536,
+                "ms": 22
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5521408-5537791",
+                "status": 206,
+                "len": 16384,
+                "ms": 20
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5947392-5963775",
+                "status": 206,
+                "len": 16384,
+                "ms": 21
+              },
+              {
+                "m": "GET",
+                "range": "bytes=5963776-6029311",
+                "status": 206,
+                "len": 65536,
+                "ms": 23
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-0",
+                "status": 206,
+                "len": 1,
+                "ms": 13
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 200,
+                "len": 0,
+                "ms": 13
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2932736-2933450",
+                "status": 206,
+                "len": 715,
+                "ms": 22
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2916352-2932735",
+                "status": 206,
+                "len": 16384,
+                "ms": 15
+              },
+              {
+                "m": "GET",
+                "range": "bytes=688128-704511",
+                "status": 206,
+                "len": 16384,
+                "ms": 16
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1966080-1982463",
+                "status": 206,
+                "len": 16384,
+                "ms": 16
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1982464-2047999",
+                "status": 206,
+                "len": 65536,
+                "ms": 22
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2719744-2736127",
+                "status": 206,
+                "len": 16384,
+                "ms": 15
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2818048-2834431",
+                "status": 206,
+                "len": 16384,
+                "ms": 17
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2834432-2899967",
+                "status": 206,
+                "len": 65536,
+                "ms": 19
+              },
+              {
+                "m": "GET",
+                "range": "bytes=0-0",
+                "status": 206,
+                "len": 1,
+                "ms": 12
+              },
+              {
+                "m": "HEAD",
+                "range": "bytes=0-",
+                "status": 200,
+                "len": 0,
+                "ms": 14
+              },
+              {
+                "m": "GET",
+                "range": "bytes=2359296-2369496",
+                "status": 206,
+                "len": 10201,
+                "ms": 13
+              },
+              {
+                "m": "GET",
+                "range": "bytes=589824-606207",
+                "status": 206,
+                "len": 16384,
+                "ms": 15
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1736704-1753087",
+                "status": 206,
+                "len": 16384,
+                "ms": 17
+              },
+              {
+                "m": "GET",
+                "range": "bytes=1753088-1818623",
+                "status": 206,
+                "len": 65536,
+                "ms": 30
+              }
+            ]
+          },
+          "cold_server": null,
+          "warm": [
+            {
+              "ms": 59.799999952316284,
+              "requests": 3,
+              "bytes": 0
+            },
+            {
+              "ms": 51.5,
+              "requests": 3,
+              "bytes": 0
+            },
+            {
+              "ms": 44.89999985694885,
+              "requests": 3,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "256.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2938947,
+            "totalJSHeapSize": 5506247
+          },
+          "page_errors": []
+        }
+      }
+    },
+    "E-pages-default-fullread": {
+      "fs": {
+        "extensionRepo": "http://localhost:5199/duckdb-ext"
+      },
+      "base": "https://xzozero5.github.io/thai-government-budget-planner/data",
+      "queries": {
+        "Q0_count": {
+          "sql": "SELECT count(*) AS n FROM read_parquet('https://xzozero5.github.io/thai-government-budget-planner/data/budget_lines/pbo/2564/20000.parquet')",
+          "init_ms": 695.0999999046326,
+          "init_instantiate_ms": 472.2000000476837,
+          "init_open_ms": 79,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2892454,
+            "totalJSHeapSize": 4190058
+          },
+          "cold_ms": 1137.9000000953674,
+          "cold_rows": 1,
+          "cold_sample": {
+            "n": 151878
+          },
+          "cold_xhr": {
+            "requests": 2,
+            "bytes": 6167492,
+            "range_requests": 0,
+            "status_206": 0,
+            "methods": {
+              "HEAD": 1,
+              "GET": 1
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 51
+              },
+              {
+                "m": "GET",
+                "range": null,
+                "status": 200,
+                "len": 6167492,
+                "ms": 1057
+              }
+            ]
+          },
+          "cold_server": null,
+          "warm": [
+            {
+              "ms": 4.700000047683716,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 4,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 4.3999998569488525,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "28.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2896635,
+            "totalJSHeapSize": 6291019
+          },
+          "page_errors": []
+        },
+        "Q1_in_keys": {
+          "sql": "SELECT source_id, agency, item_name_raw, item_qty, amount_thb, unit_price_thb, source_row FROM read_parquet('https://xzozero5.github.io/thai-government-budget-p",
+          "init_ms": 675.2000000476837,
+          "init_instantiate_ms": 466.2999999523163,
+          "init_open_ms": 75.5,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2900758,
+            "totalJSHeapSize": 4190058
+          },
+          "cold_ms": 1459.3999998569489,
+          "cold_rows": 50,
+          "cold_sample": {
+            "source_id": "00d6fdc71065be13",
+            "agency": "สำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน",
+            "item_name_raw": "เครื่องปรับอากาศ แบบแยกส่วนชนิดตั้งพื้นหรือชนิดแขวน (มีระบบฟอกอากาศ) ขนาด 24,000บีทียู. โรงเรียนเขาพนมแบกศึกษา ตำบลป่าเว อำเภอไชยาจังหวัดสุราษฎร์ธานี",
+            "item_qty": null,
+            "amount_thb": null,
+            "unit_price_thb": null,
+            "source_row": 238061
+          },
+          "cold_xhr": {
+            "requests": 2,
+            "bytes": 6167492,
+            "range_requests": 0,
+            "status_206": 0,
+            "methods": {
+              "HEAD": 1,
+              "GET": 1
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 42
+              },
+              {
+                "m": "GET",
+                "range": null,
+                "status": 200,
+                "len": 6167492,
+                "ms": 1298
+              }
+            ]
+          },
+          "cold_server": null,
+          "warm": [
+            {
+              "ms": 75.89999985694885,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 71.59999990463257,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 78.79999995231628,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "408.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 3106123,
+            "totalJSHeapSize": 5105411
+          },
+          "page_errors": []
+        },
+        "Q1b_in_keys_narrow": {
+          "sql": "SELECT source_id, amount_thb, unit_price_thb FROM read_parquet('https://xzozero5.github.io/thai-government-budget-planner/data/budget_lines/pbo/2564/20000.parqu",
+          "init_ms": 666.0999999046326,
+          "init_instantiate_ms": 458.2999999523163,
+          "init_open_ms": 74.29999995231628,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2891098,
+            "totalJSHeapSize": 4190058
+          },
+          "cold_ms": 1230.2000000476837,
+          "cold_rows": 50,
+          "cold_sample": {
+            "source_id": "00d6fdc71065be13",
+            "amount_thb": null,
+            "unit_price_thb": null
+          },
+          "cold_xhr": {
+            "requests": 2,
+            "bytes": 6167492,
+            "range_requests": 0,
+            "status_206": 0,
+            "methods": {
+              "HEAD": 1,
+              "GET": 1
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 45
+              },
+              {
+                "m": "GET",
+                "range": null,
+                "status": 200,
+                "len": 6167492,
+                "ms": 1120
+              }
+            ]
+          },
+          "cold_server": null,
+          "warm": [
+            {
+              "ms": 26.59999990463257,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 24.299999952316284,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 25.100000143051147,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "176.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2940360,
+            "totalJSHeapSize": 5513316
+          },
+          "page_errors": []
+        },
+        "Q2_like": {
+          "sql": "SELECT item_key, count(*) AS n, median(unit_price_thb) AS med_unit_price FROM read_parquet('https://xzozero5.github.io/thai-government-budget-planner/data/budge",
+          "init_ms": 678.5,
+          "init_instantiate_ms": 468.89999985694885,
+          "init_open_ms": 74,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2903058,
+            "totalJSHeapSize": 4190058
+          },
+          "cold_ms": 1663.0999999046326,
+          "cold_rows": 20,
+          "cold_sample": {
+            "item_key": "เครื่องปรับอากาศ แบบแยกส่วนชนิดตั้งพื้นหรือชนิดแขวน มีระบบฟอกอากาศ ขนาด 24000 บีทียู",
+            "n": 445,
+            "med_unit_price": null
+          },
+          "cold_xhr": {
+            "requests": 2,
+            "bytes": 6167492,
+            "range_requests": 0,
+            "status_206": 0,
+            "methods": {
+              "HEAD": 1,
+              "GET": 1
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 267
+              },
+              {
+                "m": "GET",
+                "range": null,
+                "status": 200,
+                "len": 6167492,
+                "ms": 1323
+              }
+            ]
+          },
+          "cold_server": null,
+          "warm": [
+            {
+              "ms": 24.200000047683716,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 34,
+              "requests": 1,
+              "bytes": 0
+            },
+            {
+              "ms": 34.299999952316284,
+              "requests": 1,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "124.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2967810,
+            "totalJSHeapSize": 4215102
+          },
+          "page_errors": []
+        },
+        "Q3_agg_3shards": {
+          "sql": "SELECT fiscal_year_be, count(*) AS n, sum(amount_thb) AS total FROM read_parquet(['https://xzozero5.github.io/thai-government-budget-planner/data/budget_lines/p",
+          "init_ms": 711,
+          "init_instantiate_ms": 490.7999999523163,
+          "init_open_ms": 81.90000009536743,
+          "init_server_bytes": 38060384,
+          "heap_after_init": {
+            "usedJSHeapSize": 2895226,
+            "totalJSHeapSize": 4190058
+          },
+          "cold_ms": 1989.2000000476837,
+          "cold_rows": 3,
+          "cold_sample": {
+            "fiscal_year_be": 2564,
+            "n": 151878,
+            "total": "\"356449689400\""
+          },
+          "cold_xhr": {
+            "requests": 6,
+            "bytes": 11470440,
+            "range_requests": 0,
+            "status_206": 0,
+            "methods": {
+              "HEAD": 3,
+              "GET": 3
+            },
+            "detail": [
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 51
+              },
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 14
+              },
+              {
+                "m": "GET",
+                "range": null,
+                "status": 200,
+                "len": 6167492,
+                "ms": 966
+              },
+              {
+                "m": "HEAD",
+                "range": null,
+                "status": 200,
+                "len": 0,
+                "ms": 38
+              },
+              {
+                "m": "GET",
+                "range": null,
+                "status": 200,
+                "len": 2933451,
+                "ms": 474
+              },
+              {
+                "m": "GET",
+                "range": null,
+                "status": 200,
+                "len": 2369497,
+                "ms": 381
+              }
+            ]
+          },
+          "cold_server": null,
+          "warm": [
+            {
+              "ms": 23.799999952316284,
+              "requests": 3,
+              "bytes": 0
+            },
+            {
+              "ms": 17.5,
+              "requests": 3,
+              "bytes": 0
+            },
+            {
+              "ms": 16.200000047683716,
+              "requests": 3,
+              "bytes": 0
+            }
+          ],
+          "duckdb_memory": {
+            "database_name": "memory",
+            "database_size": "0 bytes",
+            "block_size": 0,
+            "total_blocks": 0,
+            "used_blocks": 0,
+            "free_blocks": 0,
+            "wal_size": "0 bytes",
+            "memory_usage": "256.0 KiB",
+            "memory_limit": "3.1 GiB"
+          },
+          "heap_end": {
+            "usedJSHeapSize": 2943047,
+            "totalJSHeapSize": 4457671
+          },
+          "page_errors": []
+        }
+      }
+    }
+  },
+  "fallback": [
+    {
+      "name": "F-local",
+      "base": "http://localhost:5199/data",
+      "register": {
+        "ms_fetch": 32.09999990463257,
+        "bytes": 0,
+        "ms_register": 2.5
+      },
+      "heap_after_register": {
+        "usedJSHeapSize": 2957396,
+        "totalJSHeapSize": 4452272
+      },
+      "queries": {
+        "Q0_count": {
+          "ms": 29.200000047683716,
+          "num_rows": 1
+        },
+        "Q1_in_keys": {
+          "ms": 96.20000004768372,
+          "num_rows": 50
+        },
+        "Q1b_in_keys_narrow": {
+          "ms": 26.399999856948853,
+          "num_rows": 50
+        },
+        "Q2_like": {
+          "ms": 42.200000047683716,
+          "num_rows": 20
+        }
+      },
+      "duckdb_memory": {
+        "database_name": "memory",
+        "database_size": "0 bytes",
+        "block_size": 0,
+        "total_blocks": 0,
+        "used_blocks": 0,
+        "free_blocks": 0,
+        "wal_size": "0 bytes",
+        "memory_usage": "432.0 KiB",
+        "memory_limit": "3.1 GiB"
+      },
+      "heap_end": {
+        "usedJSHeapSize": 2975470,
+        "totalJSHeapSize": 5543414
+      }
+    },
+    {
+      "name": "G-pages",
+      "base": "https://xzozero5.github.io/thai-government-budget-planner/data",
+      "register": {
+        "ms_fetch": 1229.6000001430511,
+        "bytes": 0,
+        "ms_register": 2.1999998092651367
+      },
+      "heap_after_register": {
+        "usedJSHeapSize": 2951511,
+        "totalJSHeapSize": 4452315
+      },
+      "queries": {
+        "Q0_count": {
+          "ms": 30.300000190734863,
+          "num_rows": 1
+        },
+        "Q1_in_keys": {
+          "ms": 100.29999995231628,
+          "num_rows": 50
+        },
+        "Q1b_in_keys_narrow": {
+          "ms": 25.59999990463257,
+          "num_rows": 50
+        },
+        "Q2_like": {
+          "ms": 39.60000014305115,
+          "num_rows": 20
+        }
+      },
+      "duckdb_memory": {
+        "database_name": "memory",
+        "database_size": "0 bytes",
+        "block_size": 0,
+        "total_blocks": 0,
+        "used_blocks": 0,
+        "free_blocks": 0,
+        "wal_size": "0 bytes",
+        "memory_usage": "432.0 KiB",
+        "memory_limit": "3.1 GiB"
+      },
+      "heap_end": {
+        "usedJSHeapSize": 2982509,
+        "totalJSHeapSize": 5543457
+      }
+    }
+  ]
+}

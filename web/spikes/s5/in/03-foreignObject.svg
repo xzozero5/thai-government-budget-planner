@@ -1,0 +1,1 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100"><foreignObject width="200" height="100"><body xmlns="http://www.w3.org/1999/xhtml"><iframe src="https://evil.example/"></iframe><img src=x onerror="alert(5)"/></body></foreignObject><rect width="10" height="10" fill="#000"/></svg>

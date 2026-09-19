@@ -16,9 +16,9 @@ Key อยู่ที่ `web/.env.local` (`VITE_EVAL_ANTHROPIC_API_KEY`; gitig
 
 - eval ครบ 20 โจทย์ด้วย Sonnet ตามแผนเดิม (≈ 0.5 USD/proposal → ~10 USD) **เกินเครดิต** → ลดขอบเขตตามตาราง; โจทย์ที่ไม่ได้รันจริงให้ระบุใน `docs/eval-report.md` ว่า `not_run (budget)` — ถ้าต้องการรันครบ ต้องเติมเครดิต (`[ASK-HUMAN]` ข้อ 3)
 - ทุก request ที่เรียกจริงต้องลง ledger (`web/spikes/api-spend.json`, ภายหลัง `web/tests/eval/api-spend.json`): model, tokens (in/out/cache), web_search_requests, est_cost_usd, แหล่งราคา + วันที่ตรวจ; ยอดสะสมสรุปใน `docs/STATUS.md`
-- ราคาต่อ token: ต้องตรวจจากหน้า pricing ทางการตอนใช้จริง `[UNVERIFIED]` จนกว่าจะบันทึกใน ledger
+- ราคาต่อ token: ledger ของ spike ใช้ราคาจาก `https://docs.claude.com/en/docs/about-claude/pricing` (ตรวจ 2026-09-20 โดย agent); main thread ยังไม่ได้ตรวจซ้ำเอง `[UNVERIFIED]` — ยอดจริงให้ยึดหน้า Console ของคุณนิว
 
 ## ยอดใช้สะสม
 | วันที่ | งาน | ใช้จริง (USD) | สะสม |
 |---|---|---|---|
-| — | — | 0.00 | 0.00 |
+| 2569-09-20 | Phase 2 spikes: S3 0.0500 (6 req, Haiku 4.5: streaming, tool loop, web_search ×1, cache write+read) + S5 0.0953 (3 SVG: `claude-sonnet-5` ×2, Haiku 4.5 ×1) — ledger `web/spikes/api-spend.json` | **0.1453** (เพดาน 0.40) | **0.1453** |

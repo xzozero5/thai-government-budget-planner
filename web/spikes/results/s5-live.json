@@ -1,0 +1,295 @@
+{
+  "spike": "S5-live",
+  "chromium": "153.0.8010.12",
+  "when": "2026-09-19T16:57:28.628Z",
+  "tasks": [
+    {
+      "id": "01-road-isometric",
+      "model": "claude-sonnet-5",
+      "kind": "isometric",
+      "ms": 48349.299999952316,
+      "usage": {
+        "input_tokens": 645,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 4000,
+        "output_tokens_details": {
+          "thinking_tokens": 4000
+        },
+        "service_tier": "standard",
+        "inference_geo": "global"
+      },
+      "stop_reason": "max_tokens",
+      "svg_bytes": 0,
+      "has_svg": false
+    },
+    {
+      "id": "02-weir-cross-section",
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "cross_section",
+      "ms": 18403.10000014305,
+      "usage": {
+        "input_tokens": 626,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 3215,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      },
+      "stop_reason": "end_turn",
+      "svg_bytes": 7839,
+      "has_svg": true,
+      "sanitize": {
+        "name": "02-weir-cross-section",
+        "bytes_in": 6849,
+        "bytes_out": 6508,
+        "before": {
+          "tags": {
+            "svg": 1,
+            "defs": 1,
+            "pattern": 3,
+            "rect": 12,
+            "circle": 2,
+            "path": 3,
+            "polygon": 8,
+            "text": 20,
+            "line": 10
+          },
+          "attrs": {
+            "viewbox": 1,
+            "width": 16,
+            "height": 16,
+            "xmlns": 1,
+            "id": 3,
+            "patternunits": 3,
+            "fill": 44,
+            "cx": 2,
+            "cy": 2,
+            "r": 2,
+            "opacity": 7,
+            "d": 3,
+            "stroke": 25,
+            "stroke-width": 25,
+            "points": 8,
+            "x": 28,
+            "y": 28,
+            "font-family": 20,
+            "font-size": 20,
+            "font-weight": 9,
+            "text-anchor": 9,
+            "x1": 10,
+            "y1": 10,
+            "x2": 10,
+            "y2": 10,
+            "stroke-dasharray": 8
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg"
+          ]
+        },
+        "after": {
+          "tags": {
+            "svg": 1,
+            "defs": 1,
+            "pattern": 3,
+            "rect": 12,
+            "circle": 2,
+            "path": 3,
+            "polygon": 8,
+            "text": 20,
+            "line": 10
+          },
+          "attrs": {
+            "viewbox": 1,
+            "width": 16,
+            "height": 16,
+            "xmlns": 1,
+            "id": 3,
+            "patternunits": 3,
+            "fill": 44,
+            "cx": 2,
+            "cy": 2,
+            "r": 2,
+            "opacity": 7,
+            "d": 3,
+            "stroke": 25,
+            "stroke-width": 25,
+            "points": 8,
+            "x": 28,
+            "y": 28,
+            "font-family": 20,
+            "font-size": 20,
+            "font-weight": 9,
+            "text-anchor": 9,
+            "x1": 10,
+            "y1": 10,
+            "x2": 10,
+            "y2": 10,
+            "stroke-dasharray": 8
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg"
+          ]
+        },
+        "removed_tags": [],
+        "clean_head": "<svg viewBox=\"0 0 1000 700\" width=\"1000\" height=\"700\" xmlns=\"http://www.w3.org/2000/svg\">\n  <defs>\n    <pattern id=\"concrete\" patternUnits=\"userSpaceOnUse\" width=\"8\" height=\"8\">\n      <rect width=\"8\" height=\"8\" fill=\"#E8"
+      },
+      "png": {
+        "via": "data",
+        "loaded": true,
+        "canvas": {
+          "w": 2000,
+          "h": 1400
+        },
+        "tainted": false,
+        "error": null,
+        "png_bytes": 269619,
+        "ms": 80,
+        "png_head": "data:image/png;base64,iVBORw0KGgoAAAANSU"
+      },
+      "pdf": {
+        "ms_render": 274.2999999523163,
+        "pdf_bytes": 93828,
+        "image_ops": 1,
+        "num_pages": 1
+      }
+    },
+    {
+      "id": "03-route-map",
+      "model": "claude-sonnet-5",
+      "kind": "map",
+      "ms": 34424,
+      "usage": {
+        "input_tokens": 667,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 3600,
+        "output_tokens_details": {
+          "thinking_tokens": 1041
+        },
+        "service_tier": "standard",
+        "inference_geo": "global"
+      },
+      "stop_reason": "end_turn",
+      "svg_bytes": 5160,
+      "has_svg": true,
+      "sanitize": {
+        "name": "03-route-map",
+        "bytes_in": 4582,
+        "bytes_out": 4370,
+        "before": {
+          "tags": {
+            "svg": 1,
+            "rect": 3,
+            "text": 19,
+            "line": 10,
+            "circle": 5,
+            "g": 2,
+            "polygon": 1
+          },
+          "attrs": {
+            "xmlns": 1,
+            "viewbox": 1,
+            "width": 4,
+            "height": 4,
+            "x": 22,
+            "y": 22,
+            "fill": 28,
+            "font-family": 19,
+            "font-size": 19,
+            "text-anchor": 3,
+            "font-weight": 7,
+            "stroke": 17,
+            "stroke-width": 17,
+            "x1": 10,
+            "y1": 10,
+            "x2": 10,
+            "y2": 10,
+            "stroke-linecap": 3,
+            "cx": 5,
+            "cy": 5,
+            "r": 5,
+            "transform": 2,
+            "points": 1
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg"
+          ]
+        },
+        "after": {
+          "tags": {
+            "svg": 1,
+            "rect": 3,
+            "text": 19,
+            "line": 10,
+            "circle": 5,
+            "g": 2,
+            "polygon": 1
+          },
+          "attrs": {
+            "xmlns": 1,
+            "viewbox": 1,
+            "width": 4,
+            "height": 4,
+            "x": 22,
+            "y": 22,
+            "fill": 28,
+            "font-family": 19,
+            "font-size": 19,
+            "text-anchor": 3,
+            "font-weight": 7,
+            "stroke": 17,
+            "stroke-width": 17,
+            "x1": 10,
+            "y1": 10,
+            "x2": 10,
+            "y2": 10,
+            "stroke-linecap": 3,
+            "cx": 5,
+            "cy": 5,
+            "r": 5,
+            "transform": 2,
+            "points": 1
+          },
+          "suspicious": [
+            "external-url in svg@xmlns=http://www.w3.org/2000/svg"
+          ]
+        },
+        "removed_tags": [],
+        "clean_head": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 620\" width=\"800\" height=\"620\">\n  <rect x=\"0\" y=\"0\" width=\"800\" height=\"620\" fill=\"#FFFFFF\"></rect>\n\n  \n  <text x=\"400\" y=\"35\" font-family=\"Sarabun, sans-serif\" fon"
+      },
+      "png": {
+        "via": "data",
+        "loaded": true,
+        "canvas": {
+          "w": 1600,
+          "h": 1240
+        },
+        "tainted": false,
+        "error": null,
+        "png_bytes": 165210,
+        "ms": 29.299999952316284,
+        "png_head": "data:image/png;base64,iVBORw0KGgoAAAANSU"
+      },
+      "pdf": {
+        "ms_render": 142.5,
+        "pdf_bytes": 86012,
+        "image_ops": 1,
+        "num_pages": 1
+      }
+    }
+  ],
+  "total_usd": 0.145276
+}

@@ -1,0 +1,35 @@
+{
+  "name": "tgbp-spikes",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "T-201 spikes S1-S5 — โปรเจกต์แยกจาก web/ (ห้าม import เข้า web/src)",
+  "scripts": {
+    "build": "vite build",
+    "serve": "node server.mjs",
+    "s1": "node runner/run-s1.mjs",
+    "s2": "node runner/run-s2.mjs",
+    "s4": "node runner/run-s4.mjs",
+    "s5": "node runner/run-s5.mjs",
+    "s3:offline": "node runner/run-s3-offline.mjs",
+    "s3:live": "node runner/run-s3-live.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.127.0",
+    "@duckdb/duckdb-wasm": "1.32.0",
+    "@react-pdf/renderer": "4.9.0",
+    "apache-arrow": "21.2.0",
+    "dompurify": "3.4.15",
+    "minisearch": "7.2.0",
+    "pdfjs-dist": "6.3.289",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.0",
+    "@types/react": "18.3.17",
+    "playwright": "1.63.0",
+    "typescript": "5.9.3",
+    "vite": "7.3.6"
+  }
+}

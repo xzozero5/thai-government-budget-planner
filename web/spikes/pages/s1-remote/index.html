@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <!--
+      CSP เดียวกับ 04 §D8 แต่เพิ่ม origin ของ GitHub Pages ใน connect-src
+      เพราะหน้านี้รันบน localhost แล้วยิงไป Pages (production จริงจะเป็น same-origin)
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; connect-src 'self' https://api.anthropic.com https://xzozero5.github.io; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; frame-ancestors 'none'"
+    />
+    <title>S1 — DuckDB-WASM + HTTP range (GitHub Pages)</title>
+  </head>
+  <body>
+    <h1>S1 remote (GitHub Pages)</h1>
+    <pre id="out"></pre>
+    <script type="module" src="../../src/s1.ts"></script>
+  </body>
+</html>

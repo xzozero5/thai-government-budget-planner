@@ -1,0 +1,161 @@
+{
+  "spike": "S3",
+  "model": "claude-haiku-4-5-20251001",
+  "chromium": "153.0.8010.12",
+  "when": "2026-09-19T16:55:42.989Z",
+  "steps": {
+    "ping": {
+      "ok": true,
+      "ms": 3324,
+      "input_tokens": 13
+    },
+    "stream": {
+      "ok": true,
+      "ms_total": 2069,
+      "ms_first_token": 1142,
+      "text_events": 37,
+      "text_len": 105,
+      "text_head": "งบประมาณแผ่นดินคือ แผนการใช้จ่ายเงินของรัฐบาลในแต่ละปีงบประมาณ เพื่อดำเนินการตามภารกิจและแก้ไขปัญหาประเทศ",
+      "usage": {
+        "input_tokens": 47,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 92,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      },
+      "stop_reason": "end_turn"
+    },
+    "toolLoop": {
+      "ok": true,
+      "ms": 2367.9000000953674,
+      "rounds": [
+        {
+          "round": 0,
+          "stop_reason": "tool_use",
+          "usage": {
+            "input_tokens": 868,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 0,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 0
+            },
+            "output_tokens": 87,
+            "service_tier": "standard",
+            "inference_geo": "not_available"
+          },
+          "blocks": [
+            "tool_use"
+          ]
+        },
+        {
+          "round": 1,
+          "stop_reason": "end_turn",
+          "usage": {
+            "input_tokens": 1094,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 0,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 0
+            },
+            "output_tokens": 89,
+            "service_tier": "standard",
+            "inference_geo": "not_available"
+          },
+          "blocks": [
+            "text"
+          ]
+        }
+      ],
+      "final_text": "ราคากลางของเครื่องปรับอากาศ 18000 บีทียู ที่รัฐเคยตั้งงบคือ **24,500 บาท** ต่อเครื่อง (จากข้อมูล 53 ครั้ง)"
+    },
+    "caching": {
+      "ok": true,
+      "calls": [
+        {
+          "call": 0,
+          "ms": 1249.4000000953674,
+          "usage": {
+            "input_tokens": 14,
+            "cache_creation_input_tokens": 17882,
+            "cache_read_input_tokens": 0,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 17882,
+              "ephemeral_1h_input_tokens": 0
+            },
+            "output_tokens": 40,
+            "service_tier": "standard",
+            "inference_geo": "not_available"
+          }
+        },
+        {
+          "call": 1,
+          "ms": 766,
+          "usage": {
+            "input_tokens": 15,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 17882,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 0
+            },
+            "output_tokens": 5,
+            "service_tier": "standard",
+            "inference_geo": "not_available"
+          }
+        }
+      ],
+      "system_chars": 21600
+    },
+    "webSearch": {
+      "ok": true,
+      "ms": 4687.400000095367,
+      "usage": {
+        "input_tokens": 10553,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 331,
+        "service_tier": "standard",
+        "inference_geo": "not_available",
+        "server_tool_use": {
+          "web_search_requests": 1,
+          "web_fetch_requests": 0
+        }
+      },
+      "block_types": [
+        "server_tool_use",
+        "web_search_tool_result",
+        "text",
+        "text",
+        "text",
+        "text",
+        "text",
+        "text",
+        "text"
+      ],
+      "citations": [
+        "https://www.aloydwater.com/all-18000-btu",
+        "https://www.dohome.co.th/th/electrical-appliances/air-conditioner/wall-air-conditioners.html",
+        "https://www.aloydwater.com/all-18000-btu"
+      ],
+      "text_head": "ราคาเครื่องปรับอากาศ 18000 BTU ในไทยตอนนี้อยู่ในช่วง **15,100 - 27,200 บาท** ขึ้นอยู่กับยี่ห้อและสปecs:\n\n- "
+    }
+  },
+  "storage_audit": {
+    "localStorage_keys": [],
+    "sessionStorage_keys": [],
+    "cookie_len": 0
+  },
+  "csp_violations": [],
+  "total_usd": 0.049951
+}
