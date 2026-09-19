@@ -3,8 +3,21 @@
  * (main thread วางโครง 2569-09-20 เพื่อให้งาน Phase 4 เดินขนานได้): ui-designer ปรับ "ค่า" ได้ ห้ามเปลี่ยน
  * "ชื่อ" โดยไม่แก้ tailwind.config.ts + components พร้อมกัน
  *
- * ค่าสีธงชาติ: `[UNVERIFIED]` จนกว่า ui-designer จะตรวจกับประกาศมาตรฐานสีธงชาติ พ.ศ. 2560 (T-401)
+ * ค่าสีธงชาติ: **`[UNVERIFIED]` — ยังไม่ได้ตรวจกับประกาศสำนักนายกรัฐมนตรี เรื่องมาตรฐานสีธงชาติ พ.ศ. 2560**
+ * (ui-designer ใน T-401 ไม่มีเครื่องมือเปิดเว็บ/เอกสาร จึงคงค่าตั้งต้น #a51931 / #f4f5f8 / #2d2a4a ไว้ตาม 06 §2
+ *  และห้ามอ้างว่าตรวจแล้ว — ผู้ที่เปิดประกาศจริงเท่านั้นที่ลบป้ายนี้ได้)
  * dark mode: `prefers-color-scheme` + override ด้วย `<html data-theme="light|dark">`
+ *
+ * Contrast (T-401, คำนวณด้วยสูตร WCAG 2.x relative luminance — ตรวจด้วยมือ ยังไม่มี automated test):
+ *   light: text/bg 15.5 · text/surface 16.9 · text/surface-2 14.5 · text-muted/bg 5.6 · text-muted/surface-2 5.3
+ *          accent-contrast/accent 7.5 · primary-contrast/primary 13.6 · danger|success|warn|info บน surface 6.5/6.5/5.7/6.4
+ *          basis historical 5.3 · market 5.6 · estimate 6.5 (บน basis-*-bg ของตัวเอง)
+ *   dark:  text/bg 16.1 · text/surface 14.5 · text-muted/surface 7.3 · accent-contrast/accent 5.9 · accent/surface 5.3
+ *          primary-contrast/primary 11.4 · basis historical 7.3 · market 7.5 · estimate 7.7
+ *   ทุกคู่ ≥ 4.5:1 หลังปรับค่า (ดูคอมเมนต์รายบรรทัด)
+ *
+ * ข้อควรระวัง: `--border` เป็น "เส้นแบ่งเชิงตกแต่ง" (light ~1.2:1 กับ --bg) **ห้ามใช้เป็นขอบของ form control**
+ * ที่ต้องแยกให้เห็น — input/select/textarea ให้ใช้ `border-fg-muted` (≥ 4.5:1) ตาม docs/ui/components.md §3
  */
 :root {
   --brand-navy: #2d2a4a;
@@ -22,8 +35,8 @@
   --accent: #a51931;
   --accent-contrast: #ffffff;
   --danger: #b3261e;
-  --success: #1b7f4b;
-  --warn: #9a6200;
+  --success: #166b40; /* T-401: เดิม #1b7f4b ได้ 4.33:1 บน --surface-2 (ไม่ผ่าน) → ตอนนี้ 5.64:1 */
+  --warn: #9a4b00; /* T-401: เดิม #9a6200 ได้ 4.39:1 บน --surface-2 → ตอนนี้ 5.36:1 และแยกจาก basis-market ชัดขึ้น */
   --info: #1f5fa8;
   --focus-ring: #4f6bd8;
 
@@ -54,11 +67,11 @@
     --text-muted: #a9adc4;
     --primary: #c9cbf2;
     --primary-contrast: #15142a;
-    --accent: #e0526a;
+    --accent: #f2637a; /* T-401: เดิม #e0526a เป็นข้อความบน --surface ได้ 4.31:1 (ไม่ผ่าน) → ตอนนี้ 5.28:1 */
     --accent-contrast: #15142a;
     --danger: #ff8a80;
     --success: #6fd6a0;
-    --warn: #f2c066;
+    --warn: #ff9f5a; /* T-401: เดิม #f2c066 ซ้ำกับ --basis-market ทุกตัวอักษร → เปลี่ยนเป็นส้ม (8.00:1 บน --surface) */
     --info: #8ab8f5;
     --focus-ring: #9db0ff;
     --basis-historical: #7fd8d2;
@@ -81,11 +94,11 @@
   --text-muted: #a9adc4;
   --primary: #c9cbf2;
   --primary-contrast: #15142a;
-  --accent: #e0526a;
+  --accent: #f2637a; /* ต้องตรงกับบล็อก prefers-color-scheme ด้านบนเสมอ */
   --accent-contrast: #15142a;
   --danger: #ff8a80;
   --success: #6fd6a0;
-  --warn: #f2c066;
+  --warn: #ff9f5a;
   --info: #8ab8f5;
   --focus-ring: #9db0ff;
   --basis-historical: #7fd8d2;

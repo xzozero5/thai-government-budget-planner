@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="ภาพตัดขวางฝายน้ำล้นคอนกรีตเสริมเหล็ก แสดงสันฝาย ฐานราก และระดับน้ำ">
+  <title>ภาพตัดขวางฝายน้ำล้น (เชิงแผนผัง ไม่ใช่แบบก่อสร้างจริง)</title>
+  <rect x="0" y="0" width="800" height="450" fill="#ffffff"/>
+  <rect x="0" y="0" width="800" height="450" fill="none" stroke="#e6e8ee" stroke-width="2"/>
+
+  <!-- ชั้นดิน -->
+  <path d="M40 350 L 760 350 L 760 410 L 40 410 Z" fill="#fdefd3" stroke="#8a5300" stroke-width="2"/>
+  <line x1="40" y1="374" x2="760" y2="374" stroke="#8a5300" stroke-width="2" stroke-dasharray="8 10"/>
+  <text x="48" y="400" fill="#8a5300" font-family="sans-serif" font-size="16">ชั้นดินเดิม</text>
+
+  <!-- น้ำเหนือฝาย -->
+  <path d="M40 230 L 300 230 L 300 350 L 40 350 Z" fill="#dff3f1" stroke="none"/>
+  <line x1="40" y1="230" x2="300" y2="230" stroke="#0f6e6e" stroke-width="2"/>
+  <line x1="40" y1="258" x2="300" y2="258" stroke="#0f6e6e" stroke-width="2" stroke-dasharray="6 10"/>
+  <text x="56" y="222" fill="#0f6e6e" font-family="sans-serif" font-size="16">ระดับน้ำเก็บกัก</text>
+
+  <!-- น้ำท้ายฝาย -->
+  <path d="M500 306 L 760 306 L 760 350 L 500 350 Z" fill="#dff3f1" stroke="none"/>
+  <line x1="500" y1="306" x2="760" y2="306" stroke="#0f6e6e" stroke-width="2"/>
+  <text x="628" y="298" fill="#0f6e6e" font-family="sans-serif" font-size="16">ระดับน้ำท้ายฝาย</text>
+
+  <!-- ตัวฝาย คสล. -->
+  <path d="M300 350 L 300 206 L 356 206 L 356 230 L 500 326 L 500 350 Z" fill="#e9eaf1" stroke="#2d2a4a" stroke-width="2"/>
+  <!-- ฐานราก -->
+  <rect x="268" y="350" width="264" height="36" fill="#e6e8ee" stroke="#2d2a4a" stroke-width="2"/>
+  <text x="300" y="374" fill="#5d6178" font-family="sans-serif" font-size="16">ฐานรากคอนกรีต</text>
+  <!-- แฮตช์เหล็กเสริม -->
+  <g stroke="#4d5168" stroke-width="2">
+    <line x1="312" y1="240" x2="312" y2="342"/>
+    <line x1="332" y1="240" x2="332" y2="342"/>
+    <line x1="300" y1="262" x2="352" y2="262"/>
+    <line x1="300" y1="296" x2="366" y2="296"/>
+  </g>
+
+  <!-- สันฝาย (accent) -->
+  <line x1="300" y1="206" x2="356" y2="206" stroke="#a51931" stroke-width="2"/>
+  <text x="286" y="182" fill="#a51931" font-family="sans-serif" font-size="18">สันฝาย กว้าง 12.00 ม.</text>
+
+  <!-- น้ำล้นข้ามสัน -->
+  <path d="M300 200 C 330 194, 350 200, 372 224 C 400 256, 440 292, 496 312" fill="none" stroke="#0f6e6e" stroke-width="2"/>
+
+  <!-- เส้นบอกระยะ ความสูง -->
+  <line x1="236" y1="206" x2="236" y2="350" stroke="#5d6178" stroke-width="2"/>
+  <path d="M236 206 L 230 216 M236 206 L 242 216" fill="none" stroke="#5d6178" stroke-width="2"/>
+  <path d="M236 350 L 230 340 M236 350 L 242 340" fill="none" stroke="#5d6178" stroke-width="2"/>
+  <text x="128" y="284" fill="#5d6178" font-family="sans-serif" font-size="16">สูง 2.00 ม.</text>
+
+  <!-- เส้นบอกระยะ ความยาวฐาน -->
+  <line x1="268" y1="420" x2="532" y2="420" stroke="#5d6178" stroke-width="2"/>
+  <path d="M268 420 L 278 414 M268 420 L 278 426" fill="none" stroke="#5d6178" stroke-width="2"/>
+  <path d="M532 420 L 522 414 M532 420 L 522 426" fill="none" stroke="#5d6178" stroke-width="2"/>
+  <text x="330" y="442" fill="#5d6178" font-family="sans-serif" font-size="16">ฐานกว้าง 6.60 ม.</text>
+
+  <!-- คนเทียบสัดส่วน สูงประมาณ 1.70 ม. -->
+  <g stroke="#2d2a4a" stroke-width="2" fill="none">
+    <circle cx="600" cy="288" r="9"/>
+    <line x1="600" y1="297" x2="600" y2="330"/>
+    <line x1="600" y1="306" x2="586" y2="318"/>
+    <line x1="600" y1="306" x2="614" y2="318"/>
+    <line x1="600" y1="330" x2="590" y2="350"/>
+    <line x1="600" y1="330" x2="610" y2="350"/>
+  </g>
+  <text x="626" y="344" fill="#5d6178" font-family="sans-serif" font-size="14">คน สูงประมาณ 1.70 ม.</text>
+</svg>

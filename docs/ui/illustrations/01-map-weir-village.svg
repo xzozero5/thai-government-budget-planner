@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="แผนผังที่ตั้งฝายน้ำล้นในลำน้ำ ใกล้หมู่บ้านและถนนสายหลัก">
+  <title>แผนผังที่ตั้งโครงการ (เชิงแผนผัง ไม่ใช่มาตราส่วนจริง)</title>
+  <rect x="0" y="0" width="800" height="450" fill="#ffffff"/>
+  <rect x="0" y="0" width="800" height="450" fill="none" stroke="#e6e8ee" stroke-width="2"/>
+
+  <!-- พื้นที่เกษตร -->
+  <rect x="56" y="250" width="150" height="92" fill="#dff3f1" stroke="#0f6e6e" stroke-width="2"/>
+  <rect x="600" y="96" width="146" height="86" fill="#dff3f1" stroke="#0f6e6e" stroke-width="2"/>
+  <line x1="56" y1="278" x2="206" y2="278" stroke="#0f6e6e" stroke-width="2"/>
+  <line x1="56" y1="306" x2="206" y2="306" stroke="#0f6e6e" stroke-width="2"/>
+  <line x1="600" y1="124" x2="746" y2="124" stroke="#0f6e6e" stroke-width="2"/>
+  <line x1="600" y1="152" x2="746" y2="152" stroke="#0f6e6e" stroke-width="2"/>
+
+  <!-- ลำน้ำ -->
+  <path d="M30 96 C 180 130, 250 210, 400 232 C 550 254, 640 330, 770 366" fill="none" stroke="#0f6e6e" stroke-width="22" stroke-linecap="round"/>
+  <path d="M30 96 C 180 130, 250 210, 400 232 C 550 254, 640 330, 770 366" fill="none" stroke="#2d2a4a" stroke-width="2" stroke-dasharray="10 8"/>
+
+  <!-- ถนนสายหลัก -->
+  <path d="M96 420 L 300 300 L 520 300 L 720 190" fill="none" stroke="#4d5168" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M96 420 L 300 300 L 520 300 L 720 190" fill="none" stroke="#ffffff" stroke-width="2" stroke-dasharray="14 12"/>
+
+  <!-- หมู่บ้าน -->
+  <g stroke="#2d2a4a" stroke-width="2">
+    <rect x="300" y="352" width="44" height="34" fill="#e9eaf1"/>
+    <path d="M294 352 L 322 330 L 350 352" fill="#fdefd3"/>
+    <rect x="364" y="358" width="38" height="28" fill="#e9eaf1"/>
+    <path d="M358 358 L 383 340 L 408 358" fill="#fdefd3"/>
+    <rect x="418" y="346" width="48" height="40" fill="#e9eaf1"/>
+    <path d="M412 346 L 442 322 L 472 346" fill="#fdefd3"/>
+  </g>
+  <text x="300" y="410" fill="#5d6178" font-family="sans-serif" font-size="18">บ้านน้ำปั้ว 240 ครัวเรือน</text>
+
+  <!-- ต้นไม้ -->
+  <g stroke="#166b40" stroke-width="2" fill="#dff3f1">
+    <circle cx="540" cy="378" r="16"/>
+    <circle cx="576" cy="392" r="12"/>
+    <circle cx="150" cy="180" r="16"/>
+    <circle cx="186" cy="196" r="12"/>
+  </g>
+
+  <!-- ฝาย (จุดเน้น = accent) -->
+  <rect x="372" y="196" width="60" height="72" fill="#ffffff" stroke="#a51931" stroke-width="2"/>
+  <line x1="372" y1="232" x2="432" y2="232" stroke="#a51931" stroke-width="2"/>
+  <line x1="392" y1="196" x2="392" y2="268" stroke="#a51931" stroke-width="2"/>
+  <line x1="412" y1="196" x2="412" y2="268" stroke="#a51931" stroke-width="2"/>
+  <line x1="402" y1="150" x2="402" y2="188" stroke="#a51931" stroke-width="2"/>
+  <text x="352" y="140" fill="#a51931" font-family="sans-serif" font-size="20">ฝายน้ำล้น (จุดก่อสร้าง)</text>
+
+  <!-- ทิศทางน้ำ -->
+  <path d="M120 150 L 168 168" fill="none" stroke="#0f6e6e" stroke-width="2"/>
+  <path d="M168 168 L 156 160 M168 168 L 156 174" fill="none" stroke="#0f6e6e" stroke-width="2"/>
+  <text x="96" y="140" fill="#0f6e6e" font-family="sans-serif" font-size="16">ทิศทางน้ำไหล</text>
+
+  <!-- เข็มทิศ + มาตราส่วนอย่างง่าย -->
+  <g stroke="#5d6178" stroke-width="2" fill="none">
+    <circle cx="742" cy="404" r="18"/>
+    <path d="M742 392 L 742 416"/>
+    <path d="M742 392 L 736 400 M742 392 L 748 400"/>
+  </g>
+  <text x="714" y="438" fill="#5d6178" font-family="sans-serif" font-size="14">ทิศเหนือ</text>
+  <line x1="56" y1="60" x2="176" y2="60" stroke="#5d6178" stroke-width="2"/>
+  <line x1="56" y1="52" x2="56" y2="68" stroke="#5d6178" stroke-width="2"/>
+  <line x1="176" y1="52" x2="176" y2="68" stroke="#5d6178" stroke-width="2"/>
+  <text x="56" y="44" fill="#5d6178" font-family="sans-serif" font-size="14">ประมาณ 500 เมตร</text>
+</svg>

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="แผนผังระบบประปาหมู่บ้าน จากบ่อบาดาล ผ่านเครื่องสูบน้ำ ถังกรอง หอถังสูง ไปยังบ้านเรือน">
+  <title>แผนผังระบบประปาหมู่บ้าน (เชิงแผนผัง)</title>
+  <rect x="0" y="0" width="800" height="450" fill="#ffffff"/>
+  <rect x="0" y="0" width="800" height="450" fill="none" stroke="#e6e8ee" stroke-width="2"/>
+
+  <!-- 1 บ่อบาดาล -->
+  <rect x="48" y="238" width="112" height="140" fill="#e9eaf1" stroke="#2d2a4a" stroke-width="2"/>
+  <rect x="86" y="266" width="36" height="112" fill="#dff3f1" stroke="#0f6e6e" stroke-width="2"/>
+  <line x1="48" y1="238" x2="160" y2="238" stroke="#8a5300" stroke-width="2"/>
+  <text x="48" y="226" fill="#2d2a4a" font-family="sans-serif" font-size="18">1. บ่อบาดาล</text>
+  <text x="48" y="404" fill="#5d6178" font-family="sans-serif" font-size="14">ลึก 80 เมตร</text>
+
+  <!-- 2 เครื่องสูบน้ำ -->
+  <rect x="216" y="276" width="104" height="72" fill="#ffffff" stroke="#2d2a4a" stroke-width="2"/>
+  <circle cx="268" cy="312" r="22" fill="#e9eaf1" stroke="#2d2a4a" stroke-width="2"/>
+  <path d="M268 290 L 268 312 L 286 322" fill="none" stroke="#2d2a4a" stroke-width="2"/>
+  <text x="212" y="264" fill="#2d2a4a" font-family="sans-serif" font-size="18">2. เครื่องสูบน้ำ</text>
+  <text x="216" y="372" fill="#5d6178" font-family="sans-serif" font-size="14">3 แรงม้า 2 ชุด</text>
+
+  <!-- 3 ถังกรอง -->
+  <rect x="368" y="252" width="88" height="96" fill="#dff3f1" stroke="#0f6e6e" stroke-width="2"/>
+  <line x1="368" y1="282" x2="456" y2="282" stroke="#0f6e6e" stroke-width="2"/>
+  <line x1="368" y1="312" x2="456" y2="312" stroke="#0f6e6e" stroke-width="2"/>
+  <text x="362" y="240" fill="#2d2a4a" font-family="sans-serif" font-size="18">3. ถังกรองสนิมเหล็ก</text>
+
+  <!-- 4 หอถังสูง (จุดเน้น) -->
+  <path d="M528 152 L 640 152 L 628 236 L 540 236 Z" fill="#ffffff" stroke="#a51931" stroke-width="2"/>
+  <path d="M528 152 L 584 122 L 640 152" fill="#fdefd3" stroke="#a51931" stroke-width="2"/>
+  <path d="M540 236 L 552 348 M628 236 L 616 348" fill="none" stroke="#a51931" stroke-width="2"/>
+  <path d="M546 288 L 622 288" fill="none" stroke="#a51931" stroke-width="2"/>
+  <text x="502" y="110" fill="#a51931" font-family="sans-serif" font-size="18">4. หอถังสูง 20 ลบ.ม.</text>
+  <rect x="546" y="176" width="76" height="52" fill="#dff3f1" stroke="#0f6e6e" stroke-width="2"/>
+
+  <!-- 5 บ้านเรือน -->
+  <g stroke="#2d2a4a" stroke-width="2">
+    <rect x="678" y="288" width="52" height="42" fill="#e9eaf1"/>
+    <path d="M670 288 L 704 262 L 738 288" fill="#fdefd3"/>
+    <rect x="700" y="344" width="44" height="36" fill="#e9eaf1"/>
+    <path d="M692 344 L 722 322 L 752 344" fill="#fdefd3"/>
+  </g>
+  <text x="664" y="406" fill="#2d2a4a" font-family="sans-serif" font-size="18">5. ผู้ใช้น้ำ 240 หลัง</text>
+
+  <!-- ท่อและทิศทางการไหล -->
+  <g stroke="#0f6e6e" stroke-width="2" fill="none">
+    <path d="M160 312 L 216 312"/>
+    <path d="M320 312 L 368 300"/>
+    <path d="M456 288 L 500 268 L 528 200"/>
+    <path d="M628 348 L 660 348 L 660 310 L 678 310"/>
+  </g>
+  <g stroke="#0f6e6e" stroke-width="2" fill="none">
+    <path d="M196 312 L 186 306 M196 312 L 186 318"/>
+    <path d="M352 305 L 341 300 M352 305 L 343 312"/>
+    <path d="M520 218 L 520 230 M520 218 L 529 224"/>
+    <path d="M668 310 L 658 304 M668 310 L 658 316"/>
+  </g>
+
+  <!-- คำอธิบายสัญลักษณ์ -->
+  <rect x="48" y="52" width="300" height="56" fill="#f4f5f8" stroke="#e6e8ee" stroke-width="2"/>
+  <line x1="64" y1="72" x2="104" y2="72" stroke="#0f6e6e" stroke-width="2"/>
+  <text x="114" y="78" fill="#5d6178" font-family="sans-serif" font-size="14">ท่อส่งน้ำ และทิศทางการไหล</text>
+  <rect x="64" y="86" width="40" height="12" fill="#fdefd3" stroke="#8a5300" stroke-width="2"/>
+  <text x="114" y="98" fill="#5d6178" font-family="sans-serif" font-size="14">โครงสร้างที่ต้องก่อสร้างใหม่</text>
+</svg>
