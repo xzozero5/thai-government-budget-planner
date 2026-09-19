@@ -1,0 +1,3321 @@
+# T-103: fixture สำหรับ item_parser.py แบ่ง 3 หมวด
+# - pbo2566: 200 ตัวอย่างจริงจาก PBO/2566.xlsx สุ่ม stratified ตาม budget_type (seed=42)
+#   (pipeline/scripts/sample_item_names.py) — label โดยอ่านเอง + เทียบ implementation
+#   อิสระ 2 ชุด (regex คนละตัวจาก item_parser.py) ที่ให้ผลตรงกันทั้ง 200 เคส
+# - holdout_2563: 13 เคสจาก main thread (coordinator) — expected ตามที่ระบุมาตรงตัว
+#   (ห้ามแก้ expected ให้เข้ากับ parser)
+# - holdout_2560_2568: 7 เคสจาก hold-out อิสระ (PBO 2560+2568, 48 รายการ, seed คงที่)
+#   ที่อ่านผลด้วยตาก่อนแก้โค้ด — 4 เคสแรกเป็นบั๊กจริงที่แก้แล้ว, 3 เคสหลังเป็น
+#   ข้อจำกัดที่ตั้งใจไม่แก้ (ambiguous: true พร้อมเหตุผล)
+# ambiguous: true = ไม่นับในเกณฑ์ accuracy (ดูเหตุผลใน ambiguous_reason)
+pbo2566:
+- raw: ค่าก่อสร้างแหล่งน้ำในไร่นา ขนาด 1,260 ลูกบาศก์เมตร ตำบลโคกก่อง อำเภอเมืองบึงกาฬ จังหวัดบึงกาฬ
+  source_row: 26129
+  budget_type: งบลงทุน
+  expected:
+    province: บึงกาฬ
+    amphoe: เมืองบึงกาฬ
+    tambon: โคกก่อง
+    qty: null
+    unit: null
+    spec_tokens:
+    - 1260 ลูกบาศก์เมตร
+    item_key_contains:
+    - ค่าก่อสร้างแหล่งน้ำในไร่นา
+    item_key_not_contains:
+    - บึงกาฬ
+    - เมืองบึงกาฬ
+    - โคกก่อง
+- raw: เครื่องมัลติมิเดียโปรเจคเตอร์ระดับ XGA ขนาด 3,500 ANSILumens โรงเรียนราชวินิตบางแก้ว ตำบลบางแก้ว
+    อำเภอบางพลี จังหวัดสมุทรปราการ
+  source_row: 128383
+  budget_type: งบลงทุน
+  expected:
+    province: สมุทรปราการ
+    amphoe: บางพลี
+    tambon: บางแก้ว
+    qty: null
+    unit: null
+    item_key_contains:
+    - เครื่องมัลติมิเดียโปรเจคเตอร์ระดับ
+    item_key_not_contains:
+    - สมุทรปราการ
+    - บางพลี
+    - บางแก้ว
+- raw: 'ค่าตอบแทน ใช้สอยและวัสดุเพื่อเป็นค่าใช้จ่ายในการดำเนินโครงการแก้ไขปัญหาโรคติดต่ออุบัติใหม่ : กรณีโรคติดเชื้อไวรัสโคโรนา
+    2019 (COVID - 19) ระยะการระบาดระลอกมกราคม 2565 ประจำปีงบประมาณ พ.ศ.2565'
+  source_row: 188794
+  budget_type: งบดำเนินงาน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าตอบแทน
+    item_key_not_contains: []
+- raw: ครุภัณฑ์ทดแทนสำหรับห้องเรียน DLTV (โรงเรียน Stand Alone) โรงเรียนบ้านโพนขาว ตำบลโพนสว่าง อำเภอศรีสงคราม
+    จังหวัดนครพนม
+  source_row: 132502
+  budget_type: งบลงทุน
+  expected:
+    province: นครพนม
+    amphoe: ศรีสงคราม
+    tambon: โพนสว่าง
+    qty: null
+    unit: null
+    item_key_contains:
+    - ครุภัณฑ์ทดแทนสำหรับห้องเรียน
+    item_key_not_contains:
+    - นครพนม
+    - ศรีสงคราม
+    - โพนสว่าง
+- raw: ก่อสร้างรั้วบริเวณศูนย์ราชการอำเภอเดิมบางนางบวช จังหวัดสุพรรณบุรี
+  source_row: 58852
+  budget_type: งบลงทุน
+  expected:
+    province: สุพรรณบุรี
+    amphoe: เดิมบางนางบวช
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ก่อสร้างรั้วบริเวณศูนย์ราชการ
+    item_key_not_contains:
+    - สุพรรณบุรี
+    - เดิมบางนางบวช
+- raw: โครงการก่อสร้างระบบผลิตน้ำประปา (Water Treatment System) POG ระบบขนาด L บ้านป่าตึง หมู่ 7 ตำบลออนใต้
+    อำเภอสันกำแพง จังหวัดเชียงใหม่
+  source_row: 186948
+  budget_type: งบลงทุน
+  expected:
+    province: เชียงใหม่
+    amphoe: สันกำแพง
+    tambon: ออนใต้
+    qty: null
+    unit: null
+    item_key_contains:
+    - โครงการก่อสร้างระบบผลิตน้ำประปา
+    item_key_not_contains:
+    - เชียงใหม่
+    - สันกำแพง
+    - ออนใต้
+- raw: ซ่อมแซมท่อส่งน้ำเข้านาคลองส่งน้ำ 1ซ.ส.1 จำนวน 3 แห่ง ตำบลบาชะนี อำเภอบางบาล จังหวัดพระนครศรีอยุธยา
+  source_row: 17707
+  budget_type: งบลงทุน
+  expected:
+    province: พระนครศรีอยุธยา
+    amphoe: บางบาล
+    tambon: บาชะนี
+    qty: 3.0
+    unit: แห่ง
+    item_key_contains:
+    - ซ่อมแซมท่อส่งน้ำเข้านาคลองส่งน้ำ
+    item_key_not_contains:
+    - พระนครศรีอยุธยา
+    - บางบาล
+    - บาชะนี
+- raw: โต๊ะเก้าอี้นักเรียน ระดับก่อนประถมศึกษา โรงเรียนบ้านดงกะพุงหนองนาแซง ตำบลน้ำจั้น อำเภอเซกา จังหวัดบึงกาฬ
+  source_row: 128318
+  budget_type: งบลงทุน
+  expected:
+    province: บึงกาฬ
+    amphoe: เซกา
+    tambon: น้ำจั้น
+    qty: null
+    unit: null
+    item_key_contains:
+    - โต๊ะเก้าอี้นักเรียน
+    item_key_not_contains:
+    - บึงกาฬ
+    - เซกา
+    - น้ำจั้น
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนบ้านโพนสวางกลางเจริญ ตำบลต้นผึ้ง
+    อำเภอพังโคน จังหวัดสกลนคร
+  source_row: 121087
+  budget_type: งบลงทุน
+  expected:
+    province: สกลนคร
+    amphoe: พังโคน
+    tambon: ต้นผึ้ง
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - สกลนคร
+    - พังโคน
+    - ต้นผึ้ง
+- raw: ค่าก่อสร้างแหล่งน้ำในไร่นา ขนาด 1,260 ลูกบาศก์เมตร ตำบลศรีฐาน อำเภอภูกระดึง จังหวัดเลย
+  source_row: 27143
+  budget_type: งบลงทุน
+  expected:
+    province: เลย
+    amphoe: ภูกระดึง
+    tambon: ศรีฐาน
+    qty: null
+    unit: null
+    spec_tokens:
+    - 1260 ลูกบาศก์เมตร
+    item_key_contains:
+    - ค่าก่อสร้างแหล่งน้ำในไร่นา
+    item_key_not_contains:
+    - เลย
+    - ภูกระดึง
+    - ศรีฐาน
+- raw: ปรับปรุงอาคารสำนักงานและสิ่งก่อสร้างประกอบ สำนักงานทางหลวงชนบทที่ 12 (สงขลา) 1 แห่ง
+  source_row: 42602
+  budget_type: งบลงทุน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: 1.0
+    unit: แห่ง
+    item_key_contains:
+    - ปรับปรุงอาคารสำนักงานและสิ่งก่อสร้างประกอบ
+    item_key_not_contains: []
+- raw: สแกนเนอร์สำหรับงานเก็บเอกสารทั่วไป ตำบลบ่อยางอำเภอเมืองสงขลา จังหวัดสงขลา
+  source_row: 51703
+  budget_type: งบลงทุน
+  expected:
+    province: สงขลา
+    amphoe: เมืองสงขลา
+    tambon: บ่อยาง
+    qty: null
+    unit: null
+    item_key_contains:
+    - สแกนเนอร์สำหรับงานเก็บเอกสารทั่วไป
+    item_key_not_contains:
+    - สงขลา
+    - เมืองสงขลา
+    - บ่อยาง
+- raw: การเทิดทูนสถาบันพระมหากษัตริย์
+  source_row: 2644
+  budget_type: งบรายจ่ายอื่น
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - การเทิดทูนสถาบันพระมหากษัตริย์
+    item_key_not_contains: []
+- raw: ค่าควบคุมงานจ้างเหมา จังหวัดราชบุรี
+  source_row: 18865
+  budget_type: งบลงทุน
+  expected:
+    province: ราชบุรี
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าควบคุมงานจ้างเหมา
+    item_key_not_contains:
+    - ราชบุรี
+- raw: ก่อสร้างบ้านพักข้าราชการของหน่วยป้องกันรักษาป่า ตำบลหนองหญ้าลาด อำเภอกันทรลักษ์ จังหวัดศรีสะเกษ
+  source_row: 52286
+  budget_type: งบลงทุน
+  expected:
+    province: ศรีสะเกษ
+    amphoe: กันทรลักษ์
+    tambon: หนองหญ้าลาด
+    qty: null
+    unit: null
+    item_key_contains:
+    - ก่อสร้าง
+    item_key_not_contains:
+    - ศรีสะเกษ
+    - กันทรลักษ์
+    - หนองหญ้าลาด
+- raw: ระบบวัดอัตราการเต้นของหัวใจแบบไร้สายระบบทีม ตำบลนอกเมือง อำเภอเมืองสุรินทร์ จังหวัดสุรินทร์
+  source_row: 153931
+  budget_type: งบลงทุน
+  expected:
+    province: สุรินทร์
+    amphoe: เมืองสุรินทร์
+    tambon: นอกเมือง
+    qty: null
+    unit: null
+    item_key_contains:
+    - ระบบวัดอัตราการเต้นของหัวใจแบบไร้สายระบบทีม
+    item_key_not_contains:
+    - สุรินทร์
+    - เมืองสุรินทร์
+    - นอกเมือง
+- raw: รายการงบประจำ รายการงบบุคลากร
+  source_row: 7364
+  budget_type: งบบุคลากร
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - รายการงบประจำ
+    item_key_not_contains: []
+- raw: รถบรรทุก (ดีเซล) ขนาด 1 ตัน ปริมาตรกระบอกสูบไม่ต่ำกว่า 2,400 ซีซี หรือกำลังเครื่องยนต์สูงสุดไม่ต่ำกว่า
+    110 กิโลวัตต์ ขับเคลื่อน 4 ล้อ แบบดับเบิ้ลแค็บ พร้อมหลังคาไฟเบอร์กลาสหรือเหล็ก ศูนย์ส่งเสริมเทคโนโลยีการเกษตรด้านอารักขาพืช
+    จังหวัดเชียงใหม่ ตำบลหนองควาย อำเภอหางดง จังหวัดเชียงใหม่
+  source_row: 30454
+  budget_type: งบลงทุน
+  expected:
+    province: เชียงใหม่
+    amphoe: หางดง
+    tambon: หนองควาย
+    qty: null
+    unit: null
+    spec_tokens:
+    - 1 ตัน
+    - 2400 ซีซี
+    - 110 กิโลวัตต์
+    - 4 ล้อ
+    item_key_contains:
+    - รถบรรทุก
+    item_key_not_contains:
+    - เชียงใหม่
+    - หางดง
+    - หนองควาย
+- raw: ชุดเครื่องถ่ายภาพสารพันธุกรรมและโปรตีน (Gel documentation) ตำบลแม่กา อำเภอเมืองพะเยา จังหวัดพะเยา
+  source_row: 159848
+  budget_type: งบอุดหนุน
+  expected:
+    province: พะเยา
+    amphoe: เมืองพะเยา
+    tambon: แม่กา
+    qty: null
+    unit: null
+    item_key_contains:
+    - ชุดเครื่องถ่ายภาพสารพันธุกรรมและโปรตีน
+    item_key_not_contains:
+    - พะเยา
+    - เมืองพะเยา
+    - แม่กา
+- raw: ติดตั้งหลักนำทางยางธรรมชาติแขวงทางหลวงชนบทอำนาจเจริญ
+  source_row: 40790
+  budget_type: งบลงทุน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ติดตั้งหลักนำทางยางธรรมชาติแขวงทางหลวงชนบทอำนาจเจริญ
+    item_key_not_contains: []
+- raw: งานบำรุงพิเศษและบูรณะ ทางหลวงหมายเลข 3022 ตอน พระพุทธบาท - ท่าเรือ จ.สระบุรี
+  source_row: 38106
+  budget_type: งบลงทุน
+  expected:
+    province: สระบุรี
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - งานบำรุงพิเศษและบูรณะ
+    item_key_not_contains:
+    - สระบุรี
+- raw: ค่าก่อสร้างอาคารที่พักอาศัยและสิ่งก่อสร้างประกอบ ระดับปฏิบัติการและระดับชำนาญการ (ระดับ 3-6) หมวดทางหลวงชุมพร
+    แขวงทางหลวงชุมพร จ.ชุมพร
+  source_row: 36436
+  budget_type: งบลงทุน
+  expected:
+    province: ชุมพร
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าก่อสร้างอาคารที่พักอาศัยและสิ่งก่อสร้างประกอบ
+    item_key_not_contains:
+    - ชุมพร
+- raw: ตู้เย็น แบบ 2 ประตู สำหรับใช้งานที่ทำเนียบ ออท. 1 ตู้ (สอท. ณ กรุงเบิร์น)
+  source_row: 7546
+  budget_type: งบลงทุน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ตู้เย็น
+    item_key_not_contains: []
+- raw: ค่าจ้างขั่วคราว
+  source_row: 183796
+  budget_type: งบบุคลากร
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าจ้างขั่วคราว
+    item_key_not_contains: []
+- raw: ซ่อมแซมโครงการชลประทานอันเนื่องมาจากพระราชดำริตามข้อเสนอของเกษตรกรในเขตจังหวัดพระนครศรีอยุธยา
+  source_row: 13369
+  budget_type: งบลงทุน
+  expected:
+    province: พระนครศรีอยุธยา
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ซ่อมแซมโครงการชลประทานอันเนื่องมาจากพระราชดำริตามข้อเสนอของเกษตรกรในเขต
+    item_key_not_contains:
+    - พระนครศรีอยุธยา
+- raw: เสริมผิวถนนแอสฟัลท์ติกคอนกรีต รหัสทางหลวงท้องถิ่น นธ.ถ66-004 สายกำปงนิบง - สี่เลน หมู่ที่2 บ้านกูเล็ง
+    ตำบลยี่งอ กว้าง 4.00 เมตร ยาว 940.00 เมตร หนา 0.04 เมตร หรือมีพื้นที่ไม่น้อยกว่า 3,760.00 ตารางเมตร
+    องค์การบริหารส่วนตำบลยี่งอ อำเภอยี่งอ จังหวัดนราธิวาส
+  source_row: 70239
+  budget_type: งบอุดหนุน
+  expected:
+    province: นราธิวาส
+    amphoe: ยี่งอ
+    tambon: ยี่งอ
+    spec_tokens:
+    - 4 เมตร
+    - 940 เมตร
+    - 0.04 เมตร
+    item_key_contains:
+    - เสริมผิวถนนแอสฟัลท์ติกคอนกรีต
+    item_key_not_contains:
+    - นราธิวาส
+    - ยี่งอ
+  ambiguous: true
+  ambiguous_reason: มีตัวเลข+หน่วยหลายคู่ในชื่อเดียว (เช่น กว้าง/ยาว/หนา/พื้นที่ของงานก่อสร้างถนน) ไม่ชัดว่าอันไหนคือ
+    qty หลัก
+- raw: เครื่องเล่นสนาม ระดับก่อนประถมศึกษา (เลือกรายการ)แบบ 2 โรงเรียนบ้านเป้า(สำราญไชยวิทยา) ตำบลบ้านเป้า
+    อำเภอเกษตรสมบูรณ์ จังหวัดชัยภูมิ
+  source_row: 93169
+  budget_type: งบลงทุน
+  expected:
+    province: ชัยภูมิ
+    amphoe: เกษตรสมบูรณ์
+    tambon: บ้านเป้า
+    qty: null
+    unit: null
+    item_key_contains:
+    - เครื่องเล่นสนาม
+    item_key_not_contains:
+    - ชัยภูมิ
+    - เกษตรสมบูรณ์
+    - บ้านเป้า
+- raw: บส.192
+  source_row: 5249
+  budget_type: งบรายจ่ายอื่น
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - บส 192
+    item_key_not_contains: []
+- raw: ค่าซ่อมใหญ่อากาศยานเครื่องบิน แขวงลาดยาว เขตจตุจักร กรุงเทพมหานคร
+  source_row: 33096
+  budget_type: งบลงทุน
+  expected:
+    province: กรุงเทพมหานคร
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าซ่อมใหญ่อากาศยานเครื่องบิน
+    item_key_not_contains:
+    - กรุงเทพมหานคร
+- raw: ค่าใช้จ่ายโครงการพัฒนาหลักสูตรโรงเรียนนอกระบบที่เชื่อมโยงกับมาตรฐานอาชีพ
+  source_row: 90827
+  budget_type: งบรายจ่ายอื่น
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าใช้จ่ายโครงการพัฒนาหลักสูตรโรงเรียนนอกระบบที่เชื่อมโยงกับมาตรฐานอาชีพ
+    item_key_not_contains: []
+- raw: โครงการก่อสร้างกองผลิตและซ่อมบำรุง กรมวิทยาศาสตร์ทหารเรือ พื้นที่สัตหีบ (ต่อเนื่อง)
+  source_row: 3412
+  budget_type: งบรายจ่ายอื่น
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - โครงการก่อสร้างกองผลิตและซ่อมบำรุง
+    item_key_not_contains: []
+- raw: ก่อสร้างถนนคอนกรีตเสริมเหล็ก รหัสสายทางหลวงท้องถิ่น สท.ถ. 71-061 ซอย 6 หมู่ที่ 8 บ้านวังทอง ตำบลวังทอง
+    กว้าง 3 เมตร ยาว 423 เมตร หนา 0.15 เมตร หรือมีพื้นี่ไม่น้อยกว่า 1,269 ตารางเมตร องค์การบริหารส่วนตำบลวังทอง
+    อำเภอศรีสำโรง จังหวัดสุโขทัย
+  source_row: 73538
+  budget_type: งบอุดหนุน
+  expected:
+    province: สุโขทัย
+    amphoe: ศรีสำโรง
+    tambon: วังทอง
+    qty: 1269.0
+    unit: ตารางเมตร
+    spec_tokens:
+    - 3 เมตร
+    - 423 เมตร
+    - 0.15 เมตร
+    item_key_contains:
+    - ก่อสร้างถนนคอนกรีตเสริมเหล็ก
+    item_key_not_contains:
+    - สุโขทัย
+    - ศรีสำโรง
+    - วังทอง
+- raw: เงินช่วยเหลือการศึกษาและค่าเล่าเรียนบุตรข้าราชการและลูกจ้างประจำ
+  source_row: 184284
+  budget_type: งบดำเนินงาน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - เงินช่วยเหลือการศึกษาและค่าเล่าเรียนบุตรข้าราชการและลูกจ้างประจำ
+    item_key_not_contains: []
+- raw: ปรับปรุงซ่อมแซมสถานีสูบน้ำด้วยไฟฟ้า วังกางฮุง หมู่ที่ 7บ้านคำกลาง ตำบลบุ่งไหมเทศบาลตำบลบุ่งไหม
+    อำเภอวารินชำราบ จังหวัดอุบลราชธานี
+  source_row: 83715
+  budget_type: งบอุดหนุน
+  expected:
+    province: อุบลราชธานี
+    amphoe: วารินชำราบ
+    tambon: บุ่งไหม
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมสถานีสูบน้ำด้วยไฟฟ้า
+    item_key_not_contains:
+    - อุบลราชธานี
+    - วารินชำราบ
+    - บุ่งไหม
+- raw: 'รายการงบประจำ งบบุคลากร '
+  source_row: 7435
+  budget_type: งบบุคลากร
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - รายการงบประจำ
+    item_key_not_contains: []
+- raw: ครุภัณฑ์ทดแทนสำหรับห้องเรียน DLTV (โรงเรียน Stand Alone) โรงเรียนบ้านหนองเข้ ตำบลไผ่เขียว อำเภอสว่างอารมณ์
+    จังหวัดอุทัยธานี
+  source_row: 138262
+  budget_type: งบลงทุน
+  expected:
+    province: อุทัยธานี
+    amphoe: สว่างอารมณ์
+    tambon: ไผ่เขียว
+    qty: null
+    unit: null
+    item_key_contains:
+    - ครุภัณฑ์ทดแทนสำหรับห้องเรียน
+    item_key_not_contains:
+    - อุทัยธานี
+    - สว่างอารมณ์
+    - ไผ่เขียว
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนบ้านแม่ต้อบใต้ ตำบลบ้านกาศ อำเภอแม่สะเรียง
+    จังหวัดแม่ฮ่องสอน
+  source_row: 119467
+  budget_type: งบลงทุน
+  expected:
+    province: แม่ฮ่องสอน
+    amphoe: แม่สะเรียง
+    tambon: บ้านกาศ
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - แม่ฮ่องสอน
+    - แม่สะเรียง
+    - บ้านกาศ
+- raw: ครุภัณฑ์ทดแทนสำหรับห้องเรียน DLTV (โรงเรียน Stand Alone) โรงเรียนบ้านสว่างสำราญ ตำบลโคกสูง อำเภอปลาปาก
+    จังหวัดนครพนม
+  source_row: 132581
+  budget_type: งบลงทุน
+  expected:
+    province: นครพนม
+    amphoe: ปลาปาก
+    tambon: โคกสูง
+    qty: null
+    unit: null
+    item_key_contains:
+    - ครุภัณฑ์ทดแทนสำหรับห้องเรียน
+    item_key_not_contains:
+    - นครพนม
+    - ปลาปาก
+    - โคกสูง
+- raw: งานบำรุง ชม.012 สะพานโยธาอำนวยพัฒนา อ.จอมทอง จ.เชียงใหม่ 1 แห่ง
+  source_row: 44676
+  budget_type: งบลงทุน
+  expected:
+    province: เชียงใหม่
+    amphoe: จอมทอง
+    tambon: null
+    qty: 1.0
+    unit: แห่ง
+    item_key_contains:
+    - งานบำรุง
+    item_key_not_contains:
+    - เชียงใหม่
+    - จอมทอง
+- raw: เงินอุดหนุนสมทบการบูรณปฏิสังขรณ์วัดหนองเงือก ตำบลแงง อำเภอปัว จังหวัดน่าน
+  source_row: 164991
+  budget_type: งบอุดหนุน
+  expected:
+    province: น่าน
+    amphoe: ปัว
+    tambon: แงง
+    qty: null
+    unit: null
+    item_key_contains:
+    - เงินอุดหนุนสมทบการบูรณปฏิสังขรณ์วัดหนองเงือก
+    item_key_not_contains:
+    - น่าน
+    - ปัว
+    - แงง
+- raw: ค่าก่อสร้างแหล่งน้ำในไร่นา ขนาด 1,260 ลูกบาศก์เมตร ตำบลบึงนาเรียง อำเภอห้วยเม็ก จังหวัดกาฬสินธุ์
+  source_row: 25638
+  budget_type: งบลงทุน
+  expected:
+    province: กาฬสินธุ์
+    amphoe: ห้วยเม็ก
+    tambon: บึงนาเรียง
+    qty: null
+    unit: null
+    spec_tokens:
+    - 1260 ลูกบาศก์เมตร
+    item_key_contains:
+    - ค่าก่อสร้างแหล่งน้ำในไร่นา
+    item_key_not_contains:
+    - กาฬสินธุ์
+    - ห้วยเม็ก
+    - บึงนาเรียง
+- raw: ครุภัณฑ์ทดแทนสำหรับห้องเรียน DLTV (โรงเรียน Stand Alone) โรงเรียนบ้านอาราง ตำบลพราน อำเภอขุนหาญ
+    จังหวัดศรีสะเกษ
+  source_row: 136393
+  budget_type: งบลงทุน
+  expected:
+    province: ศรีสะเกษ
+    amphoe: ขุนหาญ
+    tambon: พราน
+    qty: null
+    unit: null
+    item_key_contains:
+    - ครุภัณฑ์ทดแทนสำหรับห้องเรียน
+    item_key_not_contains:
+    - ศรีสะเกษ
+    - ขุนหาญ
+    - พราน
+- raw: เงินอุดหนุนการจัดพิธีประทานสัญญาบัตร พัดยศ ผ้าไตร และพิธีการทรงตั้งเปรียญธรรม 3 ประโยค
+  source_row: 164241
+  budget_type: งบอุดหนุน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - เงินอุดหนุนการจัดพิธีประทานสัญญาบัตร
+    item_key_not_contains: []
+- raw: 'โครงการจัดตั้งศูนย์การแพทย์แม่นยำแห่งชาติ (National Precision Medicine Center) '
+  source_row: 147479
+  budget_type: งบดำเนินงาน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - โครงการจัดตั้งศูนย์การแพทย์แม่นยำแห่งชาติ
+    item_key_not_contains: []
+- raw: ค่าก่อสร้างแหล่งน้ำในไร่นา ขนาด 1,260 ลูกบาศก์เมตร ตำบลกลางใหญ่ อำเภอบ้านผือ จังหวัดอุดรธานี
+  source_row: 26031
+  budget_type: งบลงทุน
+  expected:
+    province: อุดรธานี
+    amphoe: บ้านผือ
+    tambon: กลางใหญ่
+    qty: null
+    unit: null
+    spec_tokens:
+    - 1260 ลูกบาศก์เมตร
+    item_key_contains:
+    - ค่าก่อสร้างแหล่งน้ำในไร่นา
+    item_key_not_contains:
+    - อุดรธานี
+    - บ้านผือ
+    - กลางใหญ่
+- raw: เครื่องมัลติมีเดียโปรเจคเตอร์ ระดับ XGA  ขนาด 4,500 ANSI Lumens สำนักงานทางหลวงชนบทที่ 16 (กาฬสินธุ์)
+  source_row: 42212
+  budget_type: งบลงทุน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - เครื่องมัลติมีเดียโปรเจคเตอร์
+    item_key_not_contains: []
+- raw: กำจัดวัชพืชด้วยแรงคน บริเวณอาคารชลประทาน 37 แห่ง ปริมาณ 239 ไร่ โครงการส่งน้ำและบำรุงรักษาเจ้าเจ็ด-บางยี่หน
+    ตำบลบ้านม้า อำเภอบางไทร จังหวัดพระนครศรีอยุธยา
+  source_row: 17669
+  budget_type: งบลงทุน
+  expected:
+    province: พระนครศรีอยุธยา
+    amphoe: บางไทร
+    tambon: บ้านม้า
+    item_key_contains:
+    - กำจัดวัชพืชด้วยแรงคน
+    item_key_not_contains:
+    - พระนครศรีอยุธยา
+    - บางไทร
+    - บ้านม้า
+  ambiguous: true
+  ambiguous_reason: มีตัวเลข+หน่วยหลายคู่ในชื่อเดียว (เช่น กว้าง/ยาว/หนา/พื้นที่ของงานก่อสร้างถนน) ไม่ชัดว่าอันไหนคือ
+    qty หลัก
+- raw: ' โครงการพาน้องกลับมาเรียน เปลี่ยนความคิด เสริมทักษะชีวิตสู่โลกอาชีพ '
+  source_row: 184521
+  budget_type: งบดำเนินงาน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - โครงการพาน้องกลับมาเรียน
+    item_key_not_contains: []
+- raw: สายยโสธร - อำนาจเจริญ ตอน ยโสธร - บ.น้ำปลีก ตอน 2 จ.ยโสธร จ.อำนาจเจริญ
+  source_row: 34377
+  budget_type: งบลงทุน
+  expected:
+    province: อำนาจเจริญ
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - สายยโสธร
+    item_key_not_contains: []
+- raw: เสริมผิวแอสฟัลท์คอนกรีต สายทาง ซอยรับซื้อขายของเก่า รหัสทางหลวงท้องถิ่น ลป.ถ.82007 หมู่ที่ 7 ตำบลแม่สัน
+    อำเภอห้างฉัตร จังหวัดลำปาง จำนวน 2 ช่วง หรือมีพื้นที่รวมกันไม่น้อยกว่า 1,741 ตารางเมตร องค์การบริหารส่วนตำบลแม่สัน
+    อำเภอห้างฉัตร จังหวัดลำปาง
+  source_row: 72417
+  budget_type: งบอุดหนุน
+  expected:
+    province: ลำปาง
+    amphoe: ห้างฉัตร
+    tambon: แม่สัน
+    qty: 1741.0
+    unit: ตารางเมตร
+    item_key_contains:
+    - เสริมผิวแอสฟัลท์คอนกรีต
+    item_key_not_contains:
+    - ลำปาง
+    - ห้างฉัตร
+    - แม่สัน
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนบ้านศาลา ตำบลสถาน อำเภอนาน้อย
+    จังหวัดน่าน
+  source_row: 117216
+  budget_type: งบลงทุน
+  expected:
+    province: น่าน
+    amphoe: นาน้อย
+    tambon: สถาน
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - น่าน
+    - นาน้อย
+    - สถาน
+- raw: เครื่องเป่าลมดับไฟป่า สถานีควบคุมไฟป่าดอยผาช้าง ตำบลขุนควร อำเภอปง จังหวัดพะเยา
+  source_row: 49285
+  budget_type: งบลงทุน
+  expected:
+    province: พะเยา
+    amphoe: ปง
+    tambon: ขุนควร
+    qty: null
+    unit: null
+    item_key_contains:
+    - เครื่องเป่าลมดับไฟป่า
+    item_key_not_contains:
+    - พะเยา
+    - ปง
+    - ขุนควร
+- raw: เจาะน้ำบาดาลเพื่อการเกษตรแก้ปัญหาภัยแล้ง บ้านหนองนากอม หมู่ที่6ตำบลด่านม่วงคำ อำเภอโคกศรีสุพรรณจังหวัดสกลนครขนาด
+    6.00 นิ้ว (150 มม.) ลึก 43.00-80.00 เมตร จุดที่ 3
+  source_row: 173447
+  budget_type: งบลงทุน
+  expected:
+    province: สกลนคร
+    amphoe: โคกศรีสุพรรณ
+    tambon: ด่านม่วงคำ
+    qty: 80.0
+    unit: เมตร
+    spec_tokens:
+    - 6 นิ้ว
+    - 6 นิ้ว
+    item_key_contains:
+    - เจาะน้ำบาดาลเพื่อการเกษตรแก้ปัญหาภัยแล้ง
+    item_key_not_contains:
+    - สกลนคร
+    - โคกศรีสุพรรณ
+    - ด่านม่วงคำ
+- raw: เครื่องปรับอากาศแบบติดพนัง 24,000 BTU  พร้อมติดตั้ง จำนวน 2 เครื่อง วชช.ยโสธร
+  source_row: 152611
+  budget_type: งบลงทุน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: 2.0
+    unit: เครื่อง
+    spec_tokens:
+    - 24000 BTU
+    item_key_contains:
+    - เครื่องปรับอากาศแบบติดพนัง
+    item_key_not_contains: []
+- raw: ก่อสร้างถนนคอนกรีตเสริมเหล็ก รหัสทางหลวงท้องถิ่น ชม.ถ16-022 สายทุ่งนาทราย ซอย 1 หมู่ที่ 2 บ้านดอยแก้ว
+    ตำบลดอยแก้ว กว้าง 4 เมตร ยาว 280 เมตร หนา 0.15 เมตร เทศบาลตำบลดอยแก้ว อำเภอจอมทอง จังหวัดเชียงใหม่
+  source_row: 69011
+  budget_type: งบอุดหนุน
+  expected:
+    province: เชียงใหม่
+    amphoe: จอมทอง
+    tambon: ดอยแก้ว
+    qty: 22.0
+    unit: สาย
+    spec_tokens:
+    - 4 เมตร
+    - 280 เมตร
+    - 0.15 เมตร
+    item_key_contains:
+    - ก่อสร้างถนนคอนกรีตเสริมเหล็ก
+    item_key_not_contains:
+    - เชียงใหม่
+    - จอมทอง
+    - ดอยแก้ว
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนบ้านแม่คี-หนองอ้อ ตำบลป่าซาง อำเภอแม่จัน
+    จังหวัดเชียงราย
+  source_row: 115277
+  budget_type: งบลงทุน
+  expected:
+    province: เชียงราย
+    amphoe: แม่จัน
+    tambon: ป่าซาง
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - เชียงราย
+    - แม่จัน
+    - ป่าซาง
+- raw: ค่าใช้จ่ายเพื่อพัฒนาระบบเทคโนโลยีสารสนเทศและการสื่อสารเพื่อการบริหารจัดการและบริการข้อมูลสารสนเทศ
+  source_row: 150935
+  budget_type: งบรายจ่ายอื่น
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าใช้จ่ายเพื่อพัฒนาระบบเทคโนโลยีสารสนเทศและการสื่อสารเพื่อการบริหารจัดการและบริการข้อมูลสารสนเทศ
+    item_key_not_contains: []
+- raw: ค่าใช้จ่ายในการจ่ายเงินช่วยเหลือเบื้องต้นแก่ผู้ให้บริการสาธารณสุขที่ได้รับความเสียหายจากการให้บริการสาธารณสุข
+  source_row: 184497
+  budget_type: งบดำเนินงาน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าใช้จ่ายในการจ่ายเงินช่วยเหลือเบื้องต้นแก่ผู้ให้บริการสาธารณสุขที่ได้รับความเสียหายจากการให้บริการสาธารณสุข
+    item_key_not_contains: []
+- raw: ก่อสร้างถนนคอนกรีตเสริมเหล็ก หมู่ที่ 12 บ้านเจริญสุข สายคุ้มแลนด์แอนด์เฮ้าส์ ตำบลเกิ้ง อำเภอเมืองมหาสารคาม
+    จังหวัดมหาสารคาม ปริมาณงานผิวจราจรคอนกรีต กว้าง 4 เมตร ยาว 650 เมตร หนา 0.15 เมตร ไหล่ทางข้างละ 0.50
+    เมตร หรือมีพื้นไม่น้อยกว่า 2,600 ตารางเมตร องค์การบริหารส่วนตำบลเกิ้ง อำเภอเมืองมหาสารคาม จังหวัดมหาสารคาม
+  source_row: 79221
+  budget_type: งบอุดหนุน
+  expected:
+    province: มหาสารคาม
+    amphoe: เมืองมหาสารคาม
+    tambon: เกิ้ง
+    spec_tokens:
+    - 4 เมตร
+    - 650 เมตร
+    - 0.15 เมตร
+    item_key_contains:
+    - ก่อสร้างถนนคอนกรีตเสริมเหล็ก
+    item_key_not_contains:
+    - มหาสารคาม
+    - เมืองมหาสารคาม
+    - เกิ้ง
+  ambiguous: true
+  ambiguous_reason: มีตัวเลข+หน่วยหลายคู่ในชื่อเดียว (เช่น กว้าง/ยาว/หนา/พื้นที่ของงานก่อสร้างถนน) ไม่ชัดว่าอันไหนคือ
+    qty หลัก
+- raw: รถบรรทุกขยะ ขนาด 6 ตัน 6 ล้อ ปริมาตรกระบอกสูบไม่ต่ำกว่า 6,000 ซีซี หรือกำลังเครื่องยนต์สูงสุดไม่ต่ำกว่า
+    170 กิโลวัตต์ แบบอัดท้าย เทศบาลตำบลภูผาม่าน อำเภอภูผาม่าน จังหวัดขอนแก่น
+  source_row: 66112
+  budget_type: งบอุดหนุน
+  expected:
+    province: ขอนแก่น
+    amphoe: ภูผาม่าน
+    tambon: ภูผาม่าน
+    qty: null
+    unit: null
+    spec_tokens:
+    - 6 ตัน
+    - 6 ล้อ
+    - 6000 ซีซี
+    - 170 กิโลวัตต์
+    item_key_contains:
+    - รถบรรทุกขยะ
+    item_key_not_contains:
+    - ขอนแก่น
+    - ภูผาม่าน
+- raw: พัฒนาแหล่งท่องเที่ยวศาลา 4 (วังพญาโมเดล) สายกูแบบลางอ บ้านตะลาแน หมู่ที่ 3 ถึง บ้านอูเป๊าะ หมู่ที่
+    4 โดยติดตั้งโคมไฟถนนแอลอีดี ตามบัญชีนวัตกรรมไทย ระยะทาง 2,300 เมตร จำนวน 93 ชุด องค์การบริหารส่วนตำบลวังพญา
+    อำเภอรามัน จังหวัดยะลา
+  source_row: 77428
+  budget_type: งบอุดหนุน
+  expected:
+    province: ยะลา
+    amphoe: รามัน
+    tambon: วังพญา
+    item_key_contains:
+    - พัฒนาแหล่งท่องเที่ยวศาลา
+    item_key_not_contains:
+    - ยะลา
+    - รามัน
+  ambiguous: true
+  ambiguous_reason: มีตัวเลข+หน่วยหลายคู่ในชื่อเดียว (เช่น กว้าง/ยาว/หนา/พื้นที่ของงานก่อสร้างถนน) ไม่ชัดว่าอันไหนคือ
+    qty หลัก
+- raw: ห้องน้ำห้องส้วมนักเรียนหญิง 6 ที่/49 โรงเรียนวัดถ้ำปลาวิทยาคม ตำบลโป่งงาม อำเภอแม่สาย จังหวัดเชียงราย
+  source_row: 124887
+  budget_type: งบลงทุน
+  expected:
+    province: เชียงราย
+    amphoe: แม่สาย
+    tambon: โป่งงาม
+    qty: null
+    unit: null
+    item_key_contains:
+    - ห้องน้ำห้องส้วมนักเรียนหญิง
+    item_key_not_contains:
+    - เชียงราย
+    - แม่สาย
+    - โป่งงาม
+- raw: เครื่องจำลองระบบพลังงานแลกเปลี่ยนความร้อนอัจฉริยะในเชิงอุตสาหกรรม ตำบลศาลายา อำเภอพุทธมณฑล จังหวัดนครปฐม
+  source_row: 161440
+  budget_type: งบอุดหนุน
+  expected:
+    province: นครปฐม
+    amphoe: พุทธมณฑล
+    tambon: ศาลายา
+    qty: null
+    unit: null
+    item_key_contains:
+    - เครื่องจำลองระบบพลังงานแลกเปลี่ยนความร้อนอัจฉริยะในเชิงอุตสาหกรรม
+    item_key_not_contains:
+    - นครปฐม
+    - พุทธมณฑล
+    - ศาลายา
+- raw: ครุภัณฑ์ทดแทนสำหรับห้องเรียน DLTV (โรงเรียน Stand Alone) โรงเรียนวัดบ้านลาด ตำบลห้วยขมิ้น อำเภอหนองแค
+    จังหวัดสระบุรี
+  source_row: 137007
+  budget_type: งบลงทุน
+  expected:
+    province: สระบุรี
+    amphoe: หนองแค
+    tambon: ห้วยขมิ้น
+    qty: null
+    unit: null
+    item_key_contains:
+    - ครุภัณฑ์ทดแทนสำหรับห้องเรียน
+    item_key_not_contains:
+    - สระบุรี
+    - หนองแค
+    - ห้วยขมิ้น
+- raw: เครื่องคอมพิวเตอร์โน้ตบุ๊ค สำหรับงานประมวลผล จำนวน 11 ชุด
+  source_row: 92797
+  budget_type: งบลงทุน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: 11.0
+    unit: ชุด
+    item_key_contains:
+    - เครื่องคอมพิวเตอร์โน้ตบุ๊ค
+    item_key_not_contains: []
+- raw: ค่าใช้จ่ายในการสำรวจแหล่งทำการประมงและสภาวะทรัพยากร
+  source_row: 23290
+  budget_type: งบรายจ่ายอื่น
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าใช้จ่ายในการสำรวจแหล่งทำการประมงและสภาวะทรัพยากร
+    item_key_not_contains: []
+- raw: ครุภัณฑ์ทดแทนสำหรับห้องเรียน DLTV (โรงเรียน Stand Alone) โรงเรียนบ้านห้วยรั้ว(เสนาณรงค์อุปถัมภ์)
+    ตำบลหนองเต่า อำเภอเก้าเลี้ยว จังหวัดนครสวรรค์
+  source_row: 133465
+  budget_type: งบลงทุน
+  expected:
+    province: นครสวรรค์
+    amphoe: เก้าเลี้ยว
+    tambon: หนองเต่า
+    qty: null
+    unit: null
+    item_key_contains:
+    - ครุภัณฑ์ทดแทนสำหรับห้องเรียน
+    item_key_not_contains:
+    - นครสวรรค์
+    - เก้าเลี้ยว
+    - หนองเต่า
+- raw: งานปรับปรุงการแบ่งทิศทางการจราจรเพื่อความปลอดภัย สายทางหลวงหมายเลข 22 ตอน บ้านยา - สว่างแดนดิน
+    ตอน 2 จ.สกลนคร
+  source_row: 35640
+  budget_type: งบลงทุน
+  expected:
+    province: สกลนคร
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - งานปรับปรุงการแบ่งทิศทางการจราจรเพื่อความปลอดภัย
+    item_key_not_contains:
+    - สกลนคร
+- raw: บำรุงรักษาหัวงานและคลองระบายน้ำโครงการบรรเทาอุทกภัยเมืองจันทบุรี ตำบลจันทนิมิต อำเภอเมืองจันทบุรี
+    จังหวัดจันทบุรี
+  source_row: 14728
+  budget_type: งบลงทุน
+  expected:
+    province: จันทบุรี
+    amphoe: เมืองจันทบุรี
+    tambon: จันทนิมิต
+    qty: null
+    unit: null
+    item_key_contains:
+    - บำรุงรักษาหัวงานและคลองระบายน้ำโครงการบรรเทาอุทกภัยเมืองจันทบุรี
+    item_key_not_contains:
+    - จันทนิมิต
+- raw: เก้าอี้ทำงานระดับ 3-6 สำนักงานคุมประพฤติจังหวัดพังงา ตำบลท้ายช้าง อำเภอเมืองพังงา จังหวัดพังงา
+  source_row: 85761
+  budget_type: งบลงทุน
+  expected:
+    province: พังงา
+    amphoe: เมืองพังงา
+    tambon: ท้ายช้าง
+    qty: null
+    unit: null
+    item_key_contains:
+    - เก้าอี้ทำงานระดับ
+    item_key_not_contains:
+    - พังงา
+    - เมืองพังงา
+    - ท้ายช้าง
+- raw: อุปกรณ์ฝึกเดินพื้นที่ต่างระดับ ศูนย์การศึกษาพิเศษ ประจำจังหวัดพระนครศรีอยุธยา ตำบลหันตรา อำเภอพระนครศรีอยุธยา
+    จังหวัดพระนครศรีอยุธยา
+  source_row: 125933
+  budget_type: งบลงทุน
+  expected:
+    province: พระนครศรีอยุธยา
+    amphoe: พระนครศรีอยุธยา
+    tambon: หันตรา
+    qty: null
+    unit: null
+    item_key_contains:
+    - อุปกรณ์ฝึกเดินพื้นที่ต่างระดับ
+    item_key_not_contains:
+    - พระนครศรีอยุธยา
+    - หันตรา
+- raw: ก่อสร้างอาคารศูนย์พัฒนาเด็กเล็ก ขนาดไม่เกิน 50 คน แบบตอกเสาเข็ม ศูนย์พัฒนาเด็กเล็กก้าวหน้าสามัคคีคำงูเหลือม
+    องค์การบริหารส่วนตำบลโนนโพธิ์ อำเภอเมืองอำนาจเจริญ จังหวัดอำนาจเจริญ
+  source_row: 65128
+  budget_type: งบอุดหนุน
+  expected:
+    province: อำนาจเจริญ
+    amphoe: เมืองอำนาจเจริญ
+    tambon: โนนโพธิ์
+    qty: 50.0
+    unit: คน
+    item_key_contains:
+    - ก่อสร้างอาคารศูนย์พัฒนาเด็กเล็ก
+    item_key_not_contains:
+    - อำนาจเจริญ
+    - เมืองอำนาจเจริญ
+    - โนนโพธิ์
+- raw: โต๊ะเก้าอี้นักเรียน ระดับก่อนประถมศึกษา โรงเรียนบ้านระหาร ตำบลชุมพลบุรี อำเภอชุมพลบุรี จังหวัดสุรินทร์
+  source_row: 109082
+  budget_type: งบลงทุน
+  expected:
+    province: สุรินทร์
+    amphoe: ชุมพลบุรี
+    tambon: ชุมพลบุรี
+    qty: null
+    unit: null
+    item_key_contains:
+    - โต๊ะเก้าอี้นักเรียน
+    item_key_not_contains:
+    - สุรินทร์
+    - ชุมพลบุรี
+- raw: งานปรับปรุงระบบประปามาตรฐาน ตำบลช้างตะลูด อำเภอหล่มสัก จังหวัดเพชรบูรณ์
+  source_row: 6068
+  budget_type: งบลงทุน
+  expected:
+    province: เพชรบูรณ์
+    amphoe: หล่มสัก
+    tambon: ช้างตะลูด
+    qty: null
+    unit: null
+    item_key_contains:
+    - งานปรับปรุงระบบประปามาตรฐาน
+    item_key_not_contains:
+    - เพชรบูรณ์
+    - หล่มสัก
+    - ช้างตะลูด
+- raw: เครื่องพิมพ์ เลเซอร์ หรือ LED ขาวดำ ชนิด Network แบบที่ 2 (38 หน้า/นาที) กรมพัฒนาธุรกิจการค้า ตำบลบางกระสอ
+    อำเภอเมืองนนทบุรี จังหวัดนนทบุรี
+  source_row: 56074
+  budget_type: งบลงทุน
+  expected:
+    province: นนทบุรี
+    amphoe: เมืองนนทบุรี
+    tambon: บางกระสอ
+    qty: null
+    unit: null
+    spec_tokens:
+    - 38 หน้า/นาที
+    item_key_contains:
+    - เครื่องพิมพ์
+    item_key_not_contains:
+    - นนทบุรี
+    - เมืองนนทบุรี
+    - บางกระสอ
+- raw: ค่าปรับปรุงหลังคาอาคารศาลากลางจังหวัดนครนายก ตำบลท่าช้าง อำเภอเมืองนครนายก จังหวัดนครนายก
+  source_row: 56697
+  budget_type: งบลงทุน
+  expected:
+    province: นครนายก
+    amphoe: เมืองนครนายก
+    tambon: ท่าช้าง
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าปรับปรุงหลังคาอาคารศาลากลาง
+    item_key_not_contains:
+    - นครนายก
+    - เมืองนครนายก
+    - ท่าช้าง
+- raw: ค่าก่อสร้างอาคารที่ทำการสำนักงานทรัพยากรน้ำแห่งชาติภาค 1 และงานประกอบ ตำบลกล้วยแพะอำเภอเมืองลำปาง
+    จังหวัดลำปาง
+  source_row: 2303
+  budget_type: งบลงทุน
+  expected:
+    province: ลำปาง
+    amphoe: เมืองลำปาง
+    tambon: กล้วยแพะ
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าก่อสร้างอาคารที่ทำการสำนักงานทรัพยากรน้ำแห่งชาติภาค
+    item_key_not_contains:
+    - ลำปาง
+    - เมืองลำปาง
+    - กล้วยแพะ
+- raw: ชำระต้นทุนเงินโครงการประกันรายได้เกษตรกรผู้ปลูกมันสำปะหลัง ปี 2564/2565
+  source_row: 171006
+  budget_type: งบรายจ่ายอื่น
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ชำระต้นทุนเงินโครงการประกันรายได้เกษตรกรผู้ปลูกมันสำปะหลัง
+    item_key_not_contains: []
+- raw: ค่าใช้จ่ายในการรักษาพยาบาลข้าราชการ ลูกจ้าง และพนักงานของรัฐ
+  source_row: 184256
+  budget_type: งบดำเนินงาน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าใช้จ่ายในการรักษาพยาบาลข้าราชการ
+    item_key_not_contains: []
+- raw: อาคารปรับปรุงคุณภาพน้ำ ตำบลละแม อำเภอละแม จังหวัดชุมพร
+  source_row: 6395
+  budget_type: งบลงทุน
+  expected:
+    province: ชุมพร
+    amphoe: ละแม
+    tambon: ละแม
+    qty: null
+    unit: null
+    item_key_contains:
+    - อาคารปรับปรุงคุณภาพน้ำ
+    item_key_not_contains:
+    - ชุมพร
+    - ละแม
+- raw: เครื่องคอมพิวเตอร์ สำหรับงานประมวลผล แบบที่ 2 (จอแสดงภาพ ขนาดไม่น้อยกว่า 19 นิ้ว) พร้อมชุดโปรแกรมระบบปฏิบัติการสำหรับ
+    เครื่องคอมพิวเตอร์ และชุดโปรแกรมจัดการสำนักงาน แบบที่ 3  ที่มีลิขสิทธิ์ถูกต้องตามกฎหมาย ของสำนักงานพาณิชย์จังหวัดสมุทรสาคร
+    จำนวน 1 ชุด
+  source_row: 55007
+  budget_type: งบลงทุน
+  expected:
+    province: สมุทรสาคร
+    amphoe: null
+    tambon: null
+    qty: 1.0
+    unit: ชุด
+    spec_tokens:
+    - 19 นิ้ว
+    - 19 นิ้ว
+    item_key_contains:
+    - เครื่องคอมพิวเตอร์
+    item_key_not_contains:
+    - สมุทรสาคร
+- raw: งานก่อสร้างเพิ่มประสิทธิภาพทางหลวง ทางหลวงหมายเลข 4230 ตอน ควนไม้แดง - มะนาวหวาน จ.นครศรีธรรมราช
+  source_row: 34505
+  budget_type: งบลงทุน
+  expected:
+    province: นครศรีธรรมราช
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - งานก่อสร้างเพิ่มประสิทธิภาพทางหลวง
+    item_key_not_contains:
+    - นครศรีธรรมราช
+- raw: สาย อ.ร่อนพิบูลย์ - บ.ไม้เสียบ (เป็นตอนๆ) จ.นครศรีธรรมราช
+  source_row: 34613
+  budget_type: งบลงทุน
+  expected:
+    province: นครศรีธรรมราช
+    amphoe: ร่อนพิบูลย์
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - สาย
+    item_key_not_contains:
+    - นครศรีธรรมราช
+    - ร่อนพิบูลย์
+- raw: งานติดตั้งตู้ควบคุมระบบไฟฟ้าสำรองเพิ่มเติม (MCCB EMBD) อาคารมาตรธำรง ตำบลคลองห้า อำเภอคลองหลวง
+    จังหวัดปทุมธานี
+  source_row: 157178
+  budget_type: งบอุดหนุน
+  expected:
+    province: ปทุมธานี
+    amphoe: คลองหลวง
+    tambon: คลองห้า
+    qty: null
+    unit: null
+    item_key_contains:
+    - งานติดตั้งตู้ควบคุมระบบไฟฟ้าสำรองเพิ่มเติม
+    item_key_not_contains:
+    - ปทุมธานี
+    - คลองหลวง
+    - คลองห้า
+- raw: กำจัดวัชพืชโดยเครื่องจักร คลองระบาย ร 1 ซ แม่น้ำน้อย 6 ปริมาณ 7,500 ตัน โครงการส่งน้ำและบำรุงรักษายางมณี
+    ตำบลบางพลับ อำเภอโพธิ์ทอง จังหวัดอ่างทอง
+  source_row: 20635
+  budget_type: งบลงทุน
+  expected:
+    province: อ่างทอง
+    amphoe: โพธิ์ทอง
+    tambon: บางพลับ
+    qty: null
+    unit: null
+    spec_tokens:
+    - 7500 ตัน
+    item_key_contains:
+    - กำจัดวัชพืชโดยเครื่องจักร
+    item_key_not_contains:
+    - อ่างทอง
+    - โพธิ์ทอง
+    - บางพลับ
+- raw: การปรับปรุงถนนเทพประสิทธิ์ และพื้นที่ใกล้เคียงเมืองพัทยา อำเภอบางละมุงจังหวัดชลบุรี
+  source_row: 176045
+  budget_type: งบอุดหนุน
+  expected:
+    province: ชลบุรี
+    amphoe: บางละมุง
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - การปรับปรุงถนนเทพประสิทธิ์
+    item_key_not_contains:
+    - ชลบุรี
+    - บางละมุง
+- raw: โครงการฟื้นฟูแนวปะการังเพื่อเพิ่มแหล่งทรัพยากรสัตว์น้ำสร้างรายได้ให้ชุมชนชายฝั่ง
+  source_row: 186189
+  budget_type: งบดำเนินงาน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - โครงการฟื้นฟูแนวปะการังเพื่อเพิ่มแหล่งทรัพยากรสัตว์น้ำสร้างรายได้ให้ชุมชนชายฝั่ง
+    item_key_not_contains: []
+- raw: เครื่องคอมพิวเตอร์ สำหรับงานประมวลผล แบบที่ 1 *(จอขนาดไม่น้อยกว่า 19 นิ้ว) สำนักงานพระพุทธศาสนาจังหวัดตราด
+    ตำบลวังกระแจะ อำเภอเมืองตราด จังหวัดตราด
+  source_row: 164194
+  budget_type: งบลงทุน
+  expected:
+    province: ตราด
+    amphoe: เมืองตราด
+    tambon: วังกระแจะ
+    qty: null
+    unit: null
+    spec_tokens:
+    - 19 นิ้ว
+    - 19 นิ้ว
+    item_key_contains:
+    - เครื่องคอมพิวเตอร์
+    item_key_not_contains:
+    - ตราด
+    - เมืองตราด
+    - วังกระแจะ
+- raw: โครงการต่อยอดจากโครงการปรับปรุงคลองผันน้ำร่องสัก และโครงการก่อสร้างฝายร่องขุยพร้อมระบบส่งน้ำอันเนื่องมาจากพระราดำริ
+    ตำบลบ้านปิน อำเภอดอกคำใต้ จังหวัดพะเยา
+  source_row: 183875
+  budget_type: งบดำเนินงาน
+  expected:
+    province: พะเยา
+    amphoe: ดอกคำใต้
+    tambon: บ้านปิน
+    qty: null
+    unit: null
+    item_key_contains:
+    - โครงการต่อยอดจากโครงการปรับปรุงคลองผันน้ำร่องสัก
+    item_key_not_contains:
+    - พะเยา
+    - ดอกคำใต้
+    - บ้านปิน
+- raw: งบดำเนินแผนยุทธศาสตร์
+  source_row: 55955
+  budget_type: งบดำเนินงาน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - งบดำเนินแผนยุทธศาสตร์
+    item_key_not_contains: []
+- raw: ช่อมแซมหินเรียงอาคารบังคับน้ำ คลองผันน้ำบึงกระโตน บ้านทุ่งมน ความยาว 900 ตารางเมตร ตำบลหนองค่าย
+    อำเภอประทาย จังหวัดนครราชสีมา
+  source_row: 16428
+  budget_type: งบลงทุน
+  expected:
+    province: นครราชสีมา
+    amphoe: ประทาย
+    tambon: หนองค่าย
+    qty: 900.0
+    unit: ตารางเมตร
+    item_key_contains:
+    - ช่อมแซมหินเรียงอาคารบังคับน้ำ
+    item_key_not_contains:
+    - นครราชสีมา
+    - ประทาย
+    - หนองค่าย
+- raw: อุปกรณ์เครื่องเล่นสนาม โรงเรียนราชประชานุเคราะห์ 37 ตำบลเขาพนม อำเภอเขาพนม จังหวัดกระบี่
+  source_row: 126492
+  budget_type: งบลงทุน
+  expected:
+    province: กระบี่
+    amphoe: เขาพนม
+    tambon: เขาพนม
+    qty: null
+    unit: null
+    item_key_contains:
+    - อุปกรณ์เครื่องเล่นสนาม
+    item_key_not_contains:
+    - กระบี่
+    - เขาพนม
+- raw: ซ่อมแซม ทรบ. บ้านนา2 โครงการท่าแห ตำบลบ้านทาม อำเภอศรีมหาโพธิ จังหวัดปราจีนบุรี
+  source_row: 17511
+  budget_type: งบลงทุน
+  expected:
+    province: ปราจีนบุรี
+    amphoe: ศรีมหาโพธิ
+    tambon: บ้านทาม
+    qty: 2.0
+    unit: โครงการ
+    item_key_contains:
+    - ซ่อมแซม
+    item_key_not_contains:
+    - ปราจีนบุรี
+    - ศรีมหาโพธิ
+    - บ้านทาม
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนบ้านหนองบัว ตำบลนาดี อำเภอหนองแสง
+    จังหวัดอุดรธานี
+  source_row: 122821
+  budget_type: งบลงทุน
+  expected:
+    province: อุดรธานี
+    amphoe: หนองแสง
+    tambon: นาดี
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - อุดรธานี
+    - หนองแสง
+    - นาดี
+- raw: ปรับปรุงลานจอดรถแอสฟัลท์ติกคอนกรีตอำเภอราษีไศล จังหวัดศรีสะเกษ
+  source_row: 58790
+  budget_type: งบลงทุน
+  expected:
+    province: ศรีสะเกษ
+    amphoe: ราษีไศล
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงลานจอดรถแอสฟัลท์ติกคอนกรีต
+    item_key_not_contains:
+    - ศรีสะเกษ
+    - ราษีไศล
+- raw: ชุดเครื่องฉายรังสีรักษาแบบปรับความเข้มรอบตัวผู้ป่วยในทุกทิศทาง พร้อมระบบภาพนำวิถี และอุปกรณ์ประกอบ
+    แขวงปทุมวัน เขตปทุมวัน กรุงเทพมหานคร
+  source_row: 171188
+  budget_type: งบอุดหนุน
+  expected:
+    province: กรุงเทพมหานคร
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ชุดเครื่องฉายรังสีรักษาแบบปรับความเข้มรอบตัวผู้ป่วยในทุกทิศทาง
+    item_key_not_contains:
+    - กรุงเทพมหานคร
+- raw: ตู้ทำน้ำเย็นพร้อมถังน้ำ คป.นครปฐม
+  source_row: 85851
+  budget_type: งบลงทุน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ตู้ทำน้ำเย็นพร้อมถังน้ำ
+    item_key_not_contains: []
+- raw: เงินสมทบประกันสังคม
+  source_row: 184457
+  budget_type: งบดำเนินงาน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - เงินสมทบประกันสังคม
+    item_key_not_contains: []
+- raw: ปรับปรุงถนนเสริมผิวจราจรแอสฟัลท์ติกคอนกรีต สายคลองสามเรือน - บางป่า ตั้งแต่คอสะพานบริเวณประตูน้ำฝั่งซ้าย
+    หมู่ที่ 5 , หมู่ที่ 7 และหมู่ที่ 4 ถึงแยกคอสะพานบริเวณบ้านสารวัตตี๋ ช่วงที่ 1 ผิวจราจรกว้าง 4.00 เมตร
+    ยาว 1,006 เมตร หนา 0.05 เมตร หรือมีพื้นที่ลาดยางไม่น้อยกว่า 4,024 ตารางเมตร , ช่วงที่ 2 ผิวจราจรกว้าง
+    5.00 เมตร ยาว 531 เมตร หนา 0.05 เมตร หรือมีพื้นที่ลาดยางไม่น้อยกว่า 2,655 ตารางเมตร องค์การบริหารส่วนตำบลสามเรือน
+    อำเภอเมืองราชบุรี จังหวัดราชบุรี
+  source_row: 72204
+  budget_type: งบอุดหนุน
+  expected:
+    province: ราชบุรี
+    amphoe: เมืองราชบุรี
+    tambon: สามเรือน
+    spec_tokens:
+    - 4 เมตร
+    - 1006 เมตร
+    - 0.05 เมตร
+    - 5 เมตร
+    - 531 เมตร
+    - 0.05 เมตร
+    item_key_contains:
+    - ปรับปรุงถนนเสริมผิวจราจรแอสฟัลท์ติกคอนกรีต
+    item_key_not_contains:
+    - ราชบุรี
+    - เมืองราชบุรี
+  ambiguous: true
+  ambiguous_reason: มีตัวเลข+หน่วยหลายคู่ในชื่อเดียว (เช่น กว้าง/ยาว/หนา/พื้นที่ของงานก่อสร้างถนน) ไม่ชัดว่าอันไหนคือ
+    qty หลัก
+- raw: โต๊ะเก้าอี้นักเรียน ระดับก่อนประถมศึกษา โรงเรียนวัดพระอานนท์ ตำบลเสาธง อำเภอร่อนพิบูลย์ จังหวัดนครศรีธรรมราช
+  source_row: 108439
+  budget_type: งบลงทุน
+  expected:
+    province: นครศรีธรรมราช
+    amphoe: ร่อนพิบูลย์
+    tambon: เสาธง
+    qty: null
+    unit: null
+    item_key_contains:
+    - โต๊ะเก้าอี้นักเรียน
+    item_key_not_contains:
+    - นครศรีธรรมราช
+    - ร่อนพิบูลย์
+    - เสาธง
+- raw: ปรับปรุงถนนคอนกรีตเสริมเหล็ก หมู่ที่ 14 บ้านดอนหนองบัว สายทาง อบ.ถ.11-023 (ถนนเชื่อมหมู่ที่ 8,14,
+    4, 16, 3 และหมู่ที่ 5) ตำบลแสนสุข กว้าง 5.00 เมตร ยาว 75.00 เมตร หนา 0.15 เมตร หรือมีพื้นที่ไม่น้อยกว่า
+    375.00 ตารางเมตร เทศบาลตำบลแสนสุข อำเภอวารินชำราบ จังหวัดอุบลราชธานี
+  source_row: 80609
+  budget_type: งบอุดหนุน
+  expected:
+    province: อุบลราชธานี
+    amphoe: วารินชำราบ
+    tambon: แสนสุข
+    qty: 375.0
+    unit: ตารางเมตร
+    spec_tokens:
+    - 5 เมตร
+    - 75 เมตร
+    - 0.15 เมตร
+    item_key_contains:
+    - ปรับปรุงถนนคอนกรีตเสริมเหล็ก
+    item_key_not_contains:
+    - อุบลราชธานี
+    - วารินชำราบ
+    - แสนสุข
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนอนุบาลวัดเขาสุวรรณประดิษฐ์ ตำบลดอนสัก
+    อำเภอดอนสัก จังหวัดสุราษฎร์ธานี
+  source_row: 103154
+  budget_type: งบลงทุน
+  expected:
+    province: สุราษฎร์ธานี
+    amphoe: ดอนสัก
+    tambon: ดอนสัก
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - สุราษฎร์ธานี
+    - ดอนสัก
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนบ้านคลองหนองเหล็ก ตำบลท่าโพธิ์
+    อำเภอเมืองพิษณุโลก จังหวัดพิษณุโลก
+  source_row: 118543
+  budget_type: งบลงทุน
+  expected:
+    province: พิษณุโลก
+    amphoe: เมืองพิษณุโลก
+    tambon: ท่าโพธิ์
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - พิษณุโลก
+    - เมืองพิษณุโลก
+    - ท่าโพธิ์
+- raw: ค่าใช้จ่ายการจ้างบำรุงรักษาระบบเครือข่ายสัญญาณเคเบิลใยแก้วนำแสง
+  source_row: 151007
+  budget_type: งบรายจ่ายอื่น
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าใช้จ่ายการจ้างบำรุงรักษาระบบเครือข่ายสัญญาณเคเบิลใยแก้วนำแสง
+    item_key_not_contains: []
+- raw: ซ่อมแซมและปรับปรุงบ้านพักข้าราชการ สำนักงานคลังจังหวัดนราธิวาส (บ้านพักระดับเจ้าหน้าที่) ตำบลบางนาค
+    อำเภอเมืองนราธิวาส จังหวัดนราธิวาส
+  source_row: 7149
+  budget_type: งบลงทุน
+  expected:
+    province: นราธิวาส
+    amphoe: เมืองนราธิวาส
+    tambon: บางนาค
+    qty: null
+    unit: null
+    item_key_contains:
+    - ซ่อมแซมและปรับปรุง
+    item_key_not_contains:
+    - นราธิวาส
+    - เมืองนราธิวาส
+    - บางนาค
+- raw: ปรับปรุงบริเวณคอขวดไหล่ทาง ถนนสาย นธ.2024 แยกทางหลวงหมายเลข 42 - บ้านศาลาใหม่ อ.เมือง, ตากใบ จ.นราธิวาส
+  source_row: 41113
+  budget_type: งบลงทุน
+  expected:
+    province: นราธิวาส
+    amphoe: เมือง
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงบริเวณคอขวดไหล่ทาง
+    item_key_not_contains:
+    - นราธิวาส
+    - เมือง
+- raw: ค่าบริหารการส่งน้ำโครงการส่งน้ำและบำรุงรักษาท่อทองแดง ตำบลหนองปลิง อำเภอเมืองกำแพงเพชร จังหวัดกำแพงเพชร
+  source_row: 14598
+  budget_type: งบลงทุน
+  expected:
+    province: กำแพงเพชร
+    amphoe: เมืองกำแพงเพชร
+    tambon: หนองปลิง
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าบริหารการส่งน้ำโครงการส่งน้ำและบำรุงรักษาท่อทองแดง
+    item_key_not_contains:
+    - กำแพงเพชร
+    - เมืองกำแพงเพชร
+    - หนองปลิง
+- raw: รถบรรทุก (ดีเซล) ขนาด 1 ตัน ปริมาตรกระบอกสูบไม่ต่ำกว่า 2,400 ซีซี หรือกำลังเครื่องยนต์สูงสุดไม่ต่ำกว่า
+    110 กิโลวัตต์ ขับเคลื่อน 2 ล้อ แบบดับเบิ้ลแค็บ สำนักงานการปฏิรูปที่ดินจังหวัดนครราชสีมา ตำบลในเมือง
+    อำเภอเมืองนครราชสีมา จังหวัดนครราชสีมา
+  source_row: 31405
+  budget_type: งบลงทุน
+  expected:
+    province: นครราชสีมา
+    amphoe: เมืองนครราชสีมา
+    tambon: ในเมือง
+    qty: null
+    unit: null
+    spec_tokens:
+    - 1 ตัน
+    - 2400 ซีซี
+    - 110 กิโลวัตต์
+    - 2 ล้อ
+    item_key_contains:
+    - รถบรรทุก
+    item_key_not_contains:
+    - นครราชสีมา
+    - เมืองนครราชสีมา
+    - ในเมือง
+- raw: เครื่องพิมพ์ จำนวน 1เครื่อง
+  source_row: 90252
+  budget_type: งบลงทุน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: 1.0
+    unit: เครื่อง
+    item_key_contains:
+    - เครื่องพิมพ์
+    item_key_not_contains: []
+- raw: ซ่อมแซมลาดตลิ่งลำตะคอง (แก่งวังเณร) ความยาว 50 เมตร โครงการส่งน้ำและบำรุงรักษาลำตะคอง จังหวัดนครราชสีมา
+  source_row: 16552
+  budget_type: งบลงทุน
+  expected:
+    province: นครราชสีมา
+    amphoe: null
+    tambon: null
+    qty: 50.0
+    unit: เมตร
+    item_key_contains:
+    - ซ่อมแซมลาดตลิ่งลำตะคอง
+    item_key_not_contains:
+    - นครราชสีมา
+- raw: ระบบบำบัดน้ำเสีย (ขนาด 90 เตียง) โรงพยาบาลไทรน้อย ตำบลไทรน้อย อำเภอไทรน้อย จังหวัดนนทบุรี
+  source_row: 147450
+  budget_type: งบลงทุน
+  expected:
+    province: นนทบุรี
+    amphoe: ไทรน้อย
+    tambon: ไทรน้อย
+    qty: null
+    unit: null
+    item_key_contains:
+    - ระบบบำบัดน้ำเสีย
+    item_key_not_contains:
+    - นนทบุรี
+    - ไทรน้อย
+- raw: ค่าปรับปรุงซ่อมแซมอาคารที่ทำการ วนอุทยานน้ำตกพ่าน ตำบลปะเหลียน อำเภอปะเหลียน จังหวัดตรัง
+  source_row: 51207
+  budget_type: งบลงทุน
+  expected:
+    province: ตรัง
+    amphoe: ปะเหลียน
+    tambon: ปะเหลียน
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าปรับปรุงซ่อมแซมอาคารที่ทำการ
+    item_key_not_contains:
+    - ตรัง
+    - ปะเหลียน
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนบ้านโพนทัน ตำบลหนองฮี อำเภอปลาปาก
+    จังหวัดนครพนม
+  source_row: 115986
+  budget_type: งบลงทุน
+  expected:
+    province: นครพนม
+    amphoe: ปลาปาก
+    tambon: หนองฮี
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - นครพนม
+    - ปลาปาก
+    - หนองฮี
+- raw: ครุภัณฑ์ทดแทนสำหรับห้องเรียน DLTV (โรงเรียน Stand Alone) โรงเรียนบ้านหินเทิน ตำบลแสงอรุณ อำเภอทับสะแก
+    จังหวัดประจวบคีรีขันธ์
+  source_row: 134131
+  budget_type: งบลงทุน
+  expected:
+    province: ประจวบคีรีขันธ์
+    amphoe: ทับสะแก
+    tambon: แสงอรุณ
+    qty: null
+    unit: null
+    item_key_contains:
+    - ครุภัณฑ์ทดแทนสำหรับห้องเรียน
+    item_key_not_contains:
+    - ประจวบคีรีขันธ์
+    - ทับสะแก
+    - แสงอรุณ
+- raw: งานบูรณะโครงข่ายทางหลวงหมายเลข 2 ตอน โคกกรวด - นครราชสีมา จ.นครราชสีมา
+  source_row: 33939
+  budget_type: งบลงทุน
+  expected:
+    province: นครราชสีมา
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - งานบูรณะโครงข่ายทางหลวงหมายเลข
+    item_key_not_contains: []
+- raw: เครื่องคอมพิวเตอร์ ALL In One สำหรับงานประมวลผล สำนักงานสาธารณสุขอำเภอแม่เปิน ตำบลแม่เปิน อำเภอแม่เปิน
+    จังหวัดนครสวรรค์
+  source_row: 146755
+  budget_type: งบลงทุน
+  expected:
+    province: นครสวรรค์
+    amphoe: แม่เปิน
+    tambon: แม่เปิน
+    qty: null
+    unit: null
+    item_key_contains:
+    - เครื่องคอมพิวเตอร์
+    item_key_not_contains:
+    - นครสวรรค์
+    - แม่เปิน
+- raw: ค่าก่อสร้างอาคารที่พักอาศัยและสิ่งก่อสร้างประกอบ ระดับปฏิบัติการและระดับชำนาญการ (ระดับ 3-6) หมวดทางหลวงสองพี่น้อง
+    แขวงทางหลวงสุพรรณบุรีที่ 2 (อู่ทอง) จ.สุพรรณบุรี
+  source_row: 36419
+  budget_type: งบลงทุน
+  expected:
+    province: สุพรรณบุรี
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าก่อสร้างอาคารที่พักอาศัยและสิ่งก่อสร้างประกอบ
+    item_key_not_contains:
+    - สุพรรณบุรี
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนพานพร้าว ตำบลพานพร้าว อำเภอศรีเชียงใหม่
+    จังหวัดหนองคาย
+  source_row: 104627
+  budget_type: งบลงทุน
+  expected:
+    province: หนองคาย
+    amphoe: ศรีเชียงใหม่
+    tambon: พานพร้าว
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - หนองคาย
+    - ศรีเชียงใหม่
+    - พานพร้าว
+- raw: ค่าใช้จ่ายในการรักษาความสงบเรียบร้อยการชุมนุม ระหว่างวันที่ 1 มกราคม - 31 มีนาคม 2565
+  source_row: 186177
+  budget_type: งบดำเนินงาน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าใช้จ่ายในการรักษาความสงบเรียบร้อยการชุมนุม
+    item_key_not_contains: []
+- raw: ค่าใช้จ่ายในการเฝ้าระวังและปกป้องผลประโยชน์ทางการค้า Trade Watch
+  source_row: 55154
+  budget_type: งบรายจ่ายอื่น
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าใช้จ่ายในการเฝ้าระวังและปกป้องผลประโยชน์ทางการค้า
+    item_key_not_contains: []
+- raw: กำจัดวัชพืชด้วยเครื่องจักร คลองพระพิมล กม.0+000-1+700 ปริมาณ 2,200 ตัน โครงการชลประทานนนทบุรี ตำบลบางบัวทอง
+    อำเภอบางบัวทอง จังหวัดนนทบุรี
+  source_row: 16949
+  budget_type: งบลงทุน
+  expected:
+    province: นนทบุรี
+    amphoe: บางบัวทอง
+    tambon: บางบัวทอง
+    qty: null
+    unit: null
+    spec_tokens:
+    - 2200 ตัน
+    item_key_contains:
+    - กำจัดวัชพืชด้วยเครื่องจักร
+    item_key_not_contains:
+    - นนทบุรี
+    - บางบัวทอง
+- raw: โครงการบริหารจัดการวัคซีนป้องกันโรคติดเชื้อไวรัสโคโรนา 2019 ที่ได้รับการสนับสนุนจากสาธารณรัฐฝรั่งเศส
+    (Moderna Bivalent) จำนวน 1,000,200 โดส และสาธารณรัฐเกาหลี (Pfizer - BioNTech Bivalent) จำนวน 501,120
+    โดส สำหรับบริการประชาชนในประเทศไทย
+  source_row: 184489
+  budget_type: งบดำเนินงาน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - โครงการบริหารจัดการวัคซีนป้องกันโรคติดเชื้อไวรัสโคโรนา
+    item_key_not_contains: []
+- raw: เครื่องซักผ้า แบบอุตสาหกรรม ขนาด 200 ปอนด์ โรงพยาบาลนครนายก ตำบลนครนายก อำเภอเมืองนครนายก จังหวัดนครนายก
+  source_row: 144072
+  budget_type: งบลงทุน
+  expected:
+    province: นครนายก
+    amphoe: เมืองนครนายก
+    tambon: นครนายก
+    qty: null
+    unit: null
+    item_key_contains:
+    - เครื่องซักผ้า
+    item_key_not_contains:
+    - นครนายก
+    - เมืองนครนายก
+- raw: เงินอุดหนุนสำหรับสนับสนุนภารกิจด้านการป้องกันและควบคุมไฟป่าขององค์กรปกครองส่วนท้องถิ่น เทศบาลตำบลแม่เมาะ
+    ตำบลแม่เมาะ อำเภอแม่เมาะ จังหวัดลำปาง
+  source_row: 76880
+  budget_type: งบอุดหนุน
+  expected:
+    province: ลำปาง
+    amphoe: แม่เมาะ
+    tambon: แม่เมาะ
+    qty: null
+    unit: null
+    item_key_contains:
+    - เงินอุดหนุนสำหรับสนับสนุนภารกิจด้านการป้องกันและควบคุมไฟป่าขององค์กรปกครองส่วนท้องถิ่น
+    item_key_not_contains:
+    - ลำปาง
+    - แม่เมาะ
+- raw: ก่อสร้างถนนคอนกรีตเสริมเหล็กสายหลังที่ว่าการอำเภอบางแก้ว จังหวัดพัทลุง
+  source_row: 58670
+  budget_type: งบลงทุน
+  expected:
+    province: พัทลุง
+    amphoe: บางแก้ว
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ก่อสร้างถนนคอนกรีตเสริมเหล็กสายหลังที่ว่าการ
+    item_key_not_contains:
+    - พัทลุง
+    - บางแก้ว
+- raw: พัดลมอุตสาหกรรม บก.จร.
+  source_row: 166113
+  budget_type: งบลงทุน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - พัดลมอุตสาหกรรม
+    item_key_not_contains: []
+- raw: เครื่องมัลติมิเดียโปรเจคเตอร์ระดับ XGA ขนาด 4000 ANSILumens โรงเรียนบ้านจำนันสายเจริญ ตำบลสวนกล้วย
+    อำเภอกันทรลักษ์ จังหวัดศรีสะเกษ
+  source_row: 128768
+  budget_type: งบลงทุน
+  expected:
+    province: ศรีสะเกษ
+    amphoe: กันทรลักษ์
+    tambon: สวนกล้วย
+    qty: null
+    unit: null
+    item_key_contains:
+    - เครื่องมัลติมิเดียโปรเจคเตอร์ระดับ
+    item_key_not_contains:
+    - ศรีสะเกษ
+    - กันทรลักษ์
+    - สวนกล้วย
+- raw: รายการงบประจำ งบบุคลากร
+  source_row: 36
+  budget_type: งบบุคลากร
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - รายการงบประจำ
+    item_key_not_contains: []
+- raw: โครงการทุ่นกันขยะเข้าพื้นที่ป่าชายเลนพระเจดีย์กลางน้ำและกันขยะก่อนออกสู่ทะเลจังหวัดระยอง
+  source_row: 184519
+  budget_type: งบดำเนินงาน
+  expected:
+    province: ระยอง
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - โครงการทุ่นกันขยะเข้าพื้นที่ป่าชายเลนพระเจดีย์กลางน้ำและกันขยะก่อนออกสู่ทะเล
+    item_key_not_contains:
+    - ระยอง
+- raw: เครื่องชั่งไฟฟ้าทศนิยม 4 ตำแหน่ง แบบที่ 4 ตำบลท่าโพธิ์ อำเภอเมืองพิษณุโลก จังหวัดพิษณุโลก
+  source_row: 151493
+  budget_type: งบลงทุน
+  expected:
+    province: พิษณุโลก
+    amphoe: เมืองพิษณุโลก
+    tambon: ท่าโพธิ์
+    qty: null
+    unit: null
+    item_key_contains:
+    - เครื่องชั่งไฟฟ้าทศนิยม
+    item_key_not_contains:
+    - พิษณุโลก
+    - เมืองพิษณุโลก
+    - ท่าโพธิ์
+- raw: เครื่องพิมพ์เลเซอร์ หรือ LED สี ชนิด Network แบบที่ 2 (27 หน้า/นาที) กองบริหารการคลัง
+  source_row: 41544
+  budget_type: งบลงทุน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    spec_tokens:
+    - 27 หน้า/นาที
+    item_key_contains:
+    - เครื่องพิมพ์เลเซอร์
+    item_key_not_contains: []
+- raw: ค่าตอบแทนพนักงานราชการจำนวน 406 อัตรา
+  source_row: 186135
+  budget_type: งบบุคลากร
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าตอบแทนพนักงานราชการจำนวน
+    item_key_not_contains: []
+- raw: เครื่องเลื่อย cast ตำบลแม่กา อำเภอเมืองพะเยา จังหวัดพะเยา
+  source_row: 159964
+  budget_type: งบอุดหนุน
+  expected:
+    province: พะเยา
+    amphoe: เมืองพะเยา
+    tambon: แม่กา
+    qty: null
+    unit: null
+    item_key_contains:
+    - เครื่องเลื่อย
+    item_key_not_contains:
+    - พะเยา
+    - เมืองพะเยา
+    - แม่กา
+- raw: รายการงบประจำ งบดำเนินงาน
+  source_row: 16
+  budget_type: งบดำเนินงาน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - รายการงบประจำ
+    item_key_not_contains: []
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนบ้านสุวรรณภูมิ ตำบลท่าขุนราม อำเภอเมืองกำแพงเพชร
+    จังหวัดกำแพงเพชร
+  source_row: 99380
+  budget_type: งบลงทุน
+  expected:
+    province: กำแพงเพชร
+    amphoe: เมืองกำแพงเพชร
+    tambon: ท่าขุนราม
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - กำแพงเพชร
+    - เมืองกำแพงเพชร
+    - ท่าขุนราม
+- raw: ก่อสร้างรางระบายน้ำคอนกรีตเสริมเหล็ก รหัสทางหลวงท้องถิ่น พย.ถ. 2-0027 สายสันป่าหมากใต้ กว้าง 0.40
+    เมตร หนา 0.10 เมตร ยาว 324.00 เมตร ตำบลดอนศรีชุม อำเภอดอกคำใต้ จังหวัดพะเยา
+  source_row: 179663
+  budget_type: งบอุดหนุน
+  expected:
+    province: พะเยา
+    amphoe: ดอกคำใต้
+    tambon: ดอนศรีชุม
+    qty: 27.0
+    unit: สาย
+    spec_tokens:
+    - 0.4 เมตร
+    - 0.1 เมตร
+    - 324 เมตร
+    item_key_contains:
+    - ก่อสร้างรางระบายน้ำคอนกรีตเสริมเหล็ก
+    item_key_not_contains:
+    - พะเยา
+    - ดอกคำใต้
+    - ดอนศรีชุม
+- raw: อาคารเรียน สปช.105/29 ปรับปรุง อาคาร 2 ชั้น 4 ห้องเรียน ใต้ถุนโล่ง บันไดขึ้น 2 ข้าง โรงเรียนผักเผ็ดจ้อก้อน้อยคูขาม
+    ตำบลน้ำคำ อำเภอสุวรรณภูมิ จังหวัดร้อยเอ็ด
+  source_row: 119957
+  budget_type: งบลงทุน
+  expected:
+    province: ร้อยเอ็ด
+    amphoe: สุวรรณภูมิ
+    tambon: น้ำคำ
+    qty: 4.0
+    unit: ห้องเรียน
+    item_key_contains:
+    - อาคารเรียน
+    item_key_not_contains:
+    - ร้อยเอ็ด
+    - สุวรรณภูมิ
+    - น้ำคำ
+- raw: โครงการกิจกรรมส่งเสริมการท่องเที่ยวจังหวัดปทุมธานี เพื่อฟื้นฟูเศรษฐกิจและสังคมที่ได้รับผลกระทบจากการระบาดของโรคติดเชื้อไวรัสโคโรนา
+    19 (COVID-19)
+  source_row: 186203
+  budget_type: งบดำเนินงาน
+  expected:
+    province: ปทุมธานี
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - โครงการกิจกรรมส่งเสริมการท่องเที่ยว
+    item_key_not_contains:
+    - ปทุมธานี
+- raw: เครื่องปรับอากาศแบบตั้งพื้นหรือแบบแขวน (ระบบ Inverter) ขนาด 18,000 บีทียู
+  source_row: 113381
+  budget_type: งบลงทุน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    spec_tokens:
+    - 18000 บีทียู
+    - inverter
+    - ตั้งพื้น
+    - แขวน
+    item_key_contains:
+    - เครื่องปรับอากาศแบบตั้งพื้นหรือแบบแขวน
+    item_key_not_contains: []
+- raw: เงินอุดหนุนสำหรับสนับสนุนภารกิจด้านการป้องกันและควบคุมไฟป่าขององค์กรปกครองส่วนท้องถิ่น องค์การบริหารส่วนตำบลเมือง
+    ตำบลเมือง อำเภอเมืองเลย จังหวัดเลย
+  source_row: 76988
+  budget_type: งบอุดหนุน
+  expected:
+    province: เลย
+    amphoe: เมืองเลย
+    tambon: เมือง
+    qty: null
+    unit: null
+    item_key_contains:
+    - เงินอุดหนุนสำหรับสนับสนุนภารกิจด้านการป้องกันและควบคุมไฟป่าขององค์กรปกครองส่วนท้องถิ่น
+    item_key_not_contains:
+    - เลย
+    - เมืองเลย
+    - เมือง
+- raw: เครื่องมัลติมิเดียโปรเจคเตอร์ระดับ SVGA ขนาด 3000 ANSILumens โรงเรียนบ้านทุ่งแคตำบลเพ็กใหญ่ อำเภอพลจังหวัดขอนแก่น
+  source_row: 127880
+  budget_type: งบลงทุน
+  expected:
+    province: ขอนแก่น
+    amphoe: พล
+    tambon: เพ็กใหญ่
+    qty: null
+    unit: null
+    item_key_contains:
+    - เครื่องมัลติมิเดียโปรเจคเตอร์ระดับ
+    item_key_not_contains:
+    - ขอนแก่น
+    - พล
+    - เพ็กใหญ่
+- raw: ปรับปรุงระบบไฟฟ้าภายในสำนักงานแขวงทางหลวงชนบทเชียงใหม่ 1 แห่ง
+  source_row: 42615
+  budget_type: งบลงทุน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: 1.0
+    unit: แห่ง
+    item_key_contains:
+    - ปรับปรุงระบบไฟฟ้าภายในสำนักงานแขวงทางหลวงชนบทเชียงใหม่
+    item_key_not_contains: []
+- raw: เครื่องปรับอากาศ แบบแยกส่วน (ราคารวมค่าติดตั้ง) แบบตั้งพื้นหรือแบบแขวน (ระบบ Inverter) ขนาด 24,000
+    บีทียู สำนักงานส่งเสริมการปกครองท้องถิ่นจังหวัดมหาสารคาม ตำบลแวงน่าง อำเภอเมืองมหาสารคาม จังหวัดมหาสารคาม
+  source_row: 85396
+  budget_type: งบลงทุน
+  expected:
+    province: มหาสารคาม
+    amphoe: เมืองมหาสารคาม
+    tambon: แวงน่าง
+    qty: null
+    unit: null
+    spec_tokens:
+    - 24000 บีทียู
+    - inverter
+    - ตั้งพื้น
+    - แขวน
+    item_key_contains:
+    - เครื่องปรับอากาศ
+    item_key_not_contains:
+    - มหาสารคาม
+    - เมืองมหาสารคาม
+    - แวงน่าง
+- raw: ปรับปรุงหลังคาที่ว่าการอำเภอลืออำนาจ จังหวัดอำนาจเจริญ
+  source_row: 58878
+  budget_type: งบลงทุน
+  expected:
+    province: อำนาจเจริญ
+    amphoe: ลืออำนาจ
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงหลังคาที่ว่าการ
+    item_key_not_contains:
+    - อำนาจเจริญ
+    - ลืออำนาจ
+- raw: ก่อสร้างถนนคอนกรีตเสริมเหล็ก บ้านโนนหาด (คุ้มซ้งน้อย) หมู่ที่ 10 – บ้านรวมไทย หมู่ที่ 4 ตำบลโหรา
+    สายบ้านโนนหาด(คุ้มซ้งน้อย) หมู่ที่ 10 – บ้านรวมไทย หมู่ที่ 4 ตำบลโหราหมู่ที่ 10 บ้านโนนหาด ตำบลโหรา
+    กว้าง 4.00 เมตร ยาว 500 เมตร หนา 0.15 เมตร หรือมีพื้นที่ไม่น้อยกว่า 2,000 ตารางเมตร องค์การบริหารส่วนตำบลโหรา
+    อำเภออาจสามารถ จังหวัด ร้อยเอ็ด
+  source_row: 72119
+  budget_type: งบอุดหนุน
+  expected:
+    province: ร้อยเอ็ด
+    amphoe: อาจสามารถ
+    tambon: โหรา
+    qty: 2000.0
+    unit: ตารางเมตร
+    spec_tokens:
+    - 4 เมตร
+    - 500 เมตร
+    - 0.15 เมตร
+    item_key_contains:
+    - ก่อสร้างถนนคอนกรีตเสริมเหล็ก
+    item_key_not_contains:
+    - ร้อยเอ็ด
+    - อาจสามารถ
+    - โหรา
+- raw: เงินเลื่อนเงินเดือนและเงินปรับวุฒิข้าราชการ
+  source_row: 184290
+  budget_type: งบบุคลากร
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - เงินเลื่อนเงินเดือนและเงินปรับวุฒิข้าราชการ
+    item_key_not_contains: []
+- raw: ระบบคอมพิวเตอร์พร้อมอุปกรณ์สำหรับการเรียนการสอน IC20 โรงเรียนบ้านคูบ ตำบลคูบ อำเภอน้ำเกลี้ยง จังหวัดศรีสะเกษ
+  source_row: 109652
+  budget_type: งบลงทุน
+  expected:
+    province: ศรีสะเกษ
+    amphoe: น้ำเกลี้ยง
+    tambon: คูบ
+    qty: null
+    unit: null
+    item_key_contains:
+    - ระบบคอมพิวเตอร์พร้อมอุปกรณ์สำหรับการเรียนการสอน
+    item_key_not_contains:
+    - ศรีสะเกษ
+    - น้ำเกลี้ยง
+    - คูบ
+- raw: งานบำรุงพิเศษและบูรณะ ทางหลวงหมายเลข 222 ตอน หนองแวง - ท่ากกแดง จ.สกลนคร
+  source_row: 38095
+  budget_type: งบลงทุน
+  expected:
+    province: สกลนคร
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - งานบำรุงพิเศษและบูรณะ
+    item_key_not_contains:
+    - สกลนคร
+- raw: ค่าตอบแทน ใช้สอยและวัสดุ โครงการศูนย์เรียนรู้โรงเรือนเกษตรแม่นยำปลอดภัยสำหรับผูัประกอบการมืออาชีพด้านเกษตรอัจฉริยะ
+  source_row: 186162
+  budget_type: งบดำเนินงาน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าตอบแทน
+    item_key_not_contains: []
+- raw: โครงการน้อมนำหลักปรัชญาเศรษฐกิจพอเพียง ขยายผลการสร้างความมั่นคงทางด้านอาหาร จังหวัดนราธิวาส
+  source_row: 184525
+  budget_type: งบดำเนินงาน
+  expected:
+    province: นราธิวาส
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - โครงการน้อมนำหลักปรัชญาเศรษฐกิจพอเพียง
+    item_key_not_contains:
+    - นราธิวาส
+- raw: ตู้ปราศจากเชื้อแบบคลาส II ชนิด A2 (Biosafety Cabinet, Class II Type A2) ขนาดความกว้างไม่น้อยกว่า
+    6 ฟุต ศูนย์วิทยาศาสตร์การแพทย์ที่ 12 สงขลา ตำบลพะวง อำเภอเมืองสงขลา จังหวัดสงขลา
+  source_row: 148780
+  budget_type: งบลงทุน
+  expected:
+    province: สงขลา
+    amphoe: เมืองสงขลา
+    tambon: พะวง
+    qty: null
+    unit: null
+    spec_tokens:
+    - 6 ฟุต
+    - 6 ฟุต
+    item_key_contains:
+    - ตู้ปราศจากเชื้อแบบคลาส
+    item_key_not_contains:
+    - สงขลา
+    - เมืองสงขลา
+    - พะวง
+- raw: เครื่องตรวจอวัยวะภายในด้วยคลื่นเสียงความถี่สูงชนิดใช้ในห้องผ่าตัด ตำบลศาลายา อำเภอพุทธมณฑล จังหวัดนครปฐม
+  source_row: 161868
+  budget_type: งบอุดหนุน
+  expected:
+    province: นครปฐม
+    amphoe: พุทธมณฑล
+    tambon: ศาลายา
+    qty: null
+    unit: null
+    item_key_contains:
+    - เครื่องตรวจอวัยวะภายในด้วยคลื่นเสียงความถี่สูงชนิดใช้ในห้องผ่าตัด
+    item_key_not_contains:
+    - นครปฐม
+    - พุทธมณฑล
+    - ศาลายา
+- raw: โต๊ะเก้าอี้นักเรียน ระดับประถมศึกษา โรงเรียนบ้านกุดเต่า ตำบลนามะเฟือง อำเภอเมืองหนองบัวลำภู จังหวัดหนองบัวลำภู
+  source_row: 111763
+  budget_type: งบลงทุน
+  expected:
+    province: หนองบัวลำภู
+    amphoe: เมืองหนองบัวลำภู
+    tambon: นามะเฟือง
+    qty: null
+    unit: null
+    item_key_contains:
+    - โต๊ะเก้าอี้นักเรียน
+    item_key_not_contains:
+    - หนองบัวลำภู
+    - เมืองหนองบัวลำภู
+    - นามะเฟือง
+- raw: ซ่อมแซมท่อส่งน้ำเข้านาอ่างเก็บน้ำห้วยปุ๊อันเนื่องมาจากพระราชดำริ ศูนย์ศึกษาการพัฒนาภูพานอันเนื่องมาจากพระราชดำริ
+    ตำบลดงมะไฟ อำเภอเมืองสกลนคร จังหวัดสกลนคร
+  source_row: 13611
+  budget_type: งบลงทุน
+  expected:
+    province: สกลนคร
+    amphoe: เมืองสกลนคร
+    tambon: ดงมะไฟ
+    qty: null
+    unit: null
+    item_key_contains:
+    - ซ่อมแซมท่อส่งน้ำเข้านาอ่างเก็บน้ำห้วยปุ๊อันเนื่องมาจากพระราชดำริ
+    item_key_not_contains:
+    - สกลนคร
+    - เมืองสกลนคร
+    - ดงมะไฟ
+- raw: เครื่องกำเนิดไฟฟ้า (ราคาไม่รวมค่าติดตั้ง) ขนาด 5 กิโลวัตต์ สำนักงาน กศน.จังหวัดสมุทรปราการ ตำบลปากน้ำ
+    อำเภอเมืองสมุทรปราการ จังหวัดสมุทรปราการ
+  source_row: 91269
+  budget_type: งบลงทุน
+  expected:
+    province: สมุทรปราการ
+    amphoe: เมืองสมุทรปราการ
+    tambon: ปากน้ำ
+    qty: null
+    unit: null
+    spec_tokens:
+    - 5 กิโลวัตต์
+    item_key_contains:
+    - เครื่องกำเนิดไฟฟ้า
+    item_key_not_contains:
+    - สมุทรปราการ
+    - เมืองสมุทรปราการ
+    - ปากน้ำ
+- raw: ครุภัณฑ์ทดแทนสำหรับห้องเรียน DLTV (โรงเรียน Stand Alone) โรงเรียนวัดธาตุ ตำบลบ้านดู่ อำเภอนาโพธิ์
+    จังหวัดบุรีรัมย์
+  source_row: 134015
+  budget_type: งบลงทุน
+  expected:
+    province: บุรีรัมย์
+    amphoe: นาโพธิ์
+    tambon: บ้านดู่
+    qty: null
+    unit: null
+    item_key_contains:
+    - ครุภัณฑ์ทดแทนสำหรับห้องเรียน
+    item_key_not_contains:
+    - บุรีรัมย์
+    - นาโพธิ์
+    - บ้านดู่
+- raw: หุ่นจำลองฝึกฟังเสียงหัวใจและเสียงหายใจ แบบฝึกใส่ท่อช่วยหายใจได้ ศูนย์แพทยศาสตรศึกษาชั้นคลินิกโรงพยาบาลวชิระภูเก็ต
+    ตำบลตลาดใหญ่ อำเภอเมืองภูเก็ต จังหวัดภูเก็ต
+  source_row: 143764
+  budget_type: งบลงทุน
+  expected:
+    province: ภูเก็ต
+    amphoe: เมืองภูเก็ต
+    tambon: ตลาดใหญ่
+    qty: null
+    unit: null
+    item_key_contains:
+    - หุ่นจำลองฝึกฟังเสียงหัวใจและเสียงหายใจ
+    item_key_not_contains:
+    - ภูเก็ต
+    - เมืองภูเก็ต
+    - ตลาดใหญ่
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนบ้านโคกเมา ตำบลท่าช้าง อำเภอบางกลํ่า
+    จังหวัดสงขลา
+  source_row: 121329
+  budget_type: งบลงทุน
+  expected:
+    province: สงขลา
+    amphoe: บางกลํ่า
+    tambon: ท่าช้าง
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - สงขลา
+    - บางกลํ่า
+    - ท่าช้าง
+- raw: ก่อสร้างถนนคอนกรีตเสริมเหล็ก จากนานายธเนศพล แก้วนามเมือง ถึงนานางบุญโฮม บุญเกตุ/นานางพุฒ สุมาลี
+    ขนาดกว้าง 4.00 เมตร ยาว 390 เมตร หนา 0.15 เมตร พร้อมลงไหล่ทางดินลูกรัง 2 ข้างๆละ 0.50 เมตร หรือปริมาณดินลูกรังไม่น้อยกว่า78
+    ลูกบาศ์กเมตรหรือมีพื้นที่ ไม่น้อยกว่า 1560 ตารางเมตร เทศบาลตำบลสร้างนางขาว อำเภอโพนพิสัย จังหวัดหนองคาย
+  source_row: 80282
+  budget_type: งบอุดหนุน
+  expected:
+    province: หนองคาย
+    amphoe: โพนพิสัย
+    tambon: สร้างนางขาว
+    spec_tokens:
+    - 4 เมตร
+    - 390 เมตร
+    - 0.15 เมตร
+    item_key_contains:
+    - ก่อสร้างถนนคอนกรีตเสริมเหล็ก
+    item_key_not_contains:
+    - หนองคาย
+    - โพนพิสัย
+    - สร้างนางขาว
+  ambiguous: true
+  ambiguous_reason: มีตัวเลข+หน่วยหลายคู่ในชื่อเดียว (เช่น กว้าง/ยาว/หนา/พื้นที่ของงานก่อสร้างถนน) ไม่ชัดว่าอันไหนคือ
+    qty หลัก
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนบ้านบางกลาง ตำบลบางริ้น อำเภอเมืองระนอง
+    จังหวัดระนอง
+  source_row: 120033
+  budget_type: งบลงทุน
+  expected:
+    province: ระนอง
+    amphoe: เมืองระนอง
+    tambon: บางริ้น
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - ระนอง
+    - เมืองระนอง
+    - บางริ้น
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนบ้านแก่นฟ้า ตำบลห้วยโป่ง อำเภอเมืองแม่ฮ่องสอน
+    จังหวัดแม่ฮ่องสอน
+  source_row: 119373
+  budget_type: งบลงทุน
+  expected:
+    province: แม่ฮ่องสอน
+    amphoe: เมืองแม่ฮ่องสอน
+    tambon: ห้วยโป่ง
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - แม่ฮ่องสอน
+    - เมืองแม่ฮ่องสอน
+    - ห้วยโป่ง
+- raw: ค่าก่อสร้างแหล่งน้ำในไร่นา ขนาด 1,260 ลูกบาศก์เมตร ตำบลบุกระสัง อำเภอหนองกี่ จังหวัดบุรีรัมย์
+  source_row: 25091
+  budget_type: งบลงทุน
+  expected:
+    province: บุรีรัมย์
+    amphoe: หนองกี่
+    tambon: บุกระสัง
+    qty: null
+    unit: null
+    spec_tokens:
+    - 1260 ลูกบาศก์เมตร
+    item_key_contains:
+    - ค่าก่อสร้างแหล่งน้ำในไร่นา
+    item_key_not_contains:
+    - บุรีรัมย์
+    - หนองกี่
+    - บุกระสัง
+- raw: โครงการขุดลอกลำน้ำแบ่ง เพิ่มพื้นที่กักเก็บน้ำ บ้านแบ่ง หมู่ที่ 5 ต.งิม อ.ปง จ.พะเยา
+  source_row: 188185
+  budget_type: งบอุดหนุน
+  expected:
+    province: พะเยา
+    amphoe: ปง
+    tambon: งิม
+    qty: null
+    unit: null
+    item_key_contains:
+    - โครงการขุดลอกลำน้ำแบ่ง
+    item_key_not_contains:
+    - พะเยา
+    - ปง
+    - งิม
+- raw: งานบำรุงถนนสาย นฐ.3039 แยกทางหลวงหมายเลข 346 - บ้านการ้อง อ.บางเลน จ.นครปฐม 1 แห่ง
+  source_row: 44147
+  budget_type: งบลงทุน
+  expected:
+    province: นครปฐม
+    amphoe: บางเลน
+    tambon: null
+    qty: 1.0
+    unit: แห่ง
+    item_key_contains:
+    - งานบำรุงถนนสาย
+    item_key_not_contains:
+    - นครปฐม
+    - บางเลน
+- raw: งานก่อสร้างเพิ่มประสิทธิภาพทางหลวง ทางหลวงหมายเลข32 ตอน อยุธยา - นครหลวงจ.พระนครศรีอยุธยา
+  source_row: 35794
+  budget_type: งบลงทุน
+  expected:
+    province: พระนครศรีอยุธยา
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - งานก่อสร้างเพิ่มประสิทธิภาพทางหลวง
+    item_key_not_contains:
+    - พระนครศรีอยุธยา
+- raw: เครื่องวัดความดันโลหิตแบบตั้งพื้น โรงเรียนสอนคนตาบอดภาคใต้ ตำบลขุนทะเล อำเภอเมืองสุราษฎร์ธานี จังหวัดสุราษฎร์ธานี
+  source_row: 125791
+  budget_type: งบลงทุน
+  expected:
+    province: สุราษฎร์ธานี
+    amphoe: เมืองสุราษฎร์ธานี
+    tambon: ขุนทะเล
+    qty: null
+    unit: null
+    spec_tokens:
+    - ตั้งพื้น
+    item_key_contains:
+    - เครื่องวัดความดันโลหิตแบบตั้งพื้น
+    item_key_not_contains:
+    - สุราษฎร์ธานี
+    - เมืองสุราษฎร์ธานี
+    - ขุนทะเล
+- raw: เงินชดเชยค่างานก่อสร้างตามสัญญาแบบปรับราคาได้ (ค่า K) พัฒนาสะพานขนาดกลาง สะพานข้ามคลองน้ำใส อำเภอลำทับ
+    จังหวัดกระบี่ ความยาว 36 เมตร
+  source_row: 42644
+  budget_type: งบลงทุน
+  expected:
+    province: กระบี่
+    amphoe: ลำทับ
+    tambon: null
+    qty: 36.0
+    unit: เมตร
+    item_key_contains:
+    - เงินชดเชยค่างานก่อสร้างตามสัญญาแบบปรับราคาได้
+    item_key_not_contains:
+    - กระบี่
+    - ลำทับ
+- raw: เพื่อดำเนินโครงการเกษตรประณีตทฤษฎีใหม่
+  source_row: 184472
+  budget_type: งบดำเนินงาน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - เพื่อดำเนินโครงการเกษตรประณีตทฤษฎีใหม่
+    item_key_not_contains: []
+- raw: รถเข็นอเนกประสงค์ 4 ล้อ จำนวน 2 คัน กลุ่มกฎหมาย แขวงคลองมหานาค เขตป้อมปราบศัตรูพ่าย กรุงเทพมหานคร
+  source_row: 9879
+  budget_type: งบลงทุน
+  expected:
+    province: กรุงเทพมหานคร
+    amphoe: null
+    tambon: null
+    qty: 2.0
+    unit: คัน
+    spec_tokens:
+    - 4 ล้อ
+    item_key_contains:
+    - รถเข็นอเนกประสงค์
+    item_key_not_contains:
+    - กรุงเทพมหานคร
+- raw: ชุดโปรแกรมระบบปฏิบัติการสำหรับเครื่องคอมพิวเตอร์ และเครื่องคอมพิวเตอร์โน้ตบุ๊ก แบบสิทธิการใช้งานประเภทติดตั้งมาจากโรงงาน
+    (OEM) ที่มีลิขสิทธิ์ถูกต้องตามกฎหมาย สำนักงานตรวจบัญชีสหกรณ์นครราชสีมา ตำบลในเมือง อำเภอเมืองนครราชสีมา
+    จังหวัดนครราชสีมา
+  source_row: 22721
+  budget_type: งบลงทุน
+  expected:
+    province: นครราชสีมา
+    amphoe: เมืองนครราชสีมา
+    tambon: ในเมือง
+    qty: null
+    unit: null
+    item_key_contains:
+    - ชุดโปรแกรมระบบปฏิบัติการสำหรับเครื่องคอมพิวเตอร์
+    item_key_not_contains:
+    - นครราชสีมา
+    - เมืองนครราชสีมา
+    - ในเมือง
+- raw: รั้วคอนกรีตเสริมเหล็ก และรั้วลวดหนาม โรงพยาบาลส่งเสริมสุขภาพตำบลบ้านหลักวอ ต.นอกเมือง อ.เมืองสุรินทร์
+    จ.สุรินทร์
+  source_row: 143566
+  budget_type: งบลงทุน
+  expected:
+    province: สุรินทร์
+    amphoe: เมืองสุรินทร์
+    tambon: นอกเมือง
+    qty: null
+    unit: null
+    item_key_contains:
+    - รั้วคอนกรีตเสริมเหล็ก
+    item_key_not_contains:
+    - สุรินทร์
+    - เมืองสุรินทร์
+    - นอกเมือง
+- raw: โต๊ะเก้าอี้นักเรียน ระดับก่อนประถมศึกษา โรงเรียนชุมชนบ้านขอนขว้าง ตำบลดงขี้เหล็ก อำเภอเมืองปราจีนบุรี
+    จังหวัดปราจีนบุรี
+  source_row: 108559
+  budget_type: งบลงทุน
+  expected:
+    province: ปราจีนบุรี
+    amphoe: เมืองปราจีนบุรี
+    tambon: ดงขี้เหล็ก
+    qty: null
+    unit: null
+    item_key_contains:
+    - โต๊ะเก้าอี้นักเรียน
+    item_key_not_contains:
+    - ปราจีนบุรี
+    - เมืองปราจีนบุรี
+    - ดงขี้เหล็ก
+- raw: ปรับปรุงระบบประปาที่ว่าการอำเภอแม่อาย จังหวัดเชียงใหม่
+  source_row: 57573
+  budget_type: งบลงทุน
+  expected:
+    province: เชียงใหม่
+    amphoe: แม่อาย
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงระบบประปาที่ว่าการ
+    item_key_not_contains:
+    - เชียงใหม่
+    - แม่อาย
+- raw: ครุภัณฑ์ทดแทนสำหรับห้องเรียน DLTV (โรงเรียน Stand Alone) โรงเรียนบ้านหนองลุมพุก ตำบลหนองเรือ อำเภอโนนสัง
+    จังหวัดหนองบัวลำภู
+  source_row: 137639
+  budget_type: งบลงทุน
+  expected:
+    province: หนองบัวลำภู
+    amphoe: โนนสัง
+    tambon: หนองเรือ
+    qty: null
+    unit: null
+    item_key_contains:
+    - ครุภัณฑ์ทดแทนสำหรับห้องเรียน
+    item_key_not_contains:
+    - หนองบัวลำภู
+    - โนนสัง
+    - หนองเรือ
+- raw: ค่าใช้จ่ายจัดทำฐานข้อมูลที่เขา ที่ภูเขา และพื้นที่ลาดชันเฉลี่ยเกิน 35 เปอร์เซ็นต์
+  source_row: 60396
+  budget_type: งบรายจ่ายอื่น
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าใช้จ่ายจัดทำฐานข้อมูลที่เขา
+    item_key_not_contains: []
+- raw: ก่อสร้างถนนคอนกรีตเสริมเหล็ก สายบ้านดงไพรวัลย์ - บ้านโนนสะอาด ผิวจราจรกว้าง 4 เมตร ยาว 515 เมตร
+    หนา 0.15 เมตร ไหล่ทางลูกรังกว้างข้างละ 0.50 เมตร หรือพื้นที่ผิวจราจรไม่น้อยกว่า 2,060 ตารางเมตร องค์การบริหารส่วนตำบลบ้านชัย
+    อำเภอบ้านดุง จังหวัดอุดรธานี
+  source_row: 80422
+  budget_type: งบอุดหนุน
+  expected:
+    province: อุดรธานี
+    amphoe: บ้านดุง
+    tambon: บ้านชัย
+    qty: 2060.0
+    unit: ตารางเมตร
+    spec_tokens:
+    - 4 เมตร
+    - 515 เมตร
+    - 0.15 เมตร
+    - 0.5 เมตร
+    item_key_contains:
+    - ก่อสร้างถนนคอนกรีตเสริมเหล็ก
+    item_key_not_contains:
+    - อุดรธานี
+    - บ้านดุง
+    - บ้านชัย
+- raw: รายการค่าใช้จ่ายการดำเนินการตามแผนงานและภารกิจของคณะกรรมการอำนวยการศูนย์ราชการสะดวก (GECC) และคณะอนุกรรมการหรือคณะทำงานที่เกี่ยวข้อง
+  source_row: 60
+  budget_type: งบรายจ่ายอื่น
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - รายการค่าใช้จ่ายการดำเนินการตามแผนงานและภารกิจของคณะกรรมการอำนวยการศูนย์ราชการสะดวก
+    item_key_not_contains: []
+- raw: โครงการเผยแพร่ความรู้ด้านการพัฒนาเมือง
+  source_row: 64064
+  budget_type: งบรายจ่ายอื่น
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - โครงการเผยแพร่ความรู้ด้านการพัฒนาเมือง
+    item_key_not_contains: []
+- raw: ติดตั้งไฟฟ้าแสงสว่าง ทางหลวงหมายเลข 1333 ตอนควบคุม 0100 ระหว่างกม.39+395 - กม.40+270 และ กม.41+005
+    - กม.42+580 ตำบลบ่อเกลือใต้ อำเภอบ่อเกลือ จังหวัดน่าน ระยะทาง 2.450 กิโลเมตร
+  source_row: 175131
+  budget_type: งบลงทุน
+  expected:
+    province: น่าน
+    amphoe: บ่อเกลือ
+    tambon: บ่อเกลือใต้
+    qty: 2.45
+    unit: กิโลเมตร
+    item_key_contains:
+    - ติดตั้งไฟฟ้าแสงสว่าง
+    item_key_not_contains:
+    - น่าน
+    - บ่อเกลือ
+    - บ่อเกลือใต้
+- raw: พัดลม แบบตั้งพื้น 16 นิ้ว
+  source_row: 149538
+  budget_type: งบลงทุน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    spec_tokens:
+    - 16 นิ้ว
+    - ตั้งพื้น
+    item_key_contains:
+    - พัดลม
+    item_key_not_contains: []
+- raw: เครื่องตัดโลหะด้วยคลื่นแสงอินฟาเรด ตำบลเมือง อำเภอเมืองเลย จังหวัดเลย
+  source_row: 153444
+  budget_type: งบลงทุน
+  expected:
+    province: เลย
+    amphoe: เมืองเลย
+    tambon: เมือง
+    qty: null
+    unit: null
+    item_key_contains:
+    - เครื่องตัดโลหะด้วยคลื่นแสงอินฟาเรด
+    item_key_not_contains:
+    - เลย
+    - เมืองเลย
+    - เมือง
+- raw: ค่าก่อสร้างสำนักงานพาณิชย์จังหวัด สำนักงานพาณิชย์จังหวัดอุดรธานี ตำบลหมากแข้ง อำเภอเมืองอุดรธานี
+    จังหวัดอุดรธานี
+  source_row: 55523
+  budget_type: งบลงทุน
+  expected:
+    province: อุดรธานี
+    amphoe: เมืองอุดรธานี
+    tambon: หมากแข้ง
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าก่อสร้างสำนักงานพาณิชย์
+    item_key_not_contains:
+    - อุดรธานี
+    - เมืองอุดรธานี
+    - หมากแข้ง
+- raw: 'ก่อสร้างธนาคารน้ำใต้ดินระบบเปิด จำนวน 1 บ่อ และระบบปิด จำนวน 2 บ่อ คลองห้วยทราย (กลุ่มบ้านเนินแพง
+    ) หมู่ที่ 9 องค์การบริหารส่วนตำบลเขาพระ อำเภอเมืองนครนายก จังหวัดนครนายก  '
+  source_row: 83766
+  budget_type: งบอุดหนุน
+  expected:
+    province: นครนายก
+    amphoe: เมืองนครนายก
+    tambon: เขาพระ
+    qty: null
+    unit: null
+    item_key_contains:
+    - ก่อสร้างธนาคารน้ำใต้ดินระบบเปิด
+    item_key_not_contains:
+    - นครนายก
+    - เมืองนครนายก
+    - เขาพระ
+- raw: พัฒนาแหล่งท่องเที่ยว หนองสองห้อง โดยก่อสร้างถนนลาดยาง ขนาดกว้าง 5.00 เมตร ยาว 828.00 เมตร หนา 0.04
+    เมตร องค์การบริหารส่วนตำบลสระคู อำเภอสุวรรณภูมิ จังหวัดร้อยเอ็ด
+  source_row: 67365
+  budget_type: งบอุดหนุน
+  expected:
+    province: ร้อยเอ็ด
+    amphoe: สุวรรณภูมิ
+    tambon: สระคู
+    qty: null
+    unit: null
+    spec_tokens:
+    - 5 เมตร
+    - 828 เมตร
+    - 0.04 เมตร
+    item_key_contains:
+    - พัฒนาแหล่งท่องเที่ยว
+    item_key_not_contains:
+    - ร้อยเอ็ด
+    - สุวรรณภูมิ
+    - สระคู
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนกาญจนาภิเษกวิทยาลัย นครปฐม (พระตำหนักสวนกุหลาบมัธยม)
+    ตำบลศาลายา อำเภอพุทธมณฑล จังหวัดนครปฐม
+  source_row: 124002
+  budget_type: งบลงทุน
+  expected:
+    province: นครปฐม
+    amphoe: พุทธมณฑล
+    tambon: ศาลายา
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - นครปฐม
+    - พุทธมณฑล
+    - ศาลายา
+- raw: ยกระดับมาตรฐานและเพิ่มประสิทธิภาพทางหลวง (งานติดตั้งไฟฟ้าส่องสว่าง) ทางหลวงหมายเลข 2195 ตอนควบคุม
+    1010 ตอนเชียงคาน-ปากคาน ระหว่าง กม.21+000 - กม.23+000
+  source_row: 172974
+  budget_type: งบลงทุน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ยกระดับมาตรฐานและเพิ่มประสิทธิภาพทางหลวง
+    item_key_not_contains: []
+- raw: ปรับปรุงห้องน้ำ อาคาร 52 แขวงวงศ์สว่าง เขตบางซื่อ กรุงเทพมหานคร
+  source_row: 159575
+  budget_type: งบอุดหนุน
+  expected:
+    province: กรุงเทพมหานคร
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงห้องน้ำ
+    item_key_not_contains:
+    - กรุงเทพมหานคร
+- raw: ครุภัณฑ์ทดแทนสำหรับห้องเรียน DLTV (โรงเรียน Stand Alone) โรงเรียนควนโอ ตำบลอ่าวลึกน้อย อำเภออ่าวลึก
+    จังหวัดกระบี่
+  source_row: 130784
+  budget_type: งบลงทุน
+  expected:
+    province: กระบี่
+    amphoe: อ่าวลึก
+    tambon: อ่าวลึกน้อย
+    qty: null
+    unit: null
+    item_key_contains:
+    - ครุภัณฑ์ทดแทนสำหรับห้องเรียน
+    item_key_not_contains:
+    - กระบี่
+    - อ่าวลึก
+    - อ่าวลึกน้อย
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนบ้านห้วยกบ ตำบลหนองลู อำเภอสังขละบุรี
+    จังหวัดกาญจนบุรี
+  source_row: 113543
+  budget_type: งบลงทุน
+  expected:
+    province: กาญจนบุรี
+    amphoe: สังขละบุรี
+    tambon: หนองลู
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - กาญจนบุรี
+    - สังขละบุรี
+    - หนองลู
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนวัดคำหยาด ตำบลคำหยาด อำเภอโพธิ์ทอง
+    จังหวัดอ่างทอง
+  source_row: 103428
+  budget_type: งบลงทุน
+  expected:
+    province: อ่างทอง
+    amphoe: โพธิ์ทอง
+    tambon: คำหยาด
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - อ่างทอง
+    - โพธิ์ทอง
+    - คำหยาด
+- raw: ก่อสร้างถนนคอนกรีตเสริมเหล็ก บ้านคำเจริญ สายข้างโรงเรียนบ้านคำเจริญ - แยกบ้านท่าศรีไคล(ช่วงที่
+    1) หมู่ที่ 4 บ้านคำเจริญ ตำบลคูสะคาม ขนาดกว้าง 5.00 เมตร ยาว 700.00 เมตร หนา 0.15 เมตร หรือมีพื้นที่ไม่น้อยกว่า
+    3,500 ตารางเมตร เทศบาลตำบลคูสะคาม อำเภอวานรนิวาส จังหวัดสกลนคร
+  source_row: 73070
+  budget_type: งบอุดหนุน
+  expected:
+    province: สกลนคร
+    amphoe: วานรนิวาส
+    tambon: คูสะคาม
+    qty: 3500.0
+    unit: ตารางเมตร
+    spec_tokens:
+    - 5 เมตร
+    - 700 เมตร
+    - 0.15 เมตร
+    item_key_contains:
+    - ก่อสร้างถนนคอนกรีตเสริมเหล็ก
+    item_key_not_contains:
+    - สกลนคร
+    - วานรนิวาส
+    - คูสะคาม
+- raw: ครุภัณฑ์ทดแทนสำหรับห้องเรียน DLTV (โรงเรียน Stand Alone) โรงเรียนบ้านหนองบั่ว ตำบลแก่งเค็ง อำเภอกุดข้าวปุ้น
+    จังหวัดอุบลราชธานี
+  source_row: 138646
+  budget_type: งบลงทุน
+  expected:
+    province: อุบลราชธานี
+    amphoe: กุดข้าวปุ้น
+    tambon: แก่งเค็ง
+    qty: null
+    unit: null
+    item_key_contains:
+    - ครุภัณฑ์ทดแทนสำหรับห้องเรียน
+    item_key_not_contains:
+    - อุบลราชธานี
+    - กุดข้าวปุ้น
+    - แก่งเค็ง
+- raw: โครงการเพิ่มประสิทธิภาพการระบายน้ำคลอง MC วังบัว โครงการส่งน้ำและบำรุงรักษาวังบัว กม 44+000 - กม.
+    66+000 โครงการส่งน้ำและบำรุงรักษาวังบัว ตำบลหนองคล้า อำเภอไทรงาม จังหวัดกำแพงเพชร
+  source_row: 11492
+  budget_type: งบลงทุน
+  expected:
+    province: กำแพงเพชร
+    amphoe: ไทรงาม
+    tambon: หนองคล้า
+    qty: 0.0
+    unit: โครงการ
+    item_key_contains:
+    - โครงการเพิ่มประสิทธิภาพการระบายน้ำคลอง
+    item_key_not_contains:
+    - กำแพงเพชร
+    - ไทรงาม
+    - หนองคล้า
+- raw: โรงอาหารขนาดเล็ก 260 ที่นั่ง โรงเรียนพะโต๊ะวิทยา ตำบลพะโต๊ะ อำเภอพะโต๊ะ จังหวัดชุมพร
+  source_row: 104571
+  budget_type: งบลงทุน
+  expected:
+    province: ชุมพร
+    amphoe: พะโต๊ะ
+    tambon: พะโต๊ะ
+    qty: null
+    unit: null
+    spec_tokens:
+    - 260 ที่นั่ง
+    item_key_contains:
+    - โรงอาหารขนาดเล็ก
+    item_key_not_contains:
+    - ชุมพร
+    - พะโต๊ะ
+- raw: งานก่อสร้างทางหลวงผ่านย่านชุมชน ทางหลวงหมายเลข 2218 ตอน คำเพิ่ม - ห้วยบาง จ.สกลนคร
+  source_row: 34977
+  budget_type: งบลงทุน
+  expected:
+    province: สกลนคร
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - งานก่อสร้างทางหลวงผ่านย่านชุมชน
+    item_key_not_contains:
+    - สกลนคร
+- raw: ซ่อมแซมท่อส่งน้ำเข้านา กม.24+780 ของคลองส่งน้ำสายใหญ่ฝั่งซ้าย โครงการส่งน้ำและบำรุงรักษาแม่กวงอุดมธารา
+    ตำบลห้วยทราย อำเภอสันกำแพง จังหวัดเชียงใหม่
+  source_row: 15666
+  budget_type: งบลงทุน
+  expected:
+    province: เชียงใหม่
+    amphoe: สันกำแพง
+    tambon: ห้วยทราย
+    qty: null
+    unit: null
+    item_key_contains:
+    - ซ่อมแซมท่อส่งน้ำเข้านา
+    item_key_not_contains:
+    - เชียงใหม่
+    - สันกำแพง
+    - ห้วยทราย
+- raw: 'โครงการยกระดับระบบบริหารจัดการกรมการแพทย์แนวใหม่ด้วยระบบดิจิทัล (Digital DMS New Management System) '
+  source_row: 147806
+  budget_type: งบดำเนินงาน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - โครงการยกระดับระบบบริหารจัดการกรมการแพทย์แนวใหม่ด้วยระบบดิจิทัล
+    item_key_not_contains: []
+- raw: ปรับปรุงซ่อมแซมอาคารเรียน อาคารประกอบและสิ่งก่อสร้างอื่น โรงเรียนบ้านแหลมยางนา ตำบลตะโก อำเภอทุ่งตะโก
+    จังหวัดชุมพร
+  source_row: 115053
+  budget_type: งบลงทุน
+  expected:
+    province: ชุมพร
+    amphoe: ทุ่งตะโก
+    tambon: ตะโก
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงซ่อมแซมอาคารเรียน
+    item_key_not_contains:
+    - ชุมพร
+    - ทุ่งตะโก
+    - ตะโก
+- raw: ค่าใช้จ่ายในการดำเนินโครงการขอรับการสนับสนุนงบประมาณรองรับการดำเนินงานตามแผนปฏิบัติการว่าด้วยกลไลการส่งต่อระดับชาติ
+    การบริหารจัดการคดีและการช่วยเหลือคุ้มครองผู้เสียหายจากการค้ามนุษย์ และการบังคับใช้แรงงานหรือบริการ
+  source_row: 184473
+  budget_type: งบดำเนินงาน
+  expected:
+    province: null
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ค่าใช้จ่ายในการดำเนินโครงการขอรับการสนับสนุนงบประมาณรองรับการดำเนินงานตามแผนปฏิบัติการว่าด้วยกลไลการส่งต่อระดับชาติ
+    item_key_not_contains: []
+- raw: ปรับปรุงอาคารวิทยบริการ วิทยาเขตชลบุรี ตำบลหนองไม้แดง อำเภอเมืองชลบุรี จังหวัดชลบุรี
+  source_row: 9379
+  budget_type: งบลงทุน
+  expected:
+    province: ชลบุรี
+    amphoe: เมืองชลบุรี
+    tambon: หนองไม้แดง
+    qty: null
+    unit: null
+    item_key_contains:
+    - ปรับปรุงอาคารวิทยบริการ
+    item_key_not_contains:
+    - เมืองชลบุรี
+    - หนองไม้แดง
+holdout_2563:
+- raw: เครื่องตัดหญ้าแบบดรัมโมเวอร์ขนาดหน้ากว้าง 1.30 เมตร ตำบลสามพระยา อำเภอชะอำ จังหวัดเพชรบุรี
+  note: หมวด A ข้อ 1 — ขนาด/มิติ (หน้ากว้าง) ต้องเป็น spec ไม่ใช่ qty
+  expected:
+    province: เพชรบุรี
+    amphoe: ชะอำ
+    tambon: สามพระยา
+    qty: null
+    unit: null
+    spec_tokens:
+    - 1.3 เมตร
+    item_key_contains:
+    - เครื่องตัดหญ้าแบบดรัมโมเวอร์
+    - 1.3 เมตร
+    item_key_not_contains: []
+- raw: ค่าก่อสร้างแหล่งน้ำในไร่นาขนาด 1,260 ลูกบาศก์เมตรตำบลนาสีนวล อำเภอพยัคฆภูมิพิสัย จังหวัดมหาสารคาม
+  note: หมวด A ข้อ 2 — ขนาด (ลูกบาศก์เมตร) ต้องเป็น spec ไม่ใช่ qty, comma ต้องหาย
+  expected:
+    province: มหาสารคาม
+    amphoe: พยัคฆภูมิพิสัย
+    tambon: นาสีนวล
+    qty: null
+    unit: null
+    spec_tokens:
+    - 1260 ลูกบาศก์เมตร
+    item_key_contains:
+    - 1260 ลูกบาศก์เมตร
+    item_key_not_contains: []
+- raw: คันกั้นน้ำและอาคารประกอบห้วยทับเสลา ระยะที่ 2 ระยะทางรวม5.100 กิโลเมตร ตำบลทุ่งโพอำเภอหนองฉาง จังหวัดอุทัยธานี
+  note: หมวด A ข้อ 3 — ระยะทางรวม เป็น qty ได้ แต่ต้องติดธง qty_is_measure
+  expected:
+    province: อุทัยธานี
+    amphoe: หนองฉาง
+    tambon: ทุ่งโพ
+    qty: 5.1
+    unit: กิโลเมตร
+    item_key_contains: []
+    item_key_not_contains: []
+  quality_flags_contains:
+  - qty_is_measure
+- raw: ซ่อมแซมคลองส่งน้ำสายใหญ่และสายซอย จำนวน 3 สายพื้นที่ 2,890 ตารางเมตร ระบบกระจายน้ำบ้านเขว้า โครงการส่งน้ำและบำรุงรักษามูลกลาง
+    ตำบลบ้านแพ อำเภอคูเมือง จังหวัดบุรีรัมย์
+  note: หมวด A ข้อ 4 — 'จำนวน' ต้องชนะ 'พื้นที่'
+  expected:
+    province: บุรีรัมย์
+    amphoe: คูเมือง
+    tambon: บ้านแพ
+    qty: 3.0
+    unit: สาย
+    item_key_contains: []
+    item_key_not_contains: []
+  quality_flags_contains:
+  - qty_parsed_low_conf
+- raw: เครื่องปรับอากาศ แบบแยกส่วนแบบตั้งพื้นหรือแบบแขวน (ระบบInverter) ขนาด 30,000 บีทียูบ้านพักเด็กและครอบครัวจังหวัดเชียงราย
+    ตำบลแม่ไร่ อำเภอแม่จัน จังหวัดเชียงราย
+  note: หมวด B ข้อ 1 — สเปคต้อง normalize comma และคงอยู่ใน item_key, org tail ต้องตัด
+  expected:
+    province: เชียงราย
+    amphoe: แม่จัน
+    tambon: แม่ไร่
+    qty: null
+    unit: null
+    spec_tokens:
+    - 30000 บีทียู
+    - inverter
+    item_key_contains:
+    - 30000 บีทียู
+    item_key_not_contains:
+    - บ้านพักเด็ก
+    - เชียงราย
+- raw: รถบรรทุก (ดีเซล) ขนาด 1 ตันปริมาตรกระบอกสูบไม่ต่ำกว่า2,400 ซีซี หรือกำลังเครื่องยนต์สูงสุดไม่ต่ำกว่า
+    110 กิโลวัตต์ขับเคลื่อน 2 ล้อ แบบดับเบิ้ลแค็บ พร้อมหลังคาไฟเบอร์กลาสหรือเหล็ก สำนักงานตรวจบัญชีสหกรณ์อุบลราชธานี
+    ตำบลวารินชำราบ อำเภอวารินชำราบจังหวัดอุบลราชธานี
+  note: หมวด B ข้อ 2 — comma ในสเปคต้องหาย, org tail (สำนักงานตรวจบัญชีสหกรณ์) ต้องตัด
+  expected:
+    province: อุบลราชธานี
+    amphoe: วารินชำราบ
+    tambon: วารินชำราบ
+    qty: null
+    unit: null
+    item_key_contains:
+    - 2400 ซีซี
+    item_key_not_contains:
+    - สำนักงานตรวจบัญชีสหกรณ์
+    - อุบลราชธานี
+- raw: เครื่องพิมพ์เลเซอร์หรือ LED ขาวดำชนิด Network แบบที่ 1 (28 หน้า/นาที)สำนักงานเกษตรอำเภอบ้านตาก
+    ตำบลตากออกอำเภอบ้านตาก จังหวัดตาก
+  note: หมวด B ข้อ 3 — ')' ติดคำถัดไปห้ามทำให้ span ขยายกินสเปค; item_key เก็บ '28 หน้า นาที' ('/'->space
+    จาก strip punct — coordinator อนุญาตรูปนี้)
+  expected:
+    province: ตาก
+    qty: null
+    unit: null
+    spec_tokens:
+    - 28 หน้า/นาที
+    item_key_contains:
+    - 28 หน้า นาที
+    item_key_not_contains:
+    - สำนักงานเกษตร
+- raw: ก่อสร้างระบบป้องกันน้ำท่วมพื้นที่ชุมชนเมืองอุทัยธานี ระยะที่ 4จังหวัดอุทัยธานี
+  note: หมวด C — เลขติด marker ('4จังหวัด') ห้ามถูกกินไปกับ marker
+  expected:
+    province: อุทัยธานี
+    qty: null
+    unit: null
+    item_key_contains:
+    - ระยะที่ 4
+    item_key_not_contains: []
+- raw: น้ำอุปโภคบริโภค บ้านคลอง16 หมู่ที่ 12  ตำบลดอนฉิมพลี
+  note: หมวด D ข้อ 1 — เลขหมู่/บ้านเลขที่พ่วงติดชื่อ ต้องไม่หลงเหลือใน item_key
+  expected:
+    tambon: ดอนฉิมพลี
+    qty: null
+    unit: null
+    item_key_contains:
+    - น้ำอุปโภคบริโภค
+    item_key_not_contains:
+    - '16'
+    - '12'
+- raw: ระบบท่อส่งน้ำ บ้านนางแตนหมู่ 1 ตำบลท่าผา อำเภอเกาะคา จังหวัดลำปาง
+  note: หมวด D ข้อ 2 — 'บ้านXหมู่ N' (ไม่มี 'ที่') ต้องตัดทั้งคู่
+  expected:
+    province: ลำปาง
+    amphoe: เกาะคา
+    tambon: ท่าผา
+    qty: null
+    unit: null
+    item_key_contains:
+    - ระบบท่อส่งน้ำ
+    item_key_not_contains:
+    - นางแตน
+- raw: สาย พบ.4019 แยกทางหลวงหมายเลข 3499 - บ้านวังมะละกอ อ.ท่ายางจ.เพชรบุรี
+  note: หมวด E — คำย่อ อ./จ. ติดกันไม่มีช่องว่าง ('อ.ท่ายางจ.เพชรบุรี')
+  expected:
+    province: เพชรบุรี
+    amphoe: ท่ายาง
+    qty: null
+    unit: null
+    item_key_contains: []
+    item_key_not_contains: []
+- raw: '- บ้านพิมาย อ.อุทุมพรพิสัย,ปรางค์กู่ จ.ศรีสะเกษ'
+  note: หมวด F — อำเภอหลายตัวคั่น comma ต้องใช้ตัวแรกเป็น field และตัดตัวที่สองออกจาก item_key
+  ambiguous: true
+  ambiguous_reason: >
+    DISAGREEMENT (รายงานแล้วใน T-103 รอบแก้ไข ไม่ได้แก้ expected เอง): input นี้ไม่มีคำอธิบาย
+    รายการอื่นเลยนอกจาก "บ้านพิมาย" (ซึ่งถูกตัดออกเป็นสถานที่ผ่าน BAN_RE ถูกต้องแล้ว) + address
+    chain ทั้งหมด — เมื่อตัด location ทุกส่วนออก item_key จะว่างเปล่า ชน invariant "item_key
+    ต้องไม่ว่างเมื่อ input ไม่ว่าง" ที่ coordinator กำหนดไว้เอง จึง fallback คืนข้อความเต็ม
+    (ตัดวรรคตอนแล้ว) กลับมา ทำให้ "ปรางค์กู่" ยังหลงเหลืออยู่ (ขัดกับ item_key_not_contains ที่
+    ระบุไว้) — province/amphoe field (ศรีสะเกษ/อุทุมพรพิสัย) ถูกต้องตามที่ระบุ และ parse ยัง
+    idempotent (แก้ fixed-point loop แล้ว) แต่ item_key เองไม่ตรงกับที่ระบุเพราะเหตุผลข้างต้น
+    ถ้า coordinator ต้องการให้ item_key ไม่มี "ปรางค์กู่" ในเคสประเภทนี้ ต้องผ่อน invariant
+    "ห้ามว่าง" หรือให้ตัวอย่างที่มีคำอธิบายรายการอื่นประกอบด้วย
+  expected:
+    province: ศรีสะเกษ
+    amphoe: อุทุมพรพิสัย
+    qty: null
+    unit: null
+    item_key_contains: []
+    item_key_not_contains:
+    - ปรางค์กู่
+- raw: ซ่อมแซมท่อระบายน้ำปลายคลองส่งน้ำ 1 ซ้าย กม.7+000จำนวน 1 แห่ง โครงการส่งน้ำและบำรุงรักษากระเสียว
+    ตำบลบ่อกรุอำเภอเดิมบางนางบวช จังหวัดสุพรรณบุรี
+  note: หมวด G — org tail (โครงการส่งน้ำและบำรุงรักษาฯ) ต้องตัดแม้ยังไม่มี org_master; คง 'กม 7+000'
+  expected:
+    province: สุพรรณบุรี
+    amphoe: เดิมบางนางบวช
+    tambon: บ่อกรุ
+    qty: 1.0
+    unit: แห่ง
+    item_key_contains:
+    - กม 7+000
+    item_key_not_contains:
+    - โครงการส่งน้ำและบำรุงรักษากระเสียว
+holdout_2560_2568:
+- raw: ซ่อมแผ่นคอนกรีตทางขับ ที่ บน.23 จว.อุดรธานี
+  source_row: 199403
+  year: '2560'
+  note: 'บั๊ก: ''จว.'' (คำย่อจังหวัดสไตล์ ทอ.) ไม่เคยรู้จักมาก่อน — แก้แล้ว'
+  expected:
+    province: อุดรธานี
+    amphoe: null
+    tambon: null
+    qty: null
+    unit: null
+    item_key_contains:
+    - ซ่อมแผ่นคอนกรีตทางขับ
+    item_key_not_contains:
+    - อุดรธานี
+- raw: เขื่อนป้องกันตลิ่งริมคลองกลาย หมู่ที่ 4, หมู่ที่ 6 ตำบลนบพิตำ อำเภอนบพิตำ จังหวัดนครศรีธรรมราช
+    ความยาว 290 เมตร
+  source_row: 77777
+  year: '2568'
+  note: 'บั๊ก: ''ความยาว'' (ไม่มี ''รวม'') เคยถูกจับเป็น spec ผ่าน ''ยาว'' ที่ซ้อนอยู่ข้างใน — แก้แล้ว'
+  expected:
+    province: นครศรีธรรมราช
+    amphoe: นบพิตำ
+    tambon: นบพิตำ
+    qty: 290.0
+    unit: เมตร
+    item_key_contains:
+    - เขื่อนป้องกันตลิ่งริมคลองกลาย
+    item_key_not_contains: []
+  quality_flags_contains:
+  - qty_is_measure
+- raw: ซ่อมสร้างถนนลาดยางแบบแอสฟัลท์ติกคอนกรีตปรับปรุงคุณภาพด้วยยางธรรมชาติ สายวงษ์พัฒนา-ทุ่งกราด หมู่ที่
+    5,8 ตำบลสะตอ กว้าง 6 เมตร ยาว2,250 เมตร หนา 0.04เมตร ไหล่ทางกว้างข้างละ1 เมตร องค์การบริหารส่วนตำบลสะตอ
+    อำเภอเขาสมิงจังหวัดตราด
+  source_row: 74231
+  year: '2560'
+  note: 'บั๊ก 2 อย่าง: (1) ''หมู่ที่ 5,8'' comma-list เหลือเลข ''8'' ค้างใน item_key (2) ''ไหล่ทางกว้างข้างละ1
+    เมตร'' (มีคำเติม ''ข้างละ'' คั่นกลาง) เคยหลุดไปเป็น qty=1 ทั้งที่ควรเป็น spec เหมือนกว้าง/ยาว/หนาอื่น
+    ๆ — แก้ทั้งคู่แล้ว'
+  expected:
+    province: ตราด
+    amphoe: เขาสมิง
+    tambon: สะตอ
+    qty: null
+    unit: null
+    item_key_contains:
+    - สายวงษ์พัฒนา
+    - กว้าง 6 เมตร
+    item_key_not_contains:
+    - '8'
+- raw: ซ่อมสร้างผิวทางแอสฟัลท์ติกคอนกรีต (โดยวิธีPavement in -Place recycling)สายเนินฆ้อ-สายถนนกะเพรา
+    หมู่ที่ 3,4 ตำบลเนินฆ้อ มีพื้นที่รวมไม่น้อยกว่า 11,680 ตารางเมตรเทศบาลตำบลเนินฆ้ออำเภอแกลง จังหวัดระยอง
+  source_row: 74015
+  year: '2560'
+  note: 'บั๊ก: คำเติม ''ไม่น้อยกว่า'' คั่นระหว่าง ''พื้นที่รวม'' กับตัวเลข ทำให้ไม่ถูกจัดเป็น qty_is_measure
+    (แม้ค่า qty จะถูกอยู่แล้วผ่าน generic route) และ ''หมู่ที่ 3,4'' เหลือเลข ''4'' ค้าง — แก้ทั้งคู่แล้ว'
+  expected:
+    province: ระยอง
+    amphoe: แกลง
+    tambon: เนินฆ้อ
+    qty: 11680.0
+    unit: ตารางเมตร
+    item_key_contains:
+    - สายเนินฆ้อ
+    item_key_not_contains: []
+  quality_flags_contains:
+  - qty_is_measure
+- raw: รถโดยสารขนาด 12 ที่นั่ง (ดีเซล) มุกดาหาร
+  source_row: 73703
+  year: '2560'
+  note: 'ข้อจำกัดที่รู้แล้ว (ไม่แก้): ชื่อจังหวัดท้ายชื่อแบบไม่มีคำนำหน้า ''จังหวัด''/''จ.''/''จว.'' เลย
+    — ออกแบบเป็น marker-based เท่านั้นเพื่อกัน false positive อื่น ๆ (ดู 02-DATA-INVENTORY.md / รายงาน
+    T-103)'
+  ambiguous: true
+  ambiguous_reason: province ท้ายชื่อไม่มี marker กำกับ — parser คืน None ตามที่ออกแบบไว้ (จำกัดขอบเขต
+    เฉพาะ marker-based เพื่อกัน false positive) ไม่นับเป็นความผิดพลาดที่ต้องแก้ในรอบนี้
+  expected:
+    province: null
+    qty: null
+    unit: null
+    item_key_contains: []
+    item_key_not_contains: []
+- raw: ก่อสร้างระบบประปาหมู่บ้านแบบประปาบาดาลขนาดกลาง หมู่ที่ ๑๒ บ้านชัยมงคล ตำบลกู่จาน ตามแบบมาตรฐานกรมทรัพยากรน้ำ
+    อบต.กู่จานอ.คำเขื่อนแก้ว จ.ยโสธร
+  source_row: 71864
+  year: '2560'
+  note: 'ข้อจำกัดที่รู้แล้ว (ไม่แก้): ''บ้าน'' ใน ''หมู่บ้านแบบ...'' เป็นส่วนหนึ่งของคำทั่วไป ''หมู่บ้าน''
+    ไม่ใช่ marker ชื่อสถานที่ แต่ BAN_RE แยกแยะไม่ได้ (ต้องใช้ dictionary/org_master) จึงตัด ''บ้านแบบประปาบาดาลขนาดกลาง''
+    ออกไปผิด'
+  ambiguous: true
+  ambiguous_reason: '''บ้าน'' หลัง ''หมู่'' มักเป็นคำทั่วไป ''หมู่บ้าน'' ไม่ใช่ marker สถานที่ แต่ regex
+    แยกไม่ออกจากกรณี ''บ้านชัยมงคล'' ที่เป็นชื่อสถานที่จริงในประโยคเดียวกัน — ต้องมี org_master/dictionary
+    ถึงจะแยกได้แม่นยำ'
+  expected:
+    province: ยโสธร
+    amphoe: คำเขื่อนแก้ว
+    tambon: กู่จาน
+    qty: null
+    unit: null
+    item_key_contains: []
+    item_key_not_contains: []
+- raw: ก่อสร้างระบบกระจายน้ำสะอาดเพื่ออุปโภคและบริโภค สนับสนุนโรงเรียนชุมชนบ้านนางกำ หมู่ที่10 ตำบลดอนสัก
+    อำเภอดอนสัก จังหวัดสุราษฎร์ธานี
+  source_row: 57631
+  year: '2568'
+  note: 'ข้อจำกัดที่รู้แล้ว (ไม่แก้): backward-extension ของ BAN_RE (หา ''บ้านนางกำ'') ย้อนไป ไกลเกินจนกิน
+    ''สนับสนุนโรงเรียนชุมชน'' ซึ่งเป็นคำอธิบายที่ควรเหลืออยู่ — ติดธง org_tail_uncertain ถูกต้องแล้วสำหรับ
+    ''โรงเรียน'' แต่ BAN_RE เองก็มีปัญหาเดียวกัน แยกต่างหาก ยังไม่ได้แก้ในรอบนี้'
+  ambiguous: true
+  ambiguous_reason: extend-to-token-start ของ BAN_RE ย้อนกลับไปกิน 'สนับสนุนโรงเรียนชุมชน' ทั้งที่ควร
+    เหลือเป็นส่วนหนึ่งของคำอธิบายรายการ — ต้องแยกแยะ 'ชื่อหน่วยงานที่ควรตัด' ออกจาก 'คำอธิบายทั่วไปที่ควรเก็บ'
+    ด้วย org_master ถึงจะแม่นขึ้น
+  expected:
+    province: สุราษฎร์ธานี
+    amphoe: ดอนสัก
+    tambon: ดอนสัก
+    qty: null
+    unit: null
+    item_key_contains: []
+    item_key_not_contains: []
