@@ -32,6 +32,7 @@
 - Vue ก็ได้ แต่ทีม/agent มี pattern React มากกว่า → ลด risk
 
 ### D2. เรียก Anthropic API ตรงจาก browser
+> **รายละเอียด model / พารามิเตอร์ / tool version / caching ให้ยึด `docs/decisions/ADR-006-claude-api-current-surface.md`** (ข้อความด้านล่างบางส่วนเขียนก่อนตรวจกับ API ปัจจุบัน)
 - SDK รองรับ `dangerouslyAllowBrowser: true`; ต้องส่ง header `anthropic-dangerous-direct-browser-access: true`
 - Key เก็บใน Zustand store ที่ **ไม่ persist** (memory only) — ดู `09-SECURITY.md`
 - Streaming ใช้ `client.messages.stream()` เพื่อ UX; ใช้ **prompt caching** (`cache_control` บน system prompt + tool defs) ลดค่าใช้จ่าย

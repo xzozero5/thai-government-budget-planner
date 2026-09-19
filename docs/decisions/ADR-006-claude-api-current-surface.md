@@ -1,0 +1,24 @@
+# ADR-006 — ปรับ AI layer ให้ตรง Claude API ปัจจุบัน (แทนข้อความใน 04 §D2 / 05 §3 ที่ล้าสมัย)
+
+- **Status**: Accepted — 2569-09-20 (main thread) · ที่มา: reference `claude-api` (bundled skill, cache 2026-06-24) + spike S3 (ยืนยันใน browser จริง)
+- **Links**: 04 §D2/§D4, 05 §3–§5, `docs/api-budget.md`, BACKLOG T-301..T-309
+
+## Context
+แผนเดิมเขียนด้วย model/tool version รุ่นเก่า (`claude-sonnet-4-5`, `web_search_20250305`, `max_uses: 5`) และไม่ได้ระบุพารามิเตอร์ที่ **รุ่นปัจจุบันปฏิเสธด้วย 400** ถ้าทำตามตัวอักษรจะพังตั้งแต่ request แรก และคุณนิวมีเครดิตจำกัด (5 USD) จึงต้องออกแบบให้ประหยัดเป็นค่าเริ่มต้น
+
+## Decisions
+1. **Models** (`ai/models.ts`, ค่าคงที่ — ห้ามต่อท้ายวันที่เอง): default **`claude-sonnet-5`** ($2 / $10 ต่อ MTok) · ตัวเลือก `claude-haiku-4-5` ($1 / $5, "ประหยัด") · `claude-opus-5` ($5 / $25, "ละเอียด"). ราคาใน `ai/pricing.ts` ต้องมีวันที่ตรวจ + ป้าย `[UNVERIFIED]` และ**คิดต้นทุนจาก `usage` ที่ API คืนเท่านั้น** (รวม `cache_creation_input_tokens`, `cache_read_input_tokens`, `server_tool_use.web_search_requests`)
+2. **ห้ามส่งพารามิเตอร์ที่ถูกถอด**: `temperature`/`top_p`/`top_k` และ `thinking.budget_tokens` → 400 บน Sonnet 5 / Opus 5. ใช้ adaptive thinking (ไม่ส่ง `thinking` หรือส่ง `{type:"adaptive"}`) + **`output_config: {effort}`**: ค่าเริ่มต้นของแอป = `medium` (ผู้ใช้เลือก `low`/`medium`/`high` ได้ — ผูกกับป้าย "ประหยัด/ปกติ/ละเอียด"). Haiku 4.5: ไม่ส่ง `thinking` และ**ไม่ส่ง `effort`** (รุ่นนี้ error) → request builder ต้องแตกตามความสามารถของรุ่น (ตาราง capability ใน `models.ts` + unit test ต่อรุ่น)
+3. **Web search (server tool)**: `web_search_20260209` สำหรับ Sonnet 5 / Opus 5; `web_search_20250305` สำหรับ Haiku 4.5; **ห้ามประกาศ `code_execution` คู่กัน**; `max_uses` เริ่มต้น **3** (เดิม 5 — S3 วัด: 1 ครั้ง ≈ $0.01 + ~10.5k input tokens); error ของ server tool มาเป็น HTTP 200 + content เป็น object (ไม่ใช่ list) → ต้องแยกกรณี; ต้องรองรับ `stop_reason: "pause_turn"` (ส่งต่อเพื่อให้ server ทำงานต่อ)
+4. **Loop = manual loop ของเราเอง** (ไม่ใช้ beta Tool Runner): ต้องคุม `MAX_TOOL_ROUNDS`, เพดานต้นทุนต่อ session, ยกเลิกกลางคัน (`AbortSignal`), ToolLog สำหรับ citation integrity (N3) และ event สำหรับ UI — ใช้ `client.messages.stream()` + `finalMessage()`, **SDK types เท่านั้น** (`Anthropic.MessageParam`, `Anthropic.Tool`, `Anthropic.ToolUseBlock`, …) ไม่นิยาม type ซ้ำ; error เป็น chain ของ typed exception (`RateLimitError` → `APIStatusError` → `APIConnectionError`) ไม่ string-match
+5. **Client tools**: ตั้ง `eager_input_streaming: true` (input ใหญ่: `emit_proposal`, `emit_illustration` SVG ≤ 60 KB) → **ต้อง validate input ทุกครั้งด้วย Zod ก่อนรัน** (parser ของ SDK อาจคืน input ที่ถูกตัดโดยไม่ throw); ตรวจ `stop_reason` (`max_tokens`/`refusal`) **ก่อน**รัน tool; input ไม่ผ่าน → `tool_result` `is_error: true` ข้อความไทย+อังกฤษสั้น ๆ ให้โมเดลแก้; **parallel tool use**: รันพร้อมกันแล้วส่ง `tool_result` ทุกตัวใน **user message เดียว**
+6. **`stop_reason` ที่ต้องรองรับ**: `end_turn`, `tool_use`, `pause_turn`, `max_tokens` (แจ้งผู้ใช้ + ไม่รัน tool ที่ขาด), `refusal` (แสดงข้อความสุภาพ; อ่าน `stop_details` เฉพาะเมื่อเป็น refusal). เฉพาะ `claude-opus-5`: เปิด server-side refusal fallback (`fallbacks: "default"` + beta `server-side-fallback-2026-07-01` ผ่าน `client.beta.messages`) — `[UNVERIFIED]` เพราะงบไม่พอทดสอบ Opus จริง → มี unit test ระดับรูป request เท่านั้น
+7. **Prompt caching**: ลำดับ render = `tools` → `system` → `messages` → tool list ต้อง deterministic (เรียงคงที่), system block ที่ cache ได้ห้ามมีวันที่/ค่าที่เปลี่ยนต่อ request; โหมด (`audit`/`draft`) และวันที่ปัจจุบันอยู่**หลัง** breakpoint สุดท้ายของ system; breakpoint ≤ 4: (ก) tool ตัวสุดท้าย (ข) ท้าย system ส่วนคงที่ (ค) ข้อความล่าสุดของบทสนทนา; ขั้นต่ำของ prefix ที่ cache ได้ต่างกันตามรุ่น (อ่านจาก reference) → ถ้า system prompt สั้นกว่าขั้นต่ำของ Haiku ให้ยอมรับว่าไม่ cache; **ยืนยันด้วย `usage.cache_read_input_tokens` > 0 ใน eval** (S3 ยืนยันกลไกแล้วบน Haiku)
+8. **`max_tokens`**: 16,000 ต่อ turn (ต่ำกว่าค่าแนะนำ 64k ของ streaming โดยตั้งใจ — เหตุผล: คุมต้นทุน; SVG ต้อง ≥ 8,000 จึงยังพอ); เจอ `max_tokens` → แจ้งผู้ใช้ ไม่ retry อัตโนมัติ
+9. **ตรวจ key (F1)**: `client.messages.countTokens` (ไม่คิดเงิน) — สำเร็จ = key ใช้ได้; ห้าม log/เก็บ key (N2); `dangerouslyAllowBrowser: true` (S3 ยืนยันว่าทำงานใต้ CSP §D8)
+10. **งบ**: พัฒนา/ทดสอบด้วย SDK mocked 100 %; เรียก API จริงเฉพาะ eval ตาม `docs/api-budget.md` (8 โจทย์, Haiku เป็นหลัก, judge แบบ rule-based แทน LLM-as-judge ใน 07 §4 — โจทย์ที่ไม่ได้รันระบุ `not_run (budget)`)
+
+## Consequences
+- 05 §3: `max_uses` 5 → 3; 07 §4: LLM-as-judge (Opus) → rule-based ในรอบนี้ (ทบทวนเมื่อมีเครดิตเพิ่ม); 04 §D2 ชี้มาที่ ADR นี้
+- request builder ต้องมี unit test "ต่อรุ่น" ว่าไม่มีพารามิเตอร์ต้องห้ามหลุดไป — เป็น regression guard หลักเมื่อเพิ่มรุ่นใหม่
+- ข้อมูลรุ่น/ราคาเป็น cache ณ 2026-06-24 → T-301 ต้องมีวิธีอัปเดตจุดเดียว (`models.ts` + `pricing.ts`) และระบุวันที่
