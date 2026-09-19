@@ -3,7 +3,7 @@ name = "tgbp-pipeline"
 version = "0.1.0"
 description = "TGBP offline data pipeline — แปลงข้อมูลงบประมาณดิบเป็นชุดข้อมูลสำหรับเว็บ (รันบนเครื่อง dev เท่านั้น)"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"
 dependencies = [
     "pandas>=2.2",
     "pyarrow>=16.0",

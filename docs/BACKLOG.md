@@ -4,12 +4,12 @@
 ทุก task ต้องผ่าน DoD ใน `00-START-HERE.md`
 
 ## Phase 0 — Bootstrap (เป้า: ครึ่งวัน)
-- [ ] T-001 `frontend-dev` ∥ สร้าง `web/` ด้วย Vite React-TS template; ตั้ง ESLint (typescript-eslint strict), Prettier, Vitest+RTL, Playwright, Tailwind, path alias `@/`; scripts ตาม CLAUDE.md §5; `npm run build` ผ่าน
-- [ ] T-002 `data-engineer` ∥ สร้าง `pipeline/` (pyproject + uv, ruff, pytest, typer CLI โครง `tgbp --help`), `config.yaml` ชี้ raw dir, `.cache/` gitignored
-- [ ] T-000 **main thread ทำก่อนอื่น** — git init ในโฟลเดอร์นี้, `git remote add origin git@github.com:xzozero5/thai-government-budget-planner.git`, `git fetch origin && git checkout -b main origin/main` (มี LICENSE + Initial commit อยู่แล้ว — ห้ามทับ), ตรวจ `git status` ว่าโฟลเดอร์ข้อมูลดิบถูก ignore, commit แผนทั้งหมด `docs: แผน MVP + CLAUDE.md + agents` แล้ว push; ถ้า SSH ไม่ผ่านให้ลอง HTTPS remote และ `[ASK-HUMAN]` ถ้ายัง push ไม่ได้
-- [ ] T-003 `frontend-dev` ตรวจทาน baseline ที่มีให้แล้ว: `.gitignore` (commit `web/public/data/**` ทั้งหมดตาม CLAUDE.md §5.1; ignore raw data/.cache/.env), เพิ่ม pre-commit hook (`.githooks/pre-commit` + `git config core.hooksPath .githooks`) ที่ grep `sk-ant-` และบล็อกไฟล์ > 24 MB, `.env.example` (เพิ่ม key ใหม่ถ้ามี), `README.md` (เติม section build/run เมื่อ web/pipeline พร้อม) — ไม่ต้องสร้างใหม่
-- [ ] T-004 `frontend-dev` `.github/workflows/ci.yml` + `deploy.yml` ตาม 07 §5 (Pages deploy จาก `web/dist`, base path `/thai-government-budget-planner/`, HashRouter, CSP meta) — รันได้แม้ยังไม่มี test จริง; หน้าแรก placeholder ต้องขึ้นที่ `https://xzozero5.github.io/thai-government-budget-planner/` (ถ้า Pages ยังไม่เปิด Source=GitHub Actions → `[ASK-HUMAN]` ข้อ 1)
-- [ ] T-005 `po` ตรวจโครงตรง CLAUDE.md §4; สร้าง `docs/STATUS.md` เวอร์ชันแรก; `docs/decisions/` + `docs/qa/` โฟลเดอร์
+- [x] T-001 `frontend-dev` ∥ สร้าง `web/` ด้วย Vite React-TS template; ตั้ง ESLint (typescript-eslint strict), Prettier, Vitest+RTL, Playwright, Tailwind, path alias `@/`; scripts ตาม CLAUDE.md §5; `npm run build` ผ่าน
+- [x] T-002 `data-engineer` ∥ สร้าง `pipeline/` (pyproject + uv, ruff, pytest, typer CLI โครง `tgbp --help`), `config.yaml` ชี้ raw dir, `.cache/` gitignored
+- [x] T-000 **main thread ทำก่อนอื่น** — git init ในโฟลเดอร์นี้, `git remote add origin git@github.com:xzozero5/thai-government-budget-planner.git`, `git fetch origin && git checkout -b main origin/main` (มี LICENSE + Initial commit อยู่แล้ว — ห้ามทับ), ตรวจ `git status` ว่าโฟลเดอร์ข้อมูลดิบถูก ignore, commit แผนทั้งหมด `docs: แผน MVP + CLAUDE.md + agents` แล้ว push; ถ้า SSH ไม่ผ่านให้ลอง HTTPS remote และ `[ASK-HUMAN]` ถ้ายัง push ไม่ได้
+- [x] T-003 `frontend-dev` ตรวจทาน baseline ที่มีให้แล้ว: `.gitignore` (commit `web/public/data/**` ทั้งหมดตาม CLAUDE.md §5.1; ignore raw data/.cache/.env), เพิ่ม pre-commit hook (`.githooks/pre-commit` + `git config core.hooksPath .githooks`) ที่ grep `sk-ant-` และบล็อกไฟล์ > 24 MB, `.env.example` (เพิ่ม key ใหม่ถ้ามี), `README.md` (เติม section build/run เมื่อ web/pipeline พร้อม) — ไม่ต้องสร้างใหม่
+- [~] T-004 `frontend-dev` `.github/workflows/ci.yml` + `deploy.yml` ตาม 07 §5 (Pages deploy จาก `web/dist`, base path `/thai-government-budget-planner/`, HashRouter, CSP meta) — รันได้แม้ยังไม่มี test จริง; หน้าแรก placeholder ต้องขึ้นที่ `https://xzozero5.github.io/thai-government-budget-planner/` (ถ้า Pages ยังไม่เปิด Source=GitHub Actions → `[ASK-HUMAN]` ข้อ 1) — **สถานะ 19 ก.ย.: workflows เสร็จ + CI เขียว; ค้างเฉพาะคนเปิด Pages แล้ว re-run `deploy`**
+- [x] T-005 `po` ตรวจโครงตรง CLAUDE.md §4; สร้าง `docs/STATUS.md` เวอร์ชันแรก; `docs/decisions/` + `docs/qa/` โฟลเดอร์
 
 ## Phase 1 — Data pipeline (เป้า: 2–3 วัน) — อ่าน `03-DATA-PIPELINE.md`
 - [ ] T-101 `data-engineer` `inventory.py` + `tgbp inventory` → `sources.json` ครบ 318 ไฟล์, PDF text-layer detection, parse metadata จากโฟลเดอร์ (unicode normalize U+200B); test
@@ -42,7 +42,7 @@
 - [ ] T-304 `ai-engineer` `ai/agent.ts` loop (streaming, tool rounds, ToolLog, budget stop, cancel, error/retry) ; test
 - [ ] T-309 `ai-engineer` tools `get_price_trend` + `emit_illustration` (ใช้ `data/trends.ts`, `lib/svgSanitizer.ts`; จำกัด 3 ภาพ/proposal) + proposal validator รองรับ `illustrations`/`stat_cards`/`trend_ref` ; tests
 - [ ] T-305 `ai-engineer` `ai/systemPrompt.ts` (cached blocks: กฎ + facets + dataset notes + 3 few-shot tool traces + `<palette>` และ illustration style จาก `docs/ui/illustration-style.md` + few-shot SVG 1 ชิ้น) + mode variants
-- [ ] T-306 `ai-engineer` `web/tests/eval/` cases.yaml 20 โจทย์ + runner `npm run eval` (+ judge) ; รันจริง 1 รอบ → `docs/eval-report.md`
+- [ ] T-306 `ai-engineer` `web/tests/eval/` cases.yaml 20 โจทย์ + runner `npm run eval` (+ judge) ; รันจริง 1 รอบ → `docs/eval-report.md`; **guard N2**: test ที่ build แล้ว grep `dist/assets/*.js` ต้องไม่พบ `sk-ant-` / ค่า `VITE_EVAL_ANTHROPIC_API_KEY` (ตัวแปร `VITE_*` ถูก inline เข้า bundle ถ้ามีค่าตอน build — runner ต้องอ่าน key ฝั่ง Node ไม่ใช่ผ่าน `import.meta.env`)
 - [ ] T-307 `security-reviewer` review key handling/egress/prompt-injection ใน ai/ + data/; รายการแก้ → ai-engineer แก้
 - [ ] T-308 `po` review eval report เทียบเกณฑ์ 07 §4; ปรับ prompt/tool ถ้าไม่ผ่าน (วนได้ 2 รอบ) ; STATUS
 
@@ -71,7 +71,7 @@
 - [ ] T-602 `security-reviewer` รัน 09 §5 C1–C9 ; แก้
 - [ ] T-603 `frontend-dev` แก้ bug severity high/medium ทั้งหมด; a11y fixes จาก axe
 - [ ] T-604 `ai-engineer` รัน eval รอบสุดท้าย → eval-report
-- [ ] T-605 `frontend-dev` ตรวจ production deploy บน GitHub Pages: CSP meta ทำงาน, range request/latency บน URL จริง (บันทึกลง SPIKES.md), Lighthouse, README deploy section; custom domain (ถ้ามี) เป็น post-MVP
+- [ ] T-605 `frontend-dev` ตรวจ production deploy บน GitHub Pages: CSP meta ทำงาน, range request/latency บน URL จริง (บันทึกลง SPIKES.md), Lighthouse, README deploy section; ยืนยันว่า CSP meta ไม่ถูก strip และบันทึกผลกระทบที่ไม่มี `frame-ancestors` (ADR-003 ข้อ 1); custom domain (ถ้ามี) เป็น post-MVP
 - [ ] T-606 `po` release notes `docs/RELEASE-0.1.md`, STATUS = "MVP done", รายการ post-MVP (F6 data browser, OCR, share link ฯลฯ)
 
 ## Post-MVP ideas (ไม่ทำตอนนี้)

@@ -3,6 +3,7 @@ name: ci
 # ทุก push/PR — ไม่มี secret ใด ๆ, ไม่รัน eval, ไม่รัน pipeline กับ raw data (docs/07-TESTING.md §5)
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
@@ -19,7 +20,7 @@ jobs:
       run:
         working-directory: pipeline
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: '3.11'
@@ -36,8 +37,8 @@ jobs:
       run:
         working-directory: web
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
