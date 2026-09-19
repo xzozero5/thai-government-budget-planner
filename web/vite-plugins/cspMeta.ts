@@ -8,9 +8,13 @@ import type { Plugin } from 'vite';
  * ซึ่ง**ใช้ใน <meta> ไม่ได้** (บราวเซอร์รองรับ frame-ancestors เฉพาะตอนส่งเป็น HTTP response
  * header เท่านั้น ถ้าใส่ใน <meta> จะถูก browser เพิกเฉย/เตือนใน console) จึงตัดออกจาก
  * ค่านี้ — ไม่มีทางแก้อื่นบน GitHub Pages เพราะไม่มี server-side ให้ตั้ง header (N1)
+ *
+ * T-307 M4: เพิ่ม `object-src 'none'` (ไม่มี plugin/embed), `base-uri 'self'` (กัน `<base>` ที่ถูกฉีดเปลี่ยน
+ * ปลายทางของ URL สัมพัทธ์ทั้งหน้า — ทั้งสองตัวไม่ fallback ไป default-src), `form-action 'none'` (แอปไม่มี
+ * form submit จริง) — ทั้งสามใช้ได้ใน <meta>
  */
 export const CSP_CONTENT =
-  "default-src 'self'; connect-src 'self' https://api.anthropic.com; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:";
+  "default-src 'self'; connect-src 'self' https://api.anthropic.com; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'";
 
 export const CSP_META_TAG = `<meta http-equiv="Content-Security-Policy" content="${CSP_CONTENT}" />`;
 

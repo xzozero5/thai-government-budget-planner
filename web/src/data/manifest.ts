@@ -31,6 +31,15 @@ export class DataLoadError extends Error {
 // dataUrl — สร้าง URL ของไฟล์ข้อมูลจาก BASE_URL เท่านั้น (ห้าม hard-code '/data/', N5)
 // ---------------------------------------------------------------------------
 
+/** backslash (92) หรืออักขระควบคุม (0–31, 127) — ใช้ char code แทน regex เพื่อเลี่ยง no-control-regex */
+function hasForbiddenPathChar(path: string): boolean {
+  for (let i = 0; i < path.length; i += 1) {
+    const code = path.charCodeAt(i);
+    if (code === 92 || code < 32 || code === 127) return true;
+  }
+  return false;
+}
+
 /**
  * ตรวจว่า `path` เป็น relative path ที่ปลอดภัย: ห้ามว่าง, ห้ามขึ้นต้นด้วย '/', ห้ามมี URI scheme
  * (เช่น 'http:', 'https:') หรือขึ้นต้นด้วย '//' (protocol-relative), ห้ามมี segment '..'
@@ -48,6 +57,24 @@ function assertSafeRelativePath(path: string): void {
   if (path.split('/').includes('..')) {
     throw new Error(`เส้นทางไฟล์ข้อมูลห้ามมี ".." : ${path}`);
   }
+  // T-307 M3: browser บางตัว normalize "\" เป็น "/" และตัดอักขระควบคุมใน URL — ปฏิเสธตั้งแต่ต้นทาง
+  if (hasForbiddenPathChar(path)) {
+    throw new Error(
+      `เส้นทางไฟล์ข้อมูลมีอักขระต้องห้าม (backslash/อักขระควบคุม): ${JSON.stringify(path)}`,
+    );
+  }
+}
+
+/**
+ * T-307 M3 (และ T-206 F11): `BASE_URL` ต้องเป็น path ภายใน origin เดียวกันเท่านั้น — ถ้า Vite `base`
+ * ถูกตั้งเป็น URL เต็ม/`//cdn…` โดยพลั้งเผลอ ทุกไฟล์ข้อมูลจะถูกโหลดข้าม origin (ขัด N5) จึง fail เสียงดัง
+ */
+function assertSameOriginBase(base: string): void {
+  if (!base.startsWith('/') || base.startsWith('//') || base.includes('\\')) {
+    throw new Error(
+      `BASE_URL ต้องเป็น path ภายใน origin เดียวกัน (ขึ้นต้น "/" เดียว) — ได้ ${JSON.stringify(base)} (N5)`,
+    );
+  }
 }
 
 /**
@@ -58,6 +85,7 @@ function assertSafeRelativePath(path: string): void {
 export function dataUrl(path: string): string {
   assertSafeRelativePath(path);
   const base = import.meta.env.BASE_URL;
+  assertSameOriginBase(base);
   const encodedPath = path
     .split('/')
     .map((segment) => encodeURIComponent(segment))
