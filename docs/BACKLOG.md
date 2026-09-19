@@ -30,7 +30,7 @@
 - [ ] T-201 `architect` ∥ Spike S1–S5 (04 §6) ใน `web/spikes/` → `docs/decisions/SPIKES.md` ผลวัดจริง; ถ้า S1 ล้มเหลวบน host เป้าหมาย → ADR-002 fallback
 - [ ] T-202 `frontend-dev` `data/manifest.ts` loader + types จาก schema (สร้าง `data/types.ts` ให้ตรง 03 §3); test
 - [ ] T-203 `frontend-dev` `data/duckdb.ts` (lazy init, register shard URLs, query with params, cache/evict) + `data/repo.ts` API (`queryLines`, `getLines`, `getDoc`, `getEcon`, `facets`) ; integration test กับ fixture
-- [ ] T-204 `frontend-dev` `data/search.ts` MiniSearch + Thai tokenizer (`Intl.Segmenter` + fallback) ; test เคส 3.2
+- [ ] T-204 `frontend-dev` `data/search.ts` MiniSearch + Thai tokenizer (`Intl.Segmenter` + fallback) ; test เคส 3.2; **folding สำหรับ text จาก PDF** (02 §B): ตัดช่องว่างระหว่างอักษรไทย + พับ `ำ`→`า` ทั้งฝั่ง index และ query (ค้น "สำนักงาน" ต้องเจอ `ส านักงาน`) โดยไม่แก้ text ที่แสดงเป็นหลักฐาน
 - [ ] T-205 `frontend-dev` `data/inflation.ts` deterministic + test
 - [ ] T-207 `frontend-dev` `data/trends.ts` (โหลด `catalog/trends/*`, econ series, คำนวณ change_pct) + `lib/svgSanitizer.ts` (DOMPurify profile ตาม 04 §D9) ; tests ตาม 07 §3.2
 - [ ] T-206 `architect` review boundaries (04 §3), เขียน ADR ที่เกิดขึ้น, อัปเดต STATUS
