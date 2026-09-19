@@ -112,7 +112,10 @@ async function loadSearchModule() {
   try {
     return await import(pathToFileURL(tmpFile).href);
   } finally {
-    rmSync(tmpDir, { recursive: true, force: true });
+    // ลบเฉพาะไฟล์ของ process นี้ — ห้ามลบทั้ง tmpDir (โฟลเดอร์ใช้ร่วมกัน): main thread พบ race จริง
+    // เมื่อสคริปต์ถูกรันพร้อมกัน 2 process (vitest workers / tgbp publish + sample) ตัวหนึ่งลบไฟล์ของ
+    // อีกตัวก่อนถึง import() → ล้มแบบ flaky
+    rmSync(tmpFile, { force: true });
   }
 }
 
@@ -149,8 +152,13 @@ async function main() {
   console.log(`[build-search-index] data dir: ${dataDir}`);
 
   const searchModule = await loadSearchModule();
-  const { catalogMiniSearchOptions, TOKENIZER_VERSION, CatalogFileSchema, CatalogSlimFileSchema, SearchIndexFileSchema } =
-    searchModule;
+  const {
+    catalogMiniSearchOptions,
+    TOKENIZER_VERSION,
+    CatalogFileSchema,
+    CatalogSlimFileSchema,
+    SearchIndexFileSchema,
+  } = searchModule;
 
   const manifestPath = path.join(dataDir, 'manifest.json');
   const manifestRaw = JSON.parse(readFileSync(manifestPath, 'utf8'));
@@ -166,7 +174,9 @@ async function main() {
     throw new Error(`${catalogGzPath} ไม่ตรง CatalogFileSchema: ${catalogParsed.error.message}`);
   }
   const catalog = catalogParsed.data;
-  console.log(`[build-search-index] อ่าน ${catalogGzPath}: ${String(catalog.items.length)} items, data_version=${dataVersion}`);
+  console.log(
+    `[build-search-index] อ่าน ${catalogGzPath}: ${String(catalog.items.length)} items, data_version=${dataVersion}`,
+  );
 
   // --- catalog/items-slim.json.gz ---
   const slimItems = catalog.items.map((item, i) => {
@@ -190,7 +200,9 @@ async function main() {
   const slimFile = { schema_version: 1, data_version: dataVersion, items: slimItems };
   const slimParsed = CatalogSlimFileSchema.safeParse(slimFile);
   if (!slimParsed.success) {
-    throw new Error(`slim output ที่สร้างเองไม่ตรง CatalogSlimFileSchema: ${slimParsed.error.message}`);
+    throw new Error(
+      `slim output ที่สร้างเองไม่ตรง CatalogSlimFileSchema: ${slimParsed.error.message}`,
+    );
   }
 
   // --- catalog/search-index.json.gz (MiniSearch key_only prebuilt) ---
@@ -207,7 +219,9 @@ async function main() {
   };
   const indexParsed = SearchIndexFileSchema.safeParse(indexFile);
   if (!indexParsed.success) {
-    throw new Error(`search-index output ที่สร้างเองไม่ตรง SearchIndexFileSchema: ${indexParsed.error.message}`);
+    throw new Error(
+      `search-index output ที่สร้างเองไม่ตรง SearchIndexFileSchema: ${indexParsed.error.message}`,
+    );
   }
 
   // --- เขียนไฟล์ ---
@@ -223,7 +237,8 @@ async function main() {
 // รัน `main()` เฉพาะตอนถูกเรียกเป็น CLI ตรง ๆ (`node scripts/build-search-index.mjs`) — ให้ import
 // เป็นโมดูล (เช่นจาก unit test ของ `parseArgs`/`resolveDataDir`) โดยไม่มี side effect ได้ด้วย
 const isMainModule =
-  process.argv[1] !== undefined && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
 if (isMainModule) {
   await main();
 }
