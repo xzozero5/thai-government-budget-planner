@@ -1532,7 +1532,12 @@ def run_publish_pipeline(
                 sha256=_sha256_file(extra_path),
             )
         )
-    for hh_path in sorted((out_dir / "catalog" / "trends").glob("*.json.gz")):
+    # เฉพาะ trend shard ที่เขียนในรอบนี้ — ห้าม glob โฟลเดอร์ (ไฟล์ค้างจากรอบก่อนจะหลุดเข้า manifest
+    # แล้วรอดจาก clean_stale_output: main thread พบใน fixtures ของ `tgbp sample`)
+    written_trend_shards = sorted(set(key_to_hh.values()))
+    for hh_path in (
+        out_dir / "catalog" / "trends" / f"{hh}.json.gz" for hh in written_trend_shards
+    ):
         file_entries.append(
             ManifestFileEntry(
                 path=hh_path.relative_to(out_dir).as_posix(),

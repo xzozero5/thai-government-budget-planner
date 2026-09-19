@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "data_version": "631f122e4b6e95460a7597eeaf91a012173727cd5fbf250a83418cf4cd770ad8",
+  "data_version": "abedbeadd4fa412e0663ba0e13bf151d5dee00993708e8cdf24f866eb5ad6baf",
   "built_at": "1970-01-01T00:00:00+00:00",
   "sample": true,
   "totals": {
-    "files": 42,
-    "bytes": 909077,
+    "files": 40,
+    "bytes": 908620,
     "rows_by_dataset": {
       "pbo_disbursement": 450,
       "act_2570_draft": 198,
@@ -227,16 +227,6 @@
       "province": null
     },
     {
-      "path": "catalog/trends/1e.json.gz",
-      "bytes": 245,
-      "sha256": "5b5c9372426f732db1bee81b13d292f289eec4a4e0aa0527ccbdc322df9bb2e2",
-      "rows": null,
-      "dataset": null,
-      "fiscal_year_be": null,
-      "ministry_code": null,
-      "province": null
-    },
-    {
       "path": "catalog/trends/2d.json.gz",
       "bytes": 201,
       "sha256": "57d281898ec2f903faba7e016dbfcb595b22b542bbe31ee6401d143578ac22bf",
@@ -290,16 +280,6 @@
       "path": "catalog/trends/76.json.gz",
       "bytes": 266,
       "sha256": "411c5d5b710b131aeb8e72f4579538dad450a5dd9a9c11783f2852813d2b7af5",
-      "rows": null,
-      "dataset": null,
-      "fiscal_year_be": null,
-      "ministry_code": null,
-      "province": null
-    },
-    {
-      "path": "catalog/trends/7e.json.gz",
-      "bytes": 212,
-      "sha256": "3adbfc311da60bf0bfe75c9fb6fc1e7e121665b79a88a40e66cb6dff1f8ed128",
       "rows": null,
       "dataset": null,
       "fiscal_year_be": null,

@@ -1102,3 +1102,16 @@ def test_sample_manifest_has_sample_flag_and_catalog_v2(tmp_path: Path) -> None:
                 for rel in resolved
             )
             assert found, f"variant key {variant_key!r} ของ item {item['key']!r} resolve ไม่ได้"
+
+
+def test_stale_trend_shard_is_not_listed_and_gets_cleaned(tmp_path: Path) -> None:
+    """ไฟล์ trend ค้างจากรอบก่อนต้องไม่เข้า manifest และต้องถูกล้าง (regression: fixtures ของ sample)"""
+    import inspect
+
+    from tgbp_pipeline import publish as publish_mod
+
+    source = inspect.getsource(publish_mod.run_publish_pipeline)
+    assert (
+        'glob("*.json.gz")' not in source.split("written_trend_shards")[0].split("file_entries")[-1]
+    )
+    assert "written_trend_shards" in source
