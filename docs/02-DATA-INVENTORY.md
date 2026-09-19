@@ -71,8 +71,10 @@ Gotchas ที่ยืนยันแล้ว:
 |---|---|
 | `อบจ. เชียงใหม่ - Sheets.xlsx` (0.1 MB) | sheet `Data`: `REF_DOC_Page, Divison, Budgetary_Plan, Budgetary_USER, Budgetary_TYPE, Budgetary_TYPE2, Pre Project, Project, number, amount, Division, FCY` — มี **เลขหน้าอ้างอิง PDF** |
 | `อบต. ราชาเทวะ - Sheets.xlsx` (0.5 MB) | 1 sheet ต่อแผนงาน (11 แผนงาน) + `ocr_raw_data` + `pivot_ocr_raw_data` + `summary_ocr_raw_data`; คอลัมน์: `page, plan, work, budget_group, expense_category, sub_category, item, amount, department, description, legal_reference` — **คุณภาพสูงสุดสำหรับ citation** (มีคำอธิบาย + ระเบียบที่อ้าง + เลขหน้า) แต่มี OCR typo (เช่น "เบี้ยยังขีพ", "ค่าครองซีพ") ต้อง fuzzy |
-| `อบจ. สมุทรปราการ - Sheets.xlsx` (0.2 MB) | `[UNVERIFIED]` คาดเหมือน อบจ. ชม. |
-| `ทน. เชียงใหม่ - Excel.xlsx` (0.1 MB) | `[UNVERIFIED]` |
+| `อบจ. สมุทรปราการ - Sheets.xlsx` (0.2 MB) | **ยืนยันแล้ว (T-107): ไม่เหมือน อบจ. ชม.** — 4 sheets คนละทรง; ใช้เฉพาะ `โครงการรวม งบ 70` → 574 รายการ / 3,099,999,797 บาท (1 แถวไม่มีชื่อโครงการถูกข้าม; ไม่มีเลขหน้าอ้างอิง); sheet ของปี 69 ไม่นำเข้า |
+| `ทน. เชียงใหม่ - Excel.xlsx` (0.1 MB) | **ยืนยันแล้ว**: `ชีต1` 700 รายการ / 1,995,000,000 บาท — ตรงกับ sheet `_ตรวจกระทบยอด` ของต้นทางเป๊ะ; คอลัมน์ `Budgetary_*` แบบ อบจ. ชม.; `REF_DOC_Page` รูป `"N/M"`; `REF_PDF_Page` ว่างทั้งไฟล์ |
+
+ผลจริง (T-107, 19 ก.ย.): ราชาเทวะ 345 แถว / 613,887,402 บาท · อบจ. ชม. 1,027 แถว / 2,761,133,500 บาท (มีทั้งคอลัมน์ `Divison` ว่างล้วน และ `Division`; `FCY` **ไม่ใช่ปีงบ** เป็นโน้ต/ชื่อชุมชน) · รวม A4 = 2,646 แถว. ราชาเทวะ: ยอดตามเอกสาร (`summary_ocr_raw_data`) 615,172,000 ต่างจากผลรวมรายการ 0.21 % และไม่ตรง 10/38 กลุ่ม → ADR-005
 
 หมายเหตุ: ราชาเทวะ sheet `แผนงานงบกลาง` มีค่า amount `2` สำหรับ "เงินสมทบกองทุนประกันสังคม" (น่าจะ OCR ผิด) → validation ต้อง flag outlier
 
