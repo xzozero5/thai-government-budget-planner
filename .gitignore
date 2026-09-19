@@ -13,6 +13,8 @@ web/spikes/node_modules/
 web/spikes/**/dist/
 web/spikes/**/out/
 web/dist/
+web/dist-e2e-harness/
+web/coverage/
 web/playwright-report/
 web/test-results/
 # data output: COMMIT ทั้งหมด (web/public/data/**) — ตัดสินใจ 19 ก.ย. 2569 (CLAUDE.md §5.1)
