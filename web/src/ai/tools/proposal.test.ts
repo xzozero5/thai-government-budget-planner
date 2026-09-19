@@ -51,7 +51,10 @@ function baseBoqLine(): Proposal['boq'][number] {
 
 function makeCtx(): { ctx: ToolContext; toolLog: ToolLog } {
   const toolLog = createToolLog();
-  return { ctx: { data: createDataFacade(), toolLog, illustrationSink: createInMemoryIllustrationSink() }, toolLog };
+  return {
+    ctx: { data: createDataFacade(), toolLog, illustrationSink: createInMemoryIllustrationSink() },
+    toolLog,
+  };
 }
 
 describe('emitProposalTool', () => {
@@ -176,6 +179,19 @@ describe('emitProposalTool', () => {
   it('AC 2/4: confidence ceiling จาก ToolLog จำกัด high → medium', async () => {
     const { ctx, toolLog } = makeCtx();
     toolLog.recordSourceId('src-1');
+    // ต้องมีค่าจริงของแถว (เหมือนที่ query_budget_lines/get_budget_line บันทึก) มิฉะนั้นจะถูกจำกัดเป็น low
+    // จากกติกา price_not_verifiable ก่อน — baseProposal ใช้ unit_price 500,000
+    toolLog.recordSourceFingerprint?.('src-1', {
+      amountThb: 500_000,
+      unitPriceThb: 500_000,
+      itemQty: 1,
+      itemUnit: 'แห่ง',
+      fiscalYearBe: 2566,
+      agency: 'กรมทดสอบ',
+      ministry: null,
+      itemNameRaw: 'ฝาย คสล.',
+      dataset: 'pbo_disbursement',
+    });
     toolLog.recordConfidenceCeiling('src-1', 'medium');
     const result = await emitProposalTool.run(baseProposal(), ctx);
     if (!result.isError) {
@@ -306,7 +322,12 @@ describe('emitProposalTool', () => {
     const { ctx, toolLog } = makeCtx();
     toolLog.recordSourceId('src-1');
     const proposal = baseProposal({
-      totals: { subtotal_thb: 500_000, contingency_pct: 10, vat_included: false, grand_total_thb: 550_000 },
+      totals: {
+        subtotal_thb: 500_000,
+        contingency_pct: 10,
+        vat_included: false,
+        grand_total_thb: 550_000,
+      },
     });
     const result = await emitProposalTool.run(proposal, ctx);
     if (!result.isError) {

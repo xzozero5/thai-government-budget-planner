@@ -8,7 +8,11 @@ import { z } from 'zod';
 import { createTool, type ToolContext } from './toolKit';
 
 export const GetEconIndicatorInputSchema = z.object({
-  indicators: z.array(z.string()).min(1).max(10).describe('เช่น cpi_headline_index, construction_material_index, cmi_steel'),
+  indicators: z
+    .array(z.string().max(100))
+    .min(1)
+    .max(10)
+    .describe('เช่น cpi_headline_index, construction_material_index, cmi_steel'),
   years_be: z.array(z.number().int()).min(1).max(15).describe('ปี พ.ศ.'),
 });
 export type GetEconIndicatorInput = z.infer<typeof GetEconIndicatorInputSchema>;

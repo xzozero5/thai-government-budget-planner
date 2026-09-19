@@ -105,6 +105,39 @@ describe('queryBudgetLinesTool', () => {
     expect(toolLog.getSourceShard('src-1')).toBe('budget_lines/act_2570_draft/00000.parquet');
   });
 
+  it('T-307 H2: บันทึก SourceFingerprint (ค่าจริงของแถว) ลง ToolLog ต่อ source_id', async () => {
+    const line = makeLine();
+    const queryResult: QueryLinesResult = {
+      rows: [line],
+      totalMatched: 1,
+      truncated: false,
+      shardsScanned: 1,
+      shardPaths: [],
+      rowShards: {},
+      coverageNotes: [],
+      droppedRows: 0,
+      warnings: [],
+    };
+    const toolLog = createToolLog();
+    const ctx: ToolContext = {
+      data: createDataFacade({ queryLines: vi.fn().mockResolvedValue(queryResult) }),
+      toolLog,
+      illustrationSink: createInMemoryIllustrationSink(),
+    };
+    await queryBudgetLinesTool.run({ keywords: ['เครื่องปรับอากาศ'] }, ctx);
+    expect(toolLog.getSourceFingerprint?.('src-1')).toEqual({
+      amountThb: 30000,
+      unitPriceThb: 30000,
+      itemQty: 1,
+      itemUnit: 'เครื่อง',
+      fiscalYearBe: 2570,
+      agency: 'กรมทดสอบ',
+      ministry: 'กระทรวงทดสอบ',
+      itemNameRaw: 'เครื่องปรับอากาศ ขนาด 18000 บีทียู',
+      dataset: 'act_2570_draft',
+    });
+  });
+
   it('item_key → ส่ง keys ทุก variant + shardPaths จาก catalog เข้า queryLines (จำกัดการสแกนตาม catalog)', async () => {
     const queryLines = vi.fn().mockResolvedValue({
       rows: [],

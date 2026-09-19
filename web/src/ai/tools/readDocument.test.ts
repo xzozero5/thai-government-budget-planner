@@ -57,6 +57,10 @@ describe('readDocumentTool', () => {
       expect(result.output.chunks).toHaveLength(1);
     }
     expect(toolLog.hasDocId('doc-1')).toBe(true);
+    // T-307 H2: จำเนื้อหา chunk ที่โมเดลเห็นจริงไว้เทียบ quote ของ emit_proposal ภายหลัง
+    expect(toolLog.hasDocQuote?.('doc-1', 1, 'เนื้อหาเอกสาร')).toBe(true);
+    expect(toolLog.hasDocPage?.('doc-1', 1)).toBe(true);
+    expect(toolLog.hasDocQuote?.('doc-1', 1, 'ข้อความที่ไม่มีอยู่จริง')).toBe(false);
   });
 
   it('เอกสารสแกน (extracted:false) → chunks:null พร้อม note (N4)', async () => {

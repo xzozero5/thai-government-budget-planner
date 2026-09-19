@@ -6,11 +6,15 @@ import type { FindDocumentsParams, SourceDocCollection, SourceDocKind } from '@/
 import { clampRows, createTool, truncateString, type ToolContext } from './toolKit';
 
 export const FindDocumentsInputSchema = z.object({
-  query: z.string().optional().describe('คำค้นในชื่อเรื่อง/หัวข้อ/หน่วยงาน (ว่างได้ถ้าจะกรองด้วย facet อย่างเดียว)'),
-  collection: z.string().optional().describe('committee | province_budget | open_sso | pbo'),
-  agency: z.string().optional(),
+  query: z
+    .string()
+    .max(200)
+    .optional()
+    .describe('คำค้นในชื่อเรื่อง/หัวข้อ/หน่วยงาน (ว่างได้ถ้าจะกรองด้วย facet อย่างเดียว)'),
+  collection: z.string().max(50).optional().describe('committee | province_budget | open_sso | pbo'),
+  agency: z.string().max(200).optional(),
   fiscal_year: z.number().int().optional(),
-  kind: z.string().optional().describe('pdf | xlsx | xls | docx | pptx | jpg | other'),
+  kind: z.string().max(50).optional().describe('pdf | xlsx | xls | docx | pptx | jpg | other'),
   has_text_only: z.boolean().optional().describe('true = เอาเฉพาะเอกสารที่มี text layer (ระบบอ่านเนื้อหาได้ — N4)'),
   limit: z.number().int().min(1).max(20).optional(),
 });

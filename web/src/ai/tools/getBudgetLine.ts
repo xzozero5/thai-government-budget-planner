@@ -11,7 +11,7 @@ import { clampRows, createTool, type ToolContext } from './toolKit';
 
 export const GetBudgetLineInputSchema = z.object({
   source_ids: z
-    .array(z.string())
+    .array(z.string().max(200))
     .min(1)
     .max(20)
     .describe('source_id ที่เคยเห็นจาก search_catalog/query_budget_lines ในบทสนทนานี้เท่านั้น'),
@@ -112,6 +112,18 @@ async function handler(input: GetBudgetLineInput, ctx: ToolContext): Promise<Get
     const confidenceNote = confidenceNoteFor(line.quality_flags);
     ctx.toolLog.recordSourceId(line.source_id);
     ctx.toolLog.recordDocId(line.source_doc_id);
+    // T-307 H2: จำค่าจริงของแถวนี้ไว้เทียบกับ comparables/BOQ ที่ `emit_proposal` จะตรวจภายหลัง
+    ctx.toolLog.recordSourceFingerprint?.(line.source_id, {
+      amountThb: line.amount_thb,
+      unitPriceThb: line.unit_price_thb,
+      itemQty: line.item_qty,
+      itemUnit: line.item_unit,
+      fiscalYearBe: line.fiscal_year_be,
+      agency: line.agency,
+      ministry: line.ministry,
+      itemNameRaw: line.item_name_raw,
+      dataset: line.dataset,
+    });
     if (confidenceNote !== undefined) {
       ctx.toolLog.recordConfidenceCeiling(line.source_id, 'medium');
     }

@@ -35,6 +35,14 @@ import { EmitProposalOutputSchema, type EmitProposalOutput } from './tools/propo
 /** ค่าเริ่มต้นของ `budget.maxToolRounds` (04 §D4: "ครบ MAX_TOOL_ROUNDS = 8") */
 export const DEFAULT_MAX_TOOL_ROUNDS = 8;
 
+/** T-307 (security review M2) — เดิม `maxCostUsdPerTurn`/`maxCostUsdPerSession` เป็น `undefined` เมื่อ
+ * ผู้เรียกไม่ส่งมา (ไม่มีเพดานเงินโดยปริยายเลย มีแต่ `maxToolRounds`) สินทรัพย์ที่ป้องกันคือเงินของผู้ใช้
+ * เอง — ถ้า UI (Phase 4) ลืมส่ง budget จะไม่มีเพดานใด ๆ คุมค่าใช้จ่ายต่อการสนทนา ค่าเหล่านี้เป็นค่า
+ * เริ่มต้นที่ใช้เฉพาะตอนผู้เรียกไม่ระบุ (`input.budget?.maxCostUsdPerTurn`/`...PerSession` ยังคง override
+ * ได้ตามปกติ) — ผู้ใช้ควรปรับได้เองใน UI ภายหลัง (settings ของ Phase 4) ไม่ใช่ค่าตายตัวถาวร */
+export const DEFAULT_MAX_COST_USD_PER_TURN = 0.5;
+export const DEFAULT_MAX_COST_USD_PER_SESSION = 3.0;
+
 // ---------------------------------------------------------------------------
 // ประเภทข้อมูล public
 // ---------------------------------------------------------------------------
@@ -383,8 +391,8 @@ function buildDroppedToolResults(
 export async function runAgentTurn(input: RunAgentTurnInput): Promise<RunAgentTurnResult> {
   const { client, model, effort, system, toolContext, signal } = input;
   const maxToolRounds = input.budget?.maxToolRounds ?? DEFAULT_MAX_TOOL_ROUNDS;
-  const maxCostUsdPerTurn = input.budget?.maxCostUsdPerTurn;
-  const maxCostUsdPerSession = input.budget?.maxCostUsdPerSession;
+  const maxCostUsdPerTurn = input.budget?.maxCostUsdPerTurn ?? DEFAULT_MAX_COST_USD_PER_TURN;
+  const maxCostUsdPerSession = input.budget?.maxCostUsdPerSession ?? DEFAULT_MAX_COST_USD_PER_SESSION;
   const spentUsdSoFar = input.budget?.spentUsdSoFar ?? 0;
   const onEvent = input.onEvent;
 
@@ -417,14 +425,14 @@ export async function runAgentTurn(input: RunAgentTurnInput): Promise<RunAgentTu
     if (signal?.aborted) {
       return finish(null, 'cancelled');
     }
-    if (maxCostUsdPerTurn !== undefined && turnCostUsd >= maxCostUsdPerTurn) {
+    if (turnCostUsd >= maxCostUsdPerTurn) {
       emit({
         type: 'warning',
         messageTh: `ถึงเพดานค่าใช้จ่ายของการสนทนานี้ (${maxCostUsdPerTurn.toFixed(2)} USD) แล้ว ระบบหยุดก่อนเรียก AI รอบถัดไป`,
       });
       return finish(null, 'budget');
     }
-    if (maxCostUsdPerSession !== undefined && spentUsdSoFar + turnCostUsd >= maxCostUsdPerSession) {
+    if (spentUsdSoFar + turnCostUsd >= maxCostUsdPerSession) {
       emit({
         type: 'warning',
         messageTh: `ถึงเพดานค่าใช้จ่ายรวมของ session นี้ (${maxCostUsdPerSession.toFixed(2)} USD) แล้ว ระบบหยุดก่อนเรียก AI รอบถัดไป`,

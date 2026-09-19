@@ -8,8 +8,23 @@
  * generic เพราะรูปร่าง output ต่างกันมากต่อ tool และบาง field เช่น `sample_source_ids` เป็น string[]
  * ตรง ๆ ไม่ใช่ object ที่มี key `source_id`)
  *
+ * T-307 (security review H2) — เดิม ToolLog เก็บแค่ "id เคยปรากฏ" (Set/Map ของ string) ทำให้
+ * `emit_proposal` ยืนยันได้แค่ว่า source_id/doc_id/(indicator,year) เคยปรากฏจริง แต่ตรวจ "ค่า" ที่โมเดิล
+ * แต่งขึ้นประกบ id จริงไม่ได้ (N3 ถูกเลี่ยงด้วย pointer ถูก + ตัวเลขผิด) — เพิ่ม `SourceFingerprint`
+ * (ค่าจริงต่อ source_id) และดัชนีข้อความ chunk เอกสาร (ต่อ `(doc_id, page)`) ให้ `validateAndNormalizeProposal`
+ * (`tools/proposal.ts`) เทียบค่าจริงแทนการเช็คแค่ id
+ *
+ * เมธอดใหม่ทั้งหมด (fingerprint/doc chunk) เป็น **optional** ในอินเทอร์เฟซ (ไม่ใช่ required) โดยตั้งใจ —
+ * เพื่อไม่ทำลาย backward-compat กับโค้ดที่ implement `ToolLog` เองนอก `ai/**` อยู่ก่อนแล้ว (เช่น
+ * `web/src/app/dataHarness/aiEvalHarness/toolLogSummary.ts#createCountingToolLog` ที่ wrap ทุกเมธอด
+ * แบบ object literal ตรง ๆ — ถ้าเมธอดใหม่เป็น required จะทำให้ไฟล์นั้น type-error ทันทีโดยที่เราไม่ได้รับ
+ * อนุญาตให้แก้ไฟล์นั้น) โค้ดที่เรียกเมธอดเหล่านี้ต้องใช้ optional chaining (`?.`) เสมอ และมี fallback ที่
+ * ปลอดภัย (เช่น "ตรวจไม่ได้ = ปล่อยผ่านเหมือนพฤติกรรมเดิม" สำหรับ document citation, ไม่ใช่ "ตรวจไม่ได้ =
+ * ปฏิเสธทั้งหมด") — `createToolLog()` ของไฟล์นี้ implement ครบทุกเมธอดเสมอ
+ *
  * ห้าม import React/DOM API (module boundary — docs/04-ARCHITECTURE.md §3)
  */
+import { normalizeForQuoteMatch } from './textNormalize';
 
 export interface InflationAdjustmentLogEntry {
   fromAmountThb: number;
@@ -23,6 +38,21 @@ export interface InflationAdjustmentLogEntry {
 export interface TrendRefLog {
   kind: 'item' | 'indicator';
   key: string;
+}
+
+/** ค่าจริงของแถวงบที่ tool คืนให้โมเดลเห็นจริง ต่อ `source_id` หนึ่ง ๆ (T-307 H2) — ใช้เทียบกับค่าที่
+ * โมเดลใส่ใน `comparables[]`/ตรวจ traceability ของ `boq[].unit_price_thb` (basis=historical) ใน
+ * `tools/proposal.ts` ไม่ใช่ค่าที่ใช้แสดงผลเอง (แสดงผลใช้ output ของ tool ตรง ๆ) */
+export interface SourceFingerprint {
+  amountThb: number | null;
+  unitPriceThb: number | null;
+  itemQty: number | null;
+  itemUnit: string | null;
+  fiscalYearBe: number;
+  agency: string | null;
+  ministry: string | null;
+  itemNameRaw: string;
+  dataset: string;
 }
 
 export interface ToolLog {
@@ -63,6 +93,23 @@ export interface ToolLog {
   /** จำนวนภาพประกอบที่ผ่าน `emit_illustration` สำเร็จแล้วใน session นี้ (T-309: ≤ 3/proposal) */
   illustrationCount(): number;
 
+  // -- T-307 H2: fingerprint ของค่าจริง (optional — ดูคอมเมนต์หัวไฟล์เรื่อง backward-compat) --------
+
+  /** จำค่าจริงของแถวที่ `source_id` นี้ชี้ไป — `query_budget_lines`/`get_budget_line` เรียกทุกครั้งที่
+   * คืนแถวสำเร็จ เรียกซ้ำ id เดิมได้ (ค่าล่าสุดชนะ — แถวเดิมไม่ควรเปลี่ยนค่าระหว่าง session แต่ไม่ throw) */
+  recordSourceFingerprint?(sourceId: string, fingerprint: SourceFingerprint): void;
+  getSourceFingerprint?(sourceId: string): SourceFingerprint | undefined;
+
+  /** จำเนื้อหา (ข้อความ, normalize แล้วสำหรับเทียบ substring) ของ chunk ที่ `read_document` คืนให้
+   * โมเดลเห็นจริง ต่อ `(docId, page)` — จำกัดขนาดรวม ≤ 200 KB ต่อ session (เกิน → chunk นั้นไม่ถูกจำ
+   * เนื้อหา ทำให้ quote ที่อ้างอิงจะตรวจไม่ได้แล้วถูกตัดทิ้งเสมอ ซึ่งเป็นพฤติกรรมที่ตั้งใจ ไม่ใช่บั๊ก) */
+  recordDocChunkText?(docId: string, page: number | null, text: string): void;
+  /** เคยอ่านหน้านี้ของเอกสารนี้จริงหรือไม่ (ผ่าน `read_document` ที่ระบุ `page` เจาะจง) */
+  hasDocPage?(docId: string, page: number): boolean;
+  /** `quote` (normalize แล้วเทียบกับ chunk ที่ normalize ไว้) เป็น substring ของเนื้อหาที่เคยอ่านจริง
+   * หรือไม่ — `page` เป็น `undefined`/`null` แปลว่าเทียบกับทุก chunk ของเอกสารนี้ที่เคยอ่าน (ไม่เจาะจงหน้า) */
+  hasDocQuote?(docId: string, page: number | null | undefined, quote: string): boolean;
+
   /** ล้างทั้งหมด (ใช้ตอนเริ่ม session ใหม่/ทดสอบ) */
   reset(): void;
 }
@@ -81,6 +128,16 @@ function inflationKey(
   return `${String(key.fromAmountThb)}|${String(key.fromYearBe)}|${String(key.toYearBe)}|${key.indicator}`;
 }
 
+/** เพดานขนาดรวมของข้อความ chunk เอกสารที่จำไว้เพื่อเทียบ quote (T-307 H2) — ประมาณด้วยจำนวนไบต์ utf-8
+ * ของข้อความหลัง normalize (เข้มกว่าค่าดิบเล็กน้อยเพราะ normalize ตัดช่องว่าง/วรรคตอนบางส่วนออก แต่ก็เพียง
+ * พอเป็นเพดานกันหน่วยความจำบวมของ session ที่อ่านเอกสารจำนวนมาก) เกินแล้ว chunk ใหม่จะไม่ถูกจำเนื้อหา
+ * (ยอมรับว่า quote ของ chunk นั้นตรวจไม่ได้แล้ว — `tools/proposal.ts` จะตัด quote ทิ้งเสมอในกรณีนี้) */
+const DOC_CHUNK_TEXT_BUDGET_BYTES = 200_000;
+
+function docChunkKey(docId: string, page: number | null): string {
+  return `${docId}|${page === null ? 'null' : String(page)}`;
+}
+
 export function createToolLog(): ToolLog {
   const sourceIds = new Set<string>();
   const sourceShards = new Map<string, string>();
@@ -92,6 +149,11 @@ export function createToolLog(): ToolLog {
   const webUrls = new Set<string>();
   const confidenceCeilings = new Map<string, 'medium'>();
   let proposalAttempts = 0;
+
+  const sourceFingerprints = new Map<string, SourceFingerprint>();
+  const docPagesSeen = new Set<string>();
+  const docChunkTexts = new Map<string, string[]>();
+  let docChunkBudgetUsedBytes = 0;
 
   return {
     recordSourceId(sourceId) {
@@ -164,6 +226,47 @@ export function createToolLog(): ToolLog {
     illustrationCount() {
       return illustrationIds.size;
     },
+
+    recordSourceFingerprint(sourceId, fingerprint) {
+      sourceFingerprints.set(sourceId, fingerprint);
+    },
+    getSourceFingerprint(sourceId) {
+      return sourceFingerprints.get(sourceId);
+    },
+    recordDocChunkText(docId, page, text) {
+      if (page !== null) {
+        docPagesSeen.add(`${docId}|${String(page)}`);
+      }
+      const normalized = normalizeForQuoteMatch(text);
+      const bytes = new TextEncoder().encode(normalized).length;
+      if (docChunkBudgetUsedBytes + bytes > DOC_CHUNK_TEXT_BUDGET_BYTES) {
+        // เกินเพดาน — จงใจไม่จำเนื้อหา chunk นี้ (ดูคอมเมนต์ที่ DOC_CHUNK_TEXT_BUDGET_BYTES)
+        return;
+      }
+      docChunkBudgetUsedBytes += bytes;
+      const key = docChunkKey(docId, page);
+      const existing = docChunkTexts.get(key);
+      if (existing !== undefined) {
+        existing.push(normalized);
+      } else {
+        docChunkTexts.set(key, [normalized]);
+      }
+    },
+    hasDocPage(docId, page) {
+      return docPagesSeen.has(`${docId}|${String(page)}`);
+    },
+    hasDocQuote(docId, page, quote) {
+      const normalizedQuote = normalizeForQuoteMatch(quote);
+      if (normalizedQuote.length === 0) {
+        return false;
+      }
+      const keys: string[] =
+        page !== undefined && page !== null
+          ? [docChunkKey(docId, page)]
+          : [...docChunkTexts.keys()].filter((k) => k.startsWith(`${docId}|`));
+      return keys.some((key) => (docChunkTexts.get(key) ?? []).some((t) => t.includes(normalizedQuote)));
+    },
+
     reset() {
       sourceIds.clear();
       sourceShards.clear();
@@ -175,6 +278,10 @@ export function createToolLog(): ToolLog {
       webUrls.clear();
       confidenceCeilings.clear();
       proposalAttempts = 0;
+      sourceFingerprints.clear();
+      docPagesSeen.clear();
+      docChunkTexts.clear();
+      docChunkBudgetUsedBytes = 0;
     },
   };
 }

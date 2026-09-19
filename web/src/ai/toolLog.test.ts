@@ -100,6 +100,47 @@ describe('ToolLog', () => {
     expect(log.proposalAttemptCount()).toBe(2);
   });
 
+  it('T-307 H2: source fingerprint เก็บ/อ่านค่าจริงต่อ source_id', () => {
+    const log = createToolLog();
+    expect(log.getSourceFingerprint?.('src-1')).toBeUndefined();
+    log.recordSourceFingerprint?.('src-1', {
+      amountThb: 100,
+      unitPriceThb: 50,
+      itemQty: 2,
+      itemUnit: 'ชิ้น',
+      fiscalYearBe: 2567,
+      agency: 'กรมทดสอบ',
+      ministry: null,
+      itemNameRaw: 'ของทดสอบ',
+      dataset: 'act_2570_draft',
+    });
+    expect(log.getSourceFingerprint?.('src-1')?.amountThb).toBe(100);
+    expect(log.getSourceFingerprint?.('src-2')).toBeUndefined();
+  });
+
+  it('T-307 H2: doc chunk text — hasDocPage/hasDocQuote ตรวจ substring หลัง normalize', () => {
+    const log = createToolLog();
+    expect(log.hasDocPage?.('doc-1', 1)).toBe(false);
+    log.recordDocChunkText?.('doc-1', 1, 'งบประมาณของสำนักงานปลัดกระทรวง');
+    expect(log.hasDocPage?.('doc-1', 1)).toBe(true);
+    expect(log.hasDocPage?.('doc-1', 2)).toBe(false);
+    expect(log.hasDocQuote?.('doc-1', 1, 'ของสำนักงานปลัด')).toBe(true);
+    expect(log.hasDocQuote?.('doc-1', 1, 'ของส านักงานปลัด')).toBe(true); // whitespace ต่างจาก OCR
+    expect(log.hasDocQuote?.('doc-1', 1, 'ข้อความที่ไม่มีอยู่จริง')).toBe(false);
+    expect(log.hasDocQuote?.('doc-1', undefined, 'ของสำนักงานปลัด')).toBe(true);
+    expect(log.hasDocQuote?.('doc-1', 2, 'ของสำนักงานปลัด')).toBe(false);
+  });
+
+  it('T-307 H2: doc chunk text เกินเพดานขนาดรวมต่อ session → chunk ใหม่ไม่ถูกจำเนื้อหา (quote ตรวจไม่ได้)', () => {
+    const log = createToolLog();
+    // ตัวอักษร ASCII = 1 ไบต์/ตัว ใน utf-8 — คุมขนาดให้แม่นยำเทียบกับเพดาน 200,000 ไบต์
+    const big = 'a'.repeat(150_000);
+    log.recordDocChunkText?.('doc-1', 1, big);
+    log.recordDocChunkText?.('doc-1', 2, big); // รวมเกิน 200 KB แล้ว
+    expect(log.hasDocQuote?.('doc-1', 1, 'a'.repeat(10))).toBe(true);
+    expect(log.hasDocQuote?.('doc-1', 2, 'a'.repeat(10))).toBe(false);
+  });
+
   it('reset ล้างทุกดัชนี', () => {
     const log = createToolLog();
     log.recordSourceId('a');

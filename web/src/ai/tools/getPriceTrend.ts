@@ -13,7 +13,10 @@ import { createTool, type ToolContext } from './toolKit';
 
 export const GetPriceTrendInputSchema = z.object({
   kind: z.enum(['item', 'indicator']),
-  key: z.string().describe('item: item_key จาก search_catalog; indicator: ชื่อตัวชี้วัด เช่น cpi_headline_index'),
+  key: z
+    .string()
+    .max(200)
+    .describe('item: item_key จาก search_catalog; indicator: ชื่อตัวชี้วัด เช่น cpi_headline_index'),
   years_be: z
     .tuple([z.number().int(), z.number().int()])
     .optional()

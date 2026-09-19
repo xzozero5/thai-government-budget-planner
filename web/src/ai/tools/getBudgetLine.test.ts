@@ -96,6 +96,18 @@ describe('getBudgetLineTool', () => {
       expect(result.output.lines[0]?.item_name_raw).toBe('เครื่องปรับอากาศ ขนาด 18000 บีทียู');
     }
     expect(getLines).toHaveBeenCalledWith(['src-1'], ['budget_lines/act_2570_draft/00000.parquet']);
+    // T-307 H2: บันทึก SourceFingerprint ของแถวจริงไว้ให้ emit_proposal ตรวจ comparables/BOQ ภายหลัง
+    expect(toolLog.getSourceFingerprint?.('src-1')).toEqual({
+      amountThb: 30000,
+      unitPriceThb: 30000,
+      itemQty: 1,
+      itemUnit: 'เครื่อง',
+      fiscalYearBe: 2570,
+      agency: 'กรมทดสอบ',
+      ministry: 'กระทรวงทดสอบ',
+      itemNameRaw: 'เครื่องปรับอากาศ ขนาด 18000 บีทียู',
+      dataset: 'act_2570_draft',
+    });
   });
 
   it('AC4: group_total_mismatch → max_confidence:"medium" พร้อมหมายเหตุ OCR (ADR-005)', async () => {

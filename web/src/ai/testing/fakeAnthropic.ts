@@ -1,8 +1,11 @@
 /**
- * T-304 — fake `Anthropic` client สำหรับ unit test ของ `ai/agent.ts` เท่านั้น
+ * T-304 — fake `Anthropic` client สำหรับ unit test ของ `ai/agent.ts`
  *
- * **ห้าม import ไฟล์นี้จากโค้ด production ใด ๆ** (ใช้ได้เฉพาะไฟล์ `*.test.ts`) — จำลองเฉพาะพฤติกรรมที่
- * `agent.ts` ใช้จริง: `client.messages.stream(params, {signal}) → AsyncIterable<MessageStreamEvent> &
+ * **ใช้ได้เฉพาะไฟล์ `*.test.ts` และ `web/src/app/dataHarness/**`** (T-306: หน้า harness ของ eval
+ * ต้อง "dry-run" ด้วย fake client กับ agent loop/data facade จริงในโหมด build `e2e-harness` เท่านั้น —
+ * ไม่ถูก bundle เข้า production เพราะทั้งโฟลเดอร์ dataHarness ถูกตัดด้วย `resolve.alias` ใน
+ * `vite.config.ts`/`DataHarnessRoute.stub.tsx` เมื่อไม่ใช่โหมดนั้น) — จำลองเฉพาะพฤติกรรมที่ `agent.ts`
+ * ใช้จริง: `client.messages.stream(params, {signal}) → AsyncIterable<MessageStreamEvent> &
  * {finalMessage(): Promise<Message>}` (ดู `typescript/claude-api/streaming.md`/`tool-use.md`)
  *
  * ผู้เขียนเทสต์ประกอบ `Anthropic.Message` ที่ "ควรได้" ต่อ 1 รอบ (1 ครั้งที่ `stream()` ถูกเรียก) แล้ว
@@ -16,6 +19,12 @@ import Anthropic from '@anthropic-ai/sdk';
 
 export type ScriptedTurn =
   | { kind: 'message'; message: Anthropic.Message }
+  /** T-306: สร้าง message ตอนถูกเรียกจริง (ไม่ใช่ล่วงหน้า) — ใช้ตอน dry-run harness ที่ต้องอ่าน
+   * ผลลัพธ์ "จริง" ของ tool ก่อนหน้า (เช่น item_key จาก search_catalog, source_id จาก
+   * query_budget_lines กับข้อมูล production จริง — ผ่าน `ai/testing/toolCapture.ts` ไม่ใช่จาก
+   * `params` ของการเรียกนี้ เพราะรูปแบบการห่อ `tool_result.content` เปลี่ยนได้) มาประกอบ tool_use ของ
+   * รอบถัดไป โดยไม่ต้อง mock ผลลัพธ์ของ data facade เอง */
+  | { kind: 'dynamic'; build: () => Anthropic.Message }
   /** จำลอง error ที่ SDK โยนตอน iterate stream หรือตอน `finalMessage()` (เช่น typed exception ของ SDK) */
   | { kind: 'error'; error: unknown }
   /** จำลองการยกเลิกกลางคัน (`finalMessage()` reject ด้วย `Anthropic.APIUserAbortError`) โดยไม่ต้องพึ่ง
@@ -103,7 +112,13 @@ interface FakeMessageStream {
   finalMessage(): Promise<Anthropic.Message>;
 }
 
-function makeFakeMessageStream(turn: ScriptedTurn, signal: AbortSignal | undefined): FakeMessageStream {
+/** รับเฉพาะ turn ที่ resolve แล้ว (ไม่ใช่ 'dynamic' — resolve ที่ `stream()` ก่อนเรียกฟังก์ชันนี้เสมอ) */
+type ResolvedScriptedTurn = Exclude<ScriptedTurn, { kind: 'dynamic' }>;
+
+function makeFakeMessageStream(
+  turn: ResolvedScriptedTurn,
+  signal: AbortSignal | undefined,
+): FakeMessageStream {
   async function* run(): AsyncGenerator<Anthropic.MessageStreamEvent> {
     // await เปล่า ๆ เพื่อให้เป็น async generator จริง (สอดคล้องกับ `MessageStream` จริงที่ event แต่ละตัว
     // มาแบบ asynchronous) แม้เนื้อหาข้างล่างจะ synchronous ล้วนก็ตาม
@@ -163,7 +178,12 @@ export function createFakeAnthropicClient(opts: FakeAnthropicOptions): FakeAnthr
             `fakeAnthropic: scripted turns หมดแล้ว (เรียก stream() ครั้งที่ ${String(callCount)}) แต่มีสคริปต์แค่ ${String(opts.turns.length)} รายการ`,
           );
         }
-        return makeFakeMessageStream(turn, options?.signal);
+        // 'dynamic' ต้อง resolve เป็น 'message' ที่นี่ (ก่อนสร้าง stream) เพราะต้องอ่าน `params` ของ
+        // การเรียกครั้งนี้จริง ๆ — ทุก path ถัดไป (`synthesizeEvents`/`finalMessage`) รับแค่ turn ที่
+        // resolve แล้วเท่านั้น
+        const resolvedTurn: ResolvedScriptedTurn =
+          turn.kind === 'dynamic' ? { kind: 'message', message: turn.build() } : turn;
+        return makeFakeMessageStream(resolvedTurn, options?.signal);
       },
     },
   };

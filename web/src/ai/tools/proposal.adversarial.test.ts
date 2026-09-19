@@ -6,7 +6,7 @@
 import { createDataFacade } from '@/data';
 import { describe, expect, it } from 'vitest';
 import { createInMemoryIllustrationSink } from '../illustrationSink';
-import { createToolLog, type ToolLog } from '../toolLog';
+import { createToolLog, type SourceFingerprint, type ToolLog } from '../toolLog';
 import { emitProposalTool, type Proposal } from './proposal';
 import type { ToolContext } from './toolKit';
 
@@ -48,6 +48,21 @@ function proposal(boq: BoqLine[], overrides: Partial<Proposal> = {}): Proposal {
     citations_web: [],
     illustrations: [],
     stat_cards: [],
+    ...overrides,
+  };
+}
+
+function fingerprint(overrides: Partial<SourceFingerprint> = {}): SourceFingerprint {
+  return {
+    amountThb: 56_000,
+    unitPriceThb: 28_000,
+    itemQty: 2,
+    itemUnit: 'เครื่อง',
+    fiscalYearBe: 2566,
+    agency: 'กรมทดสอบ',
+    ministry: null,
+    itemNameRaw: 'เครื่องปรับอากาศ ขนาด 18000 บีทียู',
+    dataset: 'pbo_disbursement',
     ...overrides,
   };
 }
@@ -158,6 +173,7 @@ describe('emit_proposal — citation ที่แต่งขึ้นต้อ�
   it('แถวที่ถูกจำกัด confidence ≤ medium (quality flag / n<3) → high ถูกลดเป็น medium', async () => {
     const { ctx, toolLog } = makeCtx();
     toolLog.recordSourceId('seen-ocr');
+    toolLog.recordSourceFingerprint?.('seen-ocr', fingerprint({ unitPriceThb: 28_000 }));
     toolLog.recordConfidenceCeiling('seen-ocr', 'medium');
     const out = await run(
       proposal([line({ citations: [{ kind: 'budget_line', source_id: 'seen-ocr' }] })]),
@@ -255,6 +271,67 @@ describe('emit_proposal — citation ที่แต่งขึ้นต้อ�
     expect(out.proposal.illustrations).toHaveLength(0);
     expect(out.proposal.stat_cards).toHaveLength(0);
     expect(out.proposal.boq[0]?.trend_ref).toBeUndefined();
+  });
+
+  it('อ้าง source_id ที่เห็นแค่ id (เช่นจาก sample_source_ids ของ search_catalog) พร้อมราคาแต่งขึ้น → confidence ≤ low + บอกให้เรียก get_budget_line', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('seen-id-only');
+    const out = await run(
+      proposal([
+        line({
+          unit_price_thb: 999_999,
+          total_thb: 1_999_998,
+          citations: [{ kind: 'budget_line', source_id: 'seen-id-only' }],
+        }),
+      ]),
+      ctx,
+    );
+    expect(out.proposal.boq[0]?.confidence).toBe('low');
+    expect(out.warnings.join(' ')).toMatch(/get_budget_line/);
+  });
+
+  it('อ้าง source_id จริงที่มีค่า แต่ใส่ราคาห่างจากค่าจริงเกิน 10 เท่า → basis=estimate', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('seen-1');
+    toolLog.recordSourceFingerprint?.('seen-1', fingerprint({ unitPriceThb: 28_000 }));
+    const out = await run(proposal([line({ unit_price_thb: 900_000, total_thb: 1_800_000 })]), ctx);
+    expect(out.proposal.boq[0]?.basis).toBe('estimate');
+    expect(out.proposal.boq[0]?.confidence).toBe('low');
+  });
+
+  it('อ้าง source_id จริงและราคาตรงค่าจริง (±2 %) → คง historical/high', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('seen-1');
+    toolLog.recordSourceFingerprint?.('seen-1', fingerprint({ unitPriceThb: 28_000 }));
+    const out = await run(proposal([line({ unit_price_thb: 28_300, total_thb: 56_600 })]), ctx);
+    expect(out.proposal.boq[0]?.basis).toBe('historical');
+    expect(out.proposal.boq[0]?.confidence).toBe('high');
+  });
+
+  it('comparables: source_id จริงแต่ตัวเลข/หน่วยงานแต่งขึ้น → ถูกเขียนทับด้วยค่าจริง', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('seen-1');
+    toolLog.recordSourceFingerprint?.('seen-1', fingerprint());
+    const out = await run(
+      proposal([line({ citations: [{ kind: 'budget_line', source_id: 'seen-1' }] })], {
+        comparables: [
+          {
+            source_id: 'seen-1',
+            fiscal_year_be: 2540,
+            agency: 'กรมที่แต่งขึ้น',
+            item_name: 'ชื่อที่แต่งขึ้น',
+            amount_thb: 1,
+            similarity_note: 'ทดสอบ',
+          },
+        ],
+      }),
+      ctx,
+    );
+    const c = out.proposal.comparables[0];
+    expect(c?.amount_thb).toBe(56_000);
+    expect(c?.fiscal_year_be).toBe(2566);
+    expect(c?.agency).toBe('กรมทดสอบ');
+    expect(JSON.stringify(out.proposal.comparables)).not.toContain('แต่งขึ้น');
   });
 
   it('จำนวน/ราคาติดลบ, NaN, Infinity, หรือ qty = 0 → input ถูกปฏิเสธ หรือมี warning (ห้ามผ่านเงียบ)', async () => {

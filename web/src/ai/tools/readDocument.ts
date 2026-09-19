@@ -19,8 +19,12 @@ const MAX_PAGES_PER_CALL = 5;
 const MAX_DOC_CHUNK_TEXT_LENGTH = 2000;
 
 export const ReadDocumentInputSchema = z.object({
-  doc_id: z.string().describe('doc_id จาก find_documents'),
-  query: z.string().optional().describe('ถ้าระบุ จะจัดอันดับ chunk ตามความเกี่ยวข้องกับคำนี้ (ไม่กรองตาม pages)'),
+  doc_id: z.string().max(200).describe('doc_id จาก find_documents'),
+  query: z
+    .string()
+    .max(200)
+    .optional()
+    .describe('ถ้าระบุ จะจัดอันดับ chunk ตามความเกี่ยวข้องกับคำนี้ (ไม่กรองตาม pages)'),
   pages: z
     .array(z.number().int())
     .max(MAX_PAGES_PER_CALL)
@@ -136,9 +140,18 @@ async function handler(input: ReadDocumentInput, ctx: ToolContext): Promise<Read
 
   ctx.toolLog.recordDocId(result.doc.doc_id);
 
+  const chunkResults = result.chunks !== null ? result.chunks.map(toChunkResult) : null;
+  if (chunkResults !== null) {
+    for (const chunk of chunkResults) {
+      // T-307 H2: จำเนื้อหา chunk ที่โมเดลเห็นจริง (หลังตัด 2,000 ตัวอักษร) ไว้เทียบ `quote` ที่
+      // `emit_proposal` จะตรวจภายหลัง (ตัด quote ที่ไม่ใช่ substring ของสิ่งที่เคยอ่านจริงทิ้ง)
+      ctx.toolLog.recordDocChunkText?.(chunk.doc_id, chunk.page, chunk.text);
+    }
+  }
+
   return {
     doc: toDocLite(result.doc),
-    chunks: result.chunks !== null ? result.chunks.map(toChunkResult) : null,
+    chunks: chunkResults,
     total_chunks: result.totalChunks,
     coverage_notes: result.coverageNotes.map((n) => ({
       dataset: n.dataset,

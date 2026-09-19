@@ -25,23 +25,24 @@ const ORDER_BY_VALUES = [
 export const QueryBudgetLinesInputSchema = z.object({
   item_key: z
     .string()
+    .max(200)
     .optional()
     .describe(
       'item_key จาก search_catalog — ระบบจะ resolve เป็นทุก variant ที่สะกดต่างแค่ช่องว่างให้อัตโนมัติ',
     ),
   keywords: z
-    .array(z.string())
+    .array(z.string().max(200))
     .max(5)
     .optional()
     .describe(
       'คำค้นสำรองสำหรับรายการที่ไม่อยู่ใน catalog (ใช้แค่คำแรก) — ต้องระบุปี/กระทรวงร่วมด้วยเสมอ',
     ),
   fiscal_years: z.array(z.number().int()).max(20).optional(),
-  ministry_code: z.string().optional(),
-  agency: z.string().optional().describe('ค้นแบบ substring ในชื่อหน่วยงาน'),
-  province: z.string().optional(),
+  ministry_code: z.string().max(50).optional(),
+  agency: z.string().max(200).optional().describe('ค้นแบบ substring ในชื่อหน่วยงาน'),
+  province: z.string().max(100).optional(),
   dataset: z
-    .array(z.string())
+    .array(z.string().max(50))
     .max(5)
     .optional()
     .describe(
@@ -183,6 +184,18 @@ async function handler(
     const confidenceNote = confidenceNoteFor(line.quality_flags);
     ctx.toolLog.recordSourceId(line.source_id);
     ctx.toolLog.recordDocId(line.source_doc_id);
+    // T-307 H2: จำค่าจริงของแถวนี้ไว้เทียบกับ comparables/BOQ ที่ `emit_proposal` จะตรวจภายหลัง
+    ctx.toolLog.recordSourceFingerprint?.(line.source_id, {
+      amountThb: line.amount_thb,
+      unitPriceThb: line.unit_price_thb,
+      itemQty: line.item_qty,
+      itemUnit: line.item_unit,
+      fiscalYearBe: line.fiscal_year_be,
+      agency: line.agency,
+      ministry: line.ministry,
+      itemNameRaw: line.item_name_raw,
+      dataset: line.dataset,
+    });
     const shard = result.rowShards[line.source_id];
     if (shard !== undefined) {
       ctx.toolLog.recordSourceShard(line.source_id, shard);
