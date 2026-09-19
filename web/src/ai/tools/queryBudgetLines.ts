@@ -12,7 +12,15 @@
  */
 import { z } from 'zod';
 import type { Dataset, QueryLinesParams } from '@/data';
-import { clampRows, createTool, MAX_RESULT_ROWS, type ToolContext } from './toolKit';
+import { computeImpliedUnitPriceHint } from './impliedUnitPrice';
+import {
+  clampRows,
+  createTool,
+  MAX_COVERAGE_NOTES_PER_CALL,
+  MAX_RESULT_ROWS,
+  truncateString,
+  type ToolContext,
+} from './toolKit';
 
 const ORDER_BY_VALUES = [
   'amount_desc',
@@ -27,17 +35,20 @@ export const QueryBudgetLinesInputSchema = z.object({
     .string()
     .max(200)
     .optional()
-    .describe(
-      'item_key จาก search_catalog — ระบบจะ resolve เป็นทุก variant ที่สะกดต่างแค่ช่องว่างให้อัตโนมัติ',
-    ),
+    .describe('item_key จาก search_catalog (auto-resolve variant สะกดต่างช่องว่าง)'),
   keywords: z
     .array(z.string().max(200))
     .max(5)
     .optional()
+    .describe('คำค้นสำรอง (ใช้แค่คำแรก) นอก catalog — ต้องระบุปี/กระทรวงร่วมด้วย'),
+  fiscal_years: z
+    .array(z.number().int())
+    .max(20)
+    .optional()
     .describe(
-      'คำค้นสำรองสำหรับรายการที่ไม่อยู่ใน catalog (ใช้แค่คำแรก) — ต้องระบุปี/กระทรวงร่วมด้วยเสมอ',
+      'พ.ศ. — ใส่ไม่เกิน ~2-3 ปีต่อครั้ง เริ่มจากปีล่าสุด (ระบบสแกนได้สูงสุด 12 ไฟล์ต่อคำขอ ' +
+        'ใส่มากไปจะถูกปฏิเสธพร้อมคำแนะนำ; ระบุ item_key/ministry_code ร่วมด้วยขยายช่วงปีได้)',
     ),
-  fiscal_years: z.array(z.number().int()).max(20).optional(),
   ministry_code: z.string().max(50).optional(),
   agency: z.string().max(200).optional().describe('ค้นแบบ substring ในชื่อหน่วยงาน'),
   province: z.string().max(100).optional(),
@@ -45,9 +56,7 @@ export const QueryBudgetLinesInputSchema = z.object({
     .array(z.string().max(50))
     .max(5)
     .optional()
-    .describe(
-      'ชื่อ dataset เช่น pbo_disbursement, act_2570_draft (ใช้ได้ทีละ 1 ค่าเท่านั้นในปัจจุบัน)',
-    ),
+    .describe('ชื่อ dataset เช่น pbo_disbursement (ใช้ได้ทีละ 1 ค่า)'),
   min_amount: z.number().optional(),
   max_amount: z.number().optional(),
   order_by: z.enum(ORDER_BY_VALUES).optional(),
@@ -108,12 +117,24 @@ const CoverageNoteResultSchema = z.object({
   note: z.string(),
 });
 
+/** T-308 (งาน B2) — ดูที่มา/หลักการเต็มที่ `../impliedUnitPrice.ts` */
+const ImpliedUnitPriceHintResultSchema = z.object({
+  value_thb: z.number(),
+  support_rows: z.number().int(),
+  total_rows: z.number().int(),
+  method_th: z.string(),
+  label: z.literal('estimate'),
+});
+
 export const QueryBudgetLinesOutputSchema = z.object({
   rows: z.array(BudgetLineLiteSchema),
   total: z.number().int(),
   truncated: z.boolean(),
   shards_loaded: z.array(z.string()),
   coverage_notes: z.array(CoverageNoteResultSchema),
+  /** T-308 (งาน B2) — ค่าที่ "อาจ" เป็นราคาต่อหน่วยร่วมของแถวที่คืน (คำนวณจาก amount_thb ของแถว
+   * price_basis="amount_per_line" เท่านั้น) — `null` เมื่อไม่มั่นใจพอ (ห้ามเดา) */
+  implied_unit_price_hint: ImpliedUnitPriceHintResultSchema.nullable(),
   warnings: z.array(z.string()),
 });
 export type QueryBudgetLinesOutput = z.infer<typeof QueryBudgetLinesOutputSchema>;
@@ -229,17 +250,32 @@ async function handler(
     };
   });
 
+  // T-308 (งาน B1/B2): เตือนระดับบนสุดเมื่อแถวส่วนใหญ่เป็น amount_per_line + แนบ hint ราคาต่อหน่วย
+  // (ถ้าคำนวณได้อย่างมั่นใจ) — คำนวณจาก `rows` ที่คืนจริง (หลังตัด ≤50 แถวแล้ว) เท่านั้น
+  const amountPerLineRows = rows.filter((r) => r.price_basis === 'amount_per_line');
+  if (rows.length > 0 && amountPerLineRows.length / rows.length >= 0.5) {
+    warnings.push(
+      'แถวส่วนใหญ่ที่คืนเป็น price_basis="amount_per_line" — amount_thb เป็นยอดรวมต่อบรรทัดงบ ' +
+        'อาจครอบคลุมหลายหน่วย ห้ามใช้เป็นราคาต่อหน่วยตรง ๆ (ดู implied_unit_price_hint ถ้ามี หรือใช้ get_price_trend)',
+    );
+  }
+  const impliedHint = computeImpliedUnitPriceHint(amountPerLineRows.map((r) => r.amount_thb));
+  if (impliedHint !== null) {
+    ctx.toolLog.recordImpliedUnitPriceHint?.(impliedHint.value_thb);
+  }
+
   return {
     rows,
     total: result.totalMatched,
     truncated: result.truncated,
     shards_loaded: result.shardPaths,
-    coverage_notes: result.coverageNotes.map((n) => ({
+    coverage_notes: clampRows(result.coverageNotes, MAX_COVERAGE_NOTES_PER_CALL).map((n) => ({
       dataset: n.dataset,
       ...(n.fiscal_year_be !== undefined ? { fiscal_year_be: n.fiscal_year_be } : {}),
       status: n.status,
-      note: n.note,
+      note: truncateString(n.note),
     })),
+    implied_unit_price_hint: impliedHint,
     warnings: [...warnings, ...result.warnings],
   };
 }
@@ -247,10 +283,9 @@ async function handler(
 export const queryBudgetLinesTool = createTool({
   name: 'query_budget_lines',
   description:
-    'ค้นบรรทัดงบประมาณจริงจากข้อมูลในอดีต (ผ่าน DuckDB — ไม่รับ SQL) ต้องระบุ item_key (จาก ' +
-    'search_catalog) หรือ keyword+ปี/กระทรวงเสมอ มิฉะนั้นจะกว้างเกินไปและถูกปฏิเสธ (is_error พร้อม ' +
-    'คำแนะนำให้ใส่ปี/กระทรวงให้แคบลง) ผลลัพธ์ ≤ 50 แถว มี coverage_notes/quality_flags ที่ต้องอ่าน ' +
-    'ก่อนสรุปว่า "ไม่พบ" (ปี 2562 ข้อมูลไม่ครบ — ไม่ใช่ไม่มีงบ, ADR-004)',
+    'ค้นบรรทัดงบประมาณจริง (DuckDB — ไม่รับ SQL) ต้องระบุ item_key หรือ keyword+ปี/กระทรวงเสมอ ' +
+    '(กว้างเกินไปจะถูกปฏิเสธพร้อมคำแนะนำ) fiscal_years ใส่ ~2-3 ปีต่อครั้งพอ ผลลัพธ์ ≤ 50 แถว ' +
+    'อ่าน coverage_notes/quality_flags ก่อนสรุปว่า "ไม่พบ" (ปี 2562 ข้อมูลไม่ครบ ไม่ใช่ไม่มีงบ)',
   inputSchema: QueryBudgetLinesInputSchema,
   outputSchema: QueryBudgetLinesOutputSchema,
   handler,

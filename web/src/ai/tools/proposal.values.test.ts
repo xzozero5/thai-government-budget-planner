@@ -250,6 +250,90 @@ describe('emit_proposal — trace unit_price_thb ของ basis=historical (T-3
   });
 });
 
+describe('emit_proposal — amount_per_line ที่ถูกใช้เป็นราคาต่อหน่วย (T-308 งาน B3)', () => {
+  function recordAmountPerLineRow(toolLog: ToolLog, sourceId: string, amountThb: number): void {
+    toolLog.recordSourceId(sourceId);
+    toolLog.recordSourceFingerprint?.(sourceId, {
+      amountThb,
+      unitPriceThb: null,
+      itemQty: null,
+      itemUnit: null,
+      fiscalYearBe: 2568,
+      agency: 'อบต. ทดสอบ',
+      ministry: null,
+      itemNameRaw: 'เครื่องปรับอากาศ 18000 บีทียู',
+      dataset: 'pbo_disbursement',
+    });
+  }
+
+  it('unit_price_thb ตรง (±2%) กับ amount_thb ของแถวที่ unitPriceThb/itemQty เป็น null → warning + confidence≤low แต่ไม่ reject', async () => {
+    const { ctx, toolLog } = makeCtx();
+    recordAmountPerLineRow(toolLog, 'seen-1', 279_000);
+    const out = await run(
+      proposal([line({ unit_price_thb: 279_000, total_thb: 558_000, confidence: 'high' })]),
+      ctx,
+    );
+    const l = out.proposal.boq[0];
+    // ไม่ reject ทั้ง proposal — basis คงเดิม (ตรวจ traceability ข้างบนผ่านอยู่แล้วเพราะ amountThb ตรง)
+    expect(l?.basis).toBe('historical');
+    expect(l?.confidence).toBe('low');
+    expect(out.warnings.join(' ')).toContain('amount_per_line_as_unit_price');
+  });
+
+  it('unit_price_thb ไม่ตรงกับ amount_thb ของแถว amount_per_line → ไม่มี warning นี้', async () => {
+    const { ctx, toolLog } = makeCtx();
+    recordAmountPerLineRow(toolLog, 'seen-1', 279_000);
+    const out = await run(
+      proposal([line({ unit_price_thb: 27_900, total_thb: 55_800, confidence: 'high' })]),
+      ctx,
+    );
+    expect(out.warnings.join(' ')).not.toContain('amount_per_line_as_unit_price');
+  });
+
+  it('unit_price_thb ตรงกับ implied_unit_price_hint ที่บันทึกไว้ในบทสนทนานี้ → บังคับ basis=estimate', async () => {
+    const { ctx, toolLog } = makeCtx();
+    recordAmountPerLineRow(toolLog, 'seen-1', 279_000);
+    toolLog.recordImpliedUnitPriceHint?.(27_900);
+    const out = await run(
+      proposal([
+        line({
+          unit_price_thb: 27_900,
+          total_thb: 55_800,
+          citations: [{ kind: 'budget_line', source_id: 'seen-1' }],
+        }),
+      ]),
+      ctx,
+    );
+    const l = out.proposal.boq[0];
+    expect(l?.basis).toBe('estimate');
+    expect(out.warnings.join(' ')).toContain('implied_unit_price_hint');
+  });
+
+  it('unit_price_thb ไม่ตรงกับ hint ที่บันทึกไว้ → ไม่บังคับ basis=estimate', async () => {
+    const { ctx, toolLog } = makeCtx();
+    recordRowHistorical(toolLog, 'seen-1', 28_000);
+    toolLog.recordImpliedUnitPriceHint?.(99_999);
+    const out = await run(proposal([line({ unit_price_thb: 28_000, total_thb: 56_000 })]), ctx);
+    expect(out.proposal.boq[0]?.basis).toBe('historical');
+    expect(out.warnings.join(' ')).not.toContain('implied_unit_price_hint');
+  });
+
+  function recordRowHistorical(toolLog: ToolLog, sourceId: string, unitPriceThb: number): void {
+    toolLog.recordSourceId(sourceId);
+    toolLog.recordSourceFingerprint?.(sourceId, {
+      amountThb: unitPriceThb * 2,
+      unitPriceThb,
+      itemQty: 2,
+      itemUnit: 'เครื่อง',
+      fiscalYearBe: 2567,
+      agency: 'กรมทดสอบ',
+      ministry: null,
+      itemNameRaw: 'เครื่องปรับอากาศ 18000 บีทียู',
+      dataset: 'pbo_disbursement',
+    });
+  }
+});
+
 describe('emit_proposal — quote/page ของ citation เอกสารต้อง trace ได้ (T-307 H2)', () => {
   it('quote ที่ไม่เคยปรากฏในเนื้อหาที่อ่านจริง → ตัด quote ทิ้ง แต่คง citation ระดับเอกสารไว้', async () => {
     const { ctx, toolLog } = makeCtx();

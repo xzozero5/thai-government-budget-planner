@@ -47,37 +47,47 @@ const LONG_TEXT_MAX = 4000;
 const ARRAY_MAX = 50;
 const CITATIONS_PER_LINE_MAX = 20;
 
-export const TrendRefSchema = z.object({
-  kind: z.enum(['item', 'indicator']),
-  key: z.string().max(ID_MAX),
-});
+// T-308 (prompt-tuning รอบ 1): `.meta({id})` บังคับให้ `z.toJSONSchema` (`../jsonSchema.ts`) แยกสอง
+// schema นี้ไปไว้ที่ `$defs` แล้วแทนที่ทุกจุดที่ใช้ซ้ำ (`BoqLineSchema.citations`/`.trend_ref`,
+// `AuditFindingSchema.citations`, `StatCardSchema.trend_ref`) ด้วย `$ref` แทนการก็อปปี้ก้อน JSON Schema
+// เดิมซ้ำ 2 รอบ (citation ก้อนใหญ่ที่สุดในไฟล์นี้) — ไม่กระทบ runtime validation ใด ๆ (Zod ตรวจจาก
+// object เดิมเป๊ะ ไม่ได้ผ่าน JSON Schema เลย) ต้องไม่ซ้ำ id กับ schema อื่นในไฟล์นี้ (ตรวจได้จาก
+// `jsonSchema.test.ts`/`proposal.test.ts` — เรียก `zodToToolInputSchema` ไม่ throw)
+export const TrendRefSchema = z
+  .object({
+    kind: z.enum(['item', 'indicator']),
+    key: z.string().max(ID_MAX),
+  })
+  .meta({ id: 'trend_ref' });
 export type TrendRef = z.infer<typeof TrendRefSchema>;
 
-export const CitationSchema = z.discriminatedUnion('kind', [
-  z.object({
-    kind: z.literal('budget_line'),
-    source_id: z.string().max(ID_MAX),
-    note: z.string().max(TEXT_MAX).optional(),
-  }),
-  z.object({
-    kind: z.literal('document'),
-    doc_id: z.string().max(ID_MAX),
-    page: z.number().int().optional(),
-    quote: z.string().max(TEXT_MAX).optional(),
-  }),
-  z.object({
-    kind: z.literal('econ'),
-    indicator: z.string().max(ID_MAX),
-    year_be: z.number().int(),
-  }),
-  z.object({
-    kind: z.literal('web'),
-    url: z.string().max(TEXT_MAX),
-    title: z.string().max(LABEL_MAX).optional(),
-    retrieved_at: z.string().max(50),
-    price_note: z.string().max(TEXT_MAX).optional(),
-  }),
-]);
+export const CitationSchema = z
+  .discriminatedUnion('kind', [
+    z.object({
+      kind: z.literal('budget_line'),
+      source_id: z.string().max(ID_MAX),
+      note: z.string().max(TEXT_MAX).optional(),
+    }),
+    z.object({
+      kind: z.literal('document'),
+      doc_id: z.string().max(ID_MAX),
+      page: z.number().int().optional(),
+      quote: z.string().max(TEXT_MAX).optional(),
+    }),
+    z.object({
+      kind: z.literal('econ'),
+      indicator: z.string().max(ID_MAX),
+      year_be: z.number().int(),
+    }),
+    z.object({
+      kind: z.literal('web'),
+      url: z.string().max(TEXT_MAX),
+      title: z.string().max(LABEL_MAX).optional(),
+      retrieved_at: z.string().max(50),
+      price_note: z.string().max(TEXT_MAX).optional(),
+    }),
+  ])
+  .meta({ id: 'citation' });
 export type Citation = z.infer<typeof CitationSchema>;
 
 const CONFIDENCE_VALUES = ['high', 'medium', 'low'] as const;
@@ -474,6 +484,44 @@ function processBoqLine(line: BoqLine, ctx: ToolContext, warnings: string[]): Bo
           }
         }
       }
+    }
+  }
+
+  // T-308 (งาน B3) — amount_thb ของแถวที่ fingerprint ไม่รู้ unitPriceThb/itemQty เลย (ไม่มีทางแยกว่า
+  // เป็นราคาต่อหน่วยจริงหรือยอดรวมหลายหน่วย) ใช้เป็นราคาอ้างอิงของ traceability check ข้างบนอยู่แล้ว
+  // (`referencePriceOf`) เพื่อ backward-compat — เพิ่มความโปร่งใสด้วยคำเตือนเฉพาะ + จำกัด confidence
+  // โดยไม่ reject/ตัดบรรทัดทิ้ง (basis ไม่ถูกแตะ ต่างจาก NOT_TRACEABLE ข้างบน)
+  for (const c of citations) {
+    if (c.kind !== 'budget_line') continue;
+    const fp = ctx.toolLog.getSourceFingerprint?.(c.source_id);
+    if (fp === undefined) continue;
+    if (fp.unitPriceThb !== null || fp.itemQty !== null) continue;
+    if (fp.amountThb === null || fp.amountThb === 0) continue;
+    if (isWithinTolerance(line.unit_price_thb, { min: fp.amountThb, max: fp.amountThb }, HISTORICAL_PRICE_TOLERANCE_PCT)) {
+      warnings.push(
+        `${label}: unit_price_thb (${String(line.unit_price_thb)}) ตรงกับ amount_thb ของแถวที่อ้าง ` +
+          `(source_id=${c.source_id}) ซึ่งไม่ทราบจำนวนหน่วย (amount_per_line_as_unit_price) — อาจเป็นยอดรวม` +
+          'หลายหน่วยรวมกัน ไม่ใช่ราคาต่อหน่วยจริง โปรดทบทวนก่อนใช้ — จำกัด confidence ไม่เกิน low',
+      );
+      confidence = capConfidence(confidence, 'low');
+      break;
+    }
+  }
+
+  // T-308 (งาน B3) — unit_price_thb ที่ตรงกับ implied_unit_price_hint ที่ query_budget_lines เคยคำนวณ
+  // ในบทสนทนานี้ (`../impliedUnitPrice.ts`) ถือว่า "ตรวจสอบย้อนกลับได้" (ไม่ใช่เลขลอย ๆ) แต่เป็นการประมาณ
+  // จากรูปแบบตัวเลขล้วน ๆ (ไม่ใช่ข้อเท็จจริงที่ยืนยันแล้วจากแถวใดแถวหนึ่งโดยตรง) — บังคับ basis=estimate เสมอ
+  if (basis !== 'estimate') {
+    const hints = ctx.toolLog.getImpliedUnitPriceHintValues?.() ?? [];
+    const matchesHint = hints.some((v) =>
+      isWithinTolerance(line.unit_price_thb, { min: v, max: v }, HISTORICAL_PRICE_TOLERANCE_PCT),
+    );
+    if (matchesHint) {
+      warnings.push(
+        `${label}: unit_price_thb ตรงกับ implied_unit_price_hint ที่ query_budget_lines เคยคำนวณในบทสนทนานี้ ` +
+          '— ถือว่าตรวจสอบย้อนกลับได้ แต่เป็นการประมาณจากรูปแบบตัวเลข ไม่ใช่ข้อเท็จจริงที่ยืนยันแล้ว — บังคับ basis=estimate',
+      );
+      basis = 'estimate';
     }
   }
 

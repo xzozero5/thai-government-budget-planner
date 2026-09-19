@@ -18,6 +18,12 @@ import { zodToToolInputSchema } from './jsonSchema';
 
 export const MAX_RESULT_ROWS = 50;
 export const MAX_STRING_LENGTH = 300;
+/** T-308 (prompt-tuning รอบ 1) — `coverage_notes` มาจาก `facets()`/`queryLines()` แบบ "ทั้งชุดข้อมูล"
+ * (ไม่ได้กรองตามคำค้นของ call นั้น) ถูกส่งซ้ำทุกครั้งที่เรียก search_catalog/query_budget_lines/
+ * find_documents/read_document ในบทสนทนาเดียวกัน — จำกัดจำนวนต่อ call กันไม่ให้ context บวมจากการพิมพ์
+ * ข้อความชุดเดิมซ้ำหลายรอบ (ประเด็นสำคัญที่สุด 2 เรื่อง คือช่องว่างปี 2562 และ OCR ราชาเทวะ อยู่ใน system
+ * prompt แบบ cached อยู่แล้ว — `ai/systemPrompt.ts#DATA_GAP_RULES_TH`) */
+export const MAX_COVERAGE_NOTES_PER_CALL = 3;
 
 export function truncateString(value: string): string {
   return value.length > MAX_STRING_LENGTH ? `${value.slice(0, MAX_STRING_LENGTH)}…` : value;

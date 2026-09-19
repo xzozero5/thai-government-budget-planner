@@ -3,7 +3,13 @@
  */
 import { z } from 'zod';
 import type { FindDocumentsParams, SourceDocCollection, SourceDocKind } from '@/data';
-import { clampRows, createTool, truncateString, type ToolContext } from './toolKit';
+import {
+  clampRows,
+  createTool,
+  MAX_COVERAGE_NOTES_PER_CALL,
+  truncateString,
+  type ToolContext,
+} from './toolKit';
 
 export const FindDocumentsInputSchema = z.object({
   query: z
@@ -85,7 +91,7 @@ async function handler(input: FindDocumentsInput, ctx: ToolContext): Promise<Fin
   return {
     docs,
     total: result.total,
-    coverage_notes: facets.coverage_notes.map((n) => ({
+    coverage_notes: clampRows(facets.coverage_notes, MAX_COVERAGE_NOTES_PER_CALL).map((n) => ({
       dataset: n.dataset,
       ...(n.fiscal_year_be !== undefined ? { fiscal_year_be: n.fiscal_year_be } : {}),
       status: n.status,

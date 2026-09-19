@@ -12,7 +12,13 @@
  */
 import { z } from 'zod';
 import type { DocChunk, GetDocResult } from '@/data';
-import { createTool, truncateString, type ToolContext } from './toolKit';
+import {
+  clampRows,
+  createTool,
+  MAX_COVERAGE_NOTES_PER_CALL,
+  truncateString,
+  type ToolContext,
+} from './toolKit';
 
 const MAX_CHUNKS = 6;
 const MAX_PAGES_PER_CALL = 5;
@@ -153,7 +159,7 @@ async function handler(input: ReadDocumentInput, ctx: ToolContext): Promise<Read
     doc: toDocLite(result.doc),
     chunks: chunkResults,
     total_chunks: result.totalChunks,
-    coverage_notes: result.coverageNotes.map((n) => ({
+    coverage_notes: clampRows(result.coverageNotes, MAX_COVERAGE_NOTES_PER_CALL).map((n) => ({
       dataset: n.dataset,
       ...(n.fiscal_year_be !== undefined ? { fiscal_year_be: n.fiscal_year_be } : {}),
       status: n.status,

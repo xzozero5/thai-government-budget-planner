@@ -148,11 +148,22 @@ describe('ToolLog', () => {
     log.recordEconValue('cpi_headline_index', 2567);
     log.recordIllustrationId('i');
     log.recordProposalAttempt();
+    log.recordImpliedUnitPriceHint?.(27900);
     log.reset();
     expect(log.hasSourceId('a')).toBe(false);
     expect(log.hasDocId('b')).toBe(false);
     expect(log.hasEconValue('cpi_headline_index', 2567)).toBe(false);
     expect(log.illustrationCount()).toBe(0);
     expect(log.proposalAttemptCount()).toBe(0);
+    expect(log.getImpliedUnitPriceHintValues?.()).toEqual([]);
+  });
+
+  it('T-308: implied unit price hint — บันทึกแล้วอ่านค่ากลับได้ (ไม่ซ้ำ)', () => {
+    const log = createToolLog();
+    expect(log.getImpliedUnitPriceHintValues?.()).toEqual([]);
+    log.recordImpliedUnitPriceHint?.(27900);
+    log.recordImpliedUnitPriceHint?.(33500);
+    log.recordImpliedUnitPriceHint?.(27900);
+    expect(log.getImpliedUnitPriceHintValues?.()).toEqual([27900, 33500]);
   });
 });

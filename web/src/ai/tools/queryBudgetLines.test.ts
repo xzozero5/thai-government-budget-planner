@@ -224,6 +224,60 @@ describe('queryBudgetLinesTool', () => {
     }
   });
 
+  it('T-308: แถวส่วนใหญ่ amount_per_line → เตือนระดับบนสุด + แนบ implied_unit_price_hint และบันทึกลง ToolLog', async () => {
+    const rows = [
+      makeLine({ source_id: 's1', unit_price_thb: null, amount_thb: 279000 }),
+      makeLine({ source_id: 's2', unit_price_thb: null, amount_thb: 223200 }),
+      makeLine({ source_id: 's3', unit_price_thb: null, amount_thb: 139500 }),
+    ];
+    const queryResult: QueryLinesResult = {
+      rows,
+      totalMatched: 3,
+      truncated: false,
+      shardsScanned: 1,
+      shardPaths: [],
+      rowShards: {},
+      coverageNotes: [],
+      droppedRows: 0,
+      warnings: [],
+    };
+    const toolLog = createToolLog();
+    const ctx: ToolContext = {
+      data: createDataFacade({ queryLines: vi.fn().mockResolvedValue(queryResult) }),
+      toolLog,
+      illustrationSink: createInMemoryIllustrationSink(),
+    };
+    const result = await queryBudgetLinesTool.run({ keywords: ['x'] }, ctx);
+    if (result.isError) throw new Error('expected success');
+    expect(result.output.warnings.some((w) => w.includes('amount_per_line'))).toBe(true);
+    expect(result.output.implied_unit_price_hint?.value_thb).toBe(27900);
+    expect(toolLog.getImpliedUnitPriceHintValues?.()).toContain(27900);
+  });
+
+  it('T-308: ส่วนใหญ่เป็น unit_price อยู่แล้ว → ไม่เตือน amount_per_line และ hint เป็น null', async () => {
+    const rows = [makeLine({ source_id: 's1', unit_price_thb: 30000, amount_thb: 30000 })];
+    const queryResult: QueryLinesResult = {
+      rows,
+      totalMatched: 1,
+      truncated: false,
+      shardsScanned: 1,
+      shardPaths: [],
+      rowShards: {},
+      coverageNotes: [],
+      droppedRows: 0,
+      warnings: [],
+    };
+    const ctx: ToolContext = {
+      data: createDataFacade({ queryLines: vi.fn().mockResolvedValue(queryResult) }),
+      toolLog: createToolLog(),
+      illustrationSink: createInMemoryIllustrationSink(),
+    };
+    const result = await queryBudgetLinesTool.run({ keywords: ['x'] }, ctx);
+    if (result.isError) throw new Error('expected success');
+    expect(result.output.warnings.some((w) => w.includes('amount_per_line'))).toBe(false);
+    expect(result.output.implied_unit_price_hint).toBeNull();
+  });
+
   it('AC4: quality_flags ที่บังคับ (upstream_ocr) → max_confidence:"medium" + หมายเหตุไทย และบันทึก ceiling', async () => {
     const line = makeLine({ quality_flags: ['upstream_ocr'] });
     const queryResult: QueryLinesResult = {

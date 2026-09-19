@@ -7,8 +7,14 @@
  * ในนี้ก็ทำไม่ได้เพราะ `CatalogItem`/`CatalogItemSlim` ไม่มีคอลัมน์ gov_level/budget_type ให้กรอง)
  */
 import { z } from 'zod';
-import type { CatalogItem, SearchMatch } from '@/data';
-import { clampRows, createTool, truncateString, type ToolContext } from './toolKit';
+import type { CatalogItem } from '@/data';
+import {
+  clampRows,
+  createTool,
+  MAX_COVERAGE_NOTES_PER_CALL,
+  truncateString,
+  type ToolContext,
+} from './toolKit';
 
 export const SearchCatalogInputSchema = z.object({
   query: z.string().min(1).max(200).describe('คำค้นภาษาไทย/อังกฤษ เช่น ชื่อครุภัณฑ์หรือประเภทงาน'),
@@ -52,8 +58,6 @@ const CatalogItemResultSchema = z.object({
   low_specificity: z.boolean(),
   low_specificity_warning: z.string().optional(),
   sample_source_ids: z.array(z.string()),
-  matched_terms: z.array(z.string()),
-  score: z.number(),
 });
 
 const CoverageNoteResultSchema = z.object({
@@ -74,7 +78,7 @@ const LOW_SPECIFICITY_WARNING =
   'ชื่อรายการนี้กว้าง/ไม่เจาะจงสเปค (รวมของหลายขนาด/รุ่นเข้าด้วยกัน) — ควรถามขนาด/สเปคผู้ใช้ก่อน แล้วอ้างเป็นช่วง p25–p75 ไม่ใช่ตัวเลขเดียว';
 const AMOUNT_PER_LINE_NOTE = 'ราคาต่อรายการงบ ไม่ใช่ราคาต่อหน่วย';
 
-function toCatalogItemResult(match: SearchMatch, full: CatalogItem): z.infer<typeof CatalogItemResultSchema> {
+function toCatalogItemResult(full: CatalogItem): z.infer<typeof CatalogItemResultSchema> {
   const priceBasis: 'unit_price' | 'amount_per_line' = full.unit_price !== undefined ? 'unit_price' : 'amount_per_line';
   const stats = full.unit_price ?? full.amount ?? null;
   const reliabilityLow = stats !== null && stats.n < 3;
@@ -90,8 +94,6 @@ function toCatalogItemResult(match: SearchMatch, full: CatalogItem): z.infer<typ
     price_stats: stats,
     low_specificity: full.low_specificity ?? false,
     sample_source_ids: full.sample_source_ids,
-    matched_terms: match.matchedTerms,
-    score: match.score,
     ...(priceBasis === 'amount_per_line' ? { price_basis_note: AMOUNT_PER_LINE_NOTE } : {}),
     ...(reliabilityLow
       ? {
@@ -123,7 +125,7 @@ async function handler(input: SearchCatalogInput, ctx: ToolContext): Promise<Sea
         ctx.toolLog.recordConfidenceCeiling(sourceId, 'medium');
       }
     }
-    items.push(toCatalogItemResult(match, full));
+    items.push(toCatalogItemResult(full));
   }
 
   const facets = await ctx.data.facets();
@@ -131,7 +133,7 @@ async function handler(input: SearchCatalogInput, ctx: ToolContext): Promise<Sea
   return {
     items,
     total: searchResult.total,
-    coverage_notes: facets.coverage_notes.map((n) => ({
+    coverage_notes: clampRows(facets.coverage_notes, MAX_COVERAGE_NOTES_PER_CALL).map((n) => ({
       dataset: n.dataset,
       ...(n.fiscal_year_be !== undefined ? { fiscal_year_be: n.fiscal_year_be } : {}),
       status: n.status,

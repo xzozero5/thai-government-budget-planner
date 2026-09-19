@@ -110,6 +110,16 @@ export interface ToolLog {
    * หรือไม่ — `page` เป็น `undefined`/`null` แปลว่าเทียบกับทุก chunk ของเอกสารนี้ที่เคยอ่าน (ไม่เจาะจงหน้า) */
   hasDocQuote?(docId: string, page: number | null | undefined, quote: string): boolean;
 
+  // -- T-308 (prompt-tuning รอบ 1, งาน B): implied_unit_price_hint ที่ query_budget_lines เคยคำนวณ ------
+
+  /** จำค่า `value_thb` ของ `implied_unit_price_hint` ที่ `query_budget_lines` เคยคืนจริงใน session นี้
+   * (optional เหมือน fingerprint ด้านบน — ดูเหตุผลเรื่อง backward-compat ที่คอมเมนต์หัวไฟล์) ใช้ให้
+   * `tools/proposal.ts` ตัดสินว่า `boq[].unit_price_thb` ที่ตรงกับ hint นี้ "ตรวจสอบย้อนกลับได้" แต่ต้อง
+   * บังคับ `basis:"estimate"` เสมอ (เป็นการประมาณจากรูปแบบตัวเลข ไม่ใช่ข้อเท็จจริงยืนยัน) */
+  recordImpliedUnitPriceHint?(valueThb: number): void;
+  /** ค่า hint ทั้งหมดที่เคยบันทึกใน session นี้ (ไม่ซ้ำ) — ผู้เรียกเป็นคนตัดสินใจ tolerance เอง */
+  getImpliedUnitPriceHintValues?(): readonly number[];
+
   /** ล้างทั้งหมด (ใช้ตอนเริ่ม session ใหม่/ทดสอบ) */
   reset(): void;
 }
@@ -154,6 +164,7 @@ export function createToolLog(): ToolLog {
   const docPagesSeen = new Set<string>();
   const docChunkTexts = new Map<string, string[]>();
   let docChunkBudgetUsedBytes = 0;
+  const impliedUnitPriceHints = new Set<number>();
 
   return {
     recordSourceId(sourceId) {
@@ -267,6 +278,13 @@ export function createToolLog(): ToolLog {
       return keys.some((key) => (docChunkTexts.get(key) ?? []).some((t) => t.includes(normalizedQuote)));
     },
 
+    recordImpliedUnitPriceHint(valueThb) {
+      impliedUnitPriceHints.add(valueThb);
+    },
+    getImpliedUnitPriceHintValues() {
+      return [...impliedUnitPriceHints];
+    },
+
     reset() {
       sourceIds.clear();
       sourceShards.clear();
@@ -282,6 +300,7 @@ export function createToolLog(): ToolLog {
       docPagesSeen.clear();
       docChunkTexts.clear();
       docChunkBudgetUsedBytes = 0;
+      impliedUnitPriceHints.clear();
     },
   };
 }
