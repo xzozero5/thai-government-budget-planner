@@ -114,7 +114,7 @@ tgbp sample --rows 1000        # สร้าง web/tests/fixtures/data/ สำ
  "source_name":"กระทรวงพาณิชย์ (สนค.)","source_url":"https://...","retrieved_at":"2026-09-20","verified":false,"note":""}
 ```
 ชุดขั้นต่ำ: `cpi_headline_index`, `inflation_pct`, `gdp_growth_pct`, `min_wage_bangkok_thb`, `min_wage_avg_thb`, `diesel_avg_thb_per_l`, `usd_thb_avg`, `construction_material_index`, `government_budget_total_mthb` สำหรับปี 2558–2569 (2570 ถ้ามีประกาศ)
-**เพิ่มเพื่อ trend chart** (สนค. ดัชนีราคาวัสดุก่อสร้าง รายหมวด, ค่าเฉลี่ยรายปี): `cmi_steel` (เหล็กและผลิตภัณฑ์เหล็ก), `cmi_cement`, `cmi_concrete`, `cmi_wood`, `cmi_electrical`, `cmi_plumbing`, `cmi_asphalt_petroleum` + ราคาน้ำมัน `diesel_avg_thb_per_l`, `gasoline95_avg_thb_per_l` — ทุกตัว 10 ปีย้อนหลัง (2559–2569) เพื่อให้ `get_price_trend` วาดกราฟได้โดยไม่ต้อง search
+**เพิ่มเพื่อ trend chart** (สนค. ดัชนีราคาวัสดุก่อสร้าง รายหมวด, ค่าเฉลี่ยรายปี): `cmi_steel` (เหล็กและผลิตภัณฑ์เหล็ก), `cmi_cement`, `cmi_concrete`, `cmi_wood`, `cmi_tiles`, `cmi_paint`, `cmi_sanitary`, `cmi_electrical_plumbing`, `cmi_other` — **ตามหมวดทางการ 10 หมวดของ สนค.** (ยืนยันจาก `index.tpso.go.th/api/cmi/master` 19 ก.ย. 2569: สนค. ไม่แยกไฟฟ้า/ประปา และไม่มีหมวดยางมะตอย → `cmi_electrical`, `cmi_plumbing`, `cmi_asphalt_petroleum` เดิมคงไว้เป็น null + note ชี้ไปตัวแทน; tool `get_price_trend` ต้องไม่เสนอ 3 ตัวนี้) + ราคาน้ำมัน `diesel_avg_thb_per_l`, `gasoline95_avg_thb_per_l` — ทุกตัว 10 ปีย้อนหลัง (2559–2569) เพื่อให้ `get_price_trend` วาดกราฟได้โดยไม่ต้อง search
 `econ/indicators.json` ต้องมี `series` view ด้วย: `{indicator, label_th, unit, points:[{year_be, value}], source_name, source_url, verified}` (สร้างจากรายการเดี่ยวตอน publish)
 **ทุกค่าเริ่มที่ `verified:false`** จนกว่าคนจะตรวจ — UI แสดงป้าย
 
