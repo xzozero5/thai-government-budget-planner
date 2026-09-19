@@ -385,7 +385,7 @@ async function runCaseImpl(
       finalEndedBecause,
       ranAt: new Date().toISOString(),
       isDryRun,
-      ...(promptStats !== undefined ? { promptStats } : {}),
+      promptStats,
     };
   } catch (err) {
     return {
