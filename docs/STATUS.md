@@ -3,11 +3,11 @@
 รูปแบบ entry: `## YYYY-MM-DD HH:MM (Asia/Bangkok) — <ใคร/agent> — <phase/task>` แล้วตามด้วย ทำอะไร / ไฟล์ที่แตะ / test / ค้าง / ไม่ยืนยัน
 
 ## สถานะปัจจุบัน
-- Phase: **2 กำลังทำ** — `architect` T-201 spikes S1–S5 (ใน `web/spikes/` แยก npm project) ∥ `frontend-dev` T-202 (types + manifest loader จาก fixture จริง) → แล้ว T-203/T-204/T-205/T-207 → T-206 · Phase 1 **เสร็จ** (T-101..T-115; `po` review ผ่าน)
+- Phase: **2 กำลังทำ** — เสร็จ: T-201 (spikes S1–S5 → `docs/decisions/SPIKES.md`, **ADR-002**), T-202 (types + manifest loader; schema ตรวจกับ production ครบ) · กำลังทำขนาน 3 `frontend-dev`: **T-203** (DuckDB ตาม ADR-002 + repo + e2e กัน N5) ∥ **T-204 + T-208 ฝั่งเว็บ** (ค้นหาไทย + prebuilt index) ∥ **T-205 + T-207** (econ/inflation/trends + SVG sanitizer) → แล้ว T-206 (architect review) · Phase 1 **เสร็จ**
 - Phase 0: เสร็จทั้งหมด (Pages live)
 - ข้อมูลที่ publish: `data_version cd15fb2dd39b…` — **2,993,621 แถว / 794 ไฟล์ / 180.6 MB** (งบ 500 MB), ไฟล์ใหญ่สุด 6.17 MB; `tgbp build --dataset all` = 12 นาที, deterministic (main thread รันเต็มเองได้ `data_version` เดียวกับ agent)
 - Test ล่าสุด (main thread รันเอง ณ `1f5e464`): pipeline **pytest 437 passed**, ruff check/format ผ่าน; web ไม่เปลี่ยน (vitest 7/7 ณ Phase 0); **CI ของ `eea8632` เขียว + deploy สำเร็จ** — Pages เสิร์ฟ `data_version cd15fb2dd39b` (794 ไฟล์); `budget_lines/pbo/2564/20000.parquet` ตอบ Range ด้วย **206** (7,492 bytes / 53 ms); `*.json.gz` เสิร์ฟเป็น `application/gzip` ไม่มี `Content-Encoding` → client ต้อง gunzip เอง
-- Blockers: ไม่มี · `[ASK-HUMAN]` ค้าง: ไม่มี
+- Blockers: ไม่มี · `[ASK-HUMAN]` ค้าง: ไม่มี (ข้อ 5 ปิด — คุณนิวใส่ key ใน `web/.env.local` แล้ว, **เครดิตรวม 5 USD "ใช้อย่างประหยัด"** → `docs/api-budget.md`; ใช้ไปแล้ว **0.1453 USD**)
 - **แจ้งคุณนิว (ไม่บล็อก)**: (1) ADR-004 `PBO/2562.xlsx` ต้นทางไม่ครบ (coverage 79.24 %, ขาด 6 กระทรวง) — ถ้ามีไฟล์ฉบับครบนำมาแทนแล้วรัน `tgbp build` ใหม่ (2) ADR-005 ราชาเทวะ: ตัวเลขมาจาก OCR ของต้นทาง ไม่ตรงยอดในเอกสาร 10/38 กลุ่ม → V3 เป็น soft + flag (3) econ ยังไม่มีราคาน้ำมัน/ค่าแรงขั้นต่ำรายปี; ทุกค่า `verified:false` (4) ราคาต่อหน่วยมีแค่ ~3 % ของแถว PBO (ชื่อรายการส่วนใหญ่ไม่ระบุจำนวน)
 - กติกาจากบทเรียน: (1) ตรวจซ้ำรายงาน agent ทุกครั้งก่อน commit (2) ห้าม `git stash/checkout` ขณะมี agent แก้ไฟล์ (3) test ห้ามเขียนลง `.cache`/`web/public/data` จริง (4) commit data หลัง review ผ่านเท่านั้น (กัน history บวม)
 
@@ -24,6 +24,16 @@
 - GitHub Pages: **live แล้ว** — ยืนยัน 19 ก.ย.: หน้า placeholder ขึ้น, CSP meta อยู่ใน HTML ที่ serve, `Accept-Ranges: bytes`, `Range: bytes=0-99` กับ `data/sources.json` → **206 / 100 bytes**; ยังต้องวัดกับไฟล์ parquet + DuckDB-WASM จริงใน S1 (T-201) และ `Cache-Control: max-age=600` (ข้อมูลใหม่อาจช้า ≤ 10 นาที)
 
 ## Log
+
+## 2569-09-20 02:30 (Asia/Bangkok) — Claude Code main thread (+ architect, frontend-dev) — Phase 2 ช่วงแรก
+- **ยืนยันบน production**: CI/deploy ของ `eea8632` เขียว; Pages เสิร์ฟ `data_version cd15fb2dd39b` (794 ไฟล์); parquet ตอบ Range `206`
+- **T-202** types (Zod) + manifest loader + 75 tests. main thread ตรวจ schema กับ **ข้อมูล production ทั้งชุด** (catalog 45,193, trends 256 shards, docs 142 ไฟล์/29,288 chunks, sources, orgs, econ) → เจอ 3 จุดที่ fixture จับไม่ได้: (1) enum `basis` ผิด (`unit_price` vs ของจริง `unit_price_per_line`) (2) DocChunk จาก xlsx = `{sheet, rows}` และ `page` เป็น null 1,100 chunks (3) **บั๊ก pipeline**: manifest glob โฟลเดอร์ trends → ไฟล์ค้างหลุดเข้า fixtures ของ `tgbp sample` (แก้แล้ว; production `data_version` ไม่เปลี่ยน). 03 §3.3/§3.4 แก้ตามของจริง
+- **T-201 spikes** (architect; ตัวเลขวัดจริงทั้งหมดใน SPIKES.md): **S1** DuckDB-WASM 1.32.0 default `forceFullHTTPReads:true` (โหลดทั้งไฟล์) + **แอบดาวน์โหลด parquet extension จาก `extensions.duckdb.org` (ละเมิด N5)** + CSP meta ไม่ครอบ same-origin worker → **ADR-002**: เปิด range เอง, self-host extension, worker จาก blob; bytes/query ลด 6–260×; ขนาดจริง ~8.6 MB gz (04 เดิมเขียน 2.5 MB ผิด) · **S2** build index ใน browser 1.7 s / 14.3 s (CPU 4×) → เปิด **T-208** prebuilt index; folding ทำให้ค้น text PDF ได้ (0 → 55 hits) · **S3** SDK ใน browser ใต้ CSP จริง: streaming, tool loop, web_search, **prompt cache hit**, storage audit ว่าง → default model เปลี่ยนเป็น `claude-sonnet-5` · **S4** react-pdf + Sarabun ใช้ได้ แต่มี 3 บั๊ก (ตัดคำไทยกลางคำ, ToUnicode เพี้ยน, ตัวอักษรท้าย block หาย `[UNVERIFIED]`) → T-501/T-503 · **S5** DOMPurify profile เดิม**ปล่อย `<style>@import` หลุด** → ต้องลบ `<style>` ทั้ง element; SVG จาก Claude ผ่าน sanitizer 100 %; isometric ชน `max_tokens` 4,000
+- main thread ตรวจซ้ำ: ไม่มี `sk-ant-` ในไฟล์ใดของ spikes/docs; ledger 9 requests = **0.1453 USD** (เพดาน 0.40); ทดลองเองว่า sort shard ตาม `item_key` → ขนาด +1 %, prune ได้ (row group 3 → 1) → **T-209** ทำพร้อม republish ครั้งหน้า (ไม่ republish 165 MB เพื่อเรื่องนี้)
+- 04 §D2/D3/D8/D9/§5 แก้ตามผลวัดจริง; BACKLOG เพิ่ม AC ให้ T-203/204/207/301/309/408/501/503/504/605 + เปิด T-208/T-209
+- ติดตั้ง dependency ล็อกเวอร์ชัน: `@duckdb/duckdb-wasm@1.32.0`, `minisearch@7.2.0`, `dompurify@3.4.15` (+ `zod` จาก T-202)
+- Test (main thread รันเอง): web lint/typecheck ✅, vitest **80/80** ✅, build ✅ (initial JS 60 KB gz); pipeline pytest **438** ✅
+- Commits: `8f59b4e` `60ae931` `a71c358` `8152e78` `9b60356` `00856a5`
 
 ## 2569-09-20 01:00 (Asia/Bangkok) — Claude Code main thread (+ data-engineer ×2, explorer, po) — ปิด Phase 1
 - **T-110b** `publish.py` + `tgbp build/sample`: shards ปี×กระทรวง (zstd, sort + tiebreak `source_id` — agent เจอว่า DuckDB เรียง tie ไม่คงที่ทำให้ byte ไม่ deterministic), catalog/trends/facets/orgs/docs/econ/manifest, V6, V10 ใช้ magic bytes (262 = 262). main thread รัน **full build ตั้งแต่ extract เอง: exit 0 / 724 s / `data_version` เดียวกับ agent**
