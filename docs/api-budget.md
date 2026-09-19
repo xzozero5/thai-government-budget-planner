@@ -22,3 +22,10 @@ Key อยู่ที่ `web/.env.local` (`VITE_EVAL_ANTHROPIC_API_KEY`; gitig
 | วันที่ | งาน | ใช้จริง (USD) | สะสม |
 |---|---|---|---|
 | 2569-09-20 | Phase 2 spikes: S3 0.0500 (6 req, Haiku 4.5: streaming, tool loop, web_search ×1, cache write+read) + S5 0.0953 (3 SVG: `claude-sonnet-5` ×2, Haiku 4.5 ×1) — ledger `web/spikes/api-spend.json` | **0.1453** (เพดาน 0.40) | **0.1453** |
+| 2569-09-20 | T-306 eval จริง case แรก `equip-aircon-18000btu` (Haiku 4.5, 5 requests, ชนเพดาน case 0.12) — ledger `web/tests/eval/api-spend.json` | **0.1202** (เพดาน T-306 1.80) | **0.2655** |
+
+### ข้อค้นพบด้านต้นทุนจาก case แรก (2569-09-20)
+- prefix system+tools ≈ **28.4k tokens** ต่อ session (cache write ครั้งแรก; Haiku ≈ 0.037 USD, Sonnet 5 ≈ 3 เท่า) — ภาษาไทย ≈ 0.9 token/ตัวอักษร
+- ผล `search_catalog`/`query_budget_lines` รอบละ ≈ 10k tokens; `emit_proposal` ≈ 6.4k output tokens
+- ด้วยขนาดนี้ core8 ตามแผน (6 Haiku + 2 Sonnet) จะชนเพดานต่อ case เกือบทุกข้อ → **หยุดใช้เงินจนกว่าจะลด token** (T-308 รอบ 1: ย่อ prompt/schema/ผล tool) แล้ววัดใหม่ด้วย case เดิม 1 ข้อก่อนปล่อยที่เหลือ
+- ผู้ใช้จริงจ่ายด้วย key ตัวเอง — ต้นทุนต่อข้อเสนอเป็นคุณสมบัติของผลิตภัณฑ์ ไม่ใช่แค่เรื่อง eval
