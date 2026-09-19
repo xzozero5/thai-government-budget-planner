@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-09-19T14:58:30.532900+00:00",
+  "generated_at": "2026-09-19T15:52:19.372568+00:00",
   "mode": "sample (V1-V10 เต็มข้าม — ดู publish.py::run_publish_pipeline)",
   "v6": {
     "passed": true,
     "n_files": 42,
     "oversized": []
   },
-  "total_output_bytes": 926155,
+  "total_output_bytes": 929346,
   "total_output_bytes_limit": 1500000,
   "passed": true
 }

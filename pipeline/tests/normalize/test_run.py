@@ -184,6 +184,50 @@ def test_unit_price_not_computed_when_qty_is_measure_flag_from_parser(tmp_path: 
     assert record["unit_price_thb"] is None
 
 
+def test_unit_price_not_computed_when_high_qty_without_explicit_marker(tmp_path: Path) -> None:
+    """T-115 ข้อ 2: item_qty >= 20 แต่ item_name ไม่มี "จำนวน"/หน่วยนับติดเลข → low_conf ไม่คำนวณ
+
+    เคสจริง (ก่อนแก้ item_parser ข้อ 1): "IPv6" ติดกับเลขจำนวนจริงกลายเป็น "IPv61" — ตัวอย่างนี้ใช้
+    เคสสังเคราะห์ที่ item_qty มาจาก generic qty match ปกติ (>= 20, ไม่มี "จำนวน", ไม่มีหน่วยนับติดเลข)
+    เพื่อแยกทดสอบเงื่อนไข sanity นี้ต่างหากจากบั๊ก item_parser ข้อ 1 โดยตรง
+    """
+    row = _pbo_row(item_name_raw="เครื่องพิมพ์ 25 เครื่อง", amount_thb=500_000)
+    table = _pbo_table([row])
+    cfg = _cfg(tmp_path)
+    normalized, stats = normalize_table(table, cfg=cfg, org_master=_org_master(), max_workers=1)
+    record = normalized.to_pylist()[0]
+    assert record["item_qty"] == 25.0
+    assert record["unit_price_thb"] is None
+    assert "qty_parsed_low_conf" in record["quality_flags"]
+    assert stats.n_high_qty_low_conf == 1
+    assert stats.n_unit_price_computed == 0
+
+
+def test_unit_price_computed_when_high_qty_with_jamnuan_marker(tmp_path: Path) -> None:
+    """item_qty >= 20 แต่มีคำว่า "จำนวน" ชัดเจน → ยังคำนวณ unit_price ตามปกติ"""
+    row = _pbo_row(item_name_raw="ปากกา จำนวน 500 ชุด", amount_thb=25_000)
+    table = _pbo_table([row])
+    cfg = _cfg(tmp_path)
+    normalized, stats = normalize_table(table, cfg=cfg, org_master=_org_master(), max_workers=1)
+    record = normalized.to_pylist()[0]
+    assert record["item_qty"] == 500.0
+    assert record["unit_price_thb"] == 50
+    assert "qty_parsed_low_conf" not in (record["quality_flags"] or [])
+    assert stats.n_high_qty_low_conf == 0
+    assert stats.n_unit_price_computed == 1
+
+
+def test_unit_price_computed_when_high_qty_below_threshold_unaffected(tmp_path: Path) -> None:
+    """item_qty < 20 ไม่ถูกกระทบโดย sanity check ใหม่เลย (ไม่มี "จำนวน"/หน่วยติดเลข)"""
+    row = _pbo_row(item_name_raw="เครื่องพิมพ์ 4 เครื่อง", amount_thb=40_000)
+    table = _pbo_table([row])
+    cfg = _cfg(tmp_path)
+    normalized, stats = normalize_table(table, cfg=cfg, org_master=_org_master(), max_workers=1)
+    record = normalized.to_pylist()[0]
+    assert record["unit_price_thb"] == 10_000
+    assert stats.n_high_qty_low_conf == 0
+
+
 def test_unit_price_existing_value_not_overwritten(tmp_path: Path) -> None:
     """อบจ. เชียงใหม่ (local) มี unit_price_thb จริงจากคอลัมน์ "ราคา/หน่วย" — ห้ามคำนวณทับ"""
     row = {

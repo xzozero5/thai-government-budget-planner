@@ -63,6 +63,24 @@
       "fiscal_year_be": 2570,
       "note": "อบต. ราชาเทวะ: ตัวเลขระดับแถวถอดจาก OCR ของต้นทาง (ไม่ใช่เรา OCR) — 10/38 กลุ่ม (plan, activity, budget_type) ยอดไม่ตรง summary ที่พิมพ์ในเอกสาร (flag group_total_mismatch) ยอดรวมทั้งไฟล์ต่างกัน 0.21% เท่านั้น",
       "status": "upstream_ocr_group_mismatch"
+    },
+    {
+      "dataset": "committee_table",
+      "decision_ref": "03-DATA-PIPELINE.md §6 V9",
+      "n_rows": 100,
+      "n_unmapped": 63,
+      "note": "หน่วยงานของชุดนี้บางส่วนไม่ได้ผูกรหัสกระทรวง (org_unmapped) — กรองด้วย `ministry_code` จะไม่เจอแถวเหล่านี้ ใช้ `agency`/`local_gov_name` แทนถ้าต้องการครบทุกแถว",
+      "pct_unmapped": 63.0,
+      "status": "org_unmapped"
+    },
+    {
+      "dataset": "local_ordinance_2570",
+      "decision_ref": "03-DATA-PIPELINE.md §6 V9",
+      "n_rows": 150,
+      "n_unmapped": 0,
+      "note": "หน่วยงานของชุดนี้บางส่วนไม่ได้ผูกรหัสกระทรวง (org_unmapped) — กรองด้วย `ministry_code` จะไม่เจอแถวเหล่านี้ ใช้ `agency`/`local_gov_name` แทนถ้าต้องการครบทุกแถว",
+      "pct_unmapped": 0.0,
+      "status": "org_unmapped"
     }
   ],
   "datasets": [

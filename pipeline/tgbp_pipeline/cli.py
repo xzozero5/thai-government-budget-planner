@@ -297,6 +297,7 @@ def normalize(
                 f"{r.stats.n_rows:,} แถว | distinct_item_names={r.stats.n_distinct_item_names:,} "
                 f"| org_unmapped={r.stats.n_org_unmapped:,} "
                 f"| unit_price_computed={r.stats.n_unit_price_computed:,} "
+                f"| high_qty_low_conf={r.stats.n_high_qty_low_conf:,} "
                 f"| group_mismatch={r.stats.n_group_mismatch_rows:,} | {r.cache_bytes:,} bytes "
                 f"| {r.elapsed_seconds:.1f}s"
             )

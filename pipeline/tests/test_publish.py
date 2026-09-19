@@ -430,7 +430,7 @@ def _build_rich_fixture(cfg: PipelineConfig) -> None:
                 "ร่างข้อบัญญัติงบ 2570 อบต. ราชาเทวะ - Sheets.xlsx"
             ),
             source_row=1,
-            quality_flags=["upstream_ocr"],
+            quality_flags=["upstream_ocr", "org_unmapped"],
         )
     ]
     write_normalized(
@@ -453,6 +453,7 @@ def _build_rich_fixture(cfg: PipelineConfig) -> None:
             amount_thb=1_000_000,
             source_path="กมธ.ติดตามงบ/ครั้งที่ 1 (1 มค 2569)/หัวข้อ/ไฟล์.xlsx",
             source_row=1,
+            quality_flags=["org_unmapped"],
         )
     ]
     committee_doc_id = rows_committee[0]["source_doc_id"]
@@ -492,6 +493,7 @@ def test_publish_pipeline_writes_manifest_and_passes(published) -> None:
     cfg, result = published
     assert result.manifest_path.is_file()
     assert result.validation_passed is True
+    assert result.manifest["sample"] is False
 
 
 def test_catalog_excludes_subset_rows_from_n_lines(published) -> None:
@@ -667,6 +669,134 @@ def test_catalog_and_trends_sample_source_ids_resolve(published) -> None:
             assert found, f"variant key {variant_key!r} ของ entry {entry['key']!r} resolve ไม่ได้"
 
 
+def _load_catalog_v2(out_dir: Path) -> dict:
+    return json.loads(gzip.decompress((out_dir / "catalog" / "items.json.gz").read_bytes()))
+
+
+def test_catalog_file_on_disk_is_schema_v2_with_shard_index(published) -> None:
+    """T-114 ข้อ 6: `catalog/items.json.gz` บนดิสก์ต้องเป็น schema_version 2 — `shard_paths`
+    เรียงตัวอักษร ไม่ซ้ำ, `items[].shards` เป็น int ชี้เข้า `shard_paths` (ไม่ใช่ path เต็ม)"""
+    _cfg, result = published
+    payload = _load_catalog_v2(result.out_dir)
+    assert payload["schema_version"] == 2
+    shard_paths = payload["shard_paths"]
+    assert shard_paths == sorted(shard_paths)
+    assert len(shard_paths) == len(set(shard_paths))
+
+    by_key = {e["key"]: e for e in result.catalog.entries}
+    assert len(payload["items"]) == len(result.catalog.entries)
+    for item in payload["items"]:
+        assert all(isinstance(i, int) for i in item["shards"])
+        resolved_paths = [shard_paths[i] for i in item["shards"]]
+        # ต้องตรงกับ path เต็มที่ `result.catalog.entries` (in-memory, ก่อนแปลงเป็น index) ระบุไว้
+        expected = by_key[item["key"]]["shards"]
+        assert resolved_paths == expected
+
+
+def test_sample_source_ids_resolve_within_shard_index_on_disk(published) -> None:
+    """T-114 ข้อ 9 (กัน regression บั๊ก cap 60): ทุก `sample_source_ids` ต้องอยู่ในแถวของ shard ที่
+    entry ชี้ — ตรวจจากไฟล์ **v2 บนดิสก์จริง** (resolve index → shard_paths → parquet) ไม่ใช่แค่
+    โครงสร้างใน memory"""
+    _cfg, result = published
+    out_dir = result.out_dir
+    payload = _load_catalog_v2(out_dir)
+    shard_paths = payload["shard_paths"]
+    con = duckdb.connect()
+    checked = 0
+    for item in payload["items"]:
+        resolved_shards = [shard_paths[i] for i in item["shards"]]
+        for sid in item["sample_source_ids"]:
+            checked += 1
+            found = any(
+                con.execute(
+                    f"SELECT COUNT(*) FROM read_parquet('{(out_dir / rel).as_posix()}') "
+                    f"WHERE source_id={pub._sql_lit(sid)}"
+                ).fetchone()[0]
+                > 0
+                for rel in resolved_shards
+            )
+            msg = f"sample_source_id {sid} ของ item {item['key']!r} resolve ไม่ได้ (v2 on-disk)"
+            assert found, msg
+    assert checked > 0
+
+
+def test_low_specificity_flag_on_short_key_entry(tmp_path: Path) -> None:
+    """T-114 ข้อ 7: key สั้น (ตัดช่องว่างแล้ว <= 12 ตัวอักษร) ต้องติด `low_specificity: true`"""
+    cfg = make_cfg(tmp_path)
+    rows = [
+        row(
+            source_id=f"short{i}",
+            item_name_raw="ฝาย",
+            item_name="ฝาย",
+            item_key="ฝาย",
+            fiscal_year_be=y,
+            fiscal_year_ce=y - 543,
+            amount_thb=100_000 * (i + 1),
+            source_row=i + 1,
+        )
+        for i, y in enumerate([2565, 2566, 2567])
+    ]
+    write_normalized(cfg.cache_dir, "pbo_disbursement", "short.parquet", rows)
+    result = pub.run_publish_pipeline(
+        cfg, source_sql=pub.default_source_sql(cfg), out_dir=tmp_path / "out"
+    )
+    by_key = {e["key"]: e for e in result.catalog.entries}
+    assert by_key["ฝาย"]["low_specificity"] is True
+    assert result.manifest["catalog_threshold"]["n_low_specificity"] >= 1
+
+
+def test_low_specificity_flag_on_wide_amount_spread_entry(tmp_path: Path) -> None:
+    """T-114 ข้อ 7: amount.p75/p25 >= 8 (คนละสเกลกันมาก) ต้องติด `low_specificity: true` แม้ key ยาว"""
+    cfg = make_cfg(tmp_path)
+    long_key = "ก่อสร้างฝายชลประทานทดสอบขนาดใหญ่มาก"
+    assert len(long_key) > 12
+    amounts = [100_000, 100_000, 100_000, 100_000_000, 100_000_000]
+    rows = [
+        row(
+            source_id=f"wide{i}",
+            item_name_raw=long_key,
+            item_name=long_key,
+            item_key=long_key,
+            fiscal_year_be=2566,
+            fiscal_year_ce=2023,
+            amount_thb=amt,
+            source_row=i + 1,
+        )
+        for i, amt in enumerate(amounts)
+    ]
+    write_normalized(cfg.cache_dir, "pbo_disbursement", "wide.parquet", rows)
+    result = pub.run_publish_pipeline(
+        cfg, source_sql=pub.default_source_sql(cfg), out_dir=tmp_path / "out"
+    )
+    by_key = {e["key"]: e for e in result.catalog.entries}
+    assert by_key[long_key].get("low_specificity") is True
+
+
+def test_low_specificity_absent_when_neither_condition_holds(tmp_path: Path) -> None:
+    cfg = make_cfg(tmp_path)
+    long_key = "เครื่องปรับอากาศแบบแยกส่วนขนาดใหญ่มาก"
+    assert len(long_key) > 12
+    rows = [
+        row(
+            source_id=f"normal{i}",
+            item_name_raw=long_key,
+            item_name=long_key,
+            item_key=long_key,
+            fiscal_year_be=2566,
+            fiscal_year_ce=2023,
+            amount_thb=100_000 + i * 1_000,
+            source_row=i + 1,
+        )
+        for i in range(5)
+    ]
+    write_normalized(cfg.cache_dir, "pbo_disbursement", "normal.parquet", rows)
+    result = pub.run_publish_pipeline(
+        cfg, source_sql=pub.default_source_sql(cfg), out_dir=tmp_path / "out"
+    )
+    by_key = {e["key"]: e for e in result.catalog.entries}
+    assert "low_specificity" not in by_key[long_key]
+
+
 def test_facets_has_coverage_notes_for_2562_2567_and_adr005(published) -> None:
     _cfg, result = published
     facets = json.loads((result.out_dir / "catalog" / "facets.json").read_text(encoding="utf-8"))
@@ -678,6 +808,21 @@ def test_facets_has_coverage_notes_for_2562_2567_and_adr005(published) -> None:
         n for n in notes if n.get("fiscal_year_be") == 2567 and n["status"] == "no_oracle"
     ]
     assert years_2567
+
+
+def test_facets_and_manifest_have_org_unmapped_coverage_notes_for_committee_and_local(
+    published,
+) -> None:
+    """T-114 ข้อ 5: committee_table/local_ordinance_2570 ต้องมี coverage_note สถานะ org_unmapped
+    พร้อม % จริง (ทั้งใน facets.json และ manifest.coverage_notes — ค่าเดียวกัน)"""
+    _cfg, result = published
+    facets = json.loads((result.out_dir / "catalog" / "facets.json").read_text(encoding="utf-8"))
+    for source in (facets["coverage_notes"], result.manifest["coverage_notes"]):
+        by_dataset = {n["dataset"]: n for n in source if n.get("status") == "org_unmapped"}
+        assert by_dataset["committee_table"]["pct_unmapped"] == pytest.approx(100.0)
+        assert by_dataset["committee_table"]["n_rows"] == 1
+        assert by_dataset["local_ordinance_2570"]["pct_unmapped"] == pytest.approx(100.0)
+        assert "ministry_code" in by_dataset["committee_table"]["note"]
 
 
 def test_manifest_sha256_matches_files_and_deterministic(tmp_path: Path) -> None:
@@ -915,3 +1060,45 @@ def test_sample_runs_end_to_end_and_resolves(tmp_path: Path) -> None:
                 for s in entry["shards"]
             )
             assert found
+
+
+def test_sample_manifest_has_sample_flag_and_catalog_v2(tmp_path: Path) -> None:
+    """T-114 ข้อ 8: manifest ของ `tgbp sample` ต้องมี `"sample": true` และ catalog เป็นรูป v2
+    เดียวกับ publish() เต็ม — ทุก index/`keys`/`sample_source_ids` resolve ได้"""
+    cfg = make_cfg(tmp_path)
+    _build_rich_fixture(cfg)
+
+    result = pub.sample(cfg, rows=200)
+
+    assert result.manifest["sample"] is True
+    payload = _load_catalog_v2(cfg.fixtures_dir)
+    assert payload["schema_version"] == 2
+    shard_paths = payload["shard_paths"]
+    assert shard_paths == sorted(shard_paths)
+
+    con = duckdb.connect()
+    for item in payload["items"]:
+        resolved = [shard_paths[i] for i in item["shards"]]
+        for rel in resolved:
+            assert (cfg.fixtures_dir / rel).is_file()
+        for sid in item["sample_source_ids"]:
+            found = any(
+                con.execute(
+                    f"SELECT COUNT(*) FROM read_parquet('{(cfg.fixtures_dir / rel).as_posix()}') "
+                    f"WHERE source_id={pub._sql_lit(sid)}"
+                ).fetchone()[0]
+                > 0
+                for rel in resolved
+            )
+            msg = f"sample_source_id {sid} ของ item {item['key']!r} resolve ไม่ได้ (sample v2)"
+            assert found, msg
+        for variant_key in item.get("keys", [item["key"]]):
+            found = any(
+                con.execute(
+                    f"SELECT COUNT(*) FROM read_parquet('{(cfg.fixtures_dir / rel).as_posix()}') "
+                    f"WHERE item_key={pub._sql_lit(variant_key)}"
+                ).fetchone()[0]
+                > 0
+                for rel in resolved
+            )
+            assert found, f"variant key {variant_key!r} ของ item {item['key']!r} resolve ไม่ได้"

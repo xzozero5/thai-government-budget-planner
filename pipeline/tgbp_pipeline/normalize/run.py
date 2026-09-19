@@ -111,6 +111,13 @@ UNIT_PRICE_DISALLOWED_FLAGS: frozenset[str] = frozenset(
     {"qty_is_measure", "qty_parsed_low_conf", "corrupt_row"}
 )
 
+# T-115 ข้อ 2 (po review): item_qty >= เกณฑ์นี้ ต้องมี "คำบอกจำนวนชัดเจน" ในชื่อรายการ
+# (`item_parser.has_explicit_qty_marker`) มิฉะนั้นถือว่าความมั่นใจต่ำ (flag เดียวกับที่ item_parser
+# ใช้อยู่แล้ว — `qty_parsed_low_conf` — เพื่อให้ UNIT_PRICE_DISALLOWED_FLAGS/publish.py/catalog ที่
+# กรอง flag นี้อยู่แล้วครอบคลุมเคสนี้ไปด้วยโดยไม่ต้องแก้จุดอื่น)
+HIGH_QTY_LOW_CONF_THRESHOLD = 20
+HIGH_QTY_LOW_CONF_FLAG = "qty_parsed_low_conf"
+
 RAJA_OCR_FLAG = "upstream_ocr"
 GROUP_MISMATCH_FLAG = "group_total_mismatch"
 
@@ -225,6 +232,7 @@ class NormalizeStats:
     n_qty_parsed: int = 0
     n_province_parsed: int = 0
     n_unit_price_computed: int = 0
+    n_high_qty_low_conf: int = 0
     flag_counts: dict[str, int] = field(default_factory=dict)
 
 
@@ -399,6 +407,7 @@ def normalize_table(
         orig_flags = orig_flags_list[i] or []
         amount_thb = amount_thb_list[i]
         unit_price_thb = existing_unit_price[i]
+        extra_flags: list[str] = []
         if (
             unit_price_thb is None
             and item_qty is not None
@@ -406,11 +415,22 @@ def normalize_table(
             and amount_thb is not None
         ):
             disallow = UNIT_PRICE_DISALLOWED_FLAGS & (set(orig_flags) | set(parse_flags))
+            # T-115 ข้อ 2 (po review): item_qty ≥ เกณฑ์ (20) ที่ item_name ไม่มี "คำบอกจำนวนชัดเจน"
+            # ("จำนวน" หรือหน่วยนับติดกับเลขไม่มีช่องว่างคั่น เช่น "20เครื่อง") มีความเสี่ยงสูงว่าตัวเลข
+            # เป็นส่วนหนึ่งของรหัส/สเปคที่ item_parser จับพลาด (เช่น "IPv61"/"...KVA54") ไม่ใช่จำนวนนับ
+            # จริง — กันไว้ก่อนตาม N3 (ไม่เดา unit_price เมื่อความมั่นใจต่ำ) แทนที่จะคำนวณแล้วอาจผิดมหาศาล
+            if (
+                not disallow
+                and item_qty >= HIGH_QTY_LOW_CONF_THRESHOLD
+                and not item_parser.has_explicit_qty_marker(item_name or "")
+            ):
+                extra_flags.append(HIGH_QTY_LOW_CONF_FLAG)
+                stats.n_high_qty_low_conf += 1
+                disallow = {HIGH_QTY_LOW_CONF_FLAG}
             if not disallow:
                 unit_price_thb = int(round(amount_thb / item_qty))
                 stats.n_unit_price_computed += 1
 
-        extra_flags: list[str] = []
         if dataset == DATASET_LOCAL_ORDINANCE:
             key = (plan_list[i], activity_list[i], budget_type_list[i])
             if key in group_mismatch_keys:

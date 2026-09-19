@@ -317,6 +317,7 @@ def _fake_normalize_report(dataset: str, n_rows: int = 5) -> SimpleNamespace:
             n_distinct_item_names=3,
             n_org_unmapped=1,
             n_unit_price_computed=2,
+            n_high_qty_low_conf=0,
             n_group_mismatch_rows=0,
         ),
         elapsed_seconds=0.1,

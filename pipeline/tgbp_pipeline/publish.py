@@ -722,6 +722,17 @@ def _build_catalog_entries(
                 "max": _round_stat(amt_max),
                 "n": amt_n,
             }
+        # T-114 ข้อ 7 (po review): entry กว้างเกินไปจนตัวเลขไม่มีความหมายเดียวกันจริง — (ก) key
+        # (ตัดช่องว่างทั้งหมดแบบเดียวกับ group_key) สั้น ≤ 12 ตัวอักษร (เช่น "ฝาย") หรือ (ข)
+        # amount.p75/p25 >= 8 (คนละสเกลกันมาก เช่น ฝายชลประทาน 100 ล้าน ปนกับฝาย อบต. หลักแสน)
+        low_specificity = len(group_key) <= 12
+        if not low_specificity and amt_n:
+            amt_p25_rounded = _round_stat(amt_p25)
+            amt_p75_rounded = _round_stat(amt_p75)
+            if amt_p25_rounded and amt_p25_rounded > 0 and amt_p75_rounded is not None:
+                low_specificity = (amt_p75_rounded / amt_p25_rounded) >= 8
+        if low_specificity:
+            entry["low_specificity"] = True
         entries.append(entry)
         group_key_by_key[representative] = group_key
 
@@ -785,6 +796,28 @@ def write_json_gz(path: Path, payload: object) -> None:
     with open(path, "wb") as raw:
         with gzip.GzipFile(filename="", fileobj=raw, mode="wb", mtime=0) as gz:
             gz.write(data)
+
+
+CATALOG_SCHEMA_VERSION = 2
+
+
+def build_catalog_v2_payload(entries: list[dict]) -> dict:
+    """แปลง `entries` (ที่ `entry["shards"]` เป็น path เต็มของแต่ละ shard) → รูปแบบ
+    `{"schema_version": 2, "shard_paths": [...], "items": [...]}` โดย `items[].shards` เป็น
+    **list ของ index (int)** ชี้เข้า `shard_paths` แทน path เต็ม (T-114 ข้อ 6, po review) — ลดขนาด
+    หลัง decompress มาก เพราะ path ซ้ำกันระหว่างหลาย entry (เดิม 5.63 MB gz → 49.4 MB JSON)
+
+    `shard_paths` เรียงตัวอักษร (deterministic) — ไม่ cap ทั้ง `shard_paths` และ `items[].shards`
+    (คงพฤติกรรม "ห้าม cap" เดิม — ดูคอมเมนต์ `_build_catalog_entries`)
+    """
+    shard_paths = sorted({p for e in entries for p in e["shards"]})
+    index_by_path = {p: i for i, p in enumerate(shard_paths)}
+    items = []
+    for e in entries:
+        item = dict(e)
+        item["shards"] = [index_by_path[p] for p in e["shards"]]
+        items.append(item)
+    return {"schema_version": CATALOG_SCHEMA_VERSION, "shard_paths": shard_paths, "items": items}
 
 
 # ---------------------------------------------------------------------------
@@ -917,6 +950,19 @@ def write_trend_shards(out_dir: Path, trends: dict[str, dict]) -> dict[str, str]
 # ---------------------------------------------------------------------------
 
 
+def _org_unmapped_pct(con: duckdb.DuckDBPyConnection, dataset: str) -> tuple[int, int, float]:
+    """`(n_rows, n_unmapped, pct)` ของ dataset หนึ่งจาก `flagged_full` — ใช้โดย V9-style coverage_note
+    (T-114 ข้อ 5)"""
+    row = con.execute(
+        "SELECT COUNT(*), "
+        "SUM(CASE WHEN list_contains(quality_flags, 'org_unmapped') THEN 1 ELSE 0 END) "
+        f"FROM flagged_full WHERE dataset={_sql_lit(dataset)}"
+    ).fetchone()
+    n_rows, n_unmapped = (row[0] or 0), (row[1] or 0)
+    pct = (n_unmapped / n_rows * 100) if n_rows else 0.0
+    return n_rows, n_unmapped, pct
+
+
 def build_facets(con: duckdb.DuckDBPyConnection, cfg: PipelineConfig) -> dict:
     def _distinct_counts(col: str) -> list[dict]:
         rows = con.execute(
@@ -972,6 +1018,28 @@ def build_facets(con: duckdb.DuckDBPyConnection, cfg: PipelineConfig) -> dict:
             "decision_ref": "ADR-005",
         }
     )
+    # T-114 ข้อ 5 (po review): หน่วยงานของ committee_table/local_ordinance_2570 บางส่วนไม่ได้ผูก
+    # รหัสกระทรวง (org_unmapped) — filter ด้วย `ministry_code` จะไม่เจอแถวเหล่านี้ ตัวเลข % จริงจาก
+    # การ query แถวที่ publish จริง (เทียบวิธีเดียวกับ `validate.check_v9`)
+    for dataset in (DATASET_COMMITTEE, DATASET_LOCAL_ORDINANCE):
+        n_rows, n_unmapped, pct = _org_unmapped_pct(con, dataset)
+        if n_rows == 0:
+            continue
+        coverage_notes.append(
+            {
+                "dataset": dataset,
+                "status": "org_unmapped",
+                "n_rows": n_rows,
+                "n_unmapped": n_unmapped,
+                "pct_unmapped": round(pct, 2),
+                "note": (
+                    "หน่วยงานของชุดนี้บางส่วนไม่ได้ผูกรหัสกระทรวง (org_unmapped) — กรองด้วย "
+                    "`ministry_code` จะไม่เจอแถวเหล่านี้ ใช้ `agency`/`local_gov_name` แทนถ้าต้องการ"
+                    "ครบทุกแถว"
+                ),
+                "decision_ref": "03-DATA-PIPELINE.md §6 V9",
+            }
+        )
     facets["coverage_notes"] = coverage_notes
     return facets
 
@@ -1237,9 +1305,11 @@ def build_manifest(
     catalog_scope: str,
     coverage_notes: list[dict],
     built_at: str | None = None,
+    is_sample: bool = False,
 ) -> dict:
     files_sorted = sorted(file_entries, key=lambda e: e.path)
-    # data_version: hash ของรายการไฟล์ (path+sha256+rows) — ไม่ขึ้นกับ built_at (deterministic)
+    # data_version: hash ของรายการไฟล์ (path+sha256+rows) — ไม่ขึ้นกับ built_at/is_sample (deterministic,
+    # `is_sample` เป็นแค่ metadata ป้าย ไม่ใช่ส่วนหนึ่งของเนื้อหาข้อมูล — T-114 ข้อ 8)
     version_payload = json.dumps(
         [
             {"path": e.path, "sha256": e.sha256, "bytes": e.bytes, "rows": e.rows}
@@ -1254,6 +1324,7 @@ def build_manifest(
         "schema_version": 1,
         "data_version": data_version,
         "built_at": built_at or datetime.now(UTC).isoformat(),
+        "sample": is_sample,
         "totals": totals,
         "files": [
             {
@@ -1274,15 +1345,21 @@ def build_manifest(
 
 
 CATALOG_SCOPE_NOTE = (
-    "catalog/items.json.gz แต่ละ entry คือกลุ่ม item_key ที่เหมือนกันหลังตัด whitespace ทั้งหมด "
-    "(group_key — รวม variant ที่ item_parser/OCR ต้นทางเว้นวรรคต่างกัน เช่น 'X สำหรับY' กับ "
-    "'XสำหรับY'); 'key' = variant ที่มีจำนวนแถวมากสุด (ตัวแทน, deterministic — เสมอกันเรียงตัวอักษร), "
-    "'keys' = variant ทั้งหมดของกลุ่ม (มีเฉพาะเมื่อ > 1 variant, cap 12 ตัว + 'keys_truncated:true' "
-    "ถ้าเกิน) — query budget_lines shard ด้วย `item_key IN (keys ถ้ามี มิฉะนั้นใช้ key)`; ครอบคลุม"
-    "เฉพาะกลุ่มที่ (n_lines >= เกณฑ์) หรือ (ปรากฏ >= เกณฑ์ปี) หรือ (มี unit_price ที่ต่างกัน >= 2 ค่า) "
-    "ไม่รวมแถว corrupt_row/lump_sum_category/subset_of_act_2570_draft — ดู manifest "
-    "'catalog_threshold' รายการหางยาว (long-tail) ที่ไม่เข้า catalog ยังค้นได้ด้วย SQL ตรงบน "
-    "budget_lines shards ผ่าน DuckDB-WASM"
+    "catalog/items.json.gz (schema_version 2, T-114 ข้อ 6): ไฟล์เป็น "
+    "{schema_version, shard_paths:[...เรียงตัวอักษร...], items:[...]} — แต่ละ item คือกลุ่ม "
+    "item_key ที่เหมือนกันหลังตัด whitespace ทั้งหมด (group_key — รวม variant ที่ item_parser/OCR "
+    "ต้นทางเว้นวรรคต่างกัน เช่น 'X สำหรับY' กับ 'XสำหรับY'); 'key' = variant ที่มีจำนวนแถวมากสุด "
+    "(ตัวแทน, deterministic — เสมอกันเรียงตัวอักษร), 'keys' = variant ทั้งหมดของกลุ่ม (มีเฉพาะเมื่อ "
+    "> 1 variant, cap 12 ตัว + 'keys_truncated:true' ถ้าเกิน) — query budget_lines shard ด้วย "
+    "`item_key IN (keys ถ้ามี มิฉะนั้นใช้ key)`; 'shards' เป็น **list ของ index (int)** ชี้เข้า "
+    "`shard_paths` ระดับบนสุดของไฟล์ (ไม่ใช่ path เต็มอีกต่อไป — ลดขนาดหลัง decompress มาก เพราะ path "
+    "ซ้ำกันระหว่างหลาย item) ไม่ cap ทั้งคู่; ครอบคลุมเฉพาะกลุ่มที่ (n_lines >= เกณฑ์) หรือ "
+    "(ปรากฏ >= เกณฑ์ปี) หรือ (มี unit_price ที่ต่างกัน >= 2 ค่า) ไม่รวมแถว "
+    "corrupt_row/lump_sum_category/subset_of_act_2570_draft — ดู manifest 'catalog_threshold' "
+    "รายการหางยาว (long-tail) ที่ไม่เข้า catalog ยังค้นได้ด้วย SQL ตรงบน budget_lines shards ผ่าน "
+    "DuckDB-WASM; 'low_specificity:true' (T-114 ข้อ 7, มีเฉพาะเมื่อ true) = key กว้างเกินไปจนตัวเลข "
+    "ไม่มีความหมายเดียวกันจริง (key ตัดช่องว่างทั้งหมดสั้น <= 12 ตัวอักษร หรือ amount.p75/p25 >= 8 "
+    "เมื่อ p25 > 0) — ดู manifest 'catalog_threshold.n_low_specificity'"
 )
 
 
@@ -1314,6 +1391,7 @@ def run_publish_pipeline(
     built_at: str | None = None,
     max_docs: int | None = None,
     run_validation: bool = True,
+    is_sample: bool = False,
 ) -> PublishResult:
     elapsed: dict[str, float] = {}
     t_start = time.monotonic()
@@ -1342,7 +1420,7 @@ def run_publish_pipeline(
     t0 = time.monotonic()
     catalog_result = build_catalog(con, shard_index)
     catalog_path = out_dir / "catalog" / "items.json.gz"
-    write_json_gz(catalog_path, catalog_result.entries)
+    write_json_gz(catalog_path, build_catalog_v2_payload(catalog_result.entries))
     elapsed["catalog"] = time.monotonic() - t0
 
     t0 = time.monotonic()
@@ -1360,8 +1438,9 @@ def run_publish_pipeline(
         if hh is not None:
             entry["trend"] = hh
     # เขียนซ้ำ items.json.gz หลังเติม `trend` field (เขียนครั้งแรกไว้เผื่อ build_trends ล้มเหลว
-    # แต่ในทางปฏิบัติ deterministic เสมอ — เขียนรอบสุดท้ายนี้คือไฟล์จริงที่ publish)
-    write_json_gz(catalog_path, catalog_result.entries)
+    # แต่ในทางปฏิบัติ deterministic เสมอ — เขียนรอบสุดท้ายนี้คือไฟล์จริงที่ publish) — v2 payload
+    # (schema_version 2, T-114 ข้อ 6) เสมอ ทั้ง publish() และ sample() (ใช้ engine เดียวกัน)
+    write_json_gz(catalog_path, build_catalog_v2_payload(catalog_result.entries))
     elapsed["trends"] = time.monotonic() - t0
 
     t0 = time.monotonic()
@@ -1482,12 +1561,15 @@ def run_publish_pipeline(
         catalog_scope=CATALOG_SCOPE_NOTE,
         coverage_notes=coverage_notes,
         built_at=built_at,
+        is_sample=is_sample,
     )
+    n_low_specificity = sum(1 for e in catalog_result.entries if e.get("low_specificity"))
     manifest["catalog_threshold"] = {
         "min_lines": catalog_result.min_lines,
         "min_years": catalog_result.min_years,
         "min_unit_price_distinct": catalog_result.min_unit_price_distinct,
         "n_entries": len(catalog_result.entries),
+        "n_low_specificity": n_low_specificity,
         "thresholds_tried": [
             {"n_lines": a, "n_years": b, "n_unit_price_distinct": c, "count": d, "gz_bytes": e}
             for a, b, c, d, e in catalog_result.thresholds_tried
@@ -1702,4 +1784,5 @@ def sample(cfg: PipelineConfig, rows: int = 1000) -> PublishResult:
         max_docs=SAMPLE_MAX_DOCS,
         run_validation=False,
         built_at="1970-01-01T00:00:00+00:00",
+        is_sample=True,
     )

@@ -21,7 +21,9 @@ from tgbp_pipeline.validate import (
     _make_check,
     _resolve_status,
     build_validation_report,
+    check_dataset_field_coverage,
     check_ministry_continuity,
+    check_pdf_text_layer_stats,
     check_v1,
     check_v3,
     check_v4,
@@ -557,6 +559,79 @@ def test_check_v9_computes_pct_unmapped_per_dataset(tmp_path: Path) -> None:
     assert result.n_rows == 2
     assert result.n_unmapped == 1
     assert result.pct_unmapped == pytest.approx(50.0)
+
+
+# --- T-114 ข้อ 4: check_dataset_field_coverage / check_pdf_text_layer_stats ---
+
+
+def test_check_dataset_field_coverage_computes_pct_per_field(tmp_path: Path) -> None:
+    rows = [
+        _norm_row(
+            source_id="a", agency_code="10001", item_qty=2.0, unit_price_thb=100, province="ตราด"
+        ),
+        _norm_row(
+            source_id="b", agency_code=None, item_qty=None, unit_price_thb=None, province=None
+        ),
+    ]
+    path = _write_normalized_cache(tmp_path, "pbo_disbursement", "2566.parquet", rows)
+    [result] = check_dataset_field_coverage({"pbo_disbursement": [path]})
+    assert result.dataset == "pbo_disbursement"
+    assert result.n_rows == 2
+    assert result.n_org_mapped == 1
+    assert result.pct_org_mapped == pytest.approx(50.0)
+    assert result.n_qty_parsed == 1
+    assert result.pct_qty_parsed == pytest.approx(50.0)
+    assert result.n_unit_price == 1
+    assert result.pct_unit_price == pytest.approx(50.0)
+    assert result.n_province == 1
+    assert result.pct_province == pytest.approx(50.0)
+
+
+def test_check_dataset_field_coverage_empty_dataset_zero_pct(tmp_path: Path) -> None:
+    result = check_dataset_field_coverage({})
+    assert result == []
+
+
+def test_check_pdf_text_layer_stats_missing_file_returns_none(tmp_path: Path) -> None:
+    assert check_pdf_text_layer_stats(tmp_path / "sources.json") is None
+
+
+def test_check_pdf_text_layer_stats_counts_by_kind(tmp_path: Path) -> None:
+    sources_path = tmp_path / "sources.json"
+    sources_path.write_text(
+        json.dumps(
+            [
+                {
+                    "doc_id": "d1",
+                    "rel_path": "a.pdf",
+                    "kind": "pdf",
+                    "has_text_layer": True,
+                    "extracted": True,
+                },
+                {
+                    "doc_id": "d2",
+                    "rel_path": "b.pdf",
+                    "kind": "pdf",
+                    "has_text_layer": False,
+                    "extracted": False,
+                },
+                {
+                    "doc_id": "d3",
+                    "rel_path": "c.xlsx",
+                    "kind": "xlsx",
+                    "has_text_layer": None,
+                    "extracted": True,
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+    result = check_pdf_text_layer_stats(sources_path)
+    assert result.n_pdf == 2
+    assert result.n_with_text_layer == 1
+    assert result.n_without_text_layer == 1
+    assert result.n_extracted == 1
+    assert result.n_not_extracted == 1
 
 
 # --- V10 ---

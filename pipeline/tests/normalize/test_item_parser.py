@@ -38,7 +38,8 @@ _FIXTURE_SECTIONS = _load_fixture()
 PBO2566 = _FIXTURE_SECTIONS["pbo2566"]
 HOLDOUT_2563 = _FIXTURE_SECTIONS["holdout_2563"]
 HOLDOUT_2560_2568 = _FIXTURE_SECTIONS["holdout_2560_2568"]
-ALL_CASES = PBO2566 + HOLDOUT_2563 + HOLDOUT_2560_2568
+HOLDOUT_T115_CODE_PREFIX = _FIXTURE_SECTIONS["holdout_t115_code_prefix"]
+ALL_CASES = PBO2566 + HOLDOUT_2563 + HOLDOUT_2560_2568 + HOLDOUT_T115_CODE_PREFIX
 NON_AMBIGUOUS = [c for c in ALL_CASES if not c.get("ambiguous")]
 
 
@@ -49,6 +50,9 @@ def test_fixture_has_200_pbo2566_cases() -> None:
 def test_fixture_has_holdout_sections() -> None:
     assert len(HOLDOUT_2563) >= 10, "holdout_2563 ต้องครอบคลุมหมวด A-G จาก coordinator"
     assert len(HOLDOUT_2560_2568) >= 4, "holdout_2560_2568 ต้องมีอย่างน้อยเคสที่พบบั๊กจริง"
+    assert len(HOLDOUT_T115_CODE_PREFIX) >= 6, (
+        "holdout_t115_code_prefix ต้องมีเคสจริงจาก .cache ที่พบบั๊กรหัสครุภัณฑ์ >= 6 เคส (T-115 ข้อ 1)"
+    )
 
 
 def test_fixture_strata_favor_capital_budget_types() -> None:
@@ -333,6 +337,26 @@ def test_item_key_spaces_digits_glued_to_thai_units() -> None:
     spaced = parse("รถบรรทุก (ดีเซล) ขนาด 1 ตัน ขับเคลื่อน 2 ล้อ แบบดับเบิ้ลแค็บ").item_key
     assert glued == spaced
     assert "1 ตัน" in glued and "2 ล้อ" in glued
+
+
+def test_code_prefix_with_hyphen_does_not_swallow_real_qty() -> None:
+    """T-115 ข้อ 1 regression: รหัสครุภัณฑ์ที่มี '-' คั่น (เช่น 'RA1113-40', จริงจาก
+    `.cache/normalized/pbo_disbursement/`) ต้องไม่กระทบ qty จริงที่อยู่ท้ายชื่อ ('5 ชุด')
+
+    หมายเหตุ (ไม่ใช่ scope ของ T-115): เศษเลข '40' ที่เหลือจากรหัส (หลัง '-' กลายเป็นช่องว่างใน
+    item_key) ทำให้ `parse()` **ไม่ idempotent** สำหรับเคสนี้โดยเฉพาะ — parse ซ้ำรอบสอง (parse บน
+    item_key ที่ parse ไปแล้ว) จะจับ "40 ชุด..." (substring "ชุด" ในคำว่า "ชุดฝึกซ่อม" ที่ตามหลัง
+    ไม่มี word boundary ปิดท้ายหน่วยนับใน `_QTY_RE`) เป็น qty ใหม่ผิด ๆ — บั๊กที่มีอยู่ก่อนแล้วใน
+    `_QTY_RE` (ไม่เกี่ยวกับ `_CODE_TOKEN_RE` ที่เพิ่มในงานนี้) จึงไม่รวมเคสนี้ในการเทียบ
+    idempotent-property (`tests/fixtures/item_names.yaml`) — รายงานเป็น data-quality finding แยก
+    ให้ main thread พิจารณาว่าจะแก้ `_QTY_RE` ให้มี word boundary ท้ายหน่วยนับหรือไม่
+    """
+    raw = "RA1113-40 : ชุดฝึกซ่อมเครื่องใช้ไฟฟ้า วิทยาลัยชุมชนอุทัยธานีต.ห้วยแห้ง อ.บ้านไร่จังหวัดอุทัยธานี 5 ชุด"
+    result = parse(raw)
+    assert result.item_qty == 5.0
+    assert result.item_unit == "ชุด"
+    assert result.province == "อุทัยธานี"
+    assert "ชุดฝึกซ่อมเครื่องใช้ไฟฟ้า" in result.item_key
 
 
 def test_item_key_drops_dangling_measure_tail_and_stays_idempotent() -> None:

@@ -1,10 +1,11 @@
 {
   "schema_version": 1,
-  "data_version": "42a4da6d3900cab96f450c614ea56d63682ddc3b0a40319bfd463f0661357101",
+  "data_version": "631f122e4b6e95460a7597eeaf91a012173727cd5fbf250a83418cf4cd770ad8",
   "built_at": "1970-01-01T00:00:00+00:00",
+  "sample": true,
   "totals": {
     "files": 42,
-    "bytes": 908066,
+    "bytes": 909077,
     "rows_by_dataset": {
       "pbo_disbursement": 450,
       "act_2570_draft": 198,
@@ -47,8 +48,8 @@
     },
     {
       "path": "budget_lines/act2570_province/echiyngaihm-af4ca2.parquet",
-      "bytes": 23580,
-      "sha256": "21712afe6593e717d48c3146554b6905d61ba361271ba9d553de78fe80f6ea32",
+      "bytes": 23503,
+      "sha256": "9c771e56afad81a9791cc8f7c7ccbacfa99a444513e25b2fac1106c0b400c6cf",
       "rows": 50,
       "dataset": "act_2570_province",
       "fiscal_year_be": 2570,
@@ -67,8 +68,8 @@
     },
     {
       "path": "budget_lines/local/echiyngaihm-af4ca2/obch-echiyngaihm-ad3da7.parquet",
-      "bytes": 28511,
-      "sha256": "e030765ba44b68876e044d9f7a6ab5613129b9c11bbecfe17e1db8175ebaf5a0",
+      "bytes": 28436,
+      "sha256": "36f046ac5ceba0782b2eb946f2dce025b2e240aa8e57a20356d27b4139166da0",
       "rows": 150,
       "dataset": "local_ordinance_2570",
       "fiscal_year_be": 2570,
@@ -87,8 +88,8 @@
     },
     {
       "path": "budget_lines/pbo/2566/15000.parquet",
-      "bytes": 28721,
-      "sha256": "945fb969cd567831f9ba6caf381451000bf480a3630a33ba1dffcec4871a895e",
+      "bytes": 28710,
+      "sha256": "7366d0d4fe4fd383ce47cb2367845211187370e35c707cbae49754dc62f04f33",
       "rows": 50,
       "dataset": "pbo_disbursement",
       "fiscal_year_be": 2566,
@@ -117,8 +118,8 @@
     },
     {
       "path": "budget_lines/pbo/2567/15000.parquet",
-      "bytes": 29011,
-      "sha256": "09c281dc4532724c2b18deb6db15bd23e384f2956307ed4fefa3aa185ebd1d26",
+      "bytes": 29002,
+      "sha256": "cfd7a2dc6d9d842f460c2f0119804b30cea866112fb3c147ffc27808e5baa461",
       "rows": 50,
       "dataset": "pbo_disbursement",
       "fiscal_year_be": 2567,
@@ -147,8 +148,8 @@
     },
     {
       "path": "budget_lines/pbo/2568/15000.parquet",
-      "bytes": 27743,
-      "sha256": "79f100314625bd77edfc72c48b47efdce0c13da478b3ce2ccc81ca974f00eec3",
+      "bytes": 27735,
+      "sha256": "f5b8504be1a13b669affb1f94822f8500b99e3841688d9319e428ce714a207ec",
       "rows": 50,
       "dataset": "pbo_disbursement",
       "fiscal_year_be": 2568,
@@ -177,8 +178,8 @@
     },
     {
       "path": "catalog/facets.json",
-      "bytes": 10758,
-      "sha256": "a39d8de09f9e66ef114df9ff07d03a4badf39a00c4397af62830431f036b09fb",
+      "bytes": 11913,
+      "sha256": "7562a70606ab9483da8fb74a80039c8d8dad1d615e9cd0aa12a3ac58547135f1",
       "rows": null,
       "dataset": null,
       "fiscal_year_be": null,
@@ -187,8 +188,8 @@
     },
     {
       "path": "catalog/items.json.gz",
-      "bytes": 6556,
-      "sha256": "3d241fd1827e5a3af246671d7ac1a2b224185692223a0481e3aafc106100886a",
+      "bytes": 6592,
+      "sha256": "ca8d3431fe8f4a453c19e771c40c051777c551b17e9009e936b3a3037da71a46",
       "rows": null,
       "dataset": null,
       "fiscal_year_be": null,
@@ -436,7 +437,7 @@
       "province": null
     }
   ],
-  "catalog_scope": "catalog/items.json.gz แต่ละ entry คือกลุ่ม item_key ที่เหมือนกันหลังตัด whitespace ทั้งหมด (group_key — รวม variant ที่ item_parser/OCR ต้นทางเว้นวรรคต่างกัน เช่น 'X สำหรับY' กับ 'XสำหรับY'); 'key' = variant ที่มีจำนวนแถวมากสุด (ตัวแทน, deterministic — เสมอกันเรียงตัวอักษร), 'keys' = variant ทั้งหมดของกลุ่ม (มีเฉพาะเมื่อ > 1 variant, cap 12 ตัว + 'keys_truncated:true' ถ้าเกิน) — query budget_lines shard ด้วย `item_key IN (keys ถ้ามี มิฉะนั้นใช้ key)`; ครอบคลุมเฉพาะกลุ่มที่ (n_lines >= เกณฑ์) หรือ (ปรากฏ >= เกณฑ์ปี) หรือ (มี unit_price ที่ต่างกัน >= 2 ค่า) ไม่รวมแถว corrupt_row/lump_sum_category/subset_of_act_2570_draft — ดู manifest 'catalog_threshold' รายการหางยาว (long-tail) ที่ไม่เข้า catalog ยังค้นได้ด้วย SQL ตรงบน budget_lines shards ผ่าน DuckDB-WASM",
+  "catalog_scope": "catalog/items.json.gz (schema_version 2, T-114 ข้อ 6): ไฟล์เป็น {schema_version, shard_paths:[...เรียงตัวอักษร...], items:[...]} — แต่ละ item คือกลุ่ม item_key ที่เหมือนกันหลังตัด whitespace ทั้งหมด (group_key — รวม variant ที่ item_parser/OCR ต้นทางเว้นวรรคต่างกัน เช่น 'X สำหรับY' กับ 'XสำหรับY'); 'key' = variant ที่มีจำนวนแถวมากสุด (ตัวแทน, deterministic — เสมอกันเรียงตัวอักษร), 'keys' = variant ทั้งหมดของกลุ่ม (มีเฉพาะเมื่อ > 1 variant, cap 12 ตัว + 'keys_truncated:true' ถ้าเกิน) — query budget_lines shard ด้วย `item_key IN (keys ถ้ามี มิฉะนั้นใช้ key)`; 'shards' เป็น **list ของ index (int)** ชี้เข้า `shard_paths` ระดับบนสุดของไฟล์ (ไม่ใช่ path เต็มอีกต่อไป — ลดขนาดหลัง decompress มาก เพราะ path ซ้ำกันระหว่างหลาย item) ไม่ cap ทั้งคู่; ครอบคลุมเฉพาะกลุ่มที่ (n_lines >= เกณฑ์) หรือ (ปรากฏ >= เกณฑ์ปี) หรือ (มี unit_price ที่ต่างกัน >= 2 ค่า) ไม่รวมแถว corrupt_row/lump_sum_category/subset_of_act_2570_draft — ดู manifest 'catalog_threshold' รายการหางยาว (long-tail) ที่ไม่เข้า catalog ยังค้นได้ด้วย SQL ตรงบน budget_lines shards ผ่าน DuckDB-WASM; 'low_specificity:true' (T-114 ข้อ 7, มีเฉพาะเมื่อ true) = key กว้างเกินไปจนตัวเลข ไม่มีความหมายเดียวกันจริง (key ตัดช่องว่างทั้งหมดสั้น <= 12 ตัวอักษร หรือ amount.p75/p25 >= 8 เมื่อ p25 > 0) — ดู manifest 'catalog_threshold.n_low_specificity'",
   "coverage_notes": [
     {
       "dataset": "pbo_disbursement",
@@ -471,6 +472,24 @@
       "status": "upstream_ocr_group_mismatch",
       "note": "อบต. ราชาเทวะ: ตัวเลขระดับแถวถอดจาก OCR ของต้นทาง (ไม่ใช่เรา OCR) — 10/38 กลุ่ม (plan, activity, budget_type) ยอดไม่ตรง summary ที่พิมพ์ในเอกสาร (flag group_total_mismatch) ยอดรวมทั้งไฟล์ต่างกัน 0.21% เท่านั้น",
       "decision_ref": "ADR-005"
+    },
+    {
+      "dataset": "committee_table",
+      "status": "org_unmapped",
+      "n_rows": 100,
+      "n_unmapped": 63,
+      "pct_unmapped": 63.0,
+      "note": "หน่วยงานของชุดนี้บางส่วนไม่ได้ผูกรหัสกระทรวง (org_unmapped) — กรองด้วย `ministry_code` จะไม่เจอแถวเหล่านี้ ใช้ `agency`/`local_gov_name` แทนถ้าต้องการครบทุกแถว",
+      "decision_ref": "03-DATA-PIPELINE.md §6 V9"
+    },
+    {
+      "dataset": "local_ordinance_2570",
+      "status": "org_unmapped",
+      "n_rows": 150,
+      "n_unmapped": 0,
+      "pct_unmapped": 0.0,
+      "note": "หน่วยงานของชุดนี้บางส่วนไม่ได้ผูกรหัสกระทรวง (org_unmapped) — กรองด้วย `ministry_code` จะไม่เจอแถวเหล่านี้ ใช้ `agency`/`local_gov_name` แทนถ้าต้องการครบทุกแถว",
+      "decision_ref": "03-DATA-PIPELINE.md §6 V9"
     }
   ],
   "catalog_threshold": {
@@ -478,13 +497,14 @@
     "min_years": 3,
     "min_unit_price_distinct": 2,
     "n_entries": 41,
+    "n_low_specificity": 5,
     "thresholds_tried": [
       {
         "n_lines": 5,
         "n_years": 3,
         "n_unit_price_distinct": 2,
         "count": 41,
-        "gz_bytes": 6480
+        "gz_bytes": 6508
       }
     ]
   }

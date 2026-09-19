@@ -687,6 +687,102 @@ def check_v9(cache_paths_by_dataset: dict[str, list[Path]]) -> list[V9DatasetRes
 
 
 # ---------------------------------------------------------------------------
+# T-114 ข้อ 4 (DoD 03 §9 ข้อ 3, po review): ต่อ dataset ต้องมี n_rows, % org mapped, % qty parsed,
+# % unit_price, % province ใน validation_report.md/validation.json (soft, รายงานเฉย ๆ ไม่ตัดสิน —
+# V9 มีแค่ % org_unmapped ซึ่งเป็นแค่ตัวเดียวใน 4 ตัวที่ DoD ต้องการ)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class DatasetFieldCoverage:
+    dataset: str
+    n_rows: int
+    n_org_mapped: int
+    pct_org_mapped: float
+    n_qty_parsed: int
+    pct_qty_parsed: float
+    n_unit_price: int
+    pct_unit_price: float
+    n_province: int
+    pct_province: float
+
+
+def check_dataset_field_coverage(
+    cache_paths_by_dataset: dict[str, list[Path]],
+) -> list[DatasetFieldCoverage]:
+    """% org mapped / qty parsed / unit_price / province ต่อ dataset (DoD 03 §9 ข้อ 3)
+
+    "org mapped" นับจาก `agency_code IS NOT NULL` (ครอบคลุมทั้ง dataset ที่ match ผ่าน org_master
+    และ dataset ที่มี code จาก A2/A3 อยู่แล้ว — `DATASETS_WITH_ORG_CODES` ใน `normalize/run.py`)
+    """
+    results: list[DatasetFieldCoverage] = []
+    columns = ["agency_code", "item_qty", "unit_price_thb", "province"]
+    for dataset, paths in cache_paths_by_dataset.items():
+        n_rows = 0
+        n_org_mapped = 0
+        n_qty = 0
+        n_up = 0
+        n_prov = 0
+        for path in paths:
+            table = pq.read_table(str(path), columns=columns)
+            n_rows += table.num_rows
+            n_org_mapped += table.num_rows - table.column("agency_code").null_count
+            n_qty += table.num_rows - table.column("item_qty").null_count
+            n_up += table.num_rows - table.column("unit_price_thb").null_count
+            n_prov += table.num_rows - table.column("province").null_count
+
+        def pct(x: int, total: int = n_rows) -> float:
+            return (x / total * 100) if total else 0.0
+
+        results.append(
+            DatasetFieldCoverage(
+                dataset=dataset,
+                n_rows=n_rows,
+                n_org_mapped=n_org_mapped,
+                pct_org_mapped=pct(n_org_mapped),
+                n_qty_parsed=n_qty,
+                pct_qty_parsed=pct(n_qty),
+                n_unit_price=n_up,
+                pct_unit_price=pct(n_up),
+                n_province=n_prov,
+                pct_province=pct(n_prov),
+            )
+        )
+    return sorted(results, key=lambda r: r.dataset)
+
+
+# ---------------------------------------------------------------------------
+# T-114 ข้อ 4: จำนวน PDF มี/ไม่มี text layer + extracted/ไม่ extracted จาก sources.json
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class PdfTextLayerStats:
+    n_pdf: int
+    n_with_text_layer: int
+    n_without_text_layer: int
+    n_extracted: int
+    n_not_extracted: int
+
+
+def check_pdf_text_layer_stats(sources_json_path: Path) -> PdfTextLayerStats | None:
+    """คืน `None` ถ้าไม่มี `sources.json` ให้อ่าน (เช่น `tgbp validate` เดี่ยว ๆ ก่อนรัน `inventory`)"""
+    if not sources_json_path.is_file():
+        return None
+    sources = json.loads(sources_json_path.read_text(encoding="utf-8"))
+    pdfs = [d for d in sources if d.get("kind") == "pdf"]
+    n_with_text = sum(1 for d in pdfs if d.get("has_text_layer"))
+    n_extracted = sum(1 for d in pdfs if d.get("extracted"))
+    return PdfTextLayerStats(
+        n_pdf=len(pdfs),
+        n_with_text_layer=n_with_text,
+        n_without_text_layer=len(pdfs) - n_with_text,
+        n_extracted=n_extracted,
+        n_not_extracted=len(pdfs) - n_extracted,
+    )
+
+
+# ---------------------------------------------------------------------------
 # V10 (03 §6): ทุก PDF ใน raw ปรากฏใน sources.json (hard; skip ถ้าไม่มี raw dir)
 # ---------------------------------------------------------------------------
 
@@ -789,6 +885,8 @@ class ValidationReport:
     v8: V8Result | None = None
     v9_by_dataset: list[V9DatasetResult] = field(default_factory=list)
     v10: V10Result | None = None
+    dataset_field_coverage: list[DatasetFieldCoverage] = field(default_factory=list)
+    pdf_text_layer: PdfTextLayerStats | None = None
     total_output_bytes: int | None = None
     total_output_bytes_limit: int | None = None
     hard_failures: list[str] = field(default_factory=list)
@@ -910,6 +1008,10 @@ def build_validation_report(
     elif v10.status.startswith("skipped"):
         notable_statuses.append(f"V10: {v10.status}")
 
+    # --- T-114 ข้อ 4: % org/qty/unit_price/province ต่อ dataset + PDF text layer/extracted ---
+    dataset_field_coverage = check_dataset_field_coverage(cache_paths_by_dataset)
+    pdf_text_layer = check_pdf_text_layer_stats(sources_path)
+
     # --- V6 (hard, เฉพาะเมื่อเรียกจาก publish.py หลังเขียนไฟล์จริงแล้ว) ---
     v6: V6Result | None = None
     if published_files is not None:
@@ -936,6 +1038,8 @@ def build_validation_report(
         v8=v8,
         v9_by_dataset=v9_by_dataset,
         v10=v10,
+        dataset_field_coverage=dataset_field_coverage,
+        pdf_text_layer=pdf_text_layer,
         total_output_bytes=total_output_bytes,
         total_output_bytes_limit=total_output_bytes_limit,
         hard_failures=hard_failures,
@@ -1057,6 +1161,32 @@ def render_validation_markdown(report: ValidationReport) -> str:
         lines.append(
             f"## V10 — PDF raw vs sources.json: {report.v10.status} "
             f"(raw={report.v10.n_pdf_in_raw:,}, sources={report.v10.n_pdf_in_sources:,})"
+        )
+        lines.append("")
+
+    if report.dataset_field_coverage:
+        lines.append("## สถิติ field ต่อ dataset (DoD 03 §9 ข้อ 3)")
+        lines.append("")
+        lines.append("| dataset | n_rows | org mapped | qty parsed | unit_price | province |")
+        lines.append("|---|---|---|---|---|---|")
+        for r in report.dataset_field_coverage:
+            lines.append(
+                f"| {r.dataset} | {r.n_rows:,} | "
+                f"{r.n_org_mapped:,} ({r.pct_org_mapped:.1f}%) | "
+                f"{r.n_qty_parsed:,} ({r.pct_qty_parsed:.1f}%) | "
+                f"{r.n_unit_price:,} ({r.pct_unit_price:.1f}%) | "
+                f"{r.n_province:,} ({r.pct_province:.1f}%) |"
+            )
+        lines.append("")
+
+    if report.pdf_text_layer is not None:
+        p = report.pdf_text_layer
+        lines.append("## PDF text layer / extracted (จาก sources.json)")
+        lines.append("")
+        lines.append(
+            f"รวม PDF: {p.n_pdf:,} | มี text layer: {p.n_with_text_layer:,} | "
+            f"ไม่มี text layer: {p.n_without_text_layer:,} | extracted: {p.n_extracted:,} | "
+            f"ไม่ extracted: {p.n_not_extracted:,}"
         )
         lines.append("")
 

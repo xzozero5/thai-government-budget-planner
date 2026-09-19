@@ -102,6 +102,24 @@ _QTY_RE = re.compile(
     r"(?P<num>\d[\d,]*(?:\.\d+)?)\s*(?P<unit>" + "|".join(re.escape(u) for u in _QTY_UNITS) + r")"
 )
 
+# T-115 ข้อ 2 (po review): "คำบอกจำนวนชัดเจน" สำหรับ sanity check `item_qty >= 20` ใน
+# `normalize/run.py` — หน่วยนับ**ติดกับเลขไม่มีช่องว่างคั่นเลย** (เช่น "20เครื่อง") ถือเป็นสัญญาณ
+# ตั้งใจของต้นทางว่าเป็นจำนวนนับจริง ต่างจาก "20 เครื่อง" (มีช่องว่าง) ที่อาจเป็นแค่หน่วยนับบังเอิญ
+# ตามหลังเลขอื่นที่ไม่ใช่จำนวน (เช่นรหัสครุภัณฑ์/สเปครุ่น) — ดู `has_explicit_qty_marker()`
+_QTY_UNIT_GLUED_RE = re.compile(r"\d(?:" + "|".join(re.escape(u) for u in _QTY_UNITS) + r")")
+
+
+def has_explicit_qty_marker(item_name: str) -> bool:
+    """T-115 ข้อ 2: คืน `True` ถ้า `item_name` มีคำบอกจำนวนชัดเจน — คำว่า "จำนวน" ปรากฏจริง หรือมี
+    หน่วยนับติดกับเลขแบบไม่มีช่องว่างคั่น (เช่น "20เครื่อง") ใช้โดย `normalize/run.py` เป็นเงื่อนไข
+    เสริมก่อนคำนวณ `unit_price_thb` เมื่อ `item_qty >= 20` (ไม่ใช้ตอน parse เอง — ไม่กระทบ
+    `item_qty`/`item_key` ที่คืนจาก `parse()`)
+    """
+    if "จำนวน" in item_name:
+        return True
+    return bool(_QTY_UNIT_GLUED_RE.search(item_name))
+
+
 # ── สเปคตัวเลข+หน่วย (03 §5 ข้อ 2 + หน้า/นาที จาก hold-out 2563) ──
 _SPEC_UNITS = (
     "บีทียู",
@@ -190,6 +208,28 @@ _JAMNUAN_RE = re.compile(
     + "|".join(re.escape(u) for u in _QTY_UNITS)
     + r")"
 )
+
+# ── รหัสครุภัณฑ์นำหน้า/แทรกกลางชื่อ (T-115 ข้อ 1) ──
+# PBO มักขึ้นต้น (หรือแทรกกลาง เช่น "IPv6") ด้วย "รหัสครุภัณฑ์" ที่เป็นตัวอักษรละตินติดกับเลขไม่มี
+# ช่องว่างคั่น (เช่น "AC0405", "AH0104", "KVA54", "IPv6" ที่บังเอิญมีเลขจำนวนตามหลังติดกันจน
+# กลายเป็น "IPv61") — ตัวเลขส่วนนี้**ไม่ใช่จำนวนนับ** แต่บังเอิญมีหน่วยนับ (เช่น "เครื่อง"/"โครงการ")
+# ตามหลังด้วยช่องว่างธรรมดา ทำให้ regex คุณภาพ/จำนวนงานด้านบนจับผิดเป็น qty (พบจริงจาก PBO 2568:
+# "AC0405 เครื่องจดบันทึกอักษรเบรลล์..." เดิม qty=405 → unit_price 593 บาท ทั้งที่ราคาจริงหลักแสน)
+# เกณฑ์: `[A-Za-z]{1,5}` (1-5 ตัวอักษรละติน) ตามด้วยเลข >= 2 หลักติดกันทันที (มี "-"/"_" คั่นได้ 1 ครั้ง
+# แล้วมีเลขต่อได้อีก เช่น "RA1113-40") — ไม่จำกัดตำแหน่งในชื่อ (จับได้ทั้งต้นชื่อและแทรกกลาง) เฉพาะ
+# ตัวอักษรละติน (ไม่รวมไทย) เพราะกรณีตัวอักษรไทยติดเลข (เช่น ชื่อจังหวัด/ชื่อหน่วยงานที่ OCR ตกช่องว่าง
+# ก่อนเลข "...มหานคร100 ชุด") เป็นจำนวนนับจริงที่ควรเก็บไว้ ไม่ใช่รหัส — ตรวจสอบจาก
+# `.cache/normalized/pbo_disbursement/` แล้วยืนยันว่าไม่มีรหัสครุภัณฑ์ที่ขึ้นต้นด้วยอักษรไทยในชุดนี้
+_CODE_TOKEN_RE = re.compile(r"(?<![0-9A-Za-z])[A-Za-z]{1,5}[-_]?\d{2,}(?:[-_]\d+)*(?![A-Za-z])")
+
+
+def _find_code_token_spans(text: str) -> list[tuple[int, int]]:
+    return [(m.start(), m.end()) for m in _CODE_TOKEN_RE.finditer(text)]
+
+
+def _in_code_token(pos: int, spans: list[tuple[int, int]]) -> bool:
+    return any(s <= pos < e for s, e in spans)
+
 
 # ── normalize ตัวเลขก่อนหน่วยที่รู้จัก (comma หลักพัน + ศูนย์ท้ายทศนิยมเกิน) ──
 _ALL_KNOWN_UNITS_FOR_NORMALIZE = sorted(
@@ -485,6 +525,9 @@ def parse(item_name: str, org_names: Iterable[str] | None = None, _depth: int = 
     text = _rewrite_numbers_before_known_units(text)
     quality_flags: list[str] = []
 
+    # T-115 ข้อ 1: span ของรหัสครุภัณฑ์ (ตัวอักษรละตินติดเลข) — ตัวเลขในช่วงนี้ห้ามเป็น qty/spec
+    code_token_spans = _find_code_token_spans(text)
+
     # ── ขนาด/มิติ (spec) vs ปริมาณงาน (qty) — คำนวณ**ก่อน**ตำแหน่งสถานที่ เพื่อรู้ตำแหน่งจบของ
     # คู่ตัวเลข+หน่วยที่รู้จักแล้ว (`protected_ends`) กัน location-span extension ย้อนกลับไปกิน
     # หน่วยที่เกาะติด marker แบบไม่มีช่องว่าง เช่น "ลูกบาศก์เมตรตำบลX" (hold-out 2563 ข้อ A) ──
@@ -492,6 +535,8 @@ def parse(item_name: str, org_names: Iterable[str] | None = None, _depth: int = 
     spec_dimension_spans: list[tuple[int, int]] = []
     measure_candidates: list[tuple[int, int, str, str]] = []  # (start, end, num, unit)
     for m in _DIMENSION_RE.finditer(text):
+        if _in_code_token(m.start("num"), code_token_spans):
+            continue
         marker = m.group("marker")
         num, unit = m.group("num"), m.group("unit")
         span = (m.start("num"), m.end("unit"))
@@ -504,7 +549,9 @@ def parse(item_name: str, org_names: Iterable[str] | None = None, _depth: int = 
     # "จำนวน N unit" — ชนะเสมอเมื่อมีมากกว่า 1 คู่ (hold-out 2563 ข้อ A)
     jamnuan_matches = list(_JAMNUAN_RE.finditer(text))
     jamnuan_candidates = [
-        (m.start("num"), m.end("unit"), m.group("num"), m.group("unit")) for m in jamnuan_matches
+        (m.start("num"), m.end("unit"), m.group("num"), m.group("unit"))
+        for m in jamnuan_matches
+        if not _in_code_token(m.start("num"), code_token_spans)
     ]
 
     consumed_spans = (
@@ -516,6 +563,7 @@ def parse(item_name: str, org_names: Iterable[str] | None = None, _depth: int = 
         (m.start(), m.end(), m.group("num"), m.group("unit"))
         for m in _QTY_RE.finditer(text)
         if not any(_spans_overlap((m.start(), m.end()), c) for c in consumed_spans)
+        and not _in_code_token(m.start("num"), code_token_spans)
     ]
 
     all_qty_candidates = jamnuan_candidates + measure_candidates + generic_qty_candidates
@@ -547,6 +595,8 @@ def parse(item_name: str, org_names: Iterable[str] | None = None, _depth: int = 
     # spec tokens อื่น (BTU/ตัน/ฯลฯ) — ไม่ตัดออกจาก item_key (03 §3.1: ตัดแค่ location/qty/org names)
     spec_number_spans: list[tuple[int, int]] = []
     for m in _SPEC_NUMBER_RE.finditer(text):
+        if _in_code_token(m.start("num"), code_token_spans):
+            continue
         spec_number_spans.append((m.start(), m.end()))
         spec_tokens.append(f"{m.group('num').replace(',', '')} {m.group('unit')}")
     lowered = text.lower()
