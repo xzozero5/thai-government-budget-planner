@@ -25,24 +25,26 @@
 - [~] T-111 `data-engineer` `econ/indicators.json` — ดึงจากแหล่งเปิด (ธปท., สศช., สนค. กระทรวงพาณิชย์, กระทรวงแรงงาน, สนพ./EPPO, สำนักงบประมาณ) ด้วย web search/fetch ของ Claude Code; ทุกค่า `verified:false` + `source_url` + `retrieved_at`; เขียน `docs/econ-sources.md` อธิบายที่มาและวิธีอัปเดต
 - [~] T-112 `data-engineer` `tgbp sample --rows 1000` → `web/tests/fixtures/data/` (commit)
 - [ ] T-113 `po` review: validation_report, สุ่มตรวจ 10 source_id กับไฟล์จริง (ใช้ `explorer` ช่วยเปิดไฟล์), ปิด `[UNVERIFIED]` ใน 02, อัปเดต STATUS
+- [~] T-114 `data-engineer` (จาก po review T-113) สถิติ DoD ใน validation_report (% qty/unit_price/province ต่อ dataset, PDF มี/ไม่มี text layer), V9 `org_unmapped` เข้า `coverage_notes`, catalog v2 (`shard_paths` + index — ลดขนาดหลัง decompress จาก 49 MB), flag `low_specificity`, fixture manifest `sample:true`, test ว่า `sample_source_ids` อยู่ใน shard ที่ entry ชี้
+- [~] T-115 `data-engineer` กัน qty จากรหัสนำหน้าชื่อ (`AC0405 …` → qty 405) + sanity qty ≥ 20 ที่ไม่มีคำบอกจำนวน → `qty_parsed_low_conf`; republish
 
 ## Phase 2 — Architecture & data access (เป้า: 1–2 วัน) — อ่าน `04-ARCHITECTURE.md`
-- [ ] T-201 `architect` ∥ Spike S1–S5 (04 §6) ใน `web/spikes/` → `docs/decisions/SPIKES.md` ผลวัดจริง; ถ้า S1 ล้มเหลวบน host เป้าหมาย → ADR-002 fallback
-- [ ] T-202 `frontend-dev` `data/manifest.ts` loader + types จาก schema (สร้าง `data/types.ts` ให้ตรง 03 §3); test
-- [ ] T-203 `frontend-dev` `data/duckdb.ts` (lazy init, register shard URLs, query with params, cache/evict) + `data/repo.ts` API (`queryLines`, `getLines`, `getDoc`, `getEcon`, `facets`) ; integration test กับ fixture
+- [ ] T-201 `architect` ∥ Spike S1–S5 (04 §6) ใน `web/spikes/` → `docs/decisions/SPIKES.md` ผลวัดจริง; ถ้า S1 ล้มเหลวบน host เป้าหมาย → ADR-002 fallback — **จาก T-113**: S1 ต้องวัดกับ `budget_lines/pbo/2564/20000.parquet` (ไฟล์ใหญ่สุด ~6.2 MB) บน Pages จริง (range request ยืนยันแล้วว่าได้ 206 กับ JSON) และรายงาน bytes ที่โหลดจริงต่อ query; S2 ต้องวัดกับ `catalog/items.json.gz` **ตัวจริง** (~45k entries) ไม่ใช่ mock: เวลา parse + index, memory, บนมือถือจำลอง — ถ้าไม่ผ่าน ให้เปิด T-208 (publish `catalog/search.json.gz` แบบผอม key/name/n_lines/years หรือ prebuilt index)
+- [ ] T-202 `frontend-dev` `data/manifest.ts` loader + types จาก schema (สร้าง `data/types.ts` ให้ตรง 03 §3); test — types ต้องตรง **output จริง** (03 §3.1 หมายเหตุ publish, §3.4 catalog v2) + test ว่าคอลัมน์ใน fixture parquet ครบตาม type และ catalog index resolve ได้
+- [ ] T-203 `frontend-dev` `data/duckdb.ts` (lazy init, register shard URLs, query with params, cache/evict) + `data/repo.ts` API (`queryLines`, `getLines`, `getDoc`, `getEcon`, `facets`) ; integration test กับ fixture — `queryLines` ต้องรองรับ `item_key IN (keys[])` (variant ที่ต่างกันแค่เว้นวรรค) และ keyword fallback สำหรับรายการหางยาวที่ไม่อยู่ใน catalog (catalog ครอบ ~57 % ของแถว) โดย**บังคับ filter ปี/กระทรวง**เพื่อคุมขนาดสแกน (shards รวม ~165 MB); ทุกผลลัพธ์แนบ `coverage_notes` ที่ match ปี/dataset
 - [ ] T-204 `frontend-dev` `data/search.ts` MiniSearch + Thai tokenizer (`Intl.Segmenter` + fallback) ; test เคส 3.2; **folding สำหรับ text จาก PDF** (02 §B): ตัดช่องว่างระหว่างอักษรไทย + พับ `ำ`→`า` ทั้งฝั่ง index และ query (ค้น "สำนักงาน" ต้องเจอ `ส านักงาน`) โดยไม่แก้ text ที่แสดงเป็นหลักฐาน
 - [ ] T-205 `frontend-dev` `data/inflation.ts` deterministic + test
-- [ ] T-207 `frontend-dev` `data/trends.ts` (โหลด `catalog/trends/*`, econ series, คำนวณ change_pct) + `lib/svgSanitizer.ts` (DOMPurify profile ตาม 04 §D9) ; tests ตาม 07 §3.2
+- [ ] T-207 `frontend-dev` `data/trends.ts` (โหลด `catalog/trends/*`, econ series, คำนวณ change_pct) + `lib/svgSanitizer.ts` (DOMPurify profile ตาม 04 §D9) ; tests ตาม 07 §3.2 — รองรับ `basis: unit_price | amount_per_line` (ห้ามปน) และแสดง `note: source_incomplete` ของปี 2562 บนกราฟ; การ์ด econ แสดงป้าย `verified:false` ทุกใบ และไม่วาดเมื่อ series ไม่มีค่า
 - [ ] T-206 `architect` review boundaries (04 §3), เขียน ADR ที่เกิดขึ้น, อัปเดต STATUS
 
 ## Phase 3 — AI layer (เป้า: 2–3 วัน) — อ่าน `05-FEATURES.md` §3–6
 - [ ] T-301 `ai-engineer` `ai/client.ts` (SDK browser mode, model list, count_tokens ping, usage/cost calc ต่อ model ราคาใน `ai/pricing.ts` พร้อม `[UNVERIFIED]` และวันที่) ; test (SDK mocked)
-- [ ] T-302 `ai-engineer` `ai/tools/*.ts` Zod schemas + JSON Schema export + handlers เรียก repo; test ทุก tool
+- [ ] T-302 `ai-engineer` `ai/tools/*.ts` Zod schemas + JSON Schema export + handlers เรียก repo; test ทุก tool — **AC จาก T-113**: (1) tool result แนบ `coverage_notes`; (2) `unit_price.n < 3` ห้ามเป็น `historical` confidence สูงกว่า medium; entry ที่ไม่มี `unit_price` ต้องรายงานเป็น "ราคาต่อรายการ (amount/บรรทัด)" ไม่ใช่ราคาต่อหน่วย; (3) entry `low_specificity` ห้ามใช้เป็น benchmark โดยไม่ถามขนาด/สเปคก่อน และต้องแสดง p25–p75 + n เสมอ; (4) แถวที่มี flag `upstream_ocr`/`group_total_mismatch`/`corrupt_row`/`qty_parsed_low_conf`/`qty_is_measure`/`org_tail_uncertain` → confidence ≤ medium; (5) `get_econ_indicator`/`get_price_trend` คืน `{value:null, note}` เมื่อไม่มีค่า — ห้ามประมาณเอง ให้ใช้ `web_search`
 - [ ] T-303 `ai-engineer` `ai/tools/proposal.ts` schema + validator (citation integrity vs ToolLog, totals) ; test
 - [ ] T-304 `ai-engineer` `ai/agent.ts` loop (streaming, tool rounds, ToolLog, budget stop, cancel, error/retry) ; test
 - [ ] T-309 `ai-engineer` tools `get_price_trend` + `emit_illustration` (ใช้ `data/trends.ts`, `lib/svgSanitizer.ts`; จำกัด 3 ภาพ/proposal) + proposal validator รองรับ `illustrations`/`stat_cards`/`trend_ref` ; tests
-- [ ] T-305 `ai-engineer` `ai/systemPrompt.ts` (cached blocks: กฎ + facets + dataset notes + 3 few-shot tool traces + `<palette>` และ illustration style จาก `docs/ui/illustration-style.md` + few-shot SVG 1 ชิ้น) + mode variants
-- [ ] T-306 `ai-engineer` `web/tests/eval/` cases.yaml 20 โจทย์ + runner `npm run eval` (+ judge) ; รันจริง 1 รอบ → `docs/eval-report.md`; **guard N2**: test ที่ build แล้ว grep `dist/assets/*.js` ต้องไม่พบ `sk-ant-` / ค่า `VITE_EVAL_ANTHROPIC_API_KEY` (ตัวแปร `VITE_*` ถูก inline เข้า bundle ถ้ามีค่าตอน build — runner ต้องอ่าน key ฝั่ง Node ไม่ใช่ผ่าน `import.meta.env`)
+- [ ] T-305 `ai-engineer` `ai/systemPrompt.ts` (cached blocks: กฎ + facets + dataset notes + 3 few-shot tool traces + `<palette>` และ illustration style จาก `docs/ui/illustration-style.md` + few-shot SVG 1 ชิ้น) + mode variants — system prompt ต้องระบุ: "ไม่พบในปี 2562 ≠ ไม่มีงบ (ADR-004)", "ไม่พบใน catalog ≠ ไม่เคยตั้งงบ — ต้องลอง `query_budget_lines` ด้วย keyword ก่อนสรุป", ตัวเลขราชาเทวะมาจาก OCR ต้นทาง (ADR-005)
+- [ ] T-306 `ai-engineer` `web/tests/eval/` cases.yaml 20 โจทย์ + runner `npm run eval` (+ judge) ; รันจริง 1 รอบ → `docs/eval-report.md`; **guard N2**: test ที่ build แล้ว grep `dist/assets/*.js` ต้องไม่พบ `sk-ant-` / ค่า `VITE_EVAL_ANTHROPIC_API_KEY` (ตัวแปร `VITE_*` ถูก inline เข้า bundle ถ้ามีค่าตอน build — runner ต้องอ่าน key ฝั่ง Node ไม่ใช่ผ่าน `import.meta.env`); **เคสบังคับจาก T-113**: ฝายของ อบต. (ต้องไม่หยิบ median 25 ล้านของ key `ฝาย`), รายการหางยาวที่ไม่อยู่ใน catalog, รายการปี 2562, รายการที่ unit_price n=1
 - [ ] T-307 `security-reviewer` review key handling/egress/prompt-injection ใน ai/ + data/; รายการแก้ → ai-engineer แก้
 - [ ] T-308 `po` review eval report เทียบเกณฑ์ 07 §4; ปรับ prompt/tool ถ้าไม่ผ่าน (วนได้ 2 รอบ) ; STATUS
 
@@ -53,7 +55,7 @@
 - [ ] T-404 `frontend-dev` KeyGate page (4.1) + `/about`
 - [ ] T-405 `frontend-dev` Workspace layout + Chat pane (4.2) รวม tool activity cards, quick replies, streaming, cancel
 - [ ] T-406 `frontend-dev` Proposal pane (4.3) + BOQ table (inline edit, recompute, "ให้ AI ทบทวน", version selector)
-- [ ] T-407 `frontend-dev` Citation drawer (4.4) ทุกประเภท + "ดูแถวใกล้เคียง" + `ExternalLink` component (US-4.3: เปิดแท็บใหม่, https-only, copy URL) ใช้ใน BOQ chip/drawer/แชท
+- [ ] T-407 `frontend-dev` Citation drawer (4.4) ทุกประเภท + "ดูแถวใกล้เคียง" + `ExternalLink` component (US-4.3: เปิดแท็บใหม่, https-only, copy URL) ใช้ใน BOQ chip/drawer/แชท — drawer แสดง `item_name_raw` เต็ม (ไม่มี `item_name`/`location_text` ใน shard), badge ของ quality flags + ข้อความ "ตัวเลขถอดจาก OCR ของต้นทาง โปรดตรวจหน้า N", ป้าย "เอกสารสแกน ระบบไม่ได้อ่านเนื้อหา"
 - [ ] T-408 `frontend-dev` Data loading indicator, toasts, keyboard shortcuts, responsive/mobile
 - [ ] T-411 `frontend-dev` Motion layer ตาม `docs/ui/motion.md` (`motion`, reduced-motion guard, count-up, skeletons, button states) ; tests prop-level
 - [ ] T-412 `frontend-dev` `Sparkline`, `TrendChart`, `StatCard` (Recharts) + `IllustrationFrame` (sanitized SVG, lightbox, สร้างใหม่/ซ่อน) และต่อเข้า Proposal pane/BOQ/drawer ; tests
@@ -75,4 +77,4 @@
 - [ ] T-606 `po` release notes `docs/RELEASE-0.1.md`, STATUS = "MVP done", รายการ post-MVP (F6 data browser, OCR, share link ฯลฯ)
 
 ## Post-MVP ideas (ไม่ทำตอนนี้)
-- Data browser (F6) · Image-gen provider ภายนอกสำหรับภาพเหมือนจริง (ตัดออกโดยคุณนิว — ทบทวนหลัง MVP) · OCR pipeline แยกโปรเจกต์ · Export DOCX · เปรียบเทียบสองข้อเสนอ · ภาษาอังกฤษ · โหลดข้อมูลจาก URL ภายนอกที่ผู้ใช้กำหนด (ต้องทบทวน security)
+- เติม econ `diesel/gasoline95/min_wage_*` หรือประกาศปิดถาวรใน `econ-sources.md` (ทบทวนใน Phase 6) · Data browser (F6) · Image-gen provider ภายนอกสำหรับภาพเหมือนจริง (ตัดออกโดยคุณนิว — ทบทวนหลัง MVP) · OCR pipeline แยกโปรเจกต์ · Export DOCX · เปรียบเทียบสองข้อเสนอ · ภาษาอังกฤษ · โหลดข้อมูลจาก URL ภายนอกที่ผู้ใช้กำหนด (ต้องทบทวน security)

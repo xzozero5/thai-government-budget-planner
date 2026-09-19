@@ -89,6 +89,8 @@ tgbp sample --rows 1000        # สร้าง web/tests/fixtures/data/ สำ
 | `source_doc_id` | string | FK → `sources.json` |
 | `quality_flags` | list<string> | เช่น `ocr_suspect`, `amount_outlier`, `qty_parsed_low_conf` |
 
+**หมายเหตุ publish (ยืนยันจาก output จริง 19 ก.ย. 2569)** — schema ข้างบนคือ *normalized cache*; ไฟล์ shard ใต้ `web/public/data/budget_lines/**` **ไม่มี** คอลัมน์ `item_name` (clean), `location_text`, `fiscal_year_ce` และคอลัมน์ raw เสริม เพื่อคุมขนาด (browser คำนวณ/แสดงจาก `item_name_raw`); คอลัมน์ที่คงที่ทั้งไฟล์ (`dataset`, `source_path`, `source_sheet`, `source_doc_id`) ยังอยู่ (dictionary/RLE). flag ที่เขียนตอน publish: `unit_price_outlier`, `lump_sum_category`. path ของ `act2570_province/`, `local_subsidy/`, `local/` ใช้ ascii slug; กระทรวงที่ map ไม่ได้อยู่ใต้ `_unmapped`. **แหล่งความจริงของ type ฝั่งเว็บ = fixture จริงใน `web/tests/fixtures/data/`** (T-202)
+
 ### 3.2 `SourceDoc` (`sources.json` — ทุกไฟล์ในโฟลเดอร์ดิบ)
 ```json
 {
