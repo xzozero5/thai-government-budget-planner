@@ -201,8 +201,10 @@ test.describe('data/repo.ts + data/duckdb.ts — integration จริงกั�
     expect(fullResult.ok).toBe(true);
 
     expect(fullResult.data?.totalMatched).toBe(rangeResult.data?.totalMatched);
-    expect(fullResult.data?.rows.map((r) => r.source_id).sort()).toEqual(
-      rangeResult.data?.rows.map((r) => r.source_id).sort(),
+    // T-206 B1: ต้องเทียบ "ลำดับจริง" (ไม่ sort ก่อนเทียบ) — ORDER BY มี source_id ASC เป็น
+    // tiebreaker เสมอ ทำให้ range/full mode ต้องคืนแถวเรียงเหมือนกันเป๊ะ ไม่ใช่แค่ชุดข้อมูลเดียวกัน
+    expect(fullResult.data?.rows.map((r) => r.source_id)).toEqual(
+      rangeResult.data?.rows.map((r) => r.source_id),
     );
     await fullPage.close();
   });

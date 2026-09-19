@@ -41,8 +41,15 @@ const DUCKDB_MEMORY_LIMIT = '400MB';
 
 /** ADR-002 ข้อ 5: ถ้า registered buffer รวมกันเกินนี้ ให้ evict ตัวที่ใช้นานสุด (LRU) */
 export const MAX_REGISTERED_SHARD_BYTES = 150 * 1024 * 1024;
-/** 04 §5: "ไม่โหลดเกิน 3 ปี × 3 กระทรวงพร้อมกันโดยไม่ evict" ⇒ เพดานจำนวนไฟล์ที่ register พร้อมกัน */
-export const MAX_REGISTERED_SHARDS = 9;
+/**
+ * T-206 F7: เดิมตั้งไว้ 9 ตาม 04 §5 ("ไม่โหลดเกิน 3 ปี × 3 กระทรวงพร้อมกันโดยไม่ evict") แต่
+ * `repo.MAX_SHARDS_TO_SCAN = 12` — query เดียวที่สแกน 12 shard ในโหมด `full` (หรือ fallback) จะ evict
+ * ไฟล์ของ query ตัวเองระหว่างที่ยังใช้อยู่ (พบจริงจาก review T-206) ⇒ ต้อง **≥ MAX_SHARDS_TO_SCAN**
+ * เสมอ (มี unit test ข้ามไฟล์ตรวจไว้ใน `duckdb.test.ts`/`repo.test.ts`) — ไม่ import ค่าคงที่ข้ามไฟล์
+ * ตรง ๆ เพราะจะเกิด import cycle (`repo.ts` import `duckdb.ts` อยู่แล้ว) จึง hard-code ค่าที่เท่ากันไว้
+ * ที่นี่แทน หมายเหตุ: docs/04-ARCHITECTURE.md §5 ยังไม่ได้อัปเดตค่านี้ (นอกขอบเขตงานนี้ — ห้ามแตะ docs/**)
+ */
+export const MAX_REGISTERED_SHARDS = 12;
 
 // ---------------------------------------------------------------------------
 // Error types
@@ -344,7 +351,15 @@ function totalRegisteredBytes(): number {
   return sum;
 }
 
-async function evictLeastRecentlyUsed(db: MinimalAsyncDuckDb): Promise<void> {
+/**
+ * T-206 F7: `pinned` = ชุด url ของ shard ที่ query ปัจจุบัน "กำลังใช้อยู่" — ห้าม evict แม้เกินเพดาน
+ * ปกติ (จะยอมเกินเพดานชั่วคราวถ้าทุกไฟล์ที่เหลือถูก pin ไว้หมด ดีกว่า evict ไฟล์ที่ query กำลังอ่าน
+ * อยู่จริงแล้วพัง/ช้าลงโดยไม่มีใครรู้ตัว)
+ */
+async function evictLeastRecentlyUsed(
+  db: MinimalAsyncDuckDb,
+  pinned?: ReadonlySet<string>,
+): Promise<void> {
   while (
     registeredShards.size > MAX_REGISTERED_SHARDS ||
     totalRegisteredBytes() > MAX_REGISTERED_SHARD_BYTES
@@ -352,12 +367,16 @@ async function evictLeastRecentlyUsed(db: MinimalAsyncDuckDb): Promise<void> {
     let oldestUrl: string | null = null;
     let oldestUsed = Infinity;
     for (const [url, info] of registeredShards) {
+      if (pinned?.has(url)) {
+        continue;
+      }
       if (info.lastUsed < oldestUsed) {
         oldestUsed = info.lastUsed;
         oldestUrl = url;
       }
     }
     if (oldestUrl === null) {
+      // ไม่มีตัวไหนที่ปลด pin ได้แล้ว — ยอมเกินเพดานชั่วคราวแทนการ evict ไฟล์ของ query ปัจจุบัน
       break;
     }
     await db.dropFile(oldestUrl);
@@ -369,10 +388,16 @@ async function evictLeastRecentlyUsed(db: MinimalAsyncDuckDb): Promise<void> {
  * ลงทะเบียน shard ทั้งไฟล์ไว้ในหน่วยความจำของ DuckDB (fallback ตาม ADR-002 ข้อ 5) — ใช้ชื่อไฟล์
  * ตรงกับ `url` เป๊ะ ๆ เพื่อให้ `read_parquet('<url เดิม>')` ใช้ buffer ที่ register แทนการยิง HTTP จริง
  * โดยไม่ต้องเปลี่ยน SQL ระหว่างโหมด `range`/`full`
+ *
+ * `pinned` (T-206 F7): ส่งชุด url ของ **ทุก** shard ที่ query ปัจจุบันจะใช้ เพื่อกันไม่ให้ eviction
+ * ไล่ drop ไฟล์ของ query ตัวเองระหว่างที่ยัง register ไม่ครบ (เกิดจริงเมื่อ `Promise.all` register
+ * หลายไฟล์พร้อมกันและจำนวนไฟล์ > `MAX_REGISTERED_SHARDS` เดิม) — ใช้ `ensureShardsRegistered` แทนถ้า
+ * ต้องการ pin ทั้งชุดอัตโนมัติ
  */
 export async function ensureShardRegistered(
   url: string,
   fetchImpl: typeof fetch = fetch,
+  pinned?: ReadonlySet<string>,
 ): Promise<void> {
   const { db } = await getDb();
   const existing = registeredShards.get(url);
@@ -396,7 +421,20 @@ export async function ensureShardRegistered(
   await db.registerFileBuffer(url, buffer);
   registeredShards.set(url, { bytes: buffer.byteLength, lastUsed: shardLruClock });
   shardLruClock += 1;
-  await evictLeastRecentlyUsed(db);
+  await evictLeastRecentlyUsed(db, pinned);
+}
+
+/**
+ * T-206 F7 — register shard หลายไฟล์ของ query เดียวกันพร้อมกัน โดย pin ทั้งชุดไว้ระหว่างกัน (ไม่มี
+ * ไฟล์ไหนใน `urls` ถูก evict โดยอีกไฟล์หนึ่งใน `urls` เดียวกัน) ใช้แทน `Promise.all(urls.map(...))`
+ * ตรง ๆ ใน `repo.ts` เสมอเมื่อต้อง register มากกว่า 1 shard ของ query เดียว
+ */
+export async function ensureShardsRegistered(
+  urls: string[],
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const pinned = new Set(urls);
+  await Promise.all(urls.map((url) => ensureShardRegistered(url, fetchImpl, pinned)));
 }
 
 /** จำนวน/รายชื่อ shard ที่ register แบบเต็มไฟล์อยู่ตอนนี้ — ไว้ตรวจใน test เท่านั้น */

@@ -73,10 +73,17 @@ function isExactOnlyTerm(term: string): boolean {
  * query ช้า (main thread วัด: ~230 ms) โดยแทบไม่ช่วยคัดผลลัพธ์; เลขเหล่านี้ยังมีผลผ่าน `exactNumberBonus`
  * ตอน re-rank ซึ่งใช้ query เดิมเต็ม ๆ
  */
-export function buildIndexQuery(query: string): string {
+/** token ที่ยังเหลือหลังตัดเลขสั้น (หรือ token เดิมทั้งหมดถ้าตัดจนว่าง) — ใช้ทั้งใน `buildIndexQuery`
+ * (ต่อเป็น query string ให้ MiniSearch) และใน `rerankHits` (นับ "จำนวน token ของ query" สำหรับ
+ * coverage — ต้องเป็นชุดเดียวกันเป๊ะเพื่อให้ coverage คำนวณตรงกับ query ที่ยิงเข้า MiniSearch จริง) */
+export function strongQueryTokens(query: string): string[] {
   const tokens = tokenizeThai(query);
   const strong = tokens.filter((t) => !(/^[\d.]+$/.test(t) && t.length <= 2));
-  return (strong.length > 0 ? strong : tokens).join(' ');
+  return strong.length > 0 ? strong : tokens;
+}
+
+export function buildIndexQuery(query: string): string {
+  return strongQueryTokens(query).join(' ');
 }
 
 export const DEFAULT_CATALOG_SEARCH_OPTIONS: SearchOptions = {
@@ -103,10 +110,14 @@ function extractQueryNumbers(query: string): Set<string> {
   return new Set(numbers);
 }
 
-/** บรรทัดยิ่งเยอะยิ่งน่าเชื่อถือ แต่ใช้ log กันไม่ให้ n_lines มาก ๆ กลบคะแนนความตรงของข้อความไปเลย
- * (`1 + ln(1+n_lines)`: n_lines=0 → 1 (ไม่ boost/ไม่หาร), ยิ่งมากยิ่งเพิ่มแบบหน่วงลง) */
-function popularityBoost(nLines: number): number {
-  return 1 + Math.log1p(Math.max(nLines, 0));
+/**
+ * T-206 F9: ลดความชันจาก `1 + ln(1+n_lines)` เดิม (ตัวคูณ 1.7…11.9 ตลอดช่วง n_lines จริง
+ * 1…53,806 — กลบความตรงของข้อความจน "แอร์ 18000" อันดับ 1 กลายเป็นรายการที่ไม่มี 18000 เป๊ะ) เหลือ
+ * `1 + 0.25·ln(1+n_lines)` (ตัวคูณ ~1.3…3.9 ในช่วงเดียวกัน) — คูณร่วมกับ `coverage²`
+ * (`rerankHits`) เพื่อให้ "ครอบคลุมคำค้น" มีน้ำหนักมากกว่าความนิยมเพียงอย่างเดียว
+ */
+function dampedPopularity(nLines: number): number {
+  return 1 + 0.25 * Math.log1p(Math.max(nLines, 0));
 }
 
 /** โบนัสเมื่อ "ทุก" token ตัวเลขในคำค้น (เช่น "18000") ปรากฏเป๊ะในชุด token ของ `item.key` — กันกรณี
@@ -141,9 +152,23 @@ function containsWholeNumber(text: string, num: string): boolean {
   }
 }
 
+/** T-206 F9: สัดส่วน token ของ query (หลัง `buildIndexQuery`/`strongQueryTokens`) ที่ hit นี้ match
+ * จริง (`hit.terms`) — เทียบแบบ unique token กันนับซ้ำ, clamp ไม่ให้เกิน 1 (เผื่อ MiniSearch คืน term
+ * ซ้ำ/เกินจำนวน query terms ด้วยเหตุผลภายในของมันเอง) */
+function coverageRatio(matchedTerms: string[], totalQueryTerms: number): number {
+  if (totalQueryTerms <= 0) return 1;
+  const uniqueMatched = new Set(matchedTerms).size;
+  return Math.min(uniqueMatched / totalQueryTerms, 1);
+}
+
 /**
  * re-rank ผลลัพธ์ดิบจาก `MiniSearch#search` — แยกเป็นฟังก์ชัน pure ต่างหาก (ไม่พึ่ง state ของโมดูล)
  * เพื่อ unit test ได้ตรง ๆ โดยไม่ต้องผ่าน fetch/gzip loading จริง
+ *
+ * T-206 F9: `score × coverage² × dampedPopularity(n_lines) × exactNumberBonus` — ยกกำลังสอง
+ * `coverage` เพื่อเน้นรายการที่ครอบคลุมคำค้นครบมากกว่ารายการที่ match แค่บาง token (ลดผลของ
+ * `dampedPopularity` เมื่อ coverage ต่ำ) `exactNumberBonus` ยังเป็น string scan เดิม — **ห้ามเปลี่ยน
+ * กลับไปตัดคำ (`Intl.Segmenter`) ต่อ hit** (main thread วัดแล้วว่าเป็นคอขวด ~200 ms กับ catalog จริง)
  */
 export function rerankHits(
   hits: Pick<SearchResult, 'id' | 'score' | 'terms'>[],
@@ -151,6 +176,7 @@ export function rerankHits(
   query: string,
 ): SearchMatch[] {
   const queryNumbers = extractQueryNumbers(query);
+  const totalQueryTerms = new Set(strongQueryTokens(query)).size;
   const matches: SearchMatch[] = [];
   for (const hit of hits) {
     // boundary: `SearchResult.id` เป็น `any` ในไลบรารี minisearch (รองรับ id ทุกชนิด) — โปรเจกต์นี้
@@ -158,7 +184,9 @@ export function rerankHits(
     const id = hit.id as number;
     const item = itemsById.get(id);
     if (!item) continue;
-    const score = hit.score * popularityBoost(item.n_lines) * exactNumberBonus(queryNumbers, item);
+    const coverage = coverageRatio(hit.terms, totalQueryTerms);
+    const score =
+      hit.score * coverage ** 2 * dampedPopularity(item.n_lines) * exactNumberBonus(queryNumbers, item);
     matches.push({
       item,
       score,
@@ -197,9 +225,56 @@ function buildFallbackIndex(slimItems: CatalogItemSlim[]): MiniSearch<CatalogSea
   return mini;
 }
 
+/** แปลง `CatalogItem` (เต็ม) → รูปทรงเดียวกับ `CatalogItemSlim` โดย `i` = index จริงในอาร์เรย์ที่โหลด
+ * มา — ใช้เฉพาะตอน slim เดิม "ห้ามใช้" (T-206 F4: data_version ไม่ตรง) เพื่อสร้างสถานะค้นหาที่ถูกต้อง
+ * แน่นอนจากแหล่งเดียว (catalog เต็มที่เพิ่งโหลดสด ๆ) แทน */
+function catalogItemToSlim(i: number, item: CatalogFile['items'][number]): CatalogItemSlim {
+  const slim: CatalogItemSlim = {
+    i,
+    key: item.key,
+    name: item.name,
+    n_lines: item.n_lines,
+    years: item.years,
+    has_unit_price: item.unit_price !== undefined,
+  };
+  if (item.low_specificity !== undefined) {
+    slim.low_specificity = item.low_specificity;
+  }
+  if (item.trend !== undefined) {
+    slim.trend = item.trend;
+  }
+  return slim;
+}
+
+/**
+ * T-206 F4 (main thread update, 20 ก.ย. 2569): `tgbp publish` รัน `build-search-index.mjs` เป็น
+ * ขั้นตอนแยกจากสูตร `data_version` หลัก (สอง artifact นี้ไม่ถูกนับใน hash เพื่อให้ reproducible) —
+ * ถ้า pipeline republish catalog แล้ว **ลืม** รัน build-search-index.mjs ใหม่ ไฟล์ slim/index รุ่นเก่า
+ * จะยังอยู่ครบ (ไม่ 404) แต่ `data_version` ข้างในไม่ตรงกับ manifest ปัจจุบัน ⇒ ดัชนี `i` ของ slim จะ
+ * ชี้ผิดรายการใน `catalog/items.json.gz` ตัวใหม่ (citation ผิด — N3) ต้องตรวจแยกทั้งสองไฟล์:
+ *
+ * 1. `items-slim.json.gz.data_version !== manifest.data_version` → **ห้ามใช้ slim เลย** (ทั้ง
+ *    `key`/`i` ของมันอาจไม่ตรงกับ catalog เต็มตัวใหม่) รวมถึง **ห้ามใช้ prebuilt index ด้วย**
+ *    (index ผูก id เข้ากับ `i` ของ slim รุ่นเดียวกันตอน build เสมอ) ⇒ โหลด `catalog/items.json.gz`
+ *    เต็มมาสร้าง slim-like + index ใน browser สด ๆ แทน (ช้าที่สุดแต่ถูกต้องเสมอเพราะ `i` = index จริง
+ *    ในอาร์เรย์ที่เพิ่งโหลด)
+ * 2. slim ตรง แต่ `search-index.json.gz` ไม่ตรง (data_version หรือ tokenizer_version) → build index
+ *    จาก slim ใน browser ได้ตามปกติ (พฤติกรรมเดิม) เพราะ slim (และ `i` ของมัน) ยังเชื่อถือได้
+ */
 async function buildCatalogSearchState(fetchImpl: typeof fetch): Promise<CatalogSearchState> {
   const manifest = await loadManifest(fetchImpl);
   const slimFile = await loadJsonGz('catalog/items-slim.json.gz', CatalogSlimFileSchema, fetchImpl);
+
+  if (slimFile.data_version !== manifest.data_version) {
+    console.warn(
+      `[data/search] catalog/items-slim.json.gz ไม่ตรงเวอร์ชันกับ manifest (data_version: ${slimFile.data_version} vs ${manifest.data_version}) — ดัชนี "i" อาจชี้ผิดรายการใน catalog/items.json.gz จึงไม่ใช้ slim/prebuilt index เลย จะโหลด catalog เต็มมาสร้างดัชนีค้นหาใหม่แทน (ช้ากว่ามาก)`,
+    );
+    const fullCatalog = await loadFullCatalog(fetchImpl);
+    const slimLike = fullCatalog.items.map((item, i) => catalogItemToSlim(i, item));
+    const itemsById = new Map<number, CatalogItemSlim>(slimLike.map((it) => [it.i, it]));
+    return { mini: buildFallbackIndex(slimLike), itemsById, source: 'browser-fallback' };
+  }
+
   const itemsById = new Map<number, CatalogItemSlim>(slimFile.items.map((it) => [it.i, it]));
 
   let indexFile: SearchIndexFile | null = null;
@@ -265,12 +340,18 @@ export function clampCatalogSearchLimit(limit: number | undefined): number {
   return Math.max(0, Math.min(requested, SEARCH_CATALOG_MAX_LIMIT));
 }
 
+export interface SearchCatalogResult {
+  matches: SearchMatch[];
+  /** จำนวนผลลัพธ์ทั้งหมดหลังกรอง (years/requireUnitPrice) ก่อนตัดด้วย `limit` — T-206 item 7 */
+  total: number;
+}
+
 /** ค้นหา catalog — โหลด index แบบ lazy ครั้งแรกที่เรียก แล้ว cache ไว้ */
 export async function searchCatalog(
   query: string,
   options: SearchCatalogOptions = {},
   fetchImpl: typeof fetch = fetch,
-): Promise<SearchMatch[]> {
+): Promise<SearchCatalogResult> {
   const state = await loadCatalogSearch(fetchImpl);
   const hits = state.mini.search(buildIndexQuery(query), DEFAULT_CATALOG_SEARCH_OPTIONS);
   let matches = rerankHits(hits, state.itemsById, query);
@@ -283,11 +364,16 @@ export async function searchCatalog(
     matches = matches.filter((m) => m.item.has_unit_price);
   }
 
-  return matches.slice(0, clampCatalogSearchLimit(options.limit));
+  return { matches: matches.slice(0, clampCatalogSearchLimit(options.limit)), total: matches.length };
 }
 
 // ---------------------------------------------------------------------------
 // getCatalogItem — โหลด catalog/items.json.gz เต็มเฉพาะตอนถูกเรียกครั้งแรก (cache หลังจากนั้น)
+//
+// T-206 F6 (main thread ตัดสินใจ 20 ก.ย. 2569: เลื่อนเป็น T-210 หลัง Phase 3 — จะ publish
+// `catalog/detail/{hh}.json.gz` เป็น block แทนโหลดเต็ม 40 MB heap ครั้งเดียว) — วันนี้มี backend
+// เดียว (`FullCatalogDetailSource`) แต่ซ่อนหลัง `CatalogDetailSource` interface เดียวกัน เพื่อให้
+// สลับ backend ทีหลังได้โดยไม่กระทบ caller (`getCatalogItem`/facade `@/data`)
 // ---------------------------------------------------------------------------
 
 function loadFullCatalog(fetchImpl: typeof fetch): Promise<CatalogFile> {
@@ -300,19 +386,71 @@ function loadFullCatalog(fetchImpl: typeof fetch): Promise<CatalogFile> {
   return fullCatalogPromise;
 }
 
+/** TODO(T-210): เพิ่ม backend ที่โหลดเฉพาะ shard ของ `catalog/detail/{hh}.json.gz` แทนการโหลด
+ * catalog เต็มทุกครั้ง (F6) — ตอนนี้มีแค่ `FullCatalogDetailSource` (โหลดเต็ม + cache ถาวร) */
+export interface CatalogDetailSource {
+  getItem(i: number): Promise<CatalogFile['items'][number]>;
+}
+
+/**
+ * T-206 F4: กัน "index เลื่อน" — เทียบ `key` ของ item ที่ index `i` ใน catalog เต็มกับ `key` ที่
+ * ผลค้นหา (slim/`CatalogSearchState.itemsById`) คาดไว้ ณ `i` เดียวกัน ถ้าไม่ตรงแปลว่า catalog เต็ม
+ * กับ slim/ผลค้นหาที่ใช้อยู่คนละรุ่นกัน (catalog เต็มไม่มี `data_version` ของตัวเองให้เทียบตรง ๆ —
+ * นี่คือวิธีเดียวที่ตรวจได้จากข้อมูลที่มี) — throw error ที่อ่านเข้าใจง่ายแทนคืนรายการผิดเงียบ ๆ
+ */
+function createFullCatalogDetailSource(fetchImpl: typeof fetch): CatalogDetailSource {
+  return {
+    async getItem(i: number): Promise<CatalogFile['items'][number]> {
+      const catalog = await loadFullCatalog(fetchImpl);
+      const item = catalog.items[i];
+      if (!item) {
+        throw new Error(
+          `ไม่พบ catalog item ที่ index ${String(i)} (มีทั้งหมด ${String(catalog.items.length)} รายการ)`,
+        );
+      }
+      const state = await loadCatalogSearch(fetchImpl);
+      const expected = state.itemsById.get(i);
+      if (expected && expected.key !== item.key) {
+        throw new Error(
+          `ข้อมูล catalog ไม่ตรงกัน (T-206 F4): index ${String(i)} ใน catalog/items.json.gz คือ "${item.key}" ` +
+            `แต่ผลค้นหา/slim คาดว่าเป็น "${expected.key}" (data_version ของ catalog เต็มอาจไม่ตรงกับที่ใช้ค้นหาอยู่)`,
+        );
+      }
+      return item;
+    },
+  };
+}
+
 /** คืน `CatalogItem` เต็ม (มี `keys`/`shards`/สถิติราคา) ของ index `i` — โหลด catalog เต็มแบบ lazy */
-export async function getCatalogItem(
+export function getCatalogItem(
   i: number,
   fetchImpl: typeof fetch = fetch,
 ): Promise<CatalogFile['items'][number]> {
-  const catalog = await loadFullCatalog(fetchImpl);
-  const item = catalog.items[i];
-  if (!item) {
-    throw new Error(
-      `ไม่พบ catalog item ที่ index ${String(i)} (มีทั้งหมด ${String(catalog.items.length)} รายการ)`,
-    );
+  return createFullCatalogDetailSource(fetchImpl).getItem(i);
+}
+
+/**
+ * T-206 item 7: หา `CatalogItem` เต็มจาก `key` — รองรับทั้ง key ตัวแทน (`CatalogItemSlim.key`, หาเจอ
+ * ทันทีจาก slim ที่โหลดอยู่แล้ว ไม่ต้องโหลด catalog เต็ม) และ key ที่เป็น variant ใน `CatalogItem.keys`
+ * (ต่างกันแค่ช่องว่าง/รูปแบบ) — **ข้อจำกัด**: variant lookup ต้องโหลด catalog เต็ม (~5.4 MB gz) มา
+ * สแกนก่อน (เกิดเฉพาะตอนหา variant ที่ไม่ใช่ key ตัวแทนเท่านั้น ไม่ใช่ทุกครั้งที่เรียกฟังก์ชันนี้)
+ */
+export async function getCatalogItemByKey(
+  key: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<CatalogFile['items'][number] | null> {
+  const normalized = key.trim().replace(/\s+/g, ' ');
+  const state = await loadCatalogSearch(fetchImpl);
+  for (const item of state.itemsById.values()) {
+    if (item.key === normalized) {
+      return getCatalogItem(item.i, fetchImpl);
+    }
   }
-  return item;
+  const catalog = await loadFullCatalog(fetchImpl);
+  return (
+    catalog.items.find((it) => it.key === normalized || (it.keys?.includes(normalized) ?? false)) ??
+    null
+  );
 }
 
 // ---------------------------------------------------------------------------

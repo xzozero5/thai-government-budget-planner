@@ -10,12 +10,14 @@ import {
   MAX_REGISTERED_SHARDS,
   __setDuckDbDepsForTests,
   ensureShardRegistered,
+  ensureShardsRegistered,
   getDb,
   getRegisteredShardUrlsForTests,
   prefetchDb,
   resetDuckDbForTests,
   type DuckDbProgress,
 } from './duckdb';
+import { MAX_SHARDS_TO_SCAN } from './repo';
 import { createFakeDuckDbDeps, FakeAsyncDuckDb } from './duckdbTestDoubles';
 
 afterEach(() => {
@@ -200,6 +202,35 @@ describe('ensureShardRegistered — LRU eviction', () => {
     await ensureShardRegistered('https://example.test/data/x.parquet', fetchImpl);
 
     expect(fetchCount).toBe(1);
+  });
+
+  it('T-206 F7: MAX_REGISTERED_SHARDS ต้อง >= repo.MAX_SHARDS_TO_SCAN เสมอ', () => {
+    expect(MAX_REGISTERED_SHARDS).toBeGreaterThanOrEqual(MAX_SHARDS_TO_SCAN);
+  });
+
+  it('T-206 F7: ensureShardsRegistered pin ทั้งชุด — register ครบ MAX_SHARDS_TO_SCAN ไฟล์สองรอบติดกัน ไม่มี re-register/evict กลาง query', async () => {
+    const fakeDb = new FakeAsyncDuckDb();
+    __setDuckDbDepsForTests(createFakeDuckDbDeps(fakeDb));
+    let fetchCount = 0;
+    const fetchImpl = (() => {
+      fetchCount += 1;
+      return Promise.resolve(new Response(new Uint8Array(1024), { status: 200 }));
+    }) as unknown as typeof fetch;
+    const urls = Array.from(
+      { length: MAX_SHARDS_TO_SCAN },
+      (_, i) => `https://example.test/data/pin-${String(i)}.parquet`,
+    );
+
+    await ensureShardsRegistered(urls, fetchImpl);
+    expect(fakeDb.registeredBuffers.size).toBe(MAX_SHARDS_TO_SCAN);
+    expect(fakeDb.droppedFiles).toEqual([]);
+
+    // รอบสอง (เช่น จังหวะที่ 2 ของ two-phase query เดียวกันเรียก register ซ้ำ) — ต้องไม่ evict ตัวเอง
+    await ensureShardsRegistered(urls, fetchImpl);
+    expect(fakeDb.registeredBuffers.size).toBe(MAX_SHARDS_TO_SCAN);
+    expect(fakeDb.droppedFiles).toEqual([]);
+    // รอบสองแค่ touch LRU ไม่ fetch ซ้ำ
+    expect(fetchCount).toBe(MAX_SHARDS_TO_SCAN);
   });
 
   it('โยน DuckDbQueryError ที่มีข้อความไทยเมื่อเซิร์ฟเวอร์ตอบไม่ ok', async () => {

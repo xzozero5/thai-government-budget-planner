@@ -1,14 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetDuckDbForTests, __setDuckDbDepsForTests } from './duckdb';
 import { createFakeDuckDbDeps, FakeAsyncDuckDb, type FakeQueryResponse } from './duckdbTestDoubles';
-import { resetManifestCache } from './manifest';
+import { dataUrl, resetManifestCache } from './manifest';
 import {
   budgetRepo,
   DEFAULT_EXCLUDE_FLAGS,
-  DocNotFoundError,
   facets,
-  getDoc,
   getLines,
+  getNeighborLines,
   InvalidShardPathError,
   MAX_SHARDS_TO_SCAN,
   QueryTooBroadError,
@@ -17,6 +16,12 @@ import {
 } from './repo';
 import { createFixtureFetch } from './testFixtures';
 import type { BudgetLine } from './types';
+
+/** absolute URL เดียวกับที่ `repo.ts` (`toAbsoluteDataUrl`) จะสร้างจาก relative path — ใช้ในเทสต์
+ * B3 (คอลัมน์ `filename` ของ `read_parquet(..., filename=true)`) */
+function absoluteShardUrl(relPath: string): string {
+  return new URL(dataUrl(relPath), window.location.href).href;
+}
 
 // ทุก test ในไฟล์นี้อ่านข้อมูลผ่าน fixture fetch (ไม่แตะ network จริง) — ครอบคลุมทั้ง
 // manifest.json/sources.json/facets.json (จริง) และ shard parquet (ใช้ตอน fallback mode:'full'
@@ -34,16 +39,20 @@ afterEach(() => {
 });
 
 function setFakeResponses(responses: FakeQueryResponse[]): FakeAsyncDuckDb {
+  // reset singleton ของ duckdb.ts ทุกครั้ง — จำเป็นเมื่อเทสต์เดียวเรียก setFakeResponses หลายรอบ
+  // (เช่น วน orderBy หลายค่า) มิฉะนั้น getDb() จะยังคง cache handlePromise ของ fakeDb ตัวเก่าไว้
+  resetDuckDbForTests();
   const fakeDb = new FakeAsyncDuckDb(responses);
   __setDuckDbDepsForTests(createFakeDuckDbDeps(fakeDb));
   return fakeDb;
 }
 
 /** สร้างแถว BudgetLine ที่ผ่าน BudgetLineSchema ครบทุก field (ใช้เป็นผลลัพธ์จำลองของจังหวะที่ 2) */
-function makeLineRecord(overrides: Partial<Record<keyof BudgetLine, unknown>>): Record<
-  string,
-  unknown
-> {
+/** `filename` ไม่ใช่ key ของ `BudgetLine` (มาจากคอลัมน์พิเศษ `read_parquet(..., filename=true)` — B3)
+ * แต่ยังต้องรับได้ในเทสต์ จึง union เพิ่มเข้ามาแยกต่างหาก */
+function makeLineRecord(
+  overrides: Partial<Record<keyof BudgetLine, unknown>> & { filename?: string },
+): Record<string, unknown> {
   const base: Record<string, unknown> = {
     source_id: 'src-1',
     dataset: 'act_2570_draft',
@@ -249,14 +258,74 @@ describe('queryLines — two-phase (ADR-002 ข้อ 4)', () => {
     expect(fakeDb.connection.preparedCalls).toHaveLength(1);
   });
 
-  it('truncated = true เมื่อ totalMatched > จำนวนที่คืนจริง', async () => {
+  it('T-206 B2: truncated = true เมื่อ totalMatched > limit ที่ขอ (ไม่ใช่ totalMatched > rows.length)', async () => {
     setFakeResponses([
       { rows: [{ source_id: 'src-1', __total_matched: 5 }] },
       { rows: [makeLineRecord({ source_id: 'src-1' })] },
     ]);
-    const result = await queryLines({ dataset: 'act_2570_draft', ministryCodes: ['15000'] });
+    const result = await queryLines({
+      dataset: 'act_2570_draft',
+      ministryCodes: ['15000'],
+      limit: 1,
+    });
     expect(result.totalMatched).toBe(5);
     expect(result.truncated).toBe(true);
+  });
+
+  it('T-206 B2: totalMatched <= limit → truncated = false แม้บางแถวจะ validate ไม่ผ่าน (droppedRows แยกต่างหาก)', async () => {
+    setFakeResponses([
+      { rows: [{ source_id: 'src-1', __total_matched: 1 }] },
+      // record ที่ validate ไม่ผ่าน (ไม่มี field บังคับใด ๆ เลยนอกจาก source_id)
+      { rows: [{ source_id: 'src-1' }] },
+    ]);
+    const result = await queryLines({ dataset: 'act_2570_draft', ministryCodes: ['15000'] });
+    expect(result.totalMatched).toBe(1);
+    expect(result.truncated).toBe(false);
+    expect(result.rows).toHaveLength(0);
+    expect(result.droppedRows).toBe(1);
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0]).toContain('src-1');
+  });
+});
+
+describe('queryLines — T-206 B1: ORDER BY ต้องมี source_id ASC เป็น tiebreaker เสมอ', () => {
+  it('ทุกตัวเลือกของ orderBy ลงท้ายด้วย source_id ASC (phase 1)', async () => {
+    const cases: { orderBy: Parameters<typeof queryLines>[0]['orderBy']; expectSubstr: string }[] = [
+      { orderBy: 'amount_desc', expectSubstr: 'amount_thb DESC NULLS LAST, source_id ASC' },
+      { orderBy: 'amount_asc', expectSubstr: 'amount_thb ASC NULLS LAST, source_id ASC' },
+      { orderBy: 'unit_price_desc', expectSubstr: 'unit_price_thb DESC NULLS LAST, source_id ASC' },
+      { orderBy: 'unit_price_asc', expectSubstr: 'unit_price_thb ASC NULLS LAST, source_id ASC' },
+      { orderBy: 'source_id', expectSubstr: 'source_id ASC' },
+      { orderBy: undefined, expectSubstr: 'amount_thb DESC NULLS LAST, source_id ASC' },
+    ];
+    for (const { orderBy, expectSubstr } of cases) {
+      const fakeDb = setFakeResponses([{ rows: [] }]);
+      await queryLines({
+        dataset: 'act_2570_draft',
+        ministryCodes: ['15000'],
+        ...(orderBy !== undefined ? { orderBy } : {}),
+      });
+      const [phase1] = fakeDb.connection.preparedCalls;
+      expect(phase1?.sql).toContain(`ORDER BY ${expectSubstr}`);
+    }
+  });
+
+  it('getLines: SQL มี ORDER BY source_id ASC', async () => {
+    const fakeDb = setFakeResponses([{ rows: [] }]);
+    await getLines(['src-1'], ['budget_lines/act2570/15000.parquet']);
+    const [call] = fakeDb.connection.preparedCalls;
+    expect(call?.sql).toContain('ORDER BY source_id ASC');
+  });
+
+  it('getNeighborLines: SQL มี ORDER BY source_row ASC, source_id ASC', async () => {
+    // response แรก = getLines(anchor) ภายใน, response สอง = query neighbor เอง
+    const fakeDb = setFakeResponses([
+      { rows: [makeLineRecord({ source_id: 'src-1', source_row: 10 })] },
+      { rows: [makeLineRecord({ source_id: 'src-1', source_row: 10 })] },
+    ]);
+    await getNeighborLines('src-1', 2, 'budget_lines/act2570/15000.parquet');
+    const [, neighborCall] = fakeDb.connection.preparedCalls;
+    expect(neighborCall?.sql).toContain('ORDER BY source_row ASC, source_id ASC');
   });
 });
 
@@ -365,75 +434,51 @@ describe('getLines', () => {
 
   it('คืนแถวเต็มทุกคอลัมน์เมื่อ shardHints ถูกต้อง', async () => {
     setFakeResponses([{ rows: [makeLineRecord({ source_id: 'src-1' })] }]);
-    const rows = await getLines(['src-1'], ['budget_lines/act2570/15000.parquet']);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]?.item_name_raw).toBe('เครื่องปรับอากาศ ขนาด 18000 บีทียู');
+    const result = await getLines(['src-1'], ['budget_lines/act2570/15000.parquet']);
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0]?.item_name_raw).toBe('เครื่องปรับอากาศ ขนาด 18000 บีทียู');
+    expect(result.shardPaths).toEqual(['budget_lines/act2570/15000.parquet']);
+    expect(result.droppedRows).toBe(0);
+    expect(result.warnings).toEqual([]);
   });
 
   it('sourceIds ว่าง → คืน [] โดยไม่ query', async () => {
     const fakeDb = setFakeResponses([]);
-    const rows = await getLines([], ['budget_lines/act2570/15000.parquet']);
-    expect(rows).toEqual([]);
+    const result = await getLines([], ['budget_lines/act2570/15000.parquet']);
+    expect(result.rows).toEqual([]);
+    expect(result.shardPaths).toEqual([]);
+    expect(result.rowShards).toEqual({});
     expect(fakeDb.connection.preparedCalls).toHaveLength(0);
   });
-});
 
-describe('getDoc', () => {
-  it('extracted: false → คืน note แทน chunks', async () => {
-    vi.stubGlobal(
-      'fetch',
-      (input: RequestInfo | URL) => {
-        const url =
-          typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
-        if (url.includes('sources.json')) {
-          return Promise.resolve(
-            new Response(
-              JSON.stringify([
-                {
-                  doc_id: 'd_scan',
-                  rel_path: 'x.jpg',
-                  kind: 'jpg',
-                  bytes: 1,
-                  sha1: 'a',
-                  pages: null,
-                  has_text_layer: null,
-                  extracted: false,
-                  title_guess: null,
-                  collection: 'pbo',
-                  meeting_no: null,
-                  meeting_date: null,
-                  topic: null,
-                  agency_guess: null,
-                  province: null,
-                  gov_level: null,
-                  level: null,
-                  fiscal_years: [],
-                  text_chunks_file: null,
-                  n_chunks: null,
-                  note: null,
-                  duplicates: null,
-                },
-              ]),
-              { status: 200 },
-            ),
-          );
-        }
-        return createFixtureFetch()(input);
-      },
+  it('T-206 B2: แถวที่ validate ไม่ผ่าน → นับใน droppedRows + warnings (ไม่ทิ้งเงียบ)', async () => {
+    setFakeResponses([
+      { rows: [makeLineRecord({ source_id: 'src-1' }), { source_id: 'src-2' }] },
+    ]);
+    const result = await getLines(
+      ['src-1', 'src-2'],
+      ['budget_lines/act2570/15000.parquet'],
     );
-    const result = await getDoc('d_scan');
-    expect(result.chunks).toBeNull();
-    expect(result.note).toContain('เอกสารนี้เป็นเอกสารสแกน');
+    expect(result.rows).toHaveLength(1);
+    expect(result.droppedRows).toBe(1);
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0]).toContain('src-2');
   });
 
-  it('extracted: true + มี text_chunks_file → คืน chunks จริง', async () => {
-    const result = await getDoc('d_b2216ce7d082');
-    expect(result.chunks).not.toBeNull();
-    expect(result.chunks?.length).toBeGreaterThan(0);
-  });
-
-  it('doc_id ไม่พบ → DocNotFoundError', async () => {
-    await expect(getDoc('d_ไม่มีจริง')).rejects.toBeInstanceOf(DocNotFoundError);
+  it('T-206 B3: rowShards แม็พ source_id → shard path จริงจากคอลัมน์ filename เมื่อมีหลาย shardHints', async () => {
+    const shard1 = 'budget_lines/act2570/15000.parquet';
+    const shard2 = 'budget_lines/act2570/20000.parquet';
+    setFakeResponses([
+      {
+        rows: [
+          makeLineRecord({ source_id: 'src-1', filename: absoluteShardUrl(shard1) }),
+        ],
+      },
+    ]);
+    const result = await getLines(['src-1'], [shard1, shard2]);
+    expect(result.rows).toHaveLength(1);
+    expect(result.shardPaths).toEqual([shard1, shard2]);
+    expect(result.rowShards['src-1']).toBe(shard1);
   });
 });
 
@@ -449,7 +494,6 @@ describe('budgetRepo — object รวม (ให้ ai/ mock ง่าย)', ()
     expect(typeof budgetRepo.queryLines).toBe('function');
     expect(typeof budgetRepo.getLines).toBe('function');
     expect(typeof budgetRepo.getNeighborLines).toBe('function');
-    expect(typeof budgetRepo.getDoc).toBe('function');
     expect(typeof budgetRepo.facets).toBe('function');
   });
 });

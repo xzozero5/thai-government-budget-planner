@@ -132,9 +132,13 @@ export const BUDGET_LINE_COLUMNS = Object.keys(BudgetLineSchema.shape) as (keyof
 
 export const SOURCE_DOC_KINDS = ['pdf', 'xlsx', 'xls', 'docx', 'pptx', 'jpg', 'other'] as const;
 export const SourceDocKindSchema = z.enum(SOURCE_DOC_KINDS);
+/** T-206 item 8 (`data/documents.ts`) — เพิ่ม type alias (ไม่แก้ schema/logic เดิม) */
+export type SourceDocKind = z.infer<typeof SourceDocKindSchema>;
 
 export const SOURCE_DOC_COLLECTIONS = ['committee', 'province_budget', 'open_sso', 'pbo'] as const;
 export const SourceDocCollectionSchema = z.enum(SOURCE_DOC_COLLECTIONS);
+/** T-206 item 8 (`data/documents.ts`) — เพิ่ม type alias (ไม่แก้ schema/logic เดิม) */
+export type SourceDocCollection = z.infer<typeof SourceDocCollectionSchema>;
 
 export const SourceDocSchema = z.object({
   doc_id: z.string(),
@@ -423,6 +427,18 @@ const ManifestTotalsSchema = z.object({
   rows_by_dataset: z.record(z.string(), z.number().int()),
 });
 
+/**
+ * T-206 (main thread update, 20 ก.ย. 2569): field ใหม่ที่ `tgbp publish` เขียนหลังรัน
+ * `build-search-index.mjs` (T-208) — สูตร `data_version` ของ pipeline **ไม่นับ** สอง artifact นี้
+ * (items-slim/search-index) เพื่อให้ reproducible จึงต้องตรวจ `data_version`/`tokenizer_version`
+ * ของแต่ละไฟล์เองแยกต่างหาก (ดู `data/search.ts` F4) — field นี้เป็นแค่ metadata บอกว่า build ไปแล้ว
+ * ไม่ใช่แหล่งความจริงสำหรับตรวจ mismatch (optional เผื่อ manifest รุ่นเก่าไม่มี field นี้)
+ */
+const ManifestSearchIndexSchema = z.object({
+  built: z.boolean(),
+  tokenizer_version: z.string(),
+});
+
 export const ManifestSchema = z.object({
   schema_version: z.number().int(),
   data_version: z.string(),
@@ -433,5 +449,6 @@ export const ManifestSchema = z.object({
   catalog_scope: z.string(),
   coverage_notes: z.array(CoverageNoteSchema),
   catalog_threshold: CatalogThresholdSchema,
+  search_index: ManifestSearchIndexSchema.optional(),
 });
 export type Manifest = z.infer<typeof ManifestSchema>;

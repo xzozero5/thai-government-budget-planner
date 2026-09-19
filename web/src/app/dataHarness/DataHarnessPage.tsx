@@ -7,13 +7,14 @@
  */
 import { type ReactElement, useEffect, useState } from 'react';
 import { closeDb, prefetchDb } from '@/data/duckdb';
+import { getDoc, type GetDocOptions, type GetDocResult } from '@/data/documents';
 import {
   budgetRepo,
-  type GetDocResult,
+  type GetLinesResult,
   type QueryLinesParams,
   type QueryLinesResult,
 } from '@/data/repo';
-import type { BudgetLine, Facets } from '@/data/types';
+import type { Facets } from '@/data/types';
 
 type SafeResult<T> =
   | { ok: true; data: T }
@@ -34,8 +35,8 @@ async function safeCall<T>(fn: () => Promise<T>): Promise<SafeResult<T>> {
 
 export interface DataHarnessApi {
   queryLines: (params: QueryLinesParams) => Promise<SafeResult<QueryLinesResult>>;
-  getLines: (sourceIds: string[], shardHints: string[]) => Promise<SafeResult<BudgetLine[]>>;
-  getDoc: (docId: string, opts?: { page?: number }) => Promise<SafeResult<GetDocResult>>;
+  getLines: (sourceIds: string[], shardHints: string[]) => Promise<SafeResult<GetLinesResult>>;
+  getDoc: (docId: string, opts?: GetDocOptions) => Promise<SafeResult<GetDocResult>>;
   facets: () => Promise<SafeResult<Facets>>;
   prefetchDb: () => Promise<SafeResult<void>>;
   closeDb: () => Promise<SafeResult<void>>;
@@ -54,7 +55,7 @@ export function DataHarnessPage(): ReactElement {
     window.__dataHarness = {
       queryLines: (params) => safeCall(() => budgetRepo.queryLines(params)),
       getLines: (sourceIds, shardHints) => safeCall(() => budgetRepo.getLines(sourceIds, shardHints)),
-      getDoc: (docId, opts) => safeCall(() => budgetRepo.getDoc(docId, opts)),
+      getDoc: (docId, opts) => safeCall(() => getDoc(docId, opts)),
       facets: () => safeCall(() => budgetRepo.facets()),
       prefetchDb: () => safeCall(() => prefetchDb()),
       closeDb: () => safeCall(() => closeDb()),

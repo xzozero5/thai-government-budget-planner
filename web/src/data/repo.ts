@@ -1,11 +1,15 @@
 /**
  * T-203 — Repository ของข้อมูลงบประมาณ (`BudgetRepo`)
  *
- * `ai/` เรียกข้อมูลผ่านไฟล์นี้เท่านั้น (docs/04-ARCHITECTURE.md §3: `ai/` ห้ามแตะ DuckDB โดยตรง)
- * ทุก query ที่มีค่าจาก AI/ผู้ใช้ (item_keys, keyword, agencyContains, min/maxAmount, excludeFlags)
- * ต้องผ่าน prepared statement + parameters เท่านั้น (`duckdb.queryRows`) — ห้ามต่อค่าพวกนี้เป็น
- * string ลง SQL text เด็ดขาด ส่วน path ของ shard parquet มาจาก `manifest.files` ผ่าน `dataUrl()`
- * เท่านั้น (ผ่านการ sanitize ใน manifest.ts แล้ว) จึง embed ตรง ๆ ใน SQL ได้ (ADR-002)
+ * `ai/` เรียกข้อมูลผ่าน facade `@/data` (`data/index.ts`) เท่านั้น — ไฟล์นี้เป็น implementation
+ * ภายใน (docs/04-ARCHITECTURE.md §3: `ai/` ห้ามแตะ DuckDB โดยตรง) ทุก query ที่มีค่าจาก AI/ผู้ใช้
+ * (item_keys, keyword, agencyContains, min/maxAmount, excludeFlags) ต้องผ่าน prepared statement +
+ * parameters เท่านั้น (`duckdb.queryRows`) — ห้ามต่อค่าพวกนี้เป็น string ลง SQL text เด็ดขาด ส่วน
+ * path ของ shard parquet มาจาก `manifest.files` ผ่าน `dataUrl()` เท่านั้น (ผ่านการ sanitize ใน
+ * manifest.ts แล้ว) จึง embed ตรง ๆ ใน SQL ได้ (ADR-002)
+ *
+ * T-206 (review): เอกสารเอกสาร/`sources.json`/`getDoc`/`findDocuments` ย้ายไปอยู่ `data/documents.ts`
+ * แยกต่างหาก (คนละความรับผิดชอบจาก budget lines) — ไฟล์นี้เหลือเฉพาะ budget lines + facets
  *
  * ห้าม import React (module boundary — docs/04-ARCHITECTURE.md §3)
  */
@@ -13,13 +17,12 @@ import {
   coverageNotesFor,
   dataUrl,
   loadJson,
-  loadJsonGz,
   loadManifest,
   type ShardPathsQuery,
   shardPathsFor,
 } from './manifest';
 import {
-  ensureShardRegistered,
+  ensureShardsRegistered,
   queryRows,
   type SqlParam,
 } from './duckdb';
@@ -28,21 +31,18 @@ import {
   BudgetLineSchema,
   type CoverageNote,
   type Dataset,
-  type DocChunk,
-  DocChunksFileSchema,
   type Facets,
   FacetsSchema,
   type Manifest,
   type QualityFlag,
-  type SourceDoc,
-  SourcesFileSchema,
 } from './types';
 
 // ---------------------------------------------------------------------------
 // ค่าคงที่
 // ---------------------------------------------------------------------------
 
-/** ADR-002/BACKLOG T-203: บังคับจำกัดจำนวน shard ที่สแกนต่อ query เดียว เพื่อคุมขนาดที่โหลด */
+/** ADR-002/BACKLOG T-203: บังคับจำกัดจำนวน shard ที่สแกนต่อ query เดียว เพื่อคุมขนาดที่โหลด
+ * (T-206 F7: `duckdb.MAX_REGISTERED_SHARDS` ต้อง >= ค่านี้เสมอ — มี unit test ข้ามไฟล์ตรวจไว้) */
 export const MAX_SHARDS_TO_SCAN = 12;
 
 export const DEFAULT_QUERY_LIMIT = 20;
@@ -59,11 +59,17 @@ export type OrderBy =
   | 'unit_price_asc'
   | 'source_id';
 
+/**
+ * T-206 B1 (blocker): ทุก entry ต้องลงท้ายด้วย `source_id ASC` เป็น tiebreaker — ไม่ทำเช่นนี้แล้ว
+ * แถวที่ค่าเรียงเท่ากัน (เยอะมากในข้อมูลงบ เช่น amount_thb ซ้ำ/เป็น 0) จะสลับลำดับได้ระหว่าง
+ * range/full mode, ระหว่าง shard order, และหลัง republish ⇒ citation ที่ AI อ้างในบทสนทนาเดียวกัน
+ * อาจ reproduce ไม่ได้ (N3) — มี unit test ยืนยันว่า SQL มี tiebreaker ทุก key (`repo.test.ts`)
+ */
 const ORDER_BY_SQL: Record<OrderBy, string> = {
-  amount_desc: 'amount_thb DESC NULLS LAST',
-  amount_asc: 'amount_thb ASC NULLS LAST',
-  unit_price_desc: 'unit_price_thb DESC NULLS LAST',
-  unit_price_asc: 'unit_price_thb ASC NULLS LAST',
+  amount_desc: 'amount_thb DESC NULLS LAST, source_id ASC',
+  amount_asc: 'amount_thb ASC NULLS LAST, source_id ASC',
+  unit_price_desc: 'unit_price_thb DESC NULLS LAST, source_id ASC',
+  unit_price_asc: 'unit_price_thb ASC NULLS LAST, source_id ASC',
   source_id: 'source_id ASC',
 };
 
@@ -94,13 +100,6 @@ export class RepoQueryError extends Error {
     super(message);
     this.name = 'RepoQueryError';
     this.cause = cause;
-  }
-}
-
-export class DocNotFoundError extends Error {
-  constructor(docId: string) {
-    super(`ไม่พบเอกสารต้นทาง (doc_id): ${docId}`);
-    this.name = 'DocNotFoundError';
   }
 }
 
@@ -145,10 +144,22 @@ export interface QueryLinesParams {
 export interface QueryLinesResult {
   rows: BudgetLine[];
   totalMatched: number;
+  /** T-206 B2: คิดจาก `totalMatched > limit` เสมอ (ไม่ใช่ `totalMatched > rows.length` — จำนวนแถวที่
+   * parse ผ่านน้อยกว่าที่ขอเพราะแถวเสียเป็นคนละเรื่องกับ "ถูกตัดด้วย LIMIT" ดู `droppedRows`) */
   truncated: boolean;
   shardsScanned: number;
+  /** T-206 B3: path (relative ใต้ `data/`) ของทุก shard ที่ query นี้สแกนจริง */
+  shardPaths: string[];
+  /** T-206 B3: แม็พ `source_id` ของแต่ละแถวใน `rows` → shard path ที่แถวนั้นมาจากจริง (มาจากคอลัมน์
+   * `filename` ของ `read_parquet(..., filename=true)` — ดูคอมเมนต์ที่ `buildFromClause`) ใช้เป็น
+   * `shardHints` ของ `getLines`/citation drawer รอบถัดไปได้ทันทีโดยไม่ต้องเดา */
+  rowShards: Record<string, string>;
   bytesHint?: number;
   coverageNotes: CoverageNote[];
+  /** T-206 B2: จำนวนแถวที่ query เจอจริงแต่ validate (Zod) ไม่ผ่าน แล้วถูกข้าม — ต้อง "ไม่ทิ้งเงียบ" */
+  droppedRows: number;
+  /** ข้อความไทยอธิบายแถวที่ถูกข้าม (มี source_id ถ้าทราบ) — ให้ tool layer ส่งต่อให้ AI เห็น */
+  warnings: string[];
 }
 
 interface WhereClause {
@@ -237,12 +248,28 @@ function toAbsoluteDataUrl(path: string): string {
   return new URL(dataUrl(path), window.location.href).href;
 }
 
-function buildFromClause(urls: string[]): string {
+/**
+ * T-206 B3: `filename=true` ของ `read_parquet` เติมคอลัมน์ `filename` (URL/path ที่ table function
+ * เปิดจริง) เข้าไปในผลลัพธ์ — ใช้แม็พแถวกลับไปหา shard ต้นทางเมื่อ query ข้ามหลาย shard พร้อมกัน
+ *
+ * **ทำไมไม่ทำให้ range mode อ่าน bytes เพิ่มอย่างมีนัย**: `filename` เป็น metadata ที่ DuckDB รู้อยู่
+ * แล้วจากอาร์กิวเมนต์ที่ส่งเข้า `read_parquet` เอง (ไม่ใช่ค่าที่ต้องอ่านเพิ่มจากตัวไฟล์ parquet) —
+ * ต่างจากการเพิ่มคอลัมน์ข้อมูลจริง (เช่น `item_name_raw`) ซึ่งต้องอ่าน column chunk เพิ่ม การเติม
+ * `filename=true` จึงไม่เพิ่ม HTTP range request ใด ๆ เทียบกับ query เดิม — ใช้เฉพาะกับ query ที่ดึง
+ * ทุกคอลัมน์อยู่แล้ว (phase 2 ของ `queryLines`, `getLines`) ไม่ใช้กับ phase 1 (เลือกคอลัมน์แคบ) เพราะ
+ * ไม่จำเป็นต้องรู้ shard ของแถวที่ยังไม่ถูกเลือกมาแสดงจริง
+ *
+ * ทางเลือกที่พิจารณาแล้วตัดทิ้ง: query ทีละ shard แยกกัน (N คำสั่งแทน 1) — เพิ่ม round-trip เป็น N
+ * เท่า (แย่กว่าในทางปฏิบัติ แม้ bytes ต่อคำสั่งจะเล็กลง) และทำให้ `count(*) OVER ()`/`ORDER BY` ข้าม
+ * shard ในจังหวะเดียวทำไม่ได้ (ต้อง merge ผลเองใน JS ซึ่งเสี่ยง B1 ผิดพลาดซ้ำ)
+ */
+function buildFromClause(urls: string[], opts: { filename?: boolean } = {}): string {
+  const filenameArg = opts.filename === true ? ', filename=true' : '';
   const only = urls[0];
   if (urls.length === 1 && only !== undefined) {
-    return `read_parquet(${sqlStringLiteral(only)})`;
+    return `read_parquet(${sqlStringLiteral(only)}${filenameArg})`;
   }
-  return `read_parquet([${urls.map(sqlStringLiteral).join(', ')}])`;
+  return `read_parquet([${urls.map(sqlStringLiteral).join(', ')}]${filenameArg})`;
 }
 
 function validateKnownShards(manifest: Manifest, paths: string[]): void {
@@ -328,21 +355,22 @@ function clampLimit(limit: number | undefined): number {
 }
 
 /** รัน `run` ในโหมด range ก่อน (ถ้าไม่ได้บังคับ `full`) แล้ว fallback เป็น full-mode ตาม ADR-002 ข้อ 5
- * เมื่อ host ไม่ตอบ 206 (หรือ error อื่นระหว่างอ่านแบบ range) */
+ * เมื่อ host ไม่ตอบ 206 (หรือ error อื่นระหว่างอ่านแบบ range) — ใช้ `ensureShardsRegistered` (แทน
+ * `Promise.all` ตรง ๆ) เพื่อ pin ทั้งชุด shard ของ query นี้กันการ evict ตัวเอง (T-206 F7) */
 async function runWithFallback<T>(
   urls: string[],
   mode: QueryMode | undefined,
   run: () => Promise<T>,
 ): Promise<T> {
   if (mode === 'full') {
-    await Promise.all(urls.map((url) => ensureShardRegistered(url)));
+    await ensureShardsRegistered(urls);
     return run();
   }
   try {
     return await run();
   } catch (rangeError) {
     try {
-      await Promise.all(urls.map((url) => ensureShardRegistered(url)));
+      await ensureShardsRegistered(urls);
     } catch (registerError) {
       throw new RepoQueryError(
         'อ่านข้อมูลไม่สำเร็จทั้งแบบ range request และ fallback โหลดทั้งไฟล์',
@@ -373,8 +401,46 @@ function parseBudgetLine(record: Record<string, unknown>): BudgetLine | null {
     spec_tokens: Array.isArray(record['spec_tokens']) ? record['spec_tokens'] : [],
     quality_flags: Array.isArray(record['quality_flags']) ? record['quality_flags'] : [],
   };
+  // `filename` (จาก `read_parquet(..., filename=true)`) ไม่ใช่คอลัมน์ของ BudgetLineSchema — Zod
+  // object (โหมด default 'strip') ตัดทิ้งเองอยู่แล้ว ไม่ต้องลบออกมือ
   const result = BudgetLineSchema.safeParse(normalized);
   return result.success ? result.data : null;
+}
+
+function warnForDroppedRow(sourceId: string | undefined): string {
+  return sourceId !== undefined
+    ? `แถวข้อมูล source_id=${sourceId} มีรูปแบบไม่ตรงตามที่คาดไว้ (validate ไม่ผ่าน) ถูกข้ามไป`
+    : 'พบแถวข้อมูลที่มีรูปแบบไม่ตรงตามที่คาดไว้ (ไม่ทราบ source_id) ถูกข้ามไป';
+}
+
+/** T-206 B3: url → relative shard path (ย้อนกลับของ `toAbsoluteDataUrl`) สำหรับแม็พคอลัมน์ `filename` */
+function buildUrlToPathMap(urls: string[], paths: string[]): Map<string, string> {
+  const map = new Map<string, string>();
+  urls.forEach((url, i) => {
+    const path = paths[i];
+    if (path !== undefined) {
+      map.set(url, path);
+    }
+  });
+  return map;
+}
+
+/** หา shard ต้นทางของแถวหนึ่ง — ใช้คอลัมน์ `filename` ถ้ามีหลาย shard ที่เป็นไปได้ มิฉะนั้น (สแกน
+ * shard เดียว) ใช้ shard นั้นตรง ๆ ได้เลยโดยไม่ต้องพึ่ง `filename` (single-shard query บางที่ไม่ได้
+ * ขอ `filename=true` เช่น `getNeighborLines`) */
+function resolveRowShard(
+  record: Record<string, unknown>,
+  urlToPath: Map<string, string>,
+  singleShardFallback: string | undefined,
+): string | undefined {
+  const filename = record['filename'];
+  if (typeof filename === 'string') {
+    const mapped = urlToPath.get(filename);
+    if (mapped !== undefined) {
+      return mapped;
+    }
+  }
+  return singleShardFallback;
 }
 
 export async function queryLines(params: QueryLinesParams): Promise<QueryLinesResult> {
@@ -383,7 +449,17 @@ export async function queryLines(params: QueryLinesParams): Promise<QueryLinesRe
   const coverageNotes = collectCoverageNotes(manifest, paths);
 
   if (paths.length === 0) {
-    return { rows: [], totalMatched: 0, truncated: false, shardsScanned: 0, coverageNotes };
+    return {
+      rows: [],
+      totalMatched: 0,
+      truncated: false,
+      shardsScanned: 0,
+      shardPaths: [],
+      rowShards: {},
+      coverageNotes,
+      droppedRows: 0,
+      warnings: [],
+    };
   }
   if (paths.length > MAX_SHARDS_TO_SCAN) {
     throw new QueryTooBroadError(paths.length);
@@ -393,7 +469,10 @@ export async function queryLines(params: QueryLinesParams): Promise<QueryLinesRe
   const where = buildWhereClause(params);
   const orderSql = ORDER_BY_SQL[params.orderBy ?? 'amount_desc'];
   const urls = paths.map((p) => toAbsoluteDataUrl(p));
+  const urlToPath = buildUrlToPathMap(urls, paths);
+  const singleShardFallback = paths.length === 1 ? paths[0] : undefined;
   const fromClause = buildFromClause(urls);
+  const fromClauseWithFilename = buildFromClause(urls, { filename: true });
 
   const result = await runWithFallback(urls, params.mode, async () => {
     // จังหวะที่ 1 (ADR-002 ข้อ 4): เลือกคอลัมน์แคบที่สุด (แค่ source_id) + count(*) OVER() รวมทั้งชุด
@@ -403,45 +482,86 @@ export async function queryLines(params: QueryLinesParams): Promise<QueryLinesRe
       `WHERE ${where.sql} ORDER BY ${orderSql} LIMIT ${String(limit)}`;
     const phase1Rows = await queryRows(sql1, where.params);
     if (phase1Rows.length === 0) {
-      return { rows: [] as BudgetLine[], totalMatched: 0, truncated: false };
+      return {
+        rows: [] as BudgetLine[],
+        totalMatched: 0,
+        truncated: false,
+        rowShards: {},
+        droppedRows: 0,
+        warnings: [] as string[],
+      };
     }
     const totalMatched = Number(phase1Rows[0]?.['__total_matched'] ?? phase1Rows.length);
     const orderedSourceIds = phase1Rows.map((r) => String(r['source_id']));
 
-    // จังหวะที่ 2 (ADR-002 ข้อ 4): ดึงทุกคอลัมน์ (รวม item_name_raw) เฉพาะแถวที่จะแสดงจริง (≤ 50 แถว)
-    const sql2 = `SELECT * FROM ${fromClause} WHERE source_id IN (${orderedSourceIds
+    // จังหวะที่ 2 (ADR-002 ข้อ 4): ดึงทุกคอลัมน์ (รวม item_name_raw + filename) เฉพาะแถวที่จะแสดงจริง
+    // (≤ 50 แถว) — ORDER BY ของแถวสุดท้ายอิงลำดับจาก `orderedSourceIds` (จังหวะที่ 1) เสมอ ไม่พึ่ง
+    // ลำดับที่ SQL ของจังหวะนี้คืนมา (B1: deterministic อยู่แล้วจากจังหวะที่ 1)
+    const sql2 = `SELECT * FROM ${fromClauseWithFilename} WHERE source_id IN (${orderedSourceIds
       .map(() => '?')
       .join(', ')})`;
     const phase2Rows = await queryRows(sql2, orderedSourceIds);
     const bySourceId = new Map(phase2Rows.map((r) => [String(r['source_id']), r]));
     const rows: BudgetLine[] = [];
+    const rowShards: Record<string, string> = {};
+    const warnings: string[] = [];
+    let droppedRows = 0;
     for (const sourceId of orderedSourceIds) {
       const record = bySourceId.get(sourceId);
-      const parsed = record ? parseBudgetLine(record) : null;
+      if (!record) {
+        // T-206 B2: ไม่ทิ้งเงียบแม้กรณีนี้แทบเป็นไปไม่ได้ในทางปฏิบัติ (ไฟล์ parquet เป็น static)
+        droppedRows += 1;
+        warnings.push(
+          `ไม่พบแถว source_id=${sourceId} ในจังหวะที่สอง (ข้อมูลไม่สอดคล้องกันระหว่างสองจังหวะ) ถูกข้ามไป`,
+        );
+        continue;
+      }
+      const parsed = parseBudgetLine(record);
       if (parsed) {
         rows.push(parsed);
+        const shard = resolveRowShard(record, urlToPath, singleShardFallback);
+        if (shard !== undefined) {
+          rowShards[sourceId] = shard;
+        }
+      } else {
+        droppedRows += 1;
+        warnings.push(warnForDroppedRow(sourceId));
       }
     }
-    return { rows, totalMatched, truncated: totalMatched > rows.length };
+    // T-206 B2: truncated มาจาก totalMatched > limit (ไม่ใช่ totalMatched > rows.length — แถวที่ถูก
+    // ตัดเพราะ validate ไม่ผ่านเป็นคนละเรื่องกับ "ถูกตัดด้วย LIMIT")
+    return { rows, totalMatched, truncated: totalMatched > limit, rowShards, droppedRows, warnings };
   });
 
-  return { ...result, shardsScanned: paths.length, coverageNotes };
+  return { ...result, shardsScanned: paths.length, shardPaths: paths, coverageNotes };
 }
 
 // ---------------------------------------------------------------------------
 // getLines / getNeighborLines
 // ---------------------------------------------------------------------------
 
+export interface GetLinesResult {
+  rows: BudgetLine[];
+  /** T-206 B3: shard hint ที่ถูกใช้จริง (คือ `shardHints` ที่รับเข้ามา — ตรวจแล้วว่าอยู่ใน manifest) */
+  shardPaths: string[];
+  /** T-206 B3: แม็พ source_id → shard path จริง (จากคอลัมน์ `filename` เมื่อ shardHints มีมากกว่า 1) */
+  rowShards: Record<string, string>;
+  /** T-206 F8: coverage note ของทุก shard ใน `shardHints` (ADR-004/005/V9/no_oracle) */
+  coverageNotes: CoverageNote[];
+  droppedRows: number;
+  warnings: string[];
+}
+
 /**
  * ดึงแถวเต็ม (ทุกคอลัมน์) ตาม `source_id` — ใช้ใน citation drawer (T-407)
  *
  * ต้องระบุ `shardHints` เสมอ (path ของ shard ที่ทราบอยู่แล้วว่า source_id นี้อยู่ในไฟล์ไหน — ปกติมาจาก
- * ToolLog ของ session ที่เคย query เจอมาก่อน) เพราะการค้นย้อนกลับจาก source_id ไปหา shard โดยไม่มี
- * เบาะแสต้องสแกนทุกไฟล์ ซึ่งขัดกับเพดาน `MAX_SHARDS_TO_SCAN` (ADR-002)
+ * ToolLog ของ session ที่เคย query เจอมาก่อน หรือ `QueryLinesResult.rowShards`) เพราะการค้นย้อนกลับจาก
+ * source_id ไปหา shard โดยไม่มีเบาะแสต้องสแกนทุกไฟล์ ซึ่งขัดกับเพดาน `MAX_SHARDS_TO_SCAN` (ADR-002)
  */
-export async function getLines(sourceIds: string[], shardHints: string[]): Promise<BudgetLine[]> {
+export async function getLines(sourceIds: string[], shardHints: string[]): Promise<GetLinesResult> {
   if (sourceIds.length === 0) {
-    return [];
+    return { rows: [], shardPaths: [], rowShards: {}, coverageNotes: [], droppedRows: 0, warnings: [] };
   }
   if (shardHints.length === 0) {
     throw new RepoQueryError(
@@ -454,22 +574,46 @@ export async function getLines(sourceIds: string[], shardHints: string[]): Promi
   }
   const manifest = await loadManifest();
   validateKnownShards(manifest, shardHints);
+  const coverageNotes = collectCoverageNotes(manifest, shardHints);
   const urls = shardHints.map((p) => toAbsoluteDataUrl(p));
-  const fromClause = buildFromClause(urls);
+  const urlToPath = buildUrlToPathMap(urls, shardHints);
+  const singleShardFallback = shardHints.length === 1 ? shardHints[0] : undefined;
+  const fromClause = buildFromClause(urls, { filename: true });
   const records = await runWithFallback(urls, undefined, () => {
+    // B1: ORDER BY source_id ASC — deterministic เสมอไม่ว่า DuckDB จะคืนแถวลำดับไหนจากภายใน
     const sql = `SELECT * FROM ${fromClause} WHERE source_id IN (${sourceIds
       .map(() => '?')
-      .join(', ')})`;
+      .join(', ')}) ORDER BY source_id ASC`;
     return queryRows(sql, sourceIds);
   });
   const rows: BudgetLine[] = [];
+  const rowShards: Record<string, string> = {};
+  const warnings: string[] = [];
+  let droppedRows = 0;
   for (const record of records) {
     const parsed = parseBudgetLine(record);
     if (parsed) {
       rows.push(parsed);
+      const shard = resolveRowShard(record, urlToPath, singleShardFallback);
+      if (shard !== undefined) {
+        rowShards[parsed.source_id] = shard;
+      }
+    } else {
+      droppedRows += 1;
+      const sid = typeof record['source_id'] === 'string' ? record['source_id'] : undefined;
+      warnings.push(warnForDroppedRow(sid));
     }
   }
-  return rows;
+  return { rows, shardPaths: shardHints, rowShards, coverageNotes, droppedRows, warnings };
+}
+
+export interface GetNeighborLinesResult {
+  rows: BudgetLine[];
+  shardPaths: string[];
+  rowShards: Record<string, string>;
+  coverageNotes: CoverageNote[];
+  droppedRows: number;
+  warnings: string[];
 }
 
 /** "ดูแถวใกล้เคียง" — `source_row` ± n ในไฟล์/ชีตเดียวกับ `sourceId` (T-407) */
@@ -477,59 +621,40 @@ export async function getNeighborLines(
   sourceId: string,
   n: number,
   shardHint: string,
-): Promise<BudgetLine[]> {
-  const [anchor] = await getLines([sourceId], [shardHint]);
+): Promise<GetNeighborLinesResult> {
+  const anchorResult = await getLines([sourceId], [shardHint]);
+  const anchor = anchorResult.rows[0];
   if (!anchor) {
     throw new RepoQueryError(`ไม่พบ source_id "${sourceId}" ในไฟล์ shard ที่ระบุ`);
   }
   const manifest = await loadManifest();
   validateKnownShards(manifest, [shardHint]);
+  const coverageNotes = collectCoverageNotes(manifest, [shardHint]);
   const url = toAbsoluteDataUrl(shardHint);
   const fromClause = buildFromClause([url]);
   const records = await runWithFallback([url], undefined, () => {
-    const sql = `SELECT * FROM ${fromClause} WHERE source_sheet = ? AND source_row BETWEEN ? AND ?`;
+    // B1: ORDER BY ที่ SQL เอง (ไม่ใช่แค่ .sort() ใน JS) — source_row ASC + source_id ASC tiebreaker
+    const sql =
+      `SELECT * FROM ${fromClause} WHERE source_sheet = ? AND source_row BETWEEN ? AND ? ` +
+      `ORDER BY source_row ASC, source_id ASC`;
     return queryRows(sql, [anchor.source_sheet, anchor.source_row - n, anchor.source_row + n]);
   });
   const rows: BudgetLine[] = [];
+  const rowShards: Record<string, string> = {};
+  const warnings: string[] = [];
+  let droppedRows = 0;
   for (const record of records) {
     const parsed = parseBudgetLine(record);
     if (parsed) {
       rows.push(parsed);
+      rowShards[parsed.source_id] = shardHint;
+    } else {
+      droppedRows += 1;
+      const sid = typeof record['source_id'] === 'string' ? record['source_id'] : undefined;
+      warnings.push(warnForDroppedRow(sid));
     }
   }
-  rows.sort((a, b) => a.source_row - b.source_row);
-  return rows;
-}
-
-// ---------------------------------------------------------------------------
-// getDoc
-// ---------------------------------------------------------------------------
-
-export interface GetDocResult {
-  doc: SourceDoc;
-  chunks: DocChunk[] | null;
-  note?: string;
-}
-
-export async function getDoc(docId: string, opts?: { page?: number }): Promise<GetDocResult> {
-  const sources = await loadJson('sources.json', SourcesFileSchema);
-  const doc = sources.find((d) => d.doc_id === docId);
-  if (!doc) {
-    throw new DocNotFoundError(docId);
-  }
-  if (!doc.extracted) {
-    return {
-      doc,
-      chunks: null,
-      note: doc.note ?? 'เอกสารนี้เป็นเอกสารสแกน ระบบไม่ได้อ่านเนื้อหา (N4)',
-    };
-  }
-  if (!doc.text_chunks_file) {
-    return { doc, chunks: null, note: 'ไม่มีไฟล์เนื้อหาที่แยกไว้สำหรับเอกสารนี้' };
-  }
-  const chunks = await loadJsonGz(doc.text_chunks_file, DocChunksFileSchema);
-  const filtered = opts?.page !== undefined ? chunks.filter((c) => c.page === opts.page) : chunks;
-  return { doc, chunks: filtered };
+  return { rows, shardPaths: [shardHint], rowShards, coverageNotes, droppedRows, warnings };
 }
 
 // ---------------------------------------------------------------------------
@@ -541,14 +666,14 @@ export async function facets(): Promise<Facets> {
 }
 
 // ---------------------------------------------------------------------------
-// BudgetRepo — interface เดียวที่ `ai/` ควร import (mock ง่ายในเทส: implement interface นี้ตรง ๆ)
+// BudgetRepo — interface เดียวที่ mock ง่ายในเทส (ผู้ใช้จริงของ `ai/`/`features/*` ต้อง import ผ่าน
+// facade `@/data` เท่านั้น — ดู `data/index.ts`)
 // ---------------------------------------------------------------------------
 
 export interface BudgetRepo {
   queryLines(params: QueryLinesParams): Promise<QueryLinesResult>;
-  getLines(sourceIds: string[], shardHints: string[]): Promise<BudgetLine[]>;
-  getNeighborLines(sourceId: string, n: number, shardHint: string): Promise<BudgetLine[]>;
-  getDoc(docId: string, opts?: { page?: number }): Promise<GetDocResult>;
+  getLines(sourceIds: string[], shardHints: string[]): Promise<GetLinesResult>;
+  getNeighborLines(sourceId: string, n: number, shardHint: string): Promise<GetNeighborLinesResult>;
   facets(): Promise<Facets>;
 }
 
@@ -556,6 +681,5 @@ export const budgetRepo: BudgetRepo = {
   queryLines,
   getLines,
   getNeighborLines,
-  getDoc,
   facets,
 };

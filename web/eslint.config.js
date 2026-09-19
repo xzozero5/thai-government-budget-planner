@@ -46,6 +46,27 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'error',
     },
   },
+  // T-206 item 9: `ai/tools/*`/`features/*` ต้อง import ผ่าน facade `@/data` เท่านั้น — ห้าม import
+  // ลึกเข้า `@/data/<file>` ตรง ๆ จากนอก `src/data/**` ยกเว้น harness (`src/app/dataHarness/**` ต้อง
+  // เรียกฟังก์ชันภายในตรง ๆ เพื่อทดสอบ integration จริงกับ Playwright) และไฟล์ทดสอบ (`*.test.ts(x)`)
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/data/**', 'src/app/dataHarness/**', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/data/*'],
+              message:
+                'ห้าม import ลึกเข้า @/data/<file> ตรง ๆ — ให้ import จาก "@/data" (facade เดียว, T-206) เท่านั้น',
+            },
+          ],
+        },
+      ],
+    },
+  },
   // plain JS config files (postcss/eslint config เอง) — ไม่ type-aware
   {
     files: ['*.config.js', 'eslint.config.js'],
