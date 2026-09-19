@@ -3,7 +3,7 @@
 รูปแบบ entry: `## YYYY-MM-DD HH:MM (Asia/Bangkok) — <ใคร/agent> — <phase/task>` แล้วตามด้วย ทำอะไร / ไฟล์ที่แตะ / test / ค้าง / ไม่ยืนยัน
 
 ## สถานะปัจจุบัน
-- Phase: **2 เสร็จ** (T-201..T-208; T-206 review = conditional go → blockers ปิดครบ) → ถัดไป **Phase 3** `/phase-3-ai` (AI layer — **SDK mocked ทั้งหมดระหว่างพัฒนา**; เรียก API จริงเฉพาะ eval ตาม `docs/api-budget.md`)
+- Phase: **3 กำลังทำ** — ตัดสินใจ **ADR-006** (model/พารามิเตอร์/tool version ตาม Claude API ปัจจุบัน; แผนเดิมบางข้อจะโดน 400) · `ai-engineer` ทำ T-301→T-302→T-303→T-309 (**SDK mocked ทั้งหมด — 0 USD**) → ต่อด้วย T-304 (agent loop) + T-305 (system prompt) → T-306 eval แบบจำกัดงบ (8 โจทย์) → T-307 security review → T-308 po review · Phase 2 **เสร็จ**
 - Phase 0, 1: เสร็จ · ข้อมูล production: `data_version cd15fb2dd39b…` 796 ไฟล์ (เพิ่ม `catalog/items-slim` + `catalog/search-index`), อยู่บน Pages แล้ว
 - Test ล่าสุด (main thread รันเองทั้งหมด): **web** lint 0 error · typecheck ✅ · vitest **312/312** · build ✅ (initial JS 60.3 KB gz; DuckDB/ค้นหาเป็น lazy; ไม่มี harness ใน `dist/`) · Playwright e2e **7/7** (206 จาก DuckDB worker, บล็อก cross-origin แล้ว query ผ่าน, ไม่มี CSP violation, ลำดับ range = full) · **pipeline** pytest **451** · ruff ✅ · CI ล่าสุดที่ยืนยัน: `a62b978` เขียว (web 75 s รวม e2e)
 - API ที่ `ai/` ต้องใช้: **`web/src/data/index.ts` (facade) เท่านั้น** — ESLint `no-restricted-imports` บังคับ
