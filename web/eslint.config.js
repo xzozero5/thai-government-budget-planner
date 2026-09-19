@@ -44,6 +44,20 @@ export default tseslint.config(
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       // no `any` (CLAUDE.md §7) — ยกเว้น boundary ที่ comment ไว้ ใช้ eslint-disable-line เฉพาะจุด
       '@typescript-eslint/no-explicit-any': 'error',
+      // T-307 (บังคับทั้ง repo): ห้าม inject HTML ดิบ — ทุกอย่างจากโมเดล/ข้อมูลดิบ render เป็น text node,
+      // SVG ผ่าน `sanitizeSvg(...).node()` เท่านั้น
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+          message: 'ห้ามใช้ dangerouslySetInnerHTML (T-307) — render เป็น text node หรือใช้ sanitizeSvg().node()',
+        },
+        {
+          selector:
+            "AssignmentExpression[left.type='MemberExpression'][left.property.name=/^(innerHTML|outerHTML)$/]",
+          message: 'ห้าม assign innerHTML/outerHTML (T-307)',
+        },
+      ],
     },
   },
   // T-206 item 9: `ai/tools/*`/`features/*` ต้อง import ผ่าน facade `@/data` เท่านั้น — ห้าม import

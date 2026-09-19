@@ -1,0 +1,120 @@
+/*
+ * Design tokens (docs/06-UI-SPEC.md §2) — **ชื่อตัวแปรคือ contract** ระหว่าง ui-designer / frontend-dev
+ * (main thread วางโครง 2569-09-20 เพื่อให้งาน Phase 4 เดินขนานได้): ui-designer ปรับ "ค่า" ได้ ห้ามเปลี่ยน
+ * "ชื่อ" โดยไม่แก้ tailwind.config.ts + components พร้อมกัน
+ *
+ * ค่าสีธงชาติ: `[UNVERIFIED]` จนกว่า ui-designer จะตรวจกับประกาศมาตรฐานสีธงชาติ พ.ศ. 2560 (T-401)
+ * dark mode: `prefers-color-scheme` + override ด้วย `<html data-theme="light|dark">`
+ */
+:root {
+  --brand-navy: #2d2a4a;
+  --brand-red: #a51931;
+  --brand-white: #f4f5f8;
+
+  --bg: #f4f5f8;
+  --surface: #ffffff;
+  --surface-2: #eceef4;
+  --border: #e6e8ee;
+  --text: #1c1b2e;
+  --text-muted: #5d6178;
+  --primary: #2d2a4a;
+  --primary-contrast: #ffffff;
+  --accent: #a51931;
+  --accent-contrast: #ffffff;
+  --danger: #b3261e;
+  --success: #1b7f4b;
+  --warn: #9a6200;
+  --info: #1f5fa8;
+  --focus-ring: #4f6bd8;
+
+  --basis-historical: #0f6e6e;
+  --basis-historical-bg: #dff3f1;
+  --basis-market: #8a5300;
+  --basis-market-bg: #fdefd3;
+  --basis-estimate: #4d5168;
+  --basis-estimate-bg: #e9eaf1;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --shadow-1: 0 1px 2px rgb(21 20 42 / 8%);
+  --shadow-2: 0 4px 12px rgb(21 20 42 / 10%);
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --motion-slow: 250ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #15142a;
+    --surface: #1f1d3a;
+    --surface-2: #29274a;
+    --border: #38365c;
+    --text: #f1f2f8;
+    --text-muted: #a9adc4;
+    --primary: #c9cbf2;
+    --primary-contrast: #15142a;
+    --accent: #e0526a;
+    --accent-contrast: #15142a;
+    --danger: #ff8a80;
+    --success: #6fd6a0;
+    --warn: #f2c066;
+    --info: #8ab8f5;
+    --focus-ring: #9db0ff;
+    --basis-historical: #7fd8d2;
+    --basis-historical-bg: #123c3c;
+    --basis-market: #f2c066;
+    --basis-market-bg: #42300c;
+    --basis-estimate: #c3c6da;
+    --basis-estimate-bg: #2f2e4c;
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow-2: 0 4px 12px rgb(0 0 0 / 45%);
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #15142a;
+  --surface: #1f1d3a;
+  --surface-2: #29274a;
+  --border: #38365c;
+  --text: #f1f2f8;
+  --text-muted: #a9adc4;
+  --primary: #c9cbf2;
+  --primary-contrast: #15142a;
+  --accent: #e0526a;
+  --accent-contrast: #15142a;
+  --danger: #ff8a80;
+  --success: #6fd6a0;
+  --warn: #f2c066;
+  --info: #8ab8f5;
+  --focus-ring: #9db0ff;
+  --basis-historical: #7fd8d2;
+  --basis-historical-bg: #123c3c;
+  --basis-market: #f2c066;
+  --basis-market-bg: #42300c;
+  --basis-estimate: #c3c6da;
+  --basis-estimate-bg: #2f2e4c;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-2: 0 4px 12px rgb(0 0 0 / 45%);
+}
+
+html {
+  font-family: 'Sarabun', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
