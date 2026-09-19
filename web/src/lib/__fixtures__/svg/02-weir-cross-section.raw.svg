@@ -1,0 +1,108 @@
+<svg viewBox="0 0 1000 700" width="1000" height="700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="concrete" patternUnits="userSpaceOnUse" width="8" height="8">
+      <rect width="8" height="8" fill="#E8EEF7"/>
+      <circle cx="2" cy="2" r="1" fill="#6B7280" opacity="0.3"/>
+      <circle cx="6" cy="6" r="1" fill="#6B7280" opacity="0.3"/>
+    </pattern>
+    <pattern id="soil" patternUnits="userSpaceOnUse" width="6" height="6">
+      <rect width="6" height="6" fill="#B45309"/>
+      <path d="M0,0 L6,6 M6,0 L0,6" stroke="#8B3A08" stroke-width="0.5" opacity="0.5"/>
+    </pattern>
+    <pattern id="water" patternUnits="userSpaceOnUse" width="10" height="10">
+      <rect width="10" height="10" fill="#1F4E79"/>
+      <path d="M0,5 Q2.5,3 5,5 T10,5" stroke="#0F7B6C" stroke-width="0.8" fill="none" opacity="0.6"/>
+    </pattern>
+  </defs>
+
+  <!-- พื้นหลัง -->
+  <rect width="1000" height="700" fill="#FFFFFF"/>
+
+  <!-- ดิน (ด้านซ้าย) -->
+  <polygon points="50,500 150,500 150,650 50,650" fill="url(#soil)"/>
+  <polygon points="150,500 200,520 200,650 150,650" fill="url(#soil)"/>
+
+  <!-- ดิน (ด้านขวา) -->
+  <polygon points="800,480 900,480 900,650 800,650" fill="url(#soil)"/>
+  <polygon points="750,500 800,480 800,650 750,650" fill="url(#soil)"/>
+
+  <!-- ฐานราก (Base Foundation) -->
+  <rect x="200" y="480" width="600" height="70" fill="url(#concrete)" stroke="#2D2A4A" stroke-width="2"/>
+  <text x="500" y="525" font-family="Sarabun, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#2D2A4A">ฐานราก คอนกรีต 0.70 ม.</text>
+
+  <!-- ตีนฝาย (ด้านหน้า) -->
+  <rect x="200" y="430" width="100" height="50" fill="url(#concrete)" stroke="#2D2A4A" stroke-width="2"/>
+  <text x="250" y="460" font-family="Sarabun, sans-serif" font-size="11" text-anchor="middle" fill="#2D2A4A">ตีนฝาย</text>
+  <text x="250" y="475" font-family="Sarabun, sans-serif" font-size="10" text-anchor="middle" fill="#2D2A4A">1.0 ม.</text>
+
+  <!-- ตีนฝาย (ด้านหลัง) -->
+  <rect x="700" y="440" width="100" height="40" fill="url(#concrete)" stroke="#2D2A4A" stroke-width="2"/>
+  <text x="750" y="465" font-family="Sarabun, sans-serif" font-size="11" text-anchor="middle" fill="#2D2A4A">ตีนฝาย</text>
+
+  <!-- สันฝาย (Spillway) -->
+  <polygon points="300,430 400,280 500,280 600,430" fill="url(#concrete)" stroke="#2D2A4A" stroke-width="2.5"/>
+  
+  <!-- เส้นแสดงความสูงสันฝาย -->
+  <line x1="500" y1="280" x2="520" y2="280" stroke="#A51931" stroke-width="2" stroke-dasharray="5,5"/>
+  <text x="530" y="285" font-family="Sarabun, sans-serif" font-size="12" font-weight="bold" fill="#A51931">สันฝาย</text>
+  <text x="530" y="300" font-family="Sarabun, sans-serif" font-size="11" fill="#A51931">สูง 1.50 ม.</text>
+
+  <!-- ระดับน้ำปกติ (Normal Water Level) -->
+  <line x1="120" y1="370" x2="750" y2="370" stroke="#1F4E79" stroke-width="2" stroke-dasharray="8,4"/>
+  <text x="30" y="375" font-family="Sarabun, sans-serif" font-size="12" font-weight="bold" fill="#1F4E79">ระดับน้ำปกติ</text>
+
+  <!-- น้ำหน้าฝาย (ปกติ) -->
+  <polygon points="120,370 300,370 300,430 200,430 120,430" fill="url(#water)" opacity="0.6" stroke="#1F4E79" stroke-width="1.5"/>
+
+  <!-- ระดับน้ำหลาก (Flood Water Level) -->
+  <line x1="120" y1="320" x2="600" y2="320" stroke="#A51931" stroke-width="2.5" stroke-dasharray="6,6"/>
+  <text x="30" y="325" font-family="Sarabun, sans-serif" font-size="12" font-weight="bold" fill="#A51931">ระดับน้ำหลาก</text>
+
+  <!-- น้ำหน้าฝาย (หลาก) -->
+  <polygon points="120,320 400,320 400,430 200,430 120,430" fill="url(#water)" opacity="0.7" stroke="#A51931" stroke-width="1.5"/>
+
+  <!-- น้ำท้ายฝาย -->
+  <polygon points="600,430 750,430 750,480 700,480" fill="url(#water)" opacity="0.6" stroke="#1F4E79" stroke-width="1.5"/>
+
+  <!-- บ่อรับน้ำท้ายฝาย (Tail Water Basin) -->
+  <rect x="650" y="430" width="150" height="70" fill="none" stroke="#2D2A4A" stroke-width="2" stroke-dasharray="4,4"/>
+  <text x="725" y="470" font-family="Sarabun, sans-serif" font-size="11" text-anchor="middle" fill="#2D2A4A">บ่อรับน้ำ</text>
+  <text x="725" y="485" font-family="Sarabun, sans-serif" font-size="10" text-anchor="middle" fill="#2D2A4A">ท้ายฝาย</text>
+
+  <!-- หน้าตัดฝาย (Cross section) -->
+  <text x="500" y="150" font-family="Sarabun, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#2D2A4A">ภาพตัดขวางฝายน้ำล้นคอนกรีตเสริมเหล็ก</text>
+
+  <!-- มิติความกว้าง -->
+  <line x1="200" y1="580" x2="800" y2="580" stroke="#2D2A4A" stroke-width="1.5"/>
+  <line x1="200" y1="575" x2="200" y2="585" stroke="#2D2A4A" stroke-width="1.5"/>
+  <line x1="800" y1="575" x2="800" y2="585" stroke="#2D2A4A" stroke-width="1.5"/>
+  <text x="500" y="605" font-family="Sarabun, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#2D2A4A">ความกว้าง 8.00 ม.</text>
+
+  <!-- หมายเหตุ -->
+  <rect x="50" y="620" width="280" height="65" fill="#E8EEF7" stroke="#2D2A4A" stroke-width="1"/>
+  <text x="60" y="638" font-family="Sarabun, sans-serif" font-size="11" font-weight="bold" fill="#2D2A4A">หมายเหตุ:</text>
+  <text x="60" y="655" font-family="Sarabun, sans-serif" font-size="10" fill="#2D2A4A">• ภาพประกอบเท่านั้น ไม่ใช่แบบก่อสร้าง</text>
+  <text x="60" y="670" font-family="Sarabun, sans-serif" font-size="10" fill="#2D2A4A">• มิติทั้งหมดเป็นหน่วยเมตร (ม.)</text>
+
+  <!-- เนื้อที่คอนกรีตชั้นต่างๆ -->
+  <rect x="650" y="620" width="300" height="65" fill="#F4F5F8" stroke="#2D2A4A" stroke-width="1"/>
+  <text x="660" y="638" font-family="Sarabun, sans-serif" font-size="11" font-weight="bold" fill="#2D2A4A">ชั้นวัสดุ:</text>
+  <rect x="670" y="645" width="12" height="12" fill="url(#concrete)" stroke="#2D2A4A" stroke-width="0.5"/>
+  <text x="690" y="654" font-family="Sarabun, sans-serif" font-size="10" fill="#2D2A4A">คอนกรีตเสริมเหล็ก</text>
+  <rect x="670" y="662" width="12" height="12" fill="url(#water)" stroke="#2D2A4A" stroke-width="0.5"/>
+  <text x="690" y="671" font-family="Sarabun, sans-serif" font-size="10" fill="#2D2A4A">น้ำ</text>
+
+  <!-- เส้นมิติเพิ่มเติม -->
+  <line x1="400" y1="250" x2="400" y2="280" stroke="#2D2A4A" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="500" y1="250" x2="500" y2="280" stroke="#2D2A4A" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="600" y1="250" x2="600" y2="280" stroke="#2D2A4A" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- ความสูงสันฝาย -->
+  <line x1="620" y1="280" x2="620" y2="430" stroke="#A51931" stroke-width="2" stroke-dasharray="5,5"/>
+  <text x="635" y="355" font-family="Sarabun, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#A51931">1.50 ม.</text>
+
+  <!-- เส้นแสดงผิวดิน -->
+  <path d="M 50 500 Q 100 495 150 500 L 200 520 L 750 500 L 800 480 L 900 480" stroke="#8B3A08" stroke-width="2" fill="none"/>
+  <text x="100" y="515" font-family="Sarabun, sans-serif" font-size="10" fill="#8B3A08">ผิวดิน</text>
+
+</svg>
