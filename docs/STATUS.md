@@ -3,22 +3,35 @@
 รูปแบบ entry: `## YYYY-MM-DD HH:MM (Asia/Bangkok) — <ใคร/agent> — <phase/task>` แล้วตามด้วย ทำอะไร / ไฟล์ที่แตะ / test / ค้าง / ไม่ยืนยัน
 
 ## สถานะปัจจุบัน
-- Phase: **0 เสร็จ (เหลือเปิด GitHub Pages โดยคน)** → ถัดไป **Phase 1** `/phase-1-data` (ขนานกับส่วนของ Phase 2 ที่ไม่พึ่งข้อมูลจริงได้หลัง T-112)
-- งานถัดไป: T-101 (inventory) → T-102/T-103/T-104 → T-105…
-- Blockers: ไม่มีสำหรับ Phase 1; T-004 ค้างเฉพาะ AC "หน้า placeholder ขึ้นบน URL จริง"
-- `[ASK-HUMAN]` ค้าง: **ข้อ 1 — เปิด GitHub Pages**: repo → Settings → Pages → Build and deployment → Source = **GitHub Actions** แล้ว re-run workflow `deploy` (Actions → deploy → Run workflow) — main thread ไม่มี `gh`/token จึงเปิดเองไม่ได้ (deploy run `35427525874` ล้มที่ `actions/configure-pages`: "Get Pages site failed … Not Found")
+- Phase: **1 (data pipeline) กำลังทำ** — เสร็จ: T-101, T-102, T-104, T-111 (บางส่วน) · กำลังทำ: T-103 (รอบแก้หลัง hold-out), T-105 (PBO extract) · ถัดไป: T-106..T-109 (ขนาน) → T-110 → T-112 → T-113
+- Phase 0: เสร็จ ยกเว้น AC สุดท้ายของ T-004 (รอคนเปิด Pages)
+- Blockers: ไม่มี
+- `[ASK-HUMAN]` ค้าง: **ข้อ 1 — เปิด GitHub Pages**: repo → Settings → Pages → Build and deployment → Source = **GitHub Actions** แล้ว re-run workflow `deploy` — main thread ไม่มี `gh`/token จึงเปิดเองไม่ได้ (deploy run `35427525874` ล้มที่ `actions/configure-pages`: "Get Pages site failed … Not Found")
 
 ## Open questions / `[UNVERIFIED]` ที่ยังค้าง
 - โครงสร้างไฟล์ A3 (subset จังหวัดอื่น ๆ), A4 (อบจ. สป., ทน. ชม.), A5 (xlsx/xls ใน กมธ.) — ยืนยันใน T-101/T-106..T-108
 - ขนาดข้อมูลหลัง compact (02 §E) — วัดจริงใน T-110
+- econ: ยังไม่มี `diesel_avg_thb_per_l`, `gasoline95_avg_thb_per_l` (EPPO มีแต่ราคารายวัน/หน้า JS), `min_wage_bangkok_thb` มีแค่ปี 2568, `min_wage_avg_thb` ไม่มีค่าทางการ → คง `null`; **ทุกค่า econ `verified:false` `[UNVERIFIED]`** จนกว่าคนจะตรวจ (`docs/econ-sources.md`)
+- `sources.json.fiscal_years` เป็น heuristic จากชื่อไฟล์/โฟลเดอร์ ยังพลาดบางแบบ ("ปี 66-68" ได้แค่ 2566; วันที่ในชื่อไฟล์ถูกนับเป็นปีงบ) `[UNVERIFIED]` — แก้เมื่ออ่านเนื้อหาจริงใน T-109
+- `item_parser`: fixture 200 เคสแรกให้ 100 % แต่ label เอนตาม parser — ตัวเลขที่เชื่อได้คือ hold-out (รอรอบแก้ T-103)
 - ราคา API ต่อ token ของแต่ละ model (T-301) — ต้องเช็คจาก docs.claude.com ตอน implement
 - DuckDB-WASM range request บน host เป้าหมาย — S1 ใน T-201
 - SSH push จากเครื่องคุณนิว: **ไม่ผ่าน** (`Host key verification failed`) → ใช้ HTTPS remote แทน (ยืนยันแล้วว่า push ได้ รวมไฟล์ workflow) — ADR-003 ข้อ 3
 - advisory ของ react-router-dom 6.x ที่เป็นเหตุให้ใช้ 7.x — มาจาก `npm audit` ของ agent ยังไม่ได้ตรวจเลข advisory เอง `[UNVERIFIED]` (ADR-003 ข้อ 6)
-- เวอร์ชัน action `actions/checkout@v5`, `actions/setup-node@v5` — bump เพื่อเลี่ยง warning Node 20; ยืนยันเมื่อ CI ของ commit ปิด Phase 0 เขียว `[UNVERIFIED จนกว่า run ถัดไปผ่าน]`
 - GitHub Pages: ยังไม่เปิด → CSP meta/Accept-Ranges บน URL จริงยังไม่ได้วัด (T-004 AC สุดท้าย, S1, T-605)
 
 ## Log
+
+## 2569-09-19 16:30 (Asia/Bangkok) — Claude Code main thread (+ data-engineer ×4, explorer) — Phase 1 ช่วงแรก
+- **ข้อเท็จจริงใหม่ที่แก้เอกสาร** (main thread สแกนไฟล์จริงเอง หลังรายงาน explorer ไม่คงเส้นคงวา): PBO ปี **2561/2567/2568 ไม่มีแถว Grand Total** (inventory เดิมผิด) → 02 §A1, 03 §4.1, **V1 ใหม่** (Grand Total / Sheet1 ปี 2561 รวม 3,050,000.007 ล้านบาท / Sheet1 ปี 2568 เฉพาะสำนักนายกฯ / 2567 `no_oracle`); header 22 คอลัมน์เหมือนกันทุกปี, 2567 มีคอลัมน์ขยะ 23–30
+- **เครื่อง dev ไม่มี `pdfinfo`/LibreOffice** → pipeline ใช้ Python ล้วน (pypdf/pdfplumber/xlrd) — แก้ 02, 03 §4.4/§4.5
+- **T-101** `tgbp inventory` → `sources.json` 318 records (pdf 262 [มี text 119 / ไม่มี 143], xlsx 36, xls 13, jpg 4, pptx 1, docx 1, other 1; duplicates 41 กลุ่ม), `rel_path` เป็น posix, เขียน LF; appendix auto-gen. รอบแรกถูกตีกลับ 3 จุด (backslash path, test ไม่ isolate env — agent รายงานว่าผ่านแต่ main thread รันแล้ว 7 failed, `fiscal_years` เดาจากวันประชุม) → แก้แล้ว
+- **T-102** `thai_text`, `money` (Decimal), `util/hash` + tests
+- **T-104** org master จาก A2: 33 กระทรวง / 3,289 หน่วยงาน, code เป็น string (มี `7510A`), map PBO→A2: ministry 100 %, agency 98.4 % (2566) / 98.8 % (2568); พบ fuzzy จับ อปท. ผิดตัว → **ตัดสินใจปิด fuzzy สำหรับ อปท.** (03 §5 ข้อ 3; implement ใน T-105)
+- **T-111** econ: รอบแรกได้เฉพาะแหล่งทุติยภูมิ (World Bank/Wikipedia); main thread พบ JSON API ของ สนค. (`index.tpso.go.th/api/cmi/*`) ผ่าน browser → รอบสองได้ CMI 10 หมวดทางการ + CPI/เงินเฟ้อจาก สนค. โดยตรง (158/250 records มีค่า); main thread ตรวจไขว้ `cmi_steel` กับ API เองแล้วตรง; เงินเฟ้อ สนค. = World Bank 10/11 ปี; วงเงินงบ 2566 (3,185,000 ล้านบาท) ตรงกับ Grand Total ใน PBO. ปรับ spec `cmi_*` ตามหมวดทางการ (03 §3.5)
+- **T-103** รอบแรก: fixture 200 เคส 100 %/100 %/100 % — main thread ไม่เชื่อ จึงรัน hold-out 28 ชื่อจาก PBO 2563 อ่านด้วยตา: province 25/25 ถูก แต่พบบั๊ก 7 แบบ (มิติถูกตีเป็น qty เช่น "หน้ากว้าง 1.30 เมตร"→qty 1.3; สเปคหลุดจาก item_key; ตัวเลขติด marker ถูกกิน; เศษเลขหมู่; `อ.ท่ายางจ.`; ชื่อหน่วยงานท้ายชื่อไม่ถูกตัด) → ตีกลับพร้อม expected ที่ label มือ
+- Test ล่าสุดที่ main thread รันเอง: pipeline pytest 92 → (หลัง T-104) ผ่าน, ruff ผ่าน; CI ของ `7a167b2` เขียว (ยืนยัน `checkout@v5`/`setup-node@v5`)
+- Commits: `d1e411f` `9d46d5b` `3816a9c`(data) `8a322f1` `9b48ad2` `0397bad` `a296257` `cd2a749`
 
 ## 2569-09-19 13:50 (Asia/Bangkok) — Claude Code main thread (+ frontend-dev, data-engineer, po) — Phase 0 / T-000..T-005
 > หมายเหตุ: เวลาใน entry วางแผนด้านล่าง (14:00–14:45) เป็นเวลาประมาณจาก session Cowork; entry นี้ใช้นาฬิกาเครื่องจริง
