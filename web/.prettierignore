@@ -1,0 +1,7 @@
+dist
+node_modules
+public/data
+public/fonts
+playwright-report
+test-results
+coverage

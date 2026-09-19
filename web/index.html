@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <!--
+      หมายเหตุ CSP (docs/04-ARCHITECTURE.md §D8):
+      ไม่ใส่ meta tag ของ Content Security Policy ไว้ที่นี่โดยตรง เพราะ Vite dev
+      server ต้องใช้ inline script + WebSocket (HMR) ซึ่งจะถูกนโยบายนี้บล็อกระหว่าง
+      `npm run dev`/`npm run preview` (dev). meta tag ถูกฝังอัตโนมัติเฉพาะตอน
+      `npm run build` โดย vite-plugins/cspMeta.ts (ดู vite.config.ts) และค่านโยบาย
+      ตรงตาม 04 §D8 ทุกตัว ยกเว้น `frame-ancestors` ซึ่งใช้ใน meta tag ไม่ได้ (บราวเซอร์
+      รองรับเฉพาะตอนเป็น HTTP response header) จึงตัดออก — ไม่มี server ให้ตั้ง header (N1)
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>เครื่องมือวางแผนงบประมาณภาครัฐ (TGBP)</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
