@@ -3,25 +3,12 @@
 รูปแบบ entry: `## YYYY-MM-DD HH:MM (Asia/Bangkok) — <ใคร/agent> — <phase/task>` แล้วตามด้วย ทำอะไร / ไฟล์ที่แตะ / test / ค้าง / ไม่ยืนยัน
 
 ## สถานะปัจจุบัน
-- Phase: **1 (data pipeline) — กำลังทำต่อ** (resume 2569-09-19 ~20:00 หลังพัก; agents ชุดเดิมหายไปกับ session → สั่ง `data-engineer` ชุดใหม่ 4 ตัวทำ T-106..T-109 พร้อมข้อค้นพบด้านล่าง)
-- เสร็จ + commit แล้ว: T-101, T-102, T-103, T-104, T-105, T-111 (บางส่วน — ขาดน้ำมัน/ค่าแรง)
-- **ค้างกลางทาง (ยังไม่ commit, ไฟล์อยู่บนดิสก์)** — 4 agents ถูกสั่งหยุดที่ safe point:
-  - T-106 `extract/act2570.py` + `tests/extract/test_act2570.py` → cache `.cache/act2570/`
-  - T-107 `extract/local_sheets.py` + `tests/extract/test_local_sheets.py` → `.cache/local/`
-  - T-108 `extract/committee_xlsx.py`, `extract/office_text.py` + tests → `.cache/committee/`, `.cache/docs/`
-  - T-109 `extract/pdf_text.py` + `tests/extract/test_pdf_text.py` → `.cache/docs/` (+ `_pdf_report.json`, `_pdf_index.json`; resume ได้)
-  - กติกาที่ให้ไว้: ห้ามแตะ `cli.py`/`schema.py`/`validate.py`/`pyproject.toml`/`conftest.py`; แต่ละตัว export `extract_<x>(cfg, *, cache_dir=None)`; test ต้องเขียนลง `tmp_path` เท่านั้น
-- **วิธีทำต่อ (main thread)**: (1) `git status` ดูไฟล์ untracked ใต้ `pipeline/` (2) ต่อ task: รัน `ruff check` + `pytest tests/extract/test_<x>.py`, เปิดดูรายงาน/ cache, **ตรวจซ้ำเองกับไฟล์จริง** (agent เคยรายงานคลาดเคลื่อน 3 ครั้ง: test isolation, cache 2566 ถูกทับ, fixture 100 % แบบวงกลม) แล้วค่อย commit ทีละ task (3) wire `tgbp extract --dataset act2570|local|committee|office|pdf|all` ใน `cli.py` + ย้าย `check_v2`/`check_v3` เข้า `validate.py` (4) T-110: normalize stage (item_parser + org_master กับ 2.9 ล้านแถว — ใช้ multiprocessing/ cache ต่อ distinct name), validate V1–V10, publish (shards < 24 MB, catalog, trends, facets + `coverage_notes` จาก ADR-004, orgs, docs chunks, econ series view, manifest sha256, อัปเดต `sources.json.extracted/text_chunks_file`), รัน `tgbp build --dataset all` จริง, วัดขนาดรวม ≤ 500 MB → 02 §E (5) T-112 sample fixtures (6) T-113 po review (7) STATUS/BACKLOG + commit `pipeline: phase 1 complete`
-- **สถานะจริง ณ จุด pause + ข้อค้นพบที่ agent รายงาน (ยังไม่ได้ตรวจซ้ำโดย main thread → `[UNVERIFIED]` ทั้งหมด)**:
-  - **T-106**: ยังไม่มีไฟล์โค้ด (ออกแบบเสร็จ). พบ: ไฟล์ A2 ตัวหลักตาม dedupe = สำเนาใน `งบประมาณ สมุทรปราการ/` (`ส` มาก่อน `เ`); A3 มี 6 ไฟล์ — **มีแค่ 1 ไฟล์** (`เชียงใหม่/1`) ที่มี title "575 รายการ | งบรวม 9,043,395,000 บาท"; อีก 5 ไฟล์เป็น sheet `Data` header แถว 1 แบบ field code ของ A2 ไม่มี title → V2 ต้องเป็น `no_oracle`; ไฟล์ format A มีแถวว่าง 404 + แถว "รวมทั้งหมด" 1 → ต้องข้ามแถวที่ `รายการ` ว่าง มิฉะนั้นยอดเบิ้ล 2 เท่า; `เชียงใหม่/4` ใช้ `objc_8` + มีคอลัมน์ จังหวัด/อำเภอ/ตำบล และ `min` เป็น int ปน str; filter A2 ด้วย "เชียงใหม่" ได้ 680 แถวเพราะติด อ.ศรีเชียงใหม่ (หนองคาย)
-  - **T-107**: `extract/local_sheets.py` เขียนครบ (ผ่าน `ast.parse`), ยังไม่มี test/ยังไม่รันจริง. พบ: มี 4 ไฟล์ — ราชาเทวะ 345 แถว/11 sheets; อบจ. ชม. `Data` 1,027 แถว (มีทั้ง `Divison` ว่างล้วน และ `Division`); **อบจ. สมุทรปราการ ไม่เหมือน อบจ. ชม.** — 4 sheets คนละทรง ใช้ได้เฉพาะ `โครงการรวม งบ 70` (577 แถว); ทน. ชม. `ชีต1` 700 แถว ตรงกับ `_หมายเหตุ`; คอลัมน์ `FCY` **ไม่ใช่ปีงบ** (เป็นโน้ต/ชื่อชุมชน); `BudgetLine` ไม่มี field `source_pdf_doc_id` → ใช้ `.cache/local/pdf_pairs.json`
-  - **T-108**: `extract/office_text.py` (มี `DocChunk`, `chunk_atoms`, `write_doc_chunks_gz` — **T-109 ต้อง reuse**) + `extract/committee_xlsx.py` เขียนครบ ผ่าน ruff, รันจริงแล้ว 1 รอบ, **ยังไม่มี test**. พบ: 26 ไฟล์ xlsx/xls — map เป็น budget_lines ได้ไฟล์เดียว (`กองทุนอนุรักษ์พลังงาน/รวมข้อมูลโครงการ 61-68` 3,328 แถว; sheet "ปี 68" ถูกตัดเพราะไม่รู้หน่วยเงิน); อีก 25 ไฟล์เป็นแบบฟอร์ม BIS → DocChunk; `องค์การโคนม/BI*.XLS` 13 ไฟล์ เป็น zip (xlsx) แต่ openpyxl ไม่เปิด — main thread สงสัยว่า openpyxl ปฏิเสธจาก**นามสกุลไฟล์** ให้ลองเปิดผ่าน file object (`open(path,'rb')`)
-  - **T-109**: ยังไม่มีไฟล์โค้ด (สำรวจเสร็จ). พบ: PDF เข้าเกณฑ์ 114 ไฟล์ (~9,428 หน้า, ไม่มีไฟล์ > 100 MB); ตาราง OPEN SSO (label/value เหลื่อมแถว) และ `2_ราคากลาง21.pdf` (ราคากลาง 2 ความหมาย) โครงไม่ชัด → **ไม่ map เป็น committee_table** ปล่อยเป็น DocChunk; ต้องทำ Thai PUA (U+F700–F71A) mapping; มีไฟล์อ้างอิงชั่วคราว `pipeline/.cache/_ref_fix_thai_pdf.py` (ลบได้)
-  - resume agent เดิมได้ด้วย SendMessage ถ้า session เดิมยังอยู่; ถ้าเป็น session ใหม่ให้สั่ง `data-engineer` ใหม่พร้อมข้อค้นพบข้างบน
-- Phase 0: **เสร็จทั้งหมด** (T-004 ปิดแล้ว — Pages live)
-- Blockers: ไม่มี
-- `[ASK-HUMAN]` ค้าง: ไม่มี (ข้อ 1 ปิดแล้ว — คุณนิวเปิด Pages ให้)
-- แจ้งคุณนิว (ไม่บล็อก): `PBO/2562.xlsx` ต้นทางไม่ครบ (coverage 79.24 %, ขาด 6 กระทรวง) → ADR-004; ถ้ามีไฟล์ฉบับครบให้นำมาแทน
+- Phase: **1 (data pipeline) — ใกล้จบ**: extract ครบทุก dataset + normalize + validate เสร็จและ commit แล้ว (T-101..T-109, T-110a); **กำลังทำ T-110b** (publish + `tgbp build` จริง + วัดขนาด) **+ T-112** (sample fixtures) → แล้ว T-113 (`po` review) → ปิด phase
+- ข้อมูล ณ ตอนนี้ (main thread ยืนยันเอง): normalized **2,993,621 แถว** `source_id` unique — pbo 2,887,730 · act_2570_draft 96,470 (รวม 3,788,000,000,000 บาทพอดี) · committee_table 3,325 · local_subsidy_2570 2,720 · local_ordinance_2570 2,646 · act_2570_province 730; DocChunks: PDF 114 ไฟล์ (28,163 chunks) + office/committee 28 ไฟล์ ≈ 6.7 MB; V1–V10 ไม่มี hard fail (2562 `source_incomplete`, 2567 `no_oracle`, V3 soft ตาม ADR-005)
+- Phase 0: **เสร็จทั้งหมด** (Pages live, range request 206)
+- Blockers: ไม่มี · `[ASK-HUMAN]` ค้าง: ไม่มี
+- ต้องแจ้งคุณนิวในสรุป Phase 1: ADR-004 (PBO 2562 ไฟล์ต้นทางไม่ครบ 79 %), ADR-005 (ราชาเทวะ OCR ต้นทางไม่ตรง 10/38 กลุ่ม → V3 soft), econ ยังขาดน้ำมัน/ค่าแรง, text ไทยใน PDF สระหลุดตำแหน่ง ~7.5 % (ไม่ซ่อม; folding ใน T-204)
+- กติกาที่ได้จากบทเรียน: (1) ตรวจซ้ำรายงาน agent ทุกครั้งก่อน commit (2) **ห้าม `git stash/checkout` ขณะมี agent แก้ไฟล์** — ตรวจ tree ที่ commit ด้วย `git worktree` (3) test ห้ามเขียนลง `.cache`/`web/public/data` จริง
 
 ## Open questions / `[UNVERIFIED]` ที่ยังค้าง
 - โครงสร้างไฟล์ A3 (subset จังหวัดอื่น ๆ), A4 (อบจ. สป., ทน. ชม.), A5 (xlsx/xls ใน กมธ.) — ยืนยันใน T-101/T-106..T-108
@@ -36,6 +23,16 @@
 - GitHub Pages: **live แล้ว** — ยืนยัน 19 ก.ย.: หน้า placeholder ขึ้น, CSP meta อยู่ใน HTML ที่ serve, `Accept-Ranges: bytes`, `Range: bytes=0-99` กับ `data/sources.json` → **206 / 100 bytes**; ยังต้องวัดกับไฟล์ parquet + DuckDB-WASM จริงใน S1 (T-201) และ `Cache-Control: max-age=600` (ข้อมูลใหม่อาจช้า ≤ 10 นาที)
 
 ## Log
+
+## 2569-09-19 23:30 (Asia/Bangkok) — Claude Code main thread (+ data-engineer ×5) — Phase 1 ช่วงสาม
+- **T-106** ร่าง พ.ร.บ. 2570: A2 96,470 แถว = 3.788 ล้านล้านบาทพอดี; A3 6 ไฟล์ (1 format A มี title/oracle ตรงเป๊ะ 575 / 9,043,395,000; 5 format B `no_oracle`) match กลับ A2 100 % → flag `subset_of_act_2570_draft`; พิสูจน์ว่า filter ด้วย substring จังหวัดใช้ไม่ได้ (อ.ศรีเชียงใหม่, รายการ อปท.)
+- **T-107** ข้อบัญญัติ อปท. 4 ไฟล์ = 2,646 แถว; ทน. ชม. ตรงยอดกระทบของต้นทางเป๊ะ; agent แก้บั๊กโค้ดเดิม 3 จุด (z-score flag ผิด, tie-break คอลัมน์หน้า → 700 แถวเสีย page citation, รูป "N/M"); main thread ตรวจ workbook ราชาเทวะเอง → `summary_ocr_raw_data` คือยอดพิมพ์ในเอกสาร ไม่ตรงรายการ 10/38 กลุ่ม (รวมต่าง 0.21 %) → **ADR-005**
+- **T-108** กมธ.: 26 xlsx/xls → map ได้ไฟล์เดียว (กองทุนอนุรักษ์พลังงาน 3,325 แถว หลังแก้บั๊ก 3 จุด: ปีงบ null ทั้งชุด, gov_level ผิด, แถว "รวม" หลุด 3 แถว); `BI*.XLS` 13 ไฟล์เป็น xlsx ปลอมนามสกุล — ยืนยันสมมติฐาน main thread (openpyxl เช็กนามสกุล → เปิดผ่าน file object); docx 1 + pptx 25 chunks
+- **T-109** PDF: 114/114 ไฟล์, 9,428 หน้า (ไม่มี text 1,119 หน้า — ข้าม ไม่ OCR), 28,163 chunks, 6.38 MB; Thai PUA map; main thread วัดเอง: สระ/วรรณยุกต์หลุดตำแหน่ง ~18,800 จุด/78 ไฟล์ และพบว่าซ่อมเหมารวมไม่ปลอดภัย (`ล านบาท`) → ไม่ซ่อม, เพิ่มข้อกำหนด folding ใน T-204
+- **T-110a** wire CLI ครบ, normalize 2.99 ล้านแถวใน ~2.5 นาที (parse เฉพาะ distinct + process pool), validate V1–V10 รวม; field ใหม่ `budget_group`; บั๊กจริงที่เจอ: `item_parser` recursion ไม่จำกัด (RecursionError กับ PBO 2558), ชื่อย่อ อปท. (อบจ./ทน.) ไม่ match org master. sanity โดย main thread: แอร์ 18,000 BTU ปี 2558–59 median 28,000 บาท/เครื่อง; พบ item_key แบบ "หมวดรวม" (…ที่มีราคาต่อหน่วยต่ำกว่า 10 ล้านบาท) ต้องกันออกจาก catalog → flag `lump_sum_category` ใน T-110b
+- **ความผิดพลาดของ main thread**: รัน `git stash` เพื่อตรวจ tree ขณะ agent T-110a กำลังแก้ → edits 3 ไฟล์ถูกย้อนชั่วคราว; กู้ครบ (agent ยืนยัน byte-identical กับ stash) ไม่มีงานหาย → กติกาใหม่ด้านบน
+- Test ที่ main thread รันเอง ณ `ec121f5`: pipeline pytest **385 passed**, ruff ผ่าน; CI ของ `a0ca1ff` — ดูผลรอบถัดไป
+- Commits: `a1e94d3`(T-004) `2d8b6d9`(T-107+ADR-005) `2dabfa6`(T-106) `23d0c63`(T-109) `a0ca1ff`(T-108) `ec121f5`(T-110a)
 
 ## 2569-09-19 20:00 (Asia/Bangkok) — Claude Code main thread — resume + ปิด T-004
 - คุณนิวเปิด GitHub Pages แล้ว: workflow `deploy` ของ `b701860`/`1722df4` สำเร็จ; `https://xzozero5.github.io/thai-government-budget-planner/` → 200, title ไทย, `lang="th"`, CSP meta ครบ, asset ใต้ base path; **range request ใช้ได้** (206) → T-004 `[x]`, `[ASK-HUMAN]` ข้อ 1 ปิด
