@@ -32,7 +32,10 @@ function createDirFetch(baseDir: string): typeof fetch {
 }
 
 /** งบเวลาต่อ query ใน Node (04 §5) — main thread ต้องรายงานตัวเลขจริงในรายงานปิดงาน T-206 */
-const MAX_QUERY_MS = 50;
+// runner ของ GitHub Actions (shared, 2 vCPU) วัดได้ ~75 ms กับ query เดียวกันที่เครื่อง dev ได้ < 20 ms →
+// บน CI ใช้เพดานหลวมขึ้นเพื่อจับ regression ระดับเท่าตัว (เช่น Intl.Segmenter ต่อ hit = 230–360 ms)
+// โดยไม่ flaky; งบจริง 50 ms ยังบังคับบนเครื่อง dev
+const MAX_QUERY_MS = process.env['CI'] ? 150 : 50;
 
 // 5 คำค้นจาก docs/decisions/SPIKES.md §S2 + substring ที่ยอมรับว่า "เกี่ยวข้อง" (assert แบบ contains)
 const QUALITY_CASES: { query: string; expectContainsAny: string[] }[] = [
