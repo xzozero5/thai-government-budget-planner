@@ -19,7 +19,6 @@ def test_help_exits_zero() -> None:
 @pytest.mark.parametrize(
     "args",
     [
-        ["inventory"],
         ["extract"],
         ["normalize"],
         ["validate"],
@@ -32,6 +31,13 @@ def test_stub_commands_exit_nonzero(args: list[str]) -> None:
     result = runner.invoke(app, args)
     assert result.exit_code != 0
     assert "ยังไม่ implement" in result.output
+
+
+def test_inventory_command_help_exits_zero() -> None:
+    result = runner.invoke(app, ["inventory", "--help"])
+    assert result.exit_code == 0
+    assert "--limit" in result.output
+    assert "--no-pdf-probe" in result.output
 
 
 def test_subcommand_help_exits_zero() -> None:

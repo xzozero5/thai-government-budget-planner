@@ -140,10 +140,10 @@ tgbp sample --rows 1000        # สร้าง web/tests/fixtures/data/ สำ
 
 ### 4.4 Committee xlsx/xls (A5) — generic
 - ทุก sheet: หา table region (แถว header ที่มี ≥ 4 เซลล์ข้อความ + แถวถัดไปมีตัวเลข) → DataFrame → พยายาม map canonical; ถ้าไม่ได้ → เก็บเป็น `DocChunk` แบบ table (ให้ AI อ่านเป็นข้อความ) ไม่ใส่ `budget_lines`
-- `.XLS` → xlrd; ถ้า xlrd เปิดไม่ได้ → `libreoffice --headless --convert-to xlsx` ไป `.cache/`
+- `.XLS` → xlrd; ถ้า xlrd เปิดไม่ได้ → skip + รายงานใน validation_report (เครื่อง dev ไม่มี LibreOffice; ใช้ได้ถ้าพบ `soffice` ใน PATH)
 
 ### 4.5 PDF / docx / pptx
-- ทุก PDF: `pdfinfo` (pages) + `pdftotext -f 1 -l 3` → `has_text_layer = chars_per_page ≥ 200`
+- ทุก PDF: pypdf (จำนวนหน้า + text 3 หน้าแรก; fallback pdfplumber) → `has_text_layer = chars_per_page ≥ 200` — ไม่ใช้ poppler CLI (เครื่อง dev ไม่มี `pdfinfo`)
 - มี text layer และ bytes ≤ 100 MB → pdfplumber per page: text + `extract_tables()`; ตารางที่มีคอลัมน์ตัวเลข → พยายาม map เป็น `committee_table` (เช่น OPEN SSO ผลเบิกจ่าย, ราคากลาง)
 - docx/pptx → text ต่อ paragraph/slide → chunks
 - ไม่มี text layer → `extracted:false`, `note:"OCR out of scope"`

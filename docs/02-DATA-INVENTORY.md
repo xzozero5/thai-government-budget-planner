@@ -1,9 +1,9 @@
 # 02 — Data Inventory (สำรวจจริง 19 ก.ย. 2569)
 
 ทุกอย่างในหน้านี้คือ **ยืนยันแล้ว** จากการเปิดไฟล์จริง เว้นแต่ติดป้าย `[UNVERIFIED]`
-Root ข้อมูลดิบ: `./เพราะ AI ไม่ใช่แค่ CHATBOT/` — ขนาดรวม ≈ 3.2 GB, 318 ไฟล์ (pdf 261, xlsx 36, xls 13, jpg 4, pptx 1, docx 1, ไม่มีนามสกุล 1)
+Root ข้อมูลดิบ: `./เพราะ AI ไม่ใช่แค่ CHATBOT/` — ขนาดรวม ≈ 3.2 GB, 318 ไฟล์ — นับจริงด้วย `tgbp inventory` 19 ก.ย. 2569: pdf 262 (261 ไฟล์ `.pdf` + 1 ไฟล์ไม่มีนามสกุลที่ magic bytes เป็น `%PDF`), xlsx 36, xls 13, jpg 4, pptx 1, docx 1, other 1 (`.DS_Store`); ตามชุด: committee 189, province_budget 111, pbo 12, open_sso 6; มีไฟล์เนื้อหาซ้ำกัน (sha1) 41 กลุ่ม — ส่วนใหญ่คือชุดร่าง พ.ร.บ. ฉบับเต็มที่ซ้ำระหว่างโฟลเดอร์เชียงใหม่/สมุทรปราการ (รายละเอียด: `docs/02-DATA-INVENTORY.appendix.md`, auto-generated)
 
-Environment บนเครื่อง dev ที่ตรวจแล้ว: python3, pandas 2.3, openpyxl 3.1, xlrd 2.0, pypdf 6, pdfplumber, pdftotext/pdfinfo (poppler), libreoffice, node 22
+Environment: (sandbox ตอนวางแผน) python3, pandas 2.3, openpyxl, xlrd, pypdf, pdfplumber, poppler, libreoffice, node 22 · **เครื่อง dev จริงของคุณนิว (Windows 11, ตรวจ 19 ก.ย.)**: Python 3.13.2, node 22.15, uv ผ่าน `python -m uv`; **ไม่มี `pdfinfo` และไม่มี LibreOffice** → pipeline ใช้ Python ล้วน (pypdf/pdfplumber, xlrd) ไม่พึ่ง CLI ภายนอก
 
 ## A. ชุดข้อมูลหลัก (structured — ใช้สร้าง "ราคาในอดีต")
 
@@ -75,7 +75,9 @@ Gotchas ที่ยืนยันแล้ว:
 - `กรมวิชาการเกษตร/2.คำของบประมาณ พ.ศ. 2570.xlsx`, `ปศุสัตว์/2.1 รายละเอียดคำของบฯ 70.xlsx`, `กรมบัญชีกลาง/3.งบรายจ่าย.xlsx`, `กองทุนอนุรักษ์พลังงาน/รวมข้อมูลโครงการ 61-68.xlsx` `[UNVERIFIED]`
 - `กรมบัญชีกลาง/4.งบกลาง.docx` (1 ไฟล์ docx), `ฝาย จ.พิจิตร/การบริหารงบประมาณ...pptx` (1 ไฟล์ pptx)
 
-## B. PDF — สถานะ text layer (ตรวจ 10 ไฟล์ตัวอย่าง)
+## B. PDF — สถานะ text layer
+
+**ผลตรวจครบทุกไฟล์ (pypdf, 3 หน้าแรก, เกณฑ์ ≥ 200 ตัวอักษร/หน้า; 19 ก.ย. 2569): 262 PDF → มี text layer 119, ไม่มี 143, probe ล้มเหลว 0** — รายชื่อเต็มใน appendix. ตารางด้านล่างคือ 10 ไฟล์ตัวอย่างที่เปิดดูด้วยมือตอนวางแผน
 
 | ไฟล์ | หน้า | text layer | ใช้ได้ |
 |---|---|---|---|
@@ -88,7 +90,7 @@ Gotchas ที่ยืนยันแล้ว:
 | `NDLP/1_TOR...pdf`, `สตช./โครงการเครื่องรับ-ส่งวิทยุ.pdf`, `ปศุสัตว์/PPT...pdf`, `สำนักงบประมาณ/งบประมาณ ปี 70.pdf` | – | ไม่มี | ❌ metadata only |
 
 ข้อสรุป: **PDF ส่วนใหญ่เป็นภาพสแกน** → ตาม scope ไม่ OCR แต่ pipeline ต้อง:
-1. สแกนทุก PDF (261 ไฟล์) ด้วย `pdfinfo` + `pdftotext -l 3` → บันทึก `has_text_layer`, `pages`, `size` ลง `sources.json`
+1. สแกนทุก PDF (262 ไฟล์) ด้วย pypdf (เครื่อง dev ไม่มี poppler ครบ) → บันทึก `has_text_layer`, `pages`, `size` ลง `sources.json`
 2. PDF ที่มี text layer → extract เป็น text chunks ต่อหน้า (สำหรับ RAG แบบ keyword) และตาราง (pdfplumber) ถ้าตรวจพบ
 3. PDF ที่ไม่มี → เก็บเฉพาะ metadata + path + ชื่อเรื่อง/หน่วยงาน/วันที่ที่ parse จากชื่อโฟลเดอร์ ให้ AI "รู้ว่ามีเอกสารนี้" และบอกผู้ใช้ให้ไปเปิดเอง
 
@@ -107,4 +109,4 @@ Gotchas ที่ยืนยันแล้ว:
 ## E. ประมาณการขนาดหลัง compact `[UNVERIFIED — ให้ pipeline วัดจริงและอัปเดตหัวข้อนี้]`
 - PBO 2.9 M แถว → Parquet (zstd, dictionary-encoded ชื่อกระทรวง/หน่วยงาน/แผนงาน) ≈ 150–250 MB รวม → แบ่ง shard ปี × กระทรวง ให้ทุกไฟล์ < 24 MB
 - Catalog (item_key aggregate) ≈ 2–6 MB gz
-- sources.json ≈ < 1 MB
+- sources.json = **333 KB (วัดจริง 19 ก.ย. — อาจเปลี่ยนเล็กน้อยหลังแก้ rel_path เป็น posix)**

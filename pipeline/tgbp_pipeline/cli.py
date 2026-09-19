@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import typer
 
+from tgbp_pipeline.config import load_config
+from tgbp_pipeline.inventory import scan_raw_dir, write_inventory_appendix, write_sources_json
+
 app = typer.Typer(
     name="tgbp",
     help=(
@@ -26,9 +29,42 @@ def _stub(task_id: str) -> None:
 
 
 @app.command()
-def inventory() -> None:
+def inventory(
+    limit: int | None = typer.Option(
+        None, "--limit", help="จำกัดจำนวนไฟล์ (เรียงตาม rel_path) — ใช้ตอนทดสอบ"
+    ),
+    pdf_probe: bool = typer.Option(
+        True,
+        "--pdf-probe/--no-pdf-probe",
+        help="ตรวจจำนวนหน้า/text layer ของ PDF (ปิดเพื่อสแกนเร็วขึ้น)",
+    ),
+    config: str | None = typer.Option(
+        None, "--config", hidden=True, help="path ของ config.yaml อื่น (ใช้ใน test เท่านั้น)"
+    ),
+) -> None:
     """เดินโฟลเดอร์ raw ทั้งหมด → sources.json + docs/02 appendix (T-101)"""
-    _stub("T-101")
+    cfg = load_config(config)
+    docs, stats = scan_raw_dir(cfg, limit=limit, probe_pdf=pdf_probe)
+    sources_path = write_sources_json(cfg, docs)
+    appendix_path = write_inventory_appendix(cfg, docs, stats)
+
+    typer.echo(f"สแกนไฟล์: {stats.total_files} ไฟล์ ({stats.elapsed_seconds:.1f} วินาที)")
+    typer.echo(f"เขียน {sources_path} ({sources_path.stat().st_size:,} bytes)")
+    typer.echo(f"เขียนภาคผนวก {appendix_path}")
+    typer.echo("นับตาม kind:")
+    for kind, n in sorted(stats.by_kind.items()):
+        typer.echo(f"  {kind}: {n}")
+    typer.echo("นับตาม collection:")
+    for collection, n in sorted(stats.by_collection.items()):
+        typer.echo(f"  {collection}: {n}")
+    typer.echo("PDF has_text_layer:")
+    for key, n in sorted(stats.by_has_text_layer.items()):
+        typer.echo(f"  {key}: {n}")
+    typer.echo(
+        f"duplicates: {stats.duplicate_groups} กลุ่ม ({stats.duplicate_files} ไฟล์ซ้ำ), "
+        f"probe ไม่สำเร็จ: {len(stats.pdf_probe_failures)}, "
+        f"probe timeout: {len(stats.pdf_probe_timeouts)}"
+    )
 
 
 @app.command()
