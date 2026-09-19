@@ -20,7 +20,7 @@
 - `act_2570_province` format A (575 แถว เชียงใหม่) ไม่มีรหัสกระทรวง/หน่วยงาน (org mapped 21 %) ทั้งที่ match กลับ A2 ได้ 100 % → copy code จาก A2 ได้ในอนาคต (ผลกระทบต่ำ: เป็น subset ที่ไม่นับใน catalog)
 - ราคา API ต่อ token ของแต่ละ model (T-301) — ต้องเช็คจาก docs.claude.com ตอน implement
 - DuckDB-WASM range request บน host เป้าหมาย — S1 ใน T-201
-- SSH push จากเครื่องคุณนิว: **ไม่ผ่าน** (`Host key verification failed`) → ใช้ HTTPS remote แทน (ยืนยันแล้วว่า push ได้ รวมไฟล์ workflow) — ADR-003 ข้อ 3
+- Push: **ใช้ SSH แล้ว** (คุณนิวสั่ง 2569-09-20) — host key ของ github.com ตรวจกับ `api.github.com/meta` แล้วเก็บใน `.git/github_known_hosts` (repo-local, ไม่แตะ `~/.ssh/known_hosts`) — ADR-003 ข้อ 3ก
 - advisory ของ react-router-dom 6.x ที่เป็นเหตุให้ใช้ 7.x — มาจาก `npm audit` ของ agent ยังไม่ได้ตรวจเลข advisory เอง `[UNVERIFIED]` (ADR-003 ข้อ 6)
 - GitHub Pages: **live แล้ว** — ยืนยัน 19 ก.ย.: หน้า placeholder ขึ้น, CSP meta อยู่ใน HTML ที่ serve, `Accept-Ranges: bytes`, `Range: bytes=0-99` กับ `data/sources.json` → **206 / 100 bytes**; ยังต้องวัดกับไฟล์ parquet + DuckDB-WASM จริงใน S1 (T-201) และ `Cache-Control: max-age=600` (ข้อมูลใหม่อาจช้า ≤ 10 นาที)
 
