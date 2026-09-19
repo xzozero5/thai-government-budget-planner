@@ -122,9 +122,9 @@ tgbp sample --rows 1000        # สร้าง web/tests/fixtures/data/ สำ
 
 ### 4.1 PBO (A1)
 - เลือก sheet ที่ชื่อขึ้นต้น `เบิกจ่ายภาพรวมทุกมิติ`; อ่านด้วย `openpyxl read_only` แล้ว **ตัดที่ 22 คอลัมน์แรก** (2567 มี 16384 คอลัมน์)
-- drop แถว `Grand Total`; `'-'`→null; คอลัมน์เงิน ×1,000,000 → int64 (round)
+- drop แถว `Grand Total` **ด้วยการตรวจเนื้อหา ไม่ใช่เลขแถว** (2561/2567/2568 ไม่มีแถวนี้ — 02 §A1) และเก็บค่า Grand Total ทุกคอลัมน์เงินไว้ใน `.cache/pbo/oracle.json`; `'-'`→null; คอลัมน์เงิน ×1,000,000 → int64 (round)
 - `fiscal_year_be` จากคอลัมน์ `ปีงบประมาณ` (ตรวจว่าตรงชื่อไฟล์ ไม่ตรง → flag)
-- `source_row` = แถว Excel จริง (header=1, Grand Total=2 → ข้อมูลเริ่ม 3)
+- `source_row` = แถว Excel จริง (header=1; ข้อมูลเริ่มแถว 3 ถ้ามี Grand Total มิฉะนั้นแถว 2)
 - memory: stream ทีละ 50k แถว → parquet ชิ้น ๆ ใน `.cache/` (ไฟล์ 2564 มี 450k แถว)
 
 ### 4.2 ร่าง พ.ร.บ. 2570 (A2) และ subset จังหวัด (A3)
@@ -164,7 +164,7 @@ tgbp sample --rows 1000        # สร้าง web/tests/fixtures/data/ สำ
 
 | # | กฎ | ระดับ |
 |---|---|---|
-| V1 | ยอดรวม `amount_thb` ต่อปีของ PBO = ค่า Grand Total ในชีต ± 0.01 % | hard |
+| V1 | ยอดรวมต่อปีของ PBO (ทุกคอลัมน์เงิน) = oracle ในไฟล์ ± 0.01 %: (a) แถว Grand Total (2558–2560, 2562–2566) (b) 2561: `Sheet1` แถว `ผลรวมทั้งหมด` (เฉพาะ พรบ.) + รายกระทรวง (c) 2568: `Sheet1` เฉพาะสำนักนายกรัฐมนตรี (d) 2567: **ไม่มี oracle** → รายงาน `no_oracle` + ตรวจจำนวนแถว = 221,571 (soft) — แก้ 19 ก.ย. 2569 หลังตรวจไฟล์จริง | hard (a–c) / soft (d) |
 | V2 | A3 (subset จังหวัด) แต่ละไฟล์: จำนวนแถว = N ใน title และผลรวม = X ใน title | hard |
 | V3 | ราชาเทวะ: ผลรวมต่อ (plan, work, budget_group) = `summary_ocr_raw_data` | hard (ยกเว้นแถวที่ flag outlier — รายงาน) |
 | V4 | `source_id` unique ทั้ง dataset | hard |
