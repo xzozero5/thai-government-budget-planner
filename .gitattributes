@@ -1,0 +1,8 @@
+# normalize line endings (dev บน Windows, CI บน Linux)
+* text=auto eol=lf
+*.parquet binary
+*.gz binary
+*.ttf binary
+*.woff2 binary
+*.png binary
+*.pdf binary

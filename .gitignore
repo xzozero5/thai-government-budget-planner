@@ -1,0 +1,25 @@
+# raw data (read-only, ไม่ commit)
+/เพราะ AI ไม่ใช่แค่ CHATBOT/
+# pipeline
+pipeline/.cache/
+pipeline/.venv/
+__pycache__/
+*.pyc
+.ruff_cache/
+.pytest_cache/
+# web
+web/node_modules/
+web/dist/
+web/playwright-report/
+web/test-results/
+# data output: COMMIT ทั้งหมด (web/public/data/**) — ตัดสินใจ 19 ก.ย. 2569 (CLAUDE.md §5.1)
+# ยกเว้น intermediate ของ pipeline เท่านั้น
+# secrets / env
+.env
+.env.*
+!.env.example
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
