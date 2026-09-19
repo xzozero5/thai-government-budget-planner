@@ -3,7 +3,7 @@
 รูปแบบ entry: `## YYYY-MM-DD HH:MM (Asia/Bangkok) — <ใคร/agent> — <phase/task>` แล้วตามด้วย ทำอะไร / ไฟล์ที่แตะ / test / ค้าง / ไม่ยืนยัน
 
 ## สถานะปัจจุบัน
-- Phase: **1 (data pipeline) — PAUSED 2569-09-19 ~19:00** (คุณนิวสั่งพักเพราะใกล้ติด usage limit; กลับมาทำต่อได้ทันที)
+- Phase: **1 (data pipeline) — กำลังทำต่อ** (resume 2569-09-19 ~20:00 หลังพัก; agents ชุดเดิมหายไปกับ session → สั่ง `data-engineer` ชุดใหม่ 4 ตัวทำ T-106..T-109 พร้อมข้อค้นพบด้านล่าง)
 - เสร็จ + commit แล้ว: T-101, T-102, T-103, T-104, T-105, T-111 (บางส่วน — ขาดน้ำมัน/ค่าแรง)
 - **ค้างกลางทาง (ยังไม่ commit, ไฟล์อยู่บนดิสก์)** — 4 agents ถูกสั่งหยุดที่ safe point:
   - T-106 `extract/act2570.py` + `tests/extract/test_act2570.py` → cache `.cache/act2570/`
@@ -18,9 +18,9 @@
   - **T-108**: `extract/office_text.py` (มี `DocChunk`, `chunk_atoms`, `write_doc_chunks_gz` — **T-109 ต้อง reuse**) + `extract/committee_xlsx.py` เขียนครบ ผ่าน ruff, รันจริงแล้ว 1 รอบ, **ยังไม่มี test**. พบ: 26 ไฟล์ xlsx/xls — map เป็น budget_lines ได้ไฟล์เดียว (`กองทุนอนุรักษ์พลังงาน/รวมข้อมูลโครงการ 61-68` 3,328 แถว; sheet "ปี 68" ถูกตัดเพราะไม่รู้หน่วยเงิน); อีก 25 ไฟล์เป็นแบบฟอร์ม BIS → DocChunk; `องค์การโคนม/BI*.XLS` 13 ไฟล์ เป็น zip (xlsx) แต่ openpyxl ไม่เปิด — main thread สงสัยว่า openpyxl ปฏิเสธจาก**นามสกุลไฟล์** ให้ลองเปิดผ่าน file object (`open(path,'rb')`)
   - **T-109**: ยังไม่มีไฟล์โค้ด (สำรวจเสร็จ). พบ: PDF เข้าเกณฑ์ 114 ไฟล์ (~9,428 หน้า, ไม่มีไฟล์ > 100 MB); ตาราง OPEN SSO (label/value เหลื่อมแถว) และ `2_ราคากลาง21.pdf` (ราคากลาง 2 ความหมาย) โครงไม่ชัด → **ไม่ map เป็น committee_table** ปล่อยเป็น DocChunk; ต้องทำ Thai PUA (U+F700–F71A) mapping; มีไฟล์อ้างอิงชั่วคราว `pipeline/.cache/_ref_fix_thai_pdf.py` (ลบได้)
   - resume agent เดิมได้ด้วย SendMessage ถ้า session เดิมยังอยู่; ถ้าเป็น session ใหม่ให้สั่ง `data-engineer` ใหม่พร้อมข้อค้นพบข้างบน
-- Phase 0: เสร็จ ยกเว้น AC สุดท้ายของ T-004 (รอคนเปิด Pages)
+- Phase 0: **เสร็จทั้งหมด** (T-004 ปิดแล้ว — Pages live)
 - Blockers: ไม่มี
-- `[ASK-HUMAN]` ค้าง: **ข้อ 1 — เปิด GitHub Pages**: repo → Settings → Pages → Build and deployment → Source = **GitHub Actions** แล้ว re-run workflow `deploy` — main thread ไม่มี `gh`/token จึงเปิดเองไม่ได้
+- `[ASK-HUMAN]` ค้าง: ไม่มี (ข้อ 1 ปิดแล้ว — คุณนิวเปิด Pages ให้)
 - แจ้งคุณนิว (ไม่บล็อก): `PBO/2562.xlsx` ต้นทางไม่ครบ (coverage 79.24 %, ขาด 6 กระทรวง) → ADR-004; ถ้ามีไฟล์ฉบับครบให้นำมาแทน
 
 ## Open questions / `[UNVERIFIED]` ที่ยังค้าง
@@ -33,9 +33,14 @@
 - DuckDB-WASM range request บน host เป้าหมาย — S1 ใน T-201
 - SSH push จากเครื่องคุณนิว: **ไม่ผ่าน** (`Host key verification failed`) → ใช้ HTTPS remote แทน (ยืนยันแล้วว่า push ได้ รวมไฟล์ workflow) — ADR-003 ข้อ 3
 - advisory ของ react-router-dom 6.x ที่เป็นเหตุให้ใช้ 7.x — มาจาก `npm audit` ของ agent ยังไม่ได้ตรวจเลข advisory เอง `[UNVERIFIED]` (ADR-003 ข้อ 6)
-- GitHub Pages: ยังไม่เปิด → CSP meta/Accept-Ranges บน URL จริงยังไม่ได้วัด (T-004 AC สุดท้าย, S1, T-605)
+- GitHub Pages: **live แล้ว** — ยืนยัน 19 ก.ย.: หน้า placeholder ขึ้น, CSP meta อยู่ใน HTML ที่ serve, `Accept-Ranges: bytes`, `Range: bytes=0-99` กับ `data/sources.json` → **206 / 100 bytes**; ยังต้องวัดกับไฟล์ parquet + DuckDB-WASM จริงใน S1 (T-201) และ `Cache-Control: max-age=600` (ข้อมูลใหม่อาจช้า ≤ 10 นาที)
 
 ## Log
+
+## 2569-09-19 20:00 (Asia/Bangkok) — Claude Code main thread — resume + ปิด T-004
+- คุณนิวเปิด GitHub Pages แล้ว: workflow `deploy` ของ `b701860`/`1722df4` สำเร็จ; `https://xzozero5.github.io/thai-government-budget-planner/` → 200, title ไทย, `lang="th"`, CSP meta ครบ, asset ใต้ base path; **range request ใช้ได้** (206) → T-004 `[x]`, `[ASK-HUMAN]` ข้อ 1 ปิด
+- CI ของ `1722df4` เขียว (pipeline 183 tests + web)
+- สั่ง `data-engineer` ชุดใหม่ 4 ตัว (T-106, T-107, T-108, T-109) พร้อมข้อค้นพบ ณ จุด pause และกติกาไฟล์เดิม
 
 ## 2569-09-19 19:00 (Asia/Bangkok) — Claude Code main thread — Phase 1 ช่วงสอง + PAUSE
 - **T-103** เสร็จ: item_parser + fixture 220 เคส (200 จาก PBO 2566 + hold-out 2563/2560/2568 ที่ label มือ). main thread รัน hold-out อิสระ 2 รอบ (2563: พบบั๊ก 7 แบบ → ตีกลับ; 2565 หลังแก้: province 17/18 [ที่พลาด = ชื่อมี 2 จังหวัด], qty/unit ผิด 0/22) แล้วเพิ่ม `_canon_key` เอง (เว้นวรรคเลข–อักษรไทย, ตัด "จำนวน"/"ความยาว"/"พื้นที่รับประโยชน์" ที่ค้าง) เพื่อให้รายการเดียวกัน group กันได้. ข้อจำกัดที่รู้: ชื่อจังหวัดที่ฝังในชื่อหน่วยงานโดยไม่มี marker, `บ้าน` กำกวม, เคสสถานที่ล้วน → fallback คงข้อความเต็ม
