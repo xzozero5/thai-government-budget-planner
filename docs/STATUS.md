@@ -3,19 +3,20 @@
 รูปแบบ entry: `## YYYY-MM-DD HH:MM (Asia/Bangkok) — <ใคร/agent> — <phase/task>` แล้วตามด้วย ทำอะไร / ไฟล์ที่แตะ / test / ค้าง / ไม่ยืนยัน
 
 ## สถานะปัจจุบัน
-- Phase: **1 (data pipeline) — ใกล้จบ**: extract ครบทุก dataset + normalize + validate เสร็จและ commit แล้ว (T-101..T-109, T-110a); **กำลังทำ T-110b** (publish + `tgbp build` จริง + วัดขนาด) **+ T-112** (sample fixtures) → แล้ว T-113 (`po` review) → ปิด phase
-- ข้อมูล ณ ตอนนี้ (main thread ยืนยันเอง): normalized **2,993,621 แถว** `source_id` unique — pbo 2,887,730 · act_2570_draft 96,470 (รวม 3,788,000,000,000 บาทพอดี) · committee_table 3,325 · local_subsidy_2570 2,720 · local_ordinance_2570 2,646 · act_2570_province 730; DocChunks: PDF 114 ไฟล์ (28,163 chunks) + office/committee 28 ไฟล์ ≈ 6.7 MB; V1–V10 ไม่มี hard fail (2562 `source_incomplete`, 2567 `no_oracle`, V3 soft ตาม ADR-005)
-- Phase 0: **เสร็จทั้งหมด** (Pages live, range request 206)
+- Phase: **1 เสร็จ** (T-101..T-115 ปิดครบ; `po` review T-113 ผ่าน — blocking 5 ข้อปิดแล้ว) → ถัดไป **Phase 2** `/phase-2-arch` (T-201 spikes S1–S5 ∥ T-202…)
+- Phase 0: เสร็จทั้งหมด (Pages live)
+- ข้อมูลที่ publish: `data_version cd15fb2dd39b…` — **2,993,621 แถว / 794 ไฟล์ / 180.6 MB** (งบ 500 MB), ไฟล์ใหญ่สุด 6.17 MB; `tgbp build --dataset all` = 12 นาที, deterministic (main thread รันเต็มเองได้ `data_version` เดียวกับ agent)
+- Test ล่าสุด (main thread รันเอง ณ `1f5e464`): pipeline **pytest 437 passed**, ruff check/format ผ่าน; web ไม่เปลี่ยน (vitest 7/7 ณ Phase 0); CI — ดู log ล่าสุด
 - Blockers: ไม่มี · `[ASK-HUMAN]` ค้าง: ไม่มี
-- ต้องแจ้งคุณนิวในสรุป Phase 1: ADR-004 (PBO 2562 ไฟล์ต้นทางไม่ครบ 79 %), ADR-005 (ราชาเทวะ OCR ต้นทางไม่ตรง 10/38 กลุ่ม → V3 soft), econ ยังขาดน้ำมัน/ค่าแรง, text ไทยใน PDF สระหลุดตำแหน่ง ~7.5 % (ไม่ซ่อม; folding ใน T-204)
-- กติกาที่ได้จากบทเรียน: (1) ตรวจซ้ำรายงาน agent ทุกครั้งก่อน commit (2) **ห้าม `git stash/checkout` ขณะมี agent แก้ไฟล์** — ตรวจ tree ที่ commit ด้วย `git worktree` (3) test ห้ามเขียนลง `.cache`/`web/public/data` จริง
+- **แจ้งคุณนิว (ไม่บล็อก)**: (1) ADR-004 `PBO/2562.xlsx` ต้นทางไม่ครบ (coverage 79.24 %, ขาด 6 กระทรวง) — ถ้ามีไฟล์ฉบับครบนำมาแทนแล้วรัน `tgbp build` ใหม่ (2) ADR-005 ราชาเทวะ: ตัวเลขมาจาก OCR ของต้นทาง ไม่ตรงยอดในเอกสาร 10/38 กลุ่ม → V3 เป็น soft + flag (3) econ ยังไม่มีราคาน้ำมัน/ค่าแรงขั้นต่ำรายปี; ทุกค่า `verified:false` (4) ราคาต่อหน่วยมีแค่ ~3 % ของแถว PBO (ชื่อรายการส่วนใหญ่ไม่ระบุจำนวน)
+- กติกาจากบทเรียน: (1) ตรวจซ้ำรายงาน agent ทุกครั้งก่อน commit (2) ห้าม `git stash/checkout` ขณะมี agent แก้ไฟล์ (3) test ห้ามเขียนลง `.cache`/`web/public/data` จริง (4) commit data หลัง review ผ่านเท่านั้น (กัน history บวม)
 
 ## Open questions / `[UNVERIFIED]` ที่ยังค้าง
-- โครงสร้างไฟล์ A3 (subset จังหวัดอื่น ๆ), A4 (อบจ. สป., ทน. ชม.), A5 (xlsx/xls ใน กมธ.) — ยืนยันใน T-101/T-106..T-108
-- ขนาดข้อมูลหลัง compact (02 §E) — วัดจริงใน T-110
 - econ: ยังไม่มี `diesel_avg_thb_per_l`, `gasoline95_avg_thb_per_l` (EPPO มีแต่ราคารายวัน/หน้า JS), `min_wage_bangkok_thb` มีแค่ปี 2568, `min_wage_avg_thb` ไม่มีค่าทางการ → คง `null`; **ทุกค่า econ `verified:false` `[UNVERIFIED]`** จนกว่าคนจะตรวจ (`docs/econ-sources.md`)
 - `sources.json.fiscal_years` เป็น heuristic จากชื่อไฟล์/โฟลเดอร์ ยังพลาดบางแบบ ("ปี 66-68" ได้แค่ 2566; วันที่ในชื่อไฟล์ถูกนับเป็นปีงบ) `[UNVERIFIED]` — แก้เมื่ออ่านเนื้อหาจริงใน T-109
-- `item_parser`: fixture 200 เคสแรกให้ 100 % แต่ label เอนตาม parser — ตัวเลขที่เชื่อได้คือ hold-out (รอรอบแก้ T-103)
+- `item_parser` ข้อจำกัดที่รู้: ชื่อจังหวัดฝังในชื่อหน่วยงานโดยไม่มี marker, `บ้าน` กำกวม, chainage ติดอักษรไทย (`0+000-1+700`), เกณฑ์ qty ≥ 20 over-flag เมื่อเลขติดคำไทย (`…กรุงเทพมหานคร100 ชุด`) — ผลคือ unit_price หายบางแถว (ปลอดภัยกว่าผิด); ยังเหลือ 305 กลุ่มใน catalog ที่ `unit_price × 20 < amount` `[UNVERIFIED]` → AC ใน T-302 (n < 3 ห้าม confidence สูง)
+- catalog หลัง decompress 40.5 MB (45,193 entries) — ความเสี่ยง memory/TTI บนมือถือ → S2 ต้องวัดกับไฟล์จริง; ทางออกสำรอง T-208
+- `act_2570_province` format A (575 แถว เชียงใหม่) ไม่มีรหัสกระทรวง/หน่วยงาน (org mapped 21 %) ทั้งที่ match กลับ A2 ได้ 100 % → copy code จาก A2 ได้ในอนาคต (ผลกระทบต่ำ: เป็น subset ที่ไม่นับใน catalog)
 - ราคา API ต่อ token ของแต่ละ model (T-301) — ต้องเช็คจาก docs.claude.com ตอน implement
 - DuckDB-WASM range request บน host เป้าหมาย — S1 ใน T-201
 - SSH push จากเครื่องคุณนิว: **ไม่ผ่าน** (`Host key verification failed`) → ใช้ HTTPS remote แทน (ยืนยันแล้วว่า push ได้ รวมไฟล์ workflow) — ADR-003 ข้อ 3
@@ -23,6 +24,15 @@
 - GitHub Pages: **live แล้ว** — ยืนยัน 19 ก.ย.: หน้า placeholder ขึ้น, CSP meta อยู่ใน HTML ที่ serve, `Accept-Ranges: bytes`, `Range: bytes=0-99` กับ `data/sources.json` → **206 / 100 bytes**; ยังต้องวัดกับไฟล์ parquet + DuckDB-WASM จริงใน S1 (T-201) และ `Cache-Control: max-age=600` (ข้อมูลใหม่อาจช้า ≤ 10 นาที)
 
 ## Log
+
+## 2569-09-20 01:00 (Asia/Bangkok) — Claude Code main thread (+ data-engineer ×2, explorer, po) — ปิด Phase 1
+- **T-110b** `publish.py` + `tgbp build/sample`: shards ปี×กระทรวง (zstd, sort + tiebreak `source_id` — agent เจอว่า DuckDB เรียง tie ไม่คงที่ทำให้ byte ไม่ deterministic), catalog/trends/facets/orgs/docs/econ/manifest, V6, V10 ใช้ magic bytes (262 = 262). main thread รัน **full build ตั้งแต่ extract เอง: exit 0 / 724 s / `data_version` เดียวกับ agent**
+- main thread ตรวจ catalog ด้วยตา → พบ key แตกเพราะเว้นวรรคไทย → agent ทำ `group_key` (ตัด whitespace) + `keys[]`; เช่น โน้ตบุ๊กประมวลผล 1,503 → 2,811 แถว, รถกระบะ 1 ตัน 5 → 10 ปี. main thread ตรวจ resolve เอง → **พบ `shards` ถูก cap 60 แบบเงียบ (194 entries; sample_source_ids ชี้นอก shard)** ทั้งที่ agent รายงานว่า resolve ครบ → แก้เอง (ไม่ cap) + ภายหลังเป็น index (catalog v2) + มี test กัน regression; ตรวจซ้ำ 111 entries = 0 mismatch
+- **T-113** (ก) blind check: main thread สุ่ม 13 `source_id` (PBO 5 ปีรวม 2562/2567, act2570, จังหวัด, เงินอุดหนุน, อปท. 3, กมธ.) → `explorer` เปิดไฟล์ดิบโดยเห็นแค่ path/sheet/row → main thread เทียบด้วยโปรแกรม: **13/13 ตรง** (ชื่อ, พรบ., เบิกจ่าย, หน่วยงาน) (ข) `po` review: DoD ผ่านหลังปิด blocking 5 ข้อ; ทดลอง 5 โจทย์จริง (แอร์/รถกระบะ/ฝาย/วิทยุ/CCTV) → AC ใหม่เข้า BACKLOG T-201/202/203/207/302/305/306/407; เห็นด้วยกับ ADR-004/005 และการไม่ซ่อม text/ไม่ map ตารางกำกวม
+- **T-114/T-115**: กัน qty จากรหัสนำหน้าชื่อ (`AC0405 …` qty 405 → unit_price 593 บาท — แก้แล้ว, 220 แถว), sanity qty ≥ 20 (unit_price 109,706 → 94,985 แถว), กลุ่ม catalog ที่ `unit_price×20 < amount` 1,121 → 305, catalog v2 (49.4 → 40.5 MB หลัง decompress), `low_specificity` 2,409 entries (เช่น `ฝาย`), สถิติ DoD ใน validation report, V9 เข้า `coverage_notes` (5 entries), fixture `sample:true`
+- **T-112** fixtures `web/tests/fixtures/data/` ~0.97 MB (998 แถว, 16 shards, catalog 41 entries, 3 docs) resolve ครบ
+- เอกสาร: 02 §A3/A4/A5/B/E ไม่มี `[UNVERIFIED]` ค้างแล้ว (เหลือเฉพาะ econ + ข้อจำกัดที่ระบุใน Open questions); 03 §3.1/§3.4/§6 ตรง output จริง; ADR-003/004/005
+- Commits: `013cbf9` `a3ffcab` `ba7816e` `1f5e464` `3f00db0`(data 181 MB) `60d9968`
 
 ## 2569-09-19 23:30 (Asia/Bangkok) — Claude Code main thread (+ data-engineer ×5) — Phase 1 ช่วงสาม
 - **T-106** ร่าง พ.ร.บ. 2570: A2 96,470 แถว = 3.788 ล้านล้านบาทพอดี; A3 6 ไฟล์ (1 format A มี title/oracle ตรงเป๊ะ 575 / 9,043,395,000; 5 format B `no_oracle`) match กลับ A2 100 % → flag `subset_of_act_2570_draft`; พิสูจน์ว่า filter ด้วย substring จังหวัดใช้ไม่ได้ (อ.ศรีเชียงใหม่, รายการ อปท.)
