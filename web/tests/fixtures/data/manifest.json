@@ -1,0 +1,491 @@
+{
+  "schema_version": 1,
+  "data_version": "42a4da6d3900cab96f450c614ea56d63682ddc3b0a40319bfd463f0661357101",
+  "built_at": "1970-01-01T00:00:00+00:00",
+  "totals": {
+    "files": 42,
+    "bytes": 908066,
+    "rows_by_dataset": {
+      "pbo_disbursement": 450,
+      "act_2570_draft": 198,
+      "act_2570_province": 50,
+      "local_subsidy_2570": 50,
+      "local_ordinance_2570": 150,
+      "committee_table": 100
+    }
+  },
+  "files": [
+    {
+      "path": "budget_lines/act2570/15000.parquet",
+      "bytes": 27887,
+      "sha256": "a63f46c5221e1c3265dbc052cf21133ade636c36b7af04102fd75ae65df02729",
+      "rows": 66,
+      "dataset": "act_2570_draft",
+      "fiscal_year_be": 2570,
+      "ministry_code": "15000",
+      "province": null
+    },
+    {
+      "path": "budget_lines/act2570/20000.parquet",
+      "bytes": 29126,
+      "sha256": "a9b2bbbe21d95e360992847cd5bb6d80cca0ed2ba367ba39fd1f69edd69b3d20",
+      "rows": 66,
+      "dataset": "act_2570_draft",
+      "fiscal_year_be": 2570,
+      "ministry_code": "20000",
+      "province": null
+    },
+    {
+      "path": "budget_lines/act2570/75000.parquet",
+      "bytes": 22087,
+      "sha256": "bb12224a683b1267683e794d5851d26ecadfd0cf9105a6653e15fbaacd47fd24",
+      "rows": 66,
+      "dataset": "act_2570_draft",
+      "fiscal_year_be": 2570,
+      "ministry_code": "75000",
+      "province": null
+    },
+    {
+      "path": "budget_lines/act2570_province/echiyngaihm-af4ca2.parquet",
+      "bytes": 23580,
+      "sha256": "21712afe6593e717d48c3146554b6905d61ba361271ba9d553de78fe80f6ea32",
+      "rows": 50,
+      "dataset": "act_2570_province",
+      "fiscal_year_be": 2570,
+      "ministry_code": null,
+      "province": "เชียงใหม่"
+    },
+    {
+      "path": "budget_lines/committee/d_7b1b69cd5ad6.parquet",
+      "bytes": 22706,
+      "sha256": "a364589fcfc7aaf024cc640886e649f71c4610d63ca9dc3a51774e21e3c77573",
+      "rows": 100,
+      "dataset": "committee_table",
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "budget_lines/local/echiyngaihm-af4ca2/obch-echiyngaihm-ad3da7.parquet",
+      "bytes": 28511,
+      "sha256": "e030765ba44b68876e044d9f7a6ab5613129b9c11bbecfe17e1db8175ebaf5a0",
+      "rows": 150,
+      "dataset": "local_ordinance_2570",
+      "fiscal_year_be": 2570,
+      "ministry_code": null,
+      "province": "เชียงใหม่"
+    },
+    {
+      "path": "budget_lines/local_subsidy/echiyngaihm-af4ca2.parquet",
+      "bytes": 23725,
+      "sha256": "954037ae66c02e4e3a040b1948ab8661fc2c0dab8de583ea3b55d5e63734d40c",
+      "rows": 50,
+      "dataset": "local_subsidy_2570",
+      "fiscal_year_be": 2570,
+      "ministry_code": null,
+      "province": "เชียงใหม่"
+    },
+    {
+      "path": "budget_lines/pbo/2566/15000.parquet",
+      "bytes": 28721,
+      "sha256": "945fb969cd567831f9ba6caf381451000bf480a3630a33ba1dffcec4871a895e",
+      "rows": 50,
+      "dataset": "pbo_disbursement",
+      "fiscal_year_be": 2566,
+      "ministry_code": "15000",
+      "province": null
+    },
+    {
+      "path": "budget_lines/pbo/2566/20000.parquet",
+      "bytes": 23267,
+      "sha256": "17695526d9cb2500b0e8400dff5136830f0aee794b5c98026bf994562cee16b9",
+      "rows": 50,
+      "dataset": "pbo_disbursement",
+      "fiscal_year_be": 2566,
+      "ministry_code": "20000",
+      "province": null
+    },
+    {
+      "path": "budget_lines/pbo/2566/75000.parquet",
+      "bytes": 24695,
+      "sha256": "122f1a4e6214e4e1b8e27d0262aa1795eb6f4b09e3cd608dc6229f1d1c47b507",
+      "rows": 50,
+      "dataset": "pbo_disbursement",
+      "fiscal_year_be": 2566,
+      "ministry_code": "75000",
+      "province": null
+    },
+    {
+      "path": "budget_lines/pbo/2567/15000.parquet",
+      "bytes": 29011,
+      "sha256": "09c281dc4532724c2b18deb6db15bd23e384f2956307ed4fefa3aa185ebd1d26",
+      "rows": 50,
+      "dataset": "pbo_disbursement",
+      "fiscal_year_be": 2567,
+      "ministry_code": "15000",
+      "province": null
+    },
+    {
+      "path": "budget_lines/pbo/2567/20000.parquet",
+      "bytes": 23545,
+      "sha256": "1f83d5d9355e8e70f473065fb834cc556a095f350f6027b2990e29e5580e8470",
+      "rows": 50,
+      "dataset": "pbo_disbursement",
+      "fiscal_year_be": 2567,
+      "ministry_code": "20000",
+      "province": null
+    },
+    {
+      "path": "budget_lines/pbo/2567/75000.parquet",
+      "bytes": 21793,
+      "sha256": "c88b45a523b30823dcd36d6440ac6e963605d26f28c055e35ccf70a529c2de9b",
+      "rows": 50,
+      "dataset": "pbo_disbursement",
+      "fiscal_year_be": 2567,
+      "ministry_code": "75000",
+      "province": null
+    },
+    {
+      "path": "budget_lines/pbo/2568/15000.parquet",
+      "bytes": 27743,
+      "sha256": "79f100314625bd77edfc72c48b47efdce0c13da478b3ce2ccc81ca974f00eec3",
+      "rows": 50,
+      "dataset": "pbo_disbursement",
+      "fiscal_year_be": 2568,
+      "ministry_code": "15000",
+      "province": null
+    },
+    {
+      "path": "budget_lines/pbo/2568/20000.parquet",
+      "bytes": 23946,
+      "sha256": "7676e33f6bddf1bbfe95defb3c43723eb040d3c2519e92a02ea104a9f2f3d23b",
+      "rows": 50,
+      "dataset": "pbo_disbursement",
+      "fiscal_year_be": 2568,
+      "ministry_code": "20000",
+      "province": null
+    },
+    {
+      "path": "budget_lines/pbo/2568/75000.parquet",
+      "bytes": 26125,
+      "sha256": "3109a4246dfa470634773e40a4dbe4cf7a320faa2aa2ee6214bc7964a4bf0a3d",
+      "rows": 50,
+      "dataset": "pbo_disbursement",
+      "fiscal_year_be": 2568,
+      "ministry_code": "75000",
+      "province": null
+    },
+    {
+      "path": "catalog/facets.json",
+      "bytes": 10758,
+      "sha256": "a39d8de09f9e66ef114df9ff07d03a4badf39a00c4397af62830431f036b09fb",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/items.json.gz",
+      "bytes": 6556,
+      "sha256": "3d241fd1827e5a3af246671d7ac1a2b224185692223a0481e3aafc106100886a",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/orgs.json",
+      "bytes": 55684,
+      "sha256": "4a87e6d2dfe354c0e7a9c7551c05fec35dac88e6dd64fbee43b3d95e6e9550f9",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/14.json.gz",
+      "bytes": 196,
+      "sha256": "f34c932786e970461cbe18ae3c0bb47d7bc9fde7e05fa8745047846b42bd0bfb",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/15.json.gz",
+      "bytes": 204,
+      "sha256": "2c3eb757d13f6e708f54bdf7cdd78d6994e00ae968f8b739712b0bab23e63f72",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/1e.json.gz",
+      "bytes": 245,
+      "sha256": "5b5c9372426f732db1bee81b13d292f289eec4a4e0aa0527ccbdc322df9bb2e2",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/2d.json.gz",
+      "bytes": 201,
+      "sha256": "57d281898ec2f903faba7e016dbfcb595b22b542bbe31ee6401d143578ac22bf",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/30.json.gz",
+      "bytes": 238,
+      "sha256": "3ea6361ccd8d9767f9df651a203129d21faf86697a059144c0955a8e5b4b190f",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/3e.json.gz",
+      "bytes": 183,
+      "sha256": "3d6779f4f05a87cabb870c2af11f8f6c1430ce87ddfba8a55a409c8202e2ee1b",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/5c.json.gz",
+      "bytes": 213,
+      "sha256": "18f28e18588d7d185561e95627e596c17c10c53519986735cc212d0a1c91cd05",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/6c.json.gz",
+      "bytes": 221,
+      "sha256": "0543e400c9da13971daebf3d78ce495a2b68f5c1430460166cf5ca49af387cfd",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/76.json.gz",
+      "bytes": 266,
+      "sha256": "411c5d5b710b131aeb8e72f4579538dad450a5dd9a9c11783f2852813d2b7af5",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/7e.json.gz",
+      "bytes": 212,
+      "sha256": "3adbfc311da60bf0bfe75c9fb6fc1e7e121665b79a88a40e66cb6dff1f8ed128",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/99.json.gz",
+      "bytes": 239,
+      "sha256": "7539492be717c522b9ee672b03759e57773b69d95ccff83581be63d57d11aaa0",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/b0.json.gz",
+      "bytes": 202,
+      "sha256": "3f1328eb688d8d03d161e4d70190e14c5c066acb59f7a5ddc09df92db196acd3",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/b5.json.gz",
+      "bytes": 238,
+      "sha256": "41a69bf29f8dcbeea156c47c9e2f1553659ffcc04246a240358398a026ec9e31",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/c2.json.gz",
+      "bytes": 257,
+      "sha256": "8b65c17c42fd47caafd17b54e4a05ef4a214c6e1bf0380b26c8749d6bb63b7ae",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/d7.json.gz",
+      "bytes": 209,
+      "sha256": "5bb34f7c512471f344c19b345b73a35d86dd24e2961c9766b826fe7b5b7cd790",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/e1.json.gz",
+      "bytes": 413,
+      "sha256": "962bab9299e1579dcccbeccac82cbb126e49035698cb94d07f32a0ab4d1519f1",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/f5.json.gz",
+      "bytes": 209,
+      "sha256": "db174d79d1e150fc1fb48a476c9563326db66629447b255e7fc9762c87d1ef6a",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "catalog/trends/f8.json.gz",
+      "bytes": 225,
+      "sha256": "b6d37adffbb4131fade70800a4c5cf3ae65ade0ae5a1c537639dcd09a2e4fbe8",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "docs/d_b2216ce7d082.json.gz",
+      "bytes": 452,
+      "sha256": "49d5942f2a0f6fa2ee644533cc9fdbef9e64a9721f7518577fa5d57384a266dc",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "docs/d_cfe9f61a1796.json.gz",
+      "bytes": 420,
+      "sha256": "a70d842ad34ca3a3fa5c77cbe8bb6960779b265808130b12d28c827b968301f4",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "docs/d_db895f8dd5a9.json.gz",
+      "bytes": 553,
+      "sha256": "f6d7ca89245dd90ae5491b169da0412150510b6e18f00d83a168d1a0ea18d4d4",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "econ/indicators.json",
+      "bytes": 411758,
+      "sha256": "e821596189542b9546aa041dbb38775ed91f013d73e035e1ff13940fda412e14",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    },
+    {
+      "path": "sources.json",
+      "bytes": 11246,
+      "sha256": "9b88063cba145d8482a4b5793b6cfa691d53f6ca3870f1c6c9e25a2b5ae29b8b",
+      "rows": null,
+      "dataset": null,
+      "fiscal_year_be": null,
+      "ministry_code": null,
+      "province": null
+    }
+  ],
+  "catalog_scope": "catalog/items.json.gz แต่ละ entry คือกลุ่ม item_key ที่เหมือนกันหลังตัด whitespace ทั้งหมด (group_key — รวม variant ที่ item_parser/OCR ต้นทางเว้นวรรคต่างกัน เช่น 'X สำหรับY' กับ 'XสำหรับY'); 'key' = variant ที่มีจำนวนแถวมากสุด (ตัวแทน, deterministic — เสมอกันเรียงตัวอักษร), 'keys' = variant ทั้งหมดของกลุ่ม (มีเฉพาะเมื่อ > 1 variant, cap 12 ตัว + 'keys_truncated:true' ถ้าเกิน) — query budget_lines shard ด้วย `item_key IN (keys ถ้ามี มิฉะนั้นใช้ key)`; ครอบคลุมเฉพาะกลุ่มที่ (n_lines >= เกณฑ์) หรือ (ปรากฏ >= เกณฑ์ปี) หรือ (มี unit_price ที่ต่างกัน >= 2 ค่า) ไม่รวมแถว corrupt_row/lump_sum_category/subset_of_act_2570_draft — ดู manifest 'catalog_threshold' รายการหางยาว (long-tail) ที่ไม่เข้า catalog ยังค้นได้ด้วย SQL ตรงบน budget_lines shards ผ่าน DuckDB-WASM",
+  "coverage_notes": [
+    {
+      "dataset": "pbo_disbursement",
+      "fiscal_year_be": 2562,
+      "status": "source_incomplete",
+      "coverage_pct": 79.24,
+      "missing_ministries": [
+        "กระทรวงกลาโหม",
+        "กระทรวงการคลัง",
+        "กระทรวงการต่างประเทศ",
+        "กระทรวงการท่องเที่ยวและกีฬา",
+        "กระทรวงการพัฒนาสังคมและความมั่นคงของมนุษย์",
+        "รายจ่ายเพื่อชดใช้เงินคงคลัง"
+      ],
+      "partial_ministries": [
+        "กระทรวงเกษตรและสหกรณ์",
+        "สำนักนายกรัฐมนตรี"
+      ],
+      "note": "PBO/2562.xlsx (sheet \"เบิกจ่ายภาพรวมทุกมิติ (3)\") ขาดข้อมูลทั้งกระทรวงของ 6 รายการข้างต้น (ไม่มีแถวเลย) และมีข้อมูลไม่ครบของกระทรวงเกษตรฯ/สำนักนายกฯ ทั้งที่ Grand Total ในไฟล์ระบุ 3,000,000 ล้านบาท (ตรงกับ พ.ร.บ. งบประมาณปี 2562 จริง) — ยังไม่ทราบสาเหตุที่แท้จริง (สงสัยว่าไฟล์ export จาก PBO ต้นทางไม่สมบูรณ์) ตัดสินใจ**เก็บข้อมูลปี 2562 ไว้ใช้งานต่อ** แต่ต้องแสดงคำเตือนชัดเจนใน UI/validation ทุกครั้ง (ดู docs/decisions/ADR-004.md). แยกจากปัญหาแถว 226-227 ที่คอลัมน์เงินเลื่อน/เสีย (พรบ.=607,006,457,005 ล้านบาท) ซึ่งถูก null ทิ้งเป็น quality_flag=corrupt_row ไปแล้วก่อนคำนวณ extracted_total_mthb นี้ (ไม่ใช่สาเหตุ ของช่องว่าง 20.8% ข้างต้น — ตรวจแยกกันแล้วว่าเป็นคนละปัญหา)",
+      "decision_ref": "ADR-004"
+    },
+    {
+      "dataset": "pbo_disbursement",
+      "fiscal_year_be": 2567,
+      "status": "no_oracle",
+      "note": "ไม่มี Grand Total/Sheet1 ให้ตรวจยอดในไฟล์ต้นทาง — ตรวจแค่จำนวนแถว (soft)",
+      "decision_ref": "03-DATA-PIPELINE.md §6 V1(d)"
+    },
+    {
+      "dataset": "local_ordinance_2570",
+      "fiscal_year_be": 2570,
+      "status": "upstream_ocr_group_mismatch",
+      "note": "อบต. ราชาเทวะ: ตัวเลขระดับแถวถอดจาก OCR ของต้นทาง (ไม่ใช่เรา OCR) — 10/38 กลุ่ม (plan, activity, budget_type) ยอดไม่ตรง summary ที่พิมพ์ในเอกสาร (flag group_total_mismatch) ยอดรวมทั้งไฟล์ต่างกัน 0.21% เท่านั้น",
+      "decision_ref": "ADR-005"
+    }
+  ],
+  "catalog_threshold": {
+    "min_lines": 5,
+    "min_years": 3,
+    "min_unit_price_distinct": 2,
+    "n_entries": 41,
+    "thresholds_tried": [
+      {
+        "n_lines": 5,
+        "n_years": 3,
+        "n_unit_price_distinct": 2,
+        "count": 41,
+        "gz_bytes": 6480
+      }
+    ]
+  }
+}

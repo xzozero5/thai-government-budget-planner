@@ -1,0 +1,2220 @@
+[
+  {
+    "code": "12000",
+    "name": "กระทรวงพลังงาน",
+    "level": "ministry",
+    "ministry_code": null,
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "15000",
+    "name": "กระทรวงมหาดไทย",
+    "level": "ministry",
+    "ministry_code": null,
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "20000",
+    "name": "กระทรวงศึกษาธิการ",
+    "level": "ministry",
+    "ministry_code": null,
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "22000",
+    "name": "กระทรวงอุตสาหกรรม",
+    "level": "ministry",
+    "ministry_code": null,
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "25000",
+    "name": "ส่วนราชการไม่สังกัดสำนักนายกรัฐมนตรี กระทรวง หรือทบวง และหน่วยงานภายใต้การควบคุมดูแลของนายกรัฐมนตรี",
+    "level": "ministry",
+    "ministry_code": null,
+    "aliases": [
+      "ส่วนราชการไม่สังกัดสำนักนายกรัฐมนตรี กระทรวงหรือทบวง เเละหน่วยงานภายใต้การควบคุม"
+    ],
+    "synthetic": false
+  },
+  {
+    "code": "70000",
+    "name": "จังหวัดและกลุ่มจังหวัด",
+    "level": "ministry",
+    "ministry_code": null,
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75000",
+    "name": "องค์กรปกครองส่วนท้องถิ่น",
+    "level": "ministry",
+    "ministry_code": null,
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "12002",
+    "name": "สำนักงานปลัดกระทรวงพลังงาน",
+    "level": "agency",
+    "ministry_code": "12000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "12005",
+    "name": "กรมพัฒนาพลังงานทดแทนและอนุรักษ์พลังงาน",
+    "level": "agency",
+    "ministry_code": "12000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "12006",
+    "name": "สำนักงานนโยบายและแผนพลังงาน",
+    "level": "agency",
+    "ministry_code": "12000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "15002",
+    "name": "สำนักงานปลัดกระทรวงมหาดไทย",
+    "level": "agency",
+    "ministry_code": "15000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "15003",
+    "name": "กรมการปกครอง",
+    "level": "agency",
+    "ministry_code": "15000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "15004",
+    "name": "กรมการพัฒนาชุมชน",
+    "level": "agency",
+    "ministry_code": "15000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "15005",
+    "name": "กรมที่ดิน",
+    "level": "agency",
+    "ministry_code": "15000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "15006",
+    "name": "กรมป้องกันและบรรเทาสาธารณภัย",
+    "level": "agency",
+    "ministry_code": "15000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "15007",
+    "name": "กรมโยธาธิการและผังเมือง",
+    "level": "agency",
+    "ministry_code": "15000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "15008",
+    "name": "กรมส่งเสริมการปกครองท้องถิ่น",
+    "level": "agency",
+    "ministry_code": "15000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "20002",
+    "name": "สำนักงานปลัดกระทรวงศึกษาธิการ",
+    "level": "agency",
+    "ministry_code": "20000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "20003",
+    "name": "สำนักงานเลขาธิการสภาการศึกษา",
+    "level": "agency",
+    "ministry_code": "20000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "20004",
+    "name": "สำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน",
+    "level": "agency",
+    "ministry_code": "20000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "20006",
+    "name": "สำนักงานคณะกรรมการการอาชีวศึกษา",
+    "level": "agency",
+    "ministry_code": "20000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "20301",
+    "name": "สถาบันส่งเสริมการสอนวิทยาศาสตร์และเทคโนโลยี",
+    "level": "agency",
+    "ministry_code": "20000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "20334",
+    "name": "กรมส่งเสริมการเรียนรู้",
+    "level": "agency",
+    "ministry_code": "20000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "22003",
+    "name": "กรมโรงงานอุตสาหกรรม",
+    "level": "agency",
+    "ministry_code": "22000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "25007",
+    "name": "สำนักงานตำรวจแห่งชาติ",
+    "level": "agency",
+    "ministry_code": "25000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "70063",
+    "name": "จังหวัดนครศรีธรรมราช",
+    "level": "agency",
+    "ministry_code": "70000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "70101",
+    "name": "จังหวัดหนองคาย",
+    "level": "agency",
+    "ministry_code": "70000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "70113",
+    "name": "จังหวัดสกลนคร",
+    "level": "agency",
+    "ministry_code": "70000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "70182",
+    "name": "จังหวัดพิจิตร",
+    "level": "agency",
+    "ministry_code": "70000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75002",
+    "name": "กรุงเทพมหานคร",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7514G",
+    "name": "เทศบาลตำบลพนมทวน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7515E",
+    "name": "องค์การบริหารส่วนจังหวัดกาฬสินธุ์",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7515Q",
+    "name": "เทศบาลตำบลภูปอ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7516E",
+    "name": "เทศบาลตำบลร่องคำ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7519J",
+    "name": "เทศบาลตำบลภูแล่นช้าง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751A6",
+    "name": "เทศบาลเมืองหนองปลิง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751AF",
+    "name": "เทศบาลตำบลไทรงาม",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751CJ",
+    "name": "เทศบาลนครขอนแก่น",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751CR",
+    "name": "เทศบาลตำบลพระลับ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751CY",
+    "name": "เทศบาลเมืองศิลา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751FM",
+    "name": "เทศบาลตำบลในเมือง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751JP",
+    "name": "เทศบาลตำบลหนองนาคำ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751KA",
+    "name": "เทศบาลเมืองท่าช้าง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751KK",
+    "name": "เทศบาลเมืองขลุง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751KX",
+    "name": "เทศบาลเมืองท่าใหม่",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751MJ",
+    "name": "เทศบาลเมืองฉะเชิงเทรา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751MR",
+    "name": "องค์การบริหารส่วนจังหวัดฉะเชิงเทรา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751N8",
+    "name": "เทศบาลตำบลปากน้ำ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751SD",
+    "name": "เทศบาลตำบลหมอนนาง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751SW",
+    "name": "เทศบาลนครเจ้าพระยาสุรศักดิ์",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751SZ",
+    "name": "เทศบาลตำบลบางพระ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751TX",
+    "name": "เทศบาลตำบลนางลือ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751V8",
+    "name": "เทศบาลตำบลวังตะเคียน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751VF",
+    "name": "เทศบาลเมืองชัยภูมิ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751XW",
+    "name": "เทศบาลตำบลโคกสะอาด",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "751ZN",
+    "name": "เทศบาลเมืองชุมพร",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7521H",
+    "name": "เทศบาลตำบลนาโพธิ์",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7521Y",
+    "name": "เทศบาลนครเชียงราย",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75223",
+    "name": "เทศบาลตำบลแม่ยาว",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75228",
+    "name": "องค์การบริหารส่วนจังหวัดเชียงราย",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7522K",
+    "name": "เทศบาลตำบลดอนศิลา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7522N",
+    "name": "เทศบาลตำบลเวียงเชียงของ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7522S",
+    "name": "เทศบาลตำบลห้วยซ้อ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75241",
+    "name": "เทศบาลตำบลท่าข้าวเปลือก",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7525T",
+    "name": "เทศบาลตำบลแม่ลาว",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75266",
+    "name": "เทศบาลนครเชียงใหม่",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75267",
+    "name": "องค์การบริหารส่วนจังหวัดเชียงใหม่",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7526J",
+    "name": "เทศบาลตำบลจอมทอง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7526P",
+    "name": "เทศบาลตำบลดอยแก้ว",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7526T",
+    "name": "เทศบาลตำบลท่าผา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7527B",
+    "name": "เทศบาลตำบลลวงเหนือ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7527C",
+    "name": "เทศบาลตำบลป่าป้อง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7527D",
+    "name": "เทศบาลตำบลสง่าบ้าน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7527E",
+    "name": "เทศบาลตำบลตลาดขวัญ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7527F",
+    "name": "เทศบาลตำบลสำราญราษฎร์",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7527G",
+    "name": "เทศบาลตำบลแม่คือ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7527H",
+    "name": "เทศบาลตำบลตลาดใหญ่",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7527J",
+    "name": "เทศบาลตำบลแม่ฮ้อยเงิน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7527K",
+    "name": "เทศบาลตำบลแม่โป่ง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7527N",
+    "name": "เทศบาลตำบลสันมหาพน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7527P",
+    "name": "เทศบาลตำบลแม่แตง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7527Z",
+    "name": "เทศบาลเมืองเมืองแกนพัฒนา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75282",
+    "name": "เทศบาลตำบลริมเหนือ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75283",
+    "name": "เทศบาลตำบลสันโป่ง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7528Q",
+    "name": "เทศบาลตำบลบ้านแม่ข่า",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7528T",
+    "name": "เทศบาลตำบลแม่อาย",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75290",
+    "name": "เทศบาลตำบลเวียงพร้าว",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75291",
+    "name": "เทศบาลตำบลป่าตุ้ม",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75292",
+    "name": "เทศบาลตำบลป่าไหน่",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7529A",
+    "name": "เทศบาลตำบลยุหว่า",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7529P",
+    "name": "เทศบาลตำบลสันกำแพง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7529U",
+    "name": "เทศบาลตำบลออนใต้",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752A1",
+    "name": "เทศบาลตำบลสันนาเม็ง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752A3",
+    "name": "เทศบาลตำบลหนองแหย่ง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752A5",
+    "name": "เทศบาลเมืองแม่โจ้",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752A7",
+    "name": "เทศบาลตำบลแม่แฝก",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752A9",
+    "name": "เทศบาลตำบลเมืองเล็น",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752AB",
+    "name": "เทศบาลตำบลหางดง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752AK",
+    "name": "เทศบาลตำบลสันผักหวาน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752AL",
+    "name": "เทศบาลตำบลหนองควาย",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752AM",
+    "name": "เทศบาลตำบลบ้านปง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752AT",
+    "name": "เทศบาลตำบลบ่อหลวง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752AX",
+    "name": "เทศบาลตำบลท่าเดื่อ-มืดกา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752BC",
+    "name": "เทศบาลตำบลไชยสถาน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752BH",
+    "name": "เทศบาลตำบลดอนแก้ว",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752BL",
+    "name": "เทศบาลตำบลป่าบง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752BU",
+    "name": "เทศบาลตำบลแม่วาง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752C8",
+    "name": "เทศบาลตำบลยางคราม",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752GM",
+    "name": "เทศบาลเมืองตาก",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752GR",
+    "name": "องค์การบริหารส่วนจังหวัดตาก",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752HV",
+    "name": "เทศบาลนครแม่สอด",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752KW",
+    "name": "เทศบาลตำบลองครักษ์",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752PF",
+    "name": "เทศบาลเมืองนครพนม",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752V5",
+    "name": "เทศบาลตำบลด่านขุนทด",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752WT",
+    "name": "เทศบาลเมืองบัวใหญ่",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "752XJ",
+    "name": "เทศบาลเมืองเมืองปัก",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7532R",
+    "name": "เทศบาลเมืองปากพูน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7532W",
+    "name": "เทศบาลตำบลพรหมโลก",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7534Z",
+    "name": "เทศบาลตำบลที่วัง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75364",
+    "name": "เทศบาลตำบลเขาชุมทอง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75367",
+    "name": "เทศบาลตำบลสิชล",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7537S",
+    "name": "เทศบาลนครนครสวรรค์",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7538M",
+    "name": "เทศบาลเมืองชุมแสง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7539V",
+    "name": "เทศบาลเมืองตาคลี",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753C0",
+    "name": "เทศบาลนครนนทบุรี",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753C3",
+    "name": "เทศบาลเมืองบางกร่าง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753DX",
+    "name": "เทศบาลตำบลต้นไทร",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753FE",
+    "name": "เทศบาลเมืองสุไหงโก-ลก",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753K0",
+    "name": "เทศบาลตำบลโนนสว่าง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753KW",
+    "name": "เทศบาลตำบลป่งไฮ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753M2",
+    "name": "เทศบาลเมืองชุมเห็ด",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753MV",
+    "name": "เทศบาลเมืองนางรอง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753PF",
+    "name": "เทศบาลตำบลตลาดนิคมปราสาท",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753S3",
+    "name": "เทศบาลตำบลบ้านใหม่ไชยพจน์",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753SH",
+    "name": "เทศบาลตำบลแคนดง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753T1",
+    "name": "เทศบาลเมืองบางคูวัด",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753T9",
+    "name": "เทศบาลเมืองท่าโขลง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753TA",
+    "name": "เทศบาลเมืองคลองหลวง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753TG",
+    "name": "เทศบาลนครรังสิต",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753TH",
+    "name": "เทศบาลเมืองบึงยี่โถ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753TK",
+    "name": "เทศบาลเมืองสนั่นรักษ์",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753V7",
+    "name": "เทศบาลตำบลทับสะแก",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753VH",
+    "name": "เทศบาลตำบลร่อนทอง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753WE",
+    "name": "เทศบาลตำบลไร่เก่า",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753XB",
+    "name": "เทศบาลเมืองหนองกี่",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753XN",
+    "name": "เทศบาลตำบลบ้านสร้าง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753YD",
+    "name": "เทศบาลตำบลกรอกสมบูรณ์",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "753YL",
+    "name": "เทศบาลเมืองปัตตานี",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7540F",
+    "name": "เทศบาลเมืองตะลุบัน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75429",
+    "name": "องค์การบริหารส่วนจังหวัดพระนครศรีอยุธยา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7544A",
+    "name": "เทศบาลเมืองผักไห่",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75452",
+    "name": "เทศบาลเมืองลำตาเสา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7545C",
+    "name": "เทศบาลเมืองเสนา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7546K",
+    "name": "เทศบาลเมืองพะเยา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75474",
+    "name": "เทศบาลตำบลทุ่งรวงทอง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7547N",
+    "name": "เทศบาลเมืองดอกคำใต้",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7548D",
+    "name": "เทศบาลตำบลเจริญราษฎร์",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75491",
+    "name": "เทศบาลตำบลพรุใน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7549S",
+    "name": "เทศบาลตำบลคุระบุรี",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754A6",
+    "name": "เทศบาลตำบลลำแก่น",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754A7",
+    "name": "องค์การบริหารส่วนจังหวัดพัทลุง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754B1",
+    "name": "เทศบาลตำบลตะโหมด",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754B6",
+    "name": "เทศบาลตำบลทะเลน้อย",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754CE",
+    "name": "เทศบาลเมืองพิจิตร",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754DP",
+    "name": "เทศบาลเมืองบางมูลนาก",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754E0",
+    "name": "เทศบาลตำบลโพทะเล",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754GN",
+    "name": "เทศบาลตำบลปลักแรด",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754JE",
+    "name": "องค์การบริหารส่วนจังหวัดเพชรบุรี",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754KD",
+    "name": "เทศบาลเมืองชะอำ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754LX",
+    "name": "เทศบาลเมืองเพชรบูรณ์",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754MV",
+    "name": "เทศบาลเมืองหล่มสัก",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754PQ",
+    "name": "เทศบาลตำบลบัววัฒนา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754QB",
+    "name": "เทศบาลตำบลวังโป่ง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754T0",
+    "name": "เทศบาลตำบลหนองม่วงไข่",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754TC",
+    "name": "เทศบาลตำบลกะรน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754TD",
+    "name": "เทศบาลเมืองกะทู้",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754TQ",
+    "name": "องค์การบริหารส่วนจังหวัดมหาสารคาม",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754W9",
+    "name": "เทศบาลตำบลพยัคฆภูมิพิสัย",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754X6",
+    "name": "เทศบาลตำบลนาดูน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754XU",
+    "name": "เทศบาลตำบลกุดปลาดุก",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754XY",
+    "name": "เทศบาลเมืองมุกดาหาร",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754Y3",
+    "name": "เทศบาลตำบลผึ่งแดด",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754Y7",
+    "name": "เทศบาลตำบลคำอาฮวน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754Y8",
+    "name": "เทศบาลตำบลดงเย็น",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754YB",
+    "name": "เทศบาลตำบลนิคมคำสร้อย",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "754YK",
+    "name": "เทศบาลตำบลดอนตาล",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75511",
+    "name": "เทศบาลเมืองยโสธร",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7553L",
+    "name": "องค์การบริหารส่วนจังหวัดยะลา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75540",
+    "name": "เทศบาลเมืองสะเตงนอก",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7555G",
+    "name": "องค์การบริหารส่วนจังหวัดร้อยเอ็ด",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7556J",
+    "name": "เทศบาลตำบลโนนสวรรค์",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755AV",
+    "name": "เทศบาลตำบลจังหาร",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755CC",
+    "name": "เทศบาลนครระยอง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755DU",
+    "name": "เทศบาลตำบลชากบก",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755DV",
+    "name": "เทศบาลตำบลบ้านปลวกแดง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755EC",
+    "name": "องค์การบริหารส่วนจังหวัดราชบุรี",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755ED",
+    "name": "เทศบาลเมืองราชบุรี",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755EM",
+    "name": "เทศบาลตำบลหลักเมือง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755EU",
+    "name": "เทศบาลตำบลเขางู",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755F2",
+    "name": "เทศบาลเมืองจอมพล",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755FG",
+    "name": "เทศบาลตำบลประสาทสิทธิ์",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755FU",
+    "name": "เทศบาลเมืองบ้านโป่ง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755FV",
+    "name": "เทศบาลเมืองท่าผา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755GH",
+    "name": "เทศบาลเมืองโพธาราม",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755HU",
+    "name": "เทศบาลเมืองเขาสามยอด",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755MC",
+    "name": "เทศบาลเมืองเขลางค์นคร",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755N7",
+    "name": "เทศบาลตำบลท่าผา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755QE",
+    "name": "เทศบาลเมืองลำพูน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755QQ",
+    "name": "องค์การบริหารส่วนจังหวัดลำพูน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755R1",
+    "name": "เทศบาลตำบลทากาศเหนือ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755S5",
+    "name": "เทศบาลเมืองเลย",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755SD",
+    "name": "เทศบาลตำบลนาดินดำ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755TT",
+    "name": "เทศบาลตำบลร่องจิก",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755TX",
+    "name": "เทศบาลตำบลท่าลี่",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755VK",
+    "name": "องค์การบริหารส่วนจังหวัดศรีสะเกษ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "755ZH",
+    "name": "เทศบาลตำบลโคกจาน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7561H",
+    "name": "เทศบาลนครสกลนคร",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7562K",
+    "name": "เทศบาลตำบลบัวสว่าง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7563P",
+    "name": "เทศบาลตำบลแพด",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75648",
+    "name": "เทศบาลตำบลสามัคคีพัฒนา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75689",
+    "name": "เทศบาลตำบลคลองแงะ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7568J",
+    "name": "เทศบาลนครหาดใหญ่",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7568V",
+    "name": "เทศบาลเมืองบ้านพรุ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7569S",
+    "name": "เทศบาลเมืองสตูล",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756B7",
+    "name": "เทศบาลเมืองแพรกษา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756BZ",
+    "name": "เทศบาลเมืองปู่เจ้าสมิงพราย",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756CF",
+    "name": "องค์การบริหารส่วนจังหวัดสมุทรสงคราม",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756DH",
+    "name": "องค์การบริหารส่วนจังหวัดสมุทรสาคร",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756FC",
+    "name": "เทศบาลเมืองวังน้ำเย็น",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756FU",
+    "name": "เทศบาลเมืองอรัญญประเทศ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756GK",
+    "name": "เทศบาลเมืองสระบุรี",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756JZ",
+    "name": "เทศบาลตำบลบ้านยาง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756KT",
+    "name": "องค์การบริหารส่วนจังหวัดสิงห์บุรี",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756L1",
+    "name": "เทศบาลเมืองบางระจัน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756LS",
+    "name": "เทศบาลตำบลทับยา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756M0",
+    "name": "เทศบาลเมืองสุโขทัยธานี",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756M7",
+    "name": "องค์การบริหารส่วนจังหวัดสุโขทัย",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756MD",
+    "name": "เทศบาลตำบลลานหอย",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756NF",
+    "name": "เทศบาลเมืองศรีสัชนาลัย",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756PQ",
+    "name": "เทศบาลเมืองสุพรรณบุรี",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756S3",
+    "name": "เทศบาลเมืองสองพี่น้อง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756U5",
+    "name": "เทศบาลเมืองดอนสัก",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756VU",
+    "name": "เทศบาลตำบลท่าชี",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "756WH",
+    "name": "เทศบาลตำบลเขานิพันธ์",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75700",
+    "name": "เทศบาลตำบลรัตนบุรี",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7572K",
+    "name": "เทศบาลเมืองหนองคาย",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7572S",
+    "name": "เทศบาลตำบลบ้านเดื่อ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7574W",
+    "name": "องค์การบริหารส่วนจังหวัดหนองบัวลำภู",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7575Y",
+    "name": "เทศบาลตำบลยางหล่อ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7576A",
+    "name": "เทศบาลตำบลสุวรรณคูหา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7578G",
+    "name": "เทศบาลเมืองอำนาจเจริญ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7578W",
+    "name": "องค์การบริหารส่วนจังหวัดอำนาจเจริญ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75792",
+    "name": "เทศบาลตำบลนายม",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7579H",
+    "name": "เทศบาลตำบลนาป่าแซง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7579N",
+    "name": "เทศบาลตำบลพระเหลา",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "757AC",
+    "name": "องค์การบริหารส่วนจังหวัดอุดรธานี",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "757B7",
+    "name": "เทศบาลตำบลยางชุม",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "757BW",
+    "name": "เทศบาลตำบลห้วยเกิ้ง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "757CT",
+    "name": "เทศบาลตำบลทุ่งฝน",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "757DJ",
+    "name": "เทศบาลเมืองบ้านดุง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "757FQ",
+    "name": "เทศบาลเมืองอุตรดิตถ์",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "757GK",
+    "name": "เทศบาลตำบลจริม",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "757KX",
+    "name": "องค์การบริหารส่วนจังหวัดอุบลราชธานี",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "757KY",
+    "name": "เทศบาลนครอุบลราชธานี",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "757LP",
+    "name": "เทศบาลตำบลบ้านด่านโขงเจียม",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "757LV",
+    "name": "เทศบาลตำบลห้วยเรือ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "757MQ",
+    "name": "เทศบาลเมืองเดชอุดม",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "757Q9",
+    "name": "เทศบาลเมืองวารินชำราบ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "757TZ",
+    "name": "เทศบาลเมืองดอนแก้ว",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75846",
+    "name": "เทศบาลตำบลหนองไฮ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "75885",
+    "name": "เทศบาลตำบลสุขไพบูลย์",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7588C",
+    "name": "เทศบาลตำบลบัวทอง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7588N",
+    "name": "เทศบาลตำบลหนองสนิท",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7588P",
+    "name": "เทศบาลตำบลแม่สาบ",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7588S",
+    "name": "เทศบาลตำบลสะลวง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7588V",
+    "name": "เทศบาลตำบลร้องวัวแดง",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  },
+  {
+    "code": "7588X",
+    "name": "เทศบาลตำบลแม่ตื่น",
+    "level": "agency",
+    "ministry_code": "75000",
+    "aliases": [],
+    "synthetic": false
+  }
+]

@@ -1,0 +1,464 @@
+{
+  "budget_types": [
+    {
+      "count": 1,
+      "value": "งบกลาง"
+    },
+    {
+      "count": 89,
+      "value": "งบดำเนินงาน"
+    },
+    {
+      "count": 28,
+      "value": "งบบุคลากร"
+    },
+    {
+      "count": 9,
+      "value": "งบรายจ่ายอื่น"
+    },
+    {
+      "count": 327,
+      "value": "งบลงทุน"
+    },
+    {
+      "count": 262,
+      "value": "งบอุดหนุน"
+    },
+    {
+      "count": 132,
+      "value": "งบเงินอุดหนุน"
+    }
+  ],
+  "coverage_notes": [
+    {
+      "coverage_pct": 79.24,
+      "dataset": "pbo_disbursement",
+      "decision_ref": "ADR-004",
+      "fiscal_year_be": 2562,
+      "missing_ministries": [
+        "กระทรวงกลาโหม",
+        "กระทรวงการคลัง",
+        "กระทรวงการต่างประเทศ",
+        "กระทรวงการท่องเที่ยวและกีฬา",
+        "กระทรวงการพัฒนาสังคมและความมั่นคงของมนุษย์",
+        "รายจ่ายเพื่อชดใช้เงินคงคลัง"
+      ],
+      "note": "PBO/2562.xlsx (sheet \"เบิกจ่ายภาพรวมทุกมิติ (3)\") ขาดข้อมูลทั้งกระทรวงของ 6 รายการข้างต้น (ไม่มีแถวเลย) และมีข้อมูลไม่ครบของกระทรวงเกษตรฯ/สำนักนายกฯ ทั้งที่ Grand Total ในไฟล์ระบุ 3,000,000 ล้านบาท (ตรงกับ พ.ร.บ. งบประมาณปี 2562 จริง) — ยังไม่ทราบสาเหตุที่แท้จริง (สงสัยว่าไฟล์ export จาก PBO ต้นทางไม่สมบูรณ์) ตัดสินใจ**เก็บข้อมูลปี 2562 ไว้ใช้งานต่อ** แต่ต้องแสดงคำเตือนชัดเจนใน UI/validation ทุกครั้ง (ดู docs/decisions/ADR-004.md). แยกจากปัญหาแถว 226-227 ที่คอลัมน์เงินเลื่อน/เสีย (พรบ.=607,006,457,005 ล้านบาท) ซึ่งถูก null ทิ้งเป็น quality_flag=corrupt_row ไปแล้วก่อนคำนวณ extracted_total_mthb นี้ (ไม่ใช่สาเหตุ ของช่องว่าง 20.8% ข้างต้น — ตรวจแยกกันแล้วว่าเป็นคนละปัญหา)",
+      "partial_ministries": [
+        "กระทรวงเกษตรและสหกรณ์",
+        "สำนักนายกรัฐมนตรี"
+      ],
+      "status": "source_incomplete"
+    },
+    {
+      "dataset": "pbo_disbursement",
+      "decision_ref": "03-DATA-PIPELINE.md §6 V1(d)",
+      "fiscal_year_be": 2567,
+      "note": "ไม่มี Grand Total/Sheet1 ให้ตรวจยอดในไฟล์ต้นทาง — ตรวจแค่จำนวนแถว (soft)",
+      "status": "no_oracle"
+    },
+    {
+      "dataset": "local_ordinance_2570",
+      "decision_ref": "ADR-005",
+      "fiscal_year_be": 2570,
+      "note": "อบต. ราชาเทวะ: ตัวเลขระดับแถวถอดจาก OCR ของต้นทาง (ไม่ใช่เรา OCR) — 10/38 กลุ่ม (plan, activity, budget_type) ยอดไม่ตรง summary ที่พิมพ์ในเอกสาร (flag group_total_mismatch) ยอดรวมทั้งไฟล์ต่างกัน 0.21% เท่านั้น",
+      "status": "upstream_ocr_group_mismatch"
+    }
+  ],
+  "datasets": [
+    {
+      "count": 198,
+      "value": "act_2570_draft"
+    },
+    {
+      "count": 50,
+      "value": "act_2570_province"
+    },
+    {
+      "count": 100,
+      "value": "committee_table"
+    },
+    {
+      "count": 150,
+      "value": "local_ordinance_2570"
+    },
+    {
+      "count": 50,
+      "value": "local_subsidy_2570"
+    },
+    {
+      "count": 450,
+      "value": "pbo_disbursement"
+    }
+  ],
+  "fiscal_years": [
+    {
+      "count": 11,
+      "value": 2561
+    },
+    {
+      "count": 19,
+      "value": 2562
+    },
+    {
+      "count": 10,
+      "value": 2563
+    },
+    {
+      "count": 28,
+      "value": 2564
+    },
+    {
+      "count": 32,
+      "value": 2565
+    },
+    {
+      "count": 150,
+      "value": 2566
+    },
+    {
+      "count": 150,
+      "value": 2567
+    },
+    {
+      "count": 150,
+      "value": 2568
+    },
+    {
+      "count": 448,
+      "value": 2570
+    }
+  ],
+  "ministries": [
+    {
+      "count": 5,
+      "value": "12000"
+    },
+    {
+      "count": 216,
+      "value": "15000"
+    },
+    {
+      "count": 216,
+      "value": "20000"
+    },
+    {
+      "count": 1,
+      "value": "22000"
+    },
+    {
+      "count": 1,
+      "value": "25000"
+    },
+    {
+      "count": 4,
+      "value": "70000"
+    },
+    {
+      "count": 442,
+      "value": "75000"
+    }
+  ],
+  "provinces": [
+    {
+      "count": 18,
+      "value": "กรุงเทพมหานคร"
+    },
+    {
+      "count": 3,
+      "value": "กาญจนบุรี"
+    },
+    {
+      "count": 13,
+      "value": "กาฬสินธุ์"
+    },
+    {
+      "count": 7,
+      "value": "กำแพงเพชร"
+    },
+    {
+      "count": 9,
+      "value": "ขอนแก่น"
+    },
+    {
+      "count": 3,
+      "value": "จันทบุรี"
+    },
+    {
+      "count": 9,
+      "value": "ฉะเชิงเทรา"
+    },
+    {
+      "count": 4,
+      "value": "ชัยนาท"
+    },
+    {
+      "count": 10,
+      "value": "ชัยภูมิ"
+    },
+    {
+      "count": 1,
+      "value": "ชุมพร"
+    },
+    {
+      "count": 8,
+      "value": "ตรัง"
+    },
+    {
+      "count": 1,
+      "value": "ตราด"
+    },
+    {
+      "count": 5,
+      "value": "ตาก"
+    },
+    {
+      "count": 3,
+      "value": "นครนายก"
+    },
+    {
+      "count": 3,
+      "value": "นครปฐม"
+    },
+    {
+      "count": 7,
+      "value": "นครพนม"
+    },
+    {
+      "count": 16,
+      "value": "นครราชสีมา"
+    },
+    {
+      "count": 11,
+      "value": "นครศรีธรรมราช"
+    },
+    {
+      "count": 12,
+      "value": "นครสวรรค์"
+    },
+    {
+      "count": 1,
+      "value": "นนทบุรี"
+    },
+    {
+      "count": 4,
+      "value": "นราธิวาส"
+    },
+    {
+      "count": 3,
+      "value": "น่าน"
+    },
+    {
+      "count": 7,
+      "value": "บึงกาฬ"
+    },
+    {
+      "count": 11,
+      "value": "บุรีรัมย์"
+    },
+    {
+      "count": 4,
+      "value": "ปทุมธานี"
+    },
+    {
+      "count": 2,
+      "value": "ประจวบคีรีขันธ์"
+    },
+    {
+      "count": 2,
+      "value": "ปราจีนบุรี"
+    },
+    {
+      "count": 2,
+      "value": "ปัตตานี"
+    },
+    {
+      "count": 11,
+      "value": "พระนครศรีอยุธยา"
+    },
+    {
+      "count": 3,
+      "value": "พะเยา"
+    },
+    {
+      "count": 2,
+      "value": "พังงา"
+    },
+    {
+      "count": 2,
+      "value": "พัทลุง"
+    },
+    {
+      "count": 3,
+      "value": "พิจิตร"
+    },
+    {
+      "count": 4,
+      "value": "พิษณุโลก"
+    },
+    {
+      "count": 2,
+      "value": "ภูเก็ต"
+    },
+    {
+      "count": 20,
+      "value": "มหาสารคาม"
+    },
+    {
+      "count": 6,
+      "value": "มุกดาหาร"
+    },
+    {
+      "count": 5,
+      "value": "ยะลา"
+    },
+    {
+      "count": 8,
+      "value": "ยโสธร"
+    },
+    {
+      "count": 2,
+      "value": "ระนอง"
+    },
+    {
+      "count": 3,
+      "value": "ระยอง"
+    },
+    {
+      "count": 7,
+      "value": "ราชบุรี"
+    },
+    {
+      "count": 6,
+      "value": "ร้อยเอ็ด"
+    },
+    {
+      "count": 3,
+      "value": "ลพบุรี"
+    },
+    {
+      "count": 5,
+      "value": "ลำปาง"
+    },
+    {
+      "count": 5,
+      "value": "ลำพูน"
+    },
+    {
+      "count": 9,
+      "value": "ศรีสะเกษ"
+    },
+    {
+      "count": 11,
+      "value": "สกลนคร"
+    },
+    {
+      "count": 6,
+      "value": "สงขลา"
+    },
+    {
+      "count": 5,
+      "value": "สตูล"
+    },
+    {
+      "count": 2,
+      "value": "สมุทรปราการ"
+    },
+    {
+      "count": 2,
+      "value": "สมุทรสงคราม"
+    },
+    {
+      "count": 4,
+      "value": "สมุทรสาคร"
+    },
+    {
+      "count": 6,
+      "value": "สระบุรี"
+    },
+    {
+      "count": 7,
+      "value": "สระแก้ว"
+    },
+    {
+      "count": 6,
+      "value": "สิงห์บุรี"
+    },
+    {
+      "count": 9,
+      "value": "สุพรรณบุรี"
+    },
+    {
+      "count": 7,
+      "value": "สุราษฎร์ธานี"
+    },
+    {
+      "count": 14,
+      "value": "สุรินทร์"
+    },
+    {
+      "count": 6,
+      "value": "สุโขทัย"
+    },
+    {
+      "count": 5,
+      "value": "หนองคาย"
+    },
+    {
+      "count": 8,
+      "value": "หนองบัวลำภู"
+    },
+    {
+      "count": 10,
+      "value": "อำนาจเจริญ"
+    },
+    {
+      "count": 14,
+      "value": "อุดรธานี"
+    },
+    {
+      "count": 1,
+      "value": "อุตรดิตถ์"
+    },
+    {
+      "count": 3,
+      "value": "อุทัยธานี"
+    },
+    {
+      "count": 19,
+      "value": "อุบลราชธานี"
+    },
+    {
+      "count": 5,
+      "value": "อ่างทอง"
+    },
+    {
+      "count": 12,
+      "value": "เชียงราย"
+    },
+    {
+      "count": 261,
+      "value": "เชียงใหม่"
+    },
+    {
+      "count": 4,
+      "value": "เพชรบุรี"
+    },
+    {
+      "count": 3,
+      "value": "เพชรบูรณ์"
+    },
+    {
+      "count": 13,
+      "value": "เลย"
+    },
+    {
+      "count": 3,
+      "value": "แพร่"
+    },
+    {
+      "count": 5,
+      "value": "แม่ฮ่องสอน"
+    }
+  ]
+}

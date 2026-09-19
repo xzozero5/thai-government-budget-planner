@@ -312,6 +312,41 @@ def _build_rich_fixture(cfg: PipelineConfig) -> None:
         )
     )
 
+    # T-110c (main thread, 20 ก.ย. 2569): whitespace variant ของ item_key เดียวกัน — ต้องรวมเป็น
+    # catalog entry เดียวผ่าน group_key (ตัด whitespace ทั้งหมด) "เครื่องพิมพ์เลเซอร์ ขาวดำ" (มีวรรค,
+    # 2 แถว 2 ปี) กับ "เครื่องพิมพ์เลเซอร์ขาวดำ" (ไม่มีวรรค, 1 แถว 1 ปี) → group_key เดียวกัน,
+    # ตัวแทน (n มากสุด) = "เครื่องพิมพ์เลเซอร์ ขาวดำ" (2 > 1), ปีรวม = 3 ปี (เข้าเกณฑ์ n_years>=3)
+    for year, price in ((2565, 5000), (2566, 5100)):
+        rows_pbo.append(
+            row(
+                fiscal_year_be=year,
+                fiscal_year_ce=year - 543,
+                item_name_raw="เครื่องพิมพ์เลเซอร์ ขาวดำ",
+                item_name="เครื่องพิมพ์เลเซอร์ ขาวดำ",
+                item_key="เครื่องพิมพ์เลเซอร์ ขาวดำ",
+                item_qty=1.0,
+                amount_thb=price,
+                unit_price_thb=price,
+                agency="กรมพัสดุ",
+                source_path=f"PBO/{year}.xlsx",
+                source_row=1500 + year,
+            )
+        )
+    rows_pbo.append(
+        row(
+            fiscal_year_be=2567,
+            item_name_raw="เครื่องพิมพ์เลเซอร์ขาวดำ",
+            item_name="เครื่องพิมพ์เลเซอร์ขาวดำ",
+            item_key="เครื่องพิมพ์เลเซอร์ขาวดำ",
+            item_qty=1.0,
+            amount_thb=5200,
+            unit_price_thb=5200,
+            agency="กรมพัสดุ",
+            source_path="PBO/2567.xlsx",
+            source_row=1600,
+        )
+    )
+
     write_normalized(cfg.cache_dir, "pbo_disbursement", "pbo.parquet", rows_pbo)
 
     # act_2570_province: 3 แถว subset_of_act_2570_draft ของ item_key "ก่อสร้างถนนคอนกรีต" — ไม่ควร
@@ -476,6 +511,71 @@ def test_catalog_amount_stats_exclude_non_positive(published) -> None:
     assert entry["amount"]["n"] == 3
 
 
+# ---------------------------------------------------------------------------
+# T-110c (main thread, 20 ก.ย. 2569): group_key รวม whitespace variant
+# ---------------------------------------------------------------------------
+
+
+def test_compute_group_key_strips_all_whitespace() -> None:
+    assert pub.compute_group_key("เครื่องคอมพิวเตอร์โน้ตบุ๊ก สำหรับงานประมวลผล") == (
+        pub.compute_group_key("เครื่องคอมพิวเตอร์โน้ตบุ๊กสำหรับงานประมวลผล")
+    )
+    assert pub.compute_group_key("a  b\tc\nd") == "abcd"
+    assert pub.compute_group_key(None) is None
+    assert pub.compute_group_key("") == ""
+
+
+def test_catalog_merges_whitespace_variants_into_one_entry(published) -> None:
+    """ "เครื่องพิมพ์เลเซอร์ ขาวดำ" (2 แถว, 2 ปี) + "เครื่องพิมพ์เลเซอร์ขาวดำ" (1 แถว, 1 ปี) ต้องรวม
+    เป็น entry เดียว: n_lines=3, years=3 ปี, ตัวแทน (key) = variant ที่มีแถวมากสุด, keys มีทั้งคู่
+    """
+    _cfg, result = published
+    variant_a = "เครื่องพิมพ์เลเซอร์ ขาวดำ"  # 2 แถว — ตัวแทนต้องเป็นตัวนี้
+    variant_b = "เครื่องพิมพ์เลเซอร์ขาวดำ"  # 1 แถว
+    by_key = {e["key"]: e for e in result.catalog.entries}
+    assert variant_b not in by_key  # variant ที่ไม่ใช่ตัวแทนต้องไม่โผล่เป็น key แยก
+    entry = by_key.get(variant_a)
+    assert entry is not None, f"entries จริง: {sorted(by_key)}"
+    assert entry["n_lines"] == 3
+    assert sorted(entry["years"]) == [2565, 2566, 2567]
+    assert entry["keys"] == [variant_a, variant_b]
+    assert "keys_truncated" not in entry
+    assert entry["unit_price"]["n"] == 3
+    assert entry["amount"]["n"] == 3
+    # shards ต้องครอบคลุมทั้งสองปีที่ variant_b (2567) อยู่ด้วย ไม่ใช่แค่ของ variant_a
+    assert any("2567" in s for s in entry["shards"])
+    assert any("2565" in s or "2566" in s for s in entry["shards"])
+
+
+def test_catalog_single_variant_entry_has_no_keys_field(published) -> None:
+    """item_key ที่ไม่มี whitespace variant (variant เดียว) ต้องไม่มี field "keys" (ประหยัดขนาด)"""
+    _cfg, result = published
+    by_key = {e["key"]: e for e in result.catalog.entries}
+    entry = by_key["ครุภัณฑ์คงทน"]
+    assert "keys" not in entry
+    assert "keys_truncated" not in entry
+
+
+def test_trends_use_group_key_for_merged_variants(published) -> None:
+    """เครื่องพิมพ์เลเซอร์: unit_price มีแค่ 1 ค่า/ปี (< TREND_MIN_UNIT_PRICE_PER_YEAR=3) ทุกปี →
+    basis ต้องเป็น amount_per_line และ series ต้องรวมข้อมูลจากทั้งสอง variant (3 ปี ไม่ใช่ 2 ปี)
+    """
+    _cfg, result = published
+    variant_a = "เครื่องพิมพ์เลเซอร์ ขาวดำ"
+    by_key = {e["key"]: e for e in result.catalog.entries}
+    entry = by_key[variant_a]
+    assert "trend" in entry
+    hh = entry["trend"]
+    trends_payload = json.loads(
+        gzip.decompress((result.out_dir / "catalog" / "trends" / f"{hh}.json.gz").read_bytes())
+    )
+    series = trends_payload[variant_a]
+    assert series["key"] == variant_a
+    assert series["basis"] == "amount_per_line"
+    assert sorted(p["year_be"] for p in series["series"]) == [2565, 2566, 2567]
+    assert all("median_unit_price_thb" not in p for p in series["series"])
+
+
 def test_unit_price_outlier_flag_written_to_shard(tmp_path: Path) -> None:
     cfg = make_cfg(tmp_path)
     _build_rich_fixture(cfg)
@@ -533,7 +633,7 @@ def test_trends_basis_not_mixed_within_series(published) -> None:
 
 
 def test_catalog_and_trends_sample_source_ids_resolve(published) -> None:
-    """`sample_source_ids`/`shards` ทุกตัวต้อง resolve ได้จริงในไฟล์ที่เขียน (ครอบคลุมข้อ 8/9)"""
+    """`sample_source_ids`/`shards`/`keys` ทุกตัวต้อง resolve ได้จริงในไฟล์ที่เขียน (ข้อ 8/9 + T-110c)"""
     _cfg, result = published
     out_dir = result.out_dir
     con = duckdb.connect()
@@ -552,6 +652,19 @@ def test_catalog_and_trends_sample_source_ids_resolve(published) -> None:
                     found = True
                     break
             assert found, f"sample_source_id {sid} ของ {entry['key']} resolve ไม่ได้"
+        # T-110c: ทุก variant ใน "keys" ต้องหาแถวเจอจริงใน shards ของ entry เดียวกัน (browser query
+        # ด้วย `item_key IN (keys)`) — ไม่ใช่แค่ตัวแทน "key"
+        for variant_key in entry.get("keys", [entry["key"]]):
+            found = False
+            for shard_rel in entry["shards"]:
+                n = con.execute(
+                    f"SELECT COUNT(*) FROM read_parquet('{(out_dir / shard_rel).as_posix()}') "
+                    f"WHERE item_key={pub._sql_lit(variant_key)}"
+                ).fetchone()[0]
+                if n > 0:
+                    found = True
+                    break
+            assert found, f"variant key {variant_key!r} ของ entry {entry['key']!r} resolve ไม่ได้"
 
 
 def test_facets_has_coverage_notes_for_2562_2567_and_adr005(published) -> None:
@@ -787,6 +900,16 @@ def test_sample_runs_end_to_end_and_resolves(tmp_path: Path) -> None:
                 con.execute(
                     f"SELECT COUNT(*) FROM read_parquet('{(cfg.fixtures_dir / s).as_posix()}') "
                     f"WHERE source_id={pub._sql_lit(sid)}"
+                ).fetchone()[0]
+                > 0
+                for s in entry["shards"]
+            )
+            assert found
+        for variant_key in entry.get("keys", [entry["key"]]):
+            found = any(
+                con.execute(
+                    f"SELECT COUNT(*) FROM read_parquet('{(cfg.fixtures_dir / s).as_posix()}') "
+                    f"WHERE item_key={pub._sql_lit(variant_key)}"
                 ).fetchone()[0]
                 > 0
                 for s in entry["shards"]

@@ -30,6 +30,7 @@ import gzip
 import hashlib
 import json
 import math
+import re
 import shutil
 import time
 from collections import defaultdict
@@ -86,7 +87,36 @@ TREND_SHARD_HEX_LEN = 2
 SUBSET_FLAG = "subset_of_act_2570_draft"
 CORRUPT_ROW_FLAG = "corrupt_row"
 UNIT_PRICE_OUTLIER_FLAG = "unit_price_outlier"
+LUMP_SUM_CATEGORY_FLAG = "lump_sum_category"
 QTY_LOW_CONF_FLAGS = ("qty_is_measure", "qty_parsed_low_conf")
+
+# T-110c (main thread, 20 ก.ย. 2569): key แตกเพราะ whitespace ภาษาไทยต่างกัน (เช่น
+# "เครื่องคอมพิวเตอร์โน้ตบุ๊กสำหรับงานประมวลผล" n=1,503 กับ "...โน้ตบุ๊ก สำหรับ..." n=1,299 คือ
+# รายการเดียวกัน) — catalog/trends จึง aggregate ตาม `group_key` (item_key ตัด whitespace ทั้งหมด)
+# แทน `item_key` ตรง ๆ **เฉพาะตอน publish** (ไม่แตะ item_key ใน budget_lines shards/normalize)
+_WHITESPACE_ALL_RE = re.compile(r"\s+")
+CATALOG_MAX_KEYS_PER_GROUP = 12
+
+
+def compute_group_key(item_key: str | None) -> str | None:
+    """`item_key` ตัด whitespace ทั้งหมดออก (ไม่ใช่แค่ collapse) — ใช้จับ variant ที่ต่างกันแค่
+    การเว้นวรรค (`item_parser`/OCR ต้นทางบางทีเว้น "โน้ตบุ๊ก สำหรับ" บางทีติดกัน "โน้ตบุ๊กสำหรับ")
+
+    **ต้องตรงกับนิยามฝั่ง SQL ทุกประการ** (`_GROUP_KEY_SQL_EXPR` — `regexp_replace(item_key,
+    '\\s+', '', 'g')`) เพราะใช้จับคู่ shard_index (คำนวณฝั่ง Python จาก `ShardPart.item_keys`)
+    เข้ากับผลอควรีของ DuckDB (คำนวณฝั่ง SQL จาก `flagged_full.group_key`)
+    """
+    if item_key is None:
+        return None
+    return _WHITESPACE_ALL_RE.sub("", item_key)
+
+
+def _group_key_sql(col_ref: str = "item_key") -> str:
+    """นิพจน์ SQL เดียวกับ `compute_group_key()` ข้างบน (DuckDB `\\s` ครอบคลุมชุดเดียวกับ Python
+    `\\s` สำหรับข้อความไทย/ละติน/เลขที่พบจริงในข้อมูลนี้ — ยืนยันด้วยผลลัพธ์ตรงกันจริงใน tests)
+    """
+    return f"regexp_replace({col_ref}, '\\s+', '', 'g')"
+
 
 DATASET_PBO = "pbo_disbursement"
 DATASET_ACT_DRAFT = "act_2570_draft"
@@ -157,7 +187,8 @@ def build_duckdb_views(con: duckdb.DuckDBPyConnection, source_sql: str) -> None:
     con.execute(
         f"""
         CREATE OR REPLACE TEMP TABLE flagged_full AS
-        SELECT {full_cols_sql}, {flags_sql} AS quality_flags
+        SELECT {full_cols_sql}, {flags_sql} AS quality_flags,
+               {_group_key_sql("b.item_key")} AS group_key
         FROM normalized_raw b
         LEFT JOIN item_thresholds t USING (item_key)
         """
@@ -440,24 +471,35 @@ class CatalogBuildResult:
     min_unit_price_distinct: int
     # (n_lines, n_years, n_up, count, gz_bytes) ทุก threshold ที่ลอง — รายงานใน manifest.json
     thresholds_tried: list[tuple[int, int, int, int, int]]
+    # {representative key (= entry["key"]): group_key} — ใช้ต่อโดย build_trends เท่านั้น
+    # (ไม่เขียนลง catalog/items.json.gz — group_key เป็นรายละเอียดภายในของ publish stage)
+    group_key_by_key: dict[str, str]
 
 
-_CATALOG_AGG_SQL_TEMPLATE = """
+# แถวที่ไม่นับเป็น "รายการเทียบราคาได้" เลย (ตัดออกจาก n_lines/n_years/สถิติ/variant ทั้งหมด — ไม่ใช่
+# แค่ไม่นับซ้ำแบบ subset_of_act_2570_draft): corrupt_row (เงินเป็น null/ผิดปกติ), lump_sum_category
+# (เป็นหมวดรวม "ราคาต่อหน่วยต่ำกว่า X บาท" ไม่ใช่รายการเดี่ยว)
+_CATALOG_BASE_EXCLUDE_SQL = (
+    "NOT list_contains(quality_flags, 'subset_of_act_2570_draft')"
+    " AND NOT list_contains(quality_flags, 'corrupt_row')"
+    " AND NOT list_contains(quality_flags, 'lump_sum_category')"
+)
+
+_CATALOG_AGG_SQL_TEMPLATE = f"""
 SELECT
-    item_key,
+    group_key,
     COUNT(*) AS n_lines,
     COUNT(DISTINCT fiscal_year_be) AS n_years,
     list_sort(list_distinct(list(fiscal_year_be))) AS years,
     COUNT(DISTINCT CASE WHEN unit_price_thb > 0
-                          AND NOT list_contains(quality_flags,'corrupt_row')
                           AND NOT list_contains(quality_flags,'unit_price_outlier')
                           AND NOT list_contains(quality_flags,'qty_is_measure')
                           AND NOT list_contains(quality_flags,'qty_parsed_low_conf')
                      THEN unit_price_thb END) AS n_unit_price_distinct
 FROM flagged_full
-WHERE item_key IS NOT NULL
-  AND NOT list_contains(quality_flags, 'subset_of_act_2570_draft')
-GROUP BY item_key
+WHERE group_key IS NOT NULL
+  AND {_CATALOG_BASE_EXCLUDE_SQL}
+GROUP BY group_key
 """
 
 
@@ -471,8 +513,12 @@ def _build_catalog_entries(
     n_lines: int,
     n_years: int,
     n_up: int,
-) -> list[dict]:
-    """สร้าง catalog entries เต็มสำหรับ threshold ตัวหนึ่ง (เรียกซ้ำได้จาก `build_catalog`
+) -> tuple[list[dict], dict[str, str]]:
+    """สร้าง catalog entries เต็มสำหรับ threshold ตัวหนึ่ง — aggregate ตาม `group_key` (item_key
+    ตัด whitespace ทั้งหมด, `compute_group_key`) เพื่อรวม variant ที่ต่างกันแค่การเว้นวรรค
+
+    คืน `(entries, group_key_by_key)` — `group_key_by_key` map จาก representative key (= "key"
+    ของแต่ละ entry) กลับไป group_key ให้ `build_trends` ใช้ต่อ (เรียกซ้ำได้จาก `build_catalog`
     ตอนขยับ threshold — แต่ละครั้งคือการ scan `flagged_full` ใหม่ทั้งหมด ~15-20 วินาทีบนข้อมูลเต็ม)
     """
     con.execute(
@@ -483,10 +529,34 @@ def _build_catalog_entries(
         """
     )
 
+    # variant ของ item_key จริงต่อ group_key (สำหรับเลือกตัวแทน "key" + สร้าง "keys" list)
+    con.execute(
+        f"""
+        CREATE OR REPLACE TEMP TABLE catalog_variants AS
+        SELECT group_key, item_key, COUNT(*) AS n
+        FROM flagged_full
+        WHERE group_key IN (SELECT group_key FROM catalog_agg)
+          AND {_CATALOG_BASE_EXCLUDE_SQL}
+        GROUP BY group_key, item_key
+        """
+    )
     con.execute(
         """
+        CREATE OR REPLACE TEMP TABLE catalog_keys AS
+        WITH ranked AS (
+            SELECT group_key, item_key, n,
+                   row_number() OVER (PARTITION BY group_key ORDER BY n DESC, item_key ASC) AS rn
+            FROM catalog_variants
+        )
+        SELECT group_key, list(item_key ORDER BY rn) AS all_keys, COUNT(*) AS n_variants
+        FROM ranked GROUP BY group_key
+        """
+    )
+
+    con.execute(
+        f"""
         CREATE OR REPLACE TEMP TABLE catalog_unit_price AS
-        SELECT item_key,
+        SELECT group_key,
             MIN(unit_price_thb) AS up_min,
             quantile_cont(unit_price_thb, 0.25) AS up_p25,
             median(unit_price_thb) AS up_median,
@@ -494,20 +564,19 @@ def _build_catalog_entries(
             MAX(unit_price_thb) AS up_max,
             COUNT(*) AS up_n
         FROM flagged_full
-        WHERE item_key IN (SELECT item_key FROM catalog_agg)
+        WHERE group_key IN (SELECT group_key FROM catalog_agg)
           AND unit_price_thb > 0
-          AND NOT list_contains(quality_flags,'corrupt_row')
           AND NOT list_contains(quality_flags,'unit_price_outlier')
           AND NOT list_contains(quality_flags,'qty_is_measure')
           AND NOT list_contains(quality_flags,'qty_parsed_low_conf')
-          AND NOT list_contains(quality_flags,'subset_of_act_2570_draft')
-        GROUP BY item_key
+          AND {_CATALOG_BASE_EXCLUDE_SQL}
+        GROUP BY group_key
         """
     )
     con.execute(
-        """
+        f"""
         CREATE OR REPLACE TEMP TABLE catalog_amount AS
-        SELECT item_key,
+        SELECT group_key,
             MIN(amount_thb) AS amt_min,
             quantile_cont(amount_thb, 0.25) AS amt_p25,
             median(amount_thb) AS amt_median,
@@ -515,85 +584,88 @@ def _build_catalog_entries(
             MAX(amount_thb) AS amt_max,
             COUNT(*) AS amt_n
         FROM flagged_full
-        WHERE item_key IN (SELECT item_key FROM catalog_agg)
+        WHERE group_key IN (SELECT group_key FROM catalog_agg)
           AND amount_thb > 0
-          AND NOT list_contains(quality_flags,'corrupt_row')
           AND NOT list_contains(quality_flags,'unit_price_outlier')
-          AND NOT list_contains(quality_flags,'subset_of_act_2570_draft')
-        GROUP BY item_key
+          AND {_CATALOG_BASE_EXCLUDE_SQL}
+        GROUP BY group_key
         """
     )
     con.execute(
-        """
+        f"""
         CREATE OR REPLACE TEMP TABLE catalog_display_name AS
         WITH name_counts AS (
-            SELECT item_key, item_name, COUNT(*) AS n
+            SELECT group_key, item_name, COUNT(*) AS n
             FROM flagged_full
-            WHERE item_key IN (SELECT item_key FROM catalog_agg) AND item_name IS NOT NULL
-              AND NOT list_contains(quality_flags,'subset_of_act_2570_draft')
-            GROUP BY item_key, item_name
+            WHERE group_key IN (SELECT group_key FROM catalog_agg) AND item_name IS NOT NULL
+              AND {_CATALOG_BASE_EXCLUDE_SQL}
+            GROUP BY group_key, item_name
         ), ranked AS (
-            SELECT item_key, item_name,
-                   row_number() OVER (PARTITION BY item_key ORDER BY n DESC, item_name ASC) AS rn
+            SELECT group_key, item_name,
+                   row_number() OVER (PARTITION BY group_key ORDER BY n DESC, item_name ASC) AS rn
             FROM name_counts
         )
-        SELECT item_key, item_name AS display_name FROM ranked WHERE rn = 1
+        SELECT group_key, item_name AS display_name FROM ranked WHERE rn = 1
         """
     )
     con.execute(
-        """
+        f"""
         CREATE OR REPLACE TEMP TABLE catalog_top_agencies AS
         WITH agency_counts AS (
-            SELECT item_key, agency, COUNT(*) AS n
+            SELECT group_key, agency, COUNT(*) AS n
             FROM flagged_full
-            WHERE item_key IN (SELECT item_key FROM catalog_agg) AND agency IS NOT NULL
-              AND NOT list_contains(quality_flags,'subset_of_act_2570_draft')
-            GROUP BY item_key, agency
+            WHERE group_key IN (SELECT group_key FROM catalog_agg) AND agency IS NOT NULL
+              AND {_CATALOG_BASE_EXCLUDE_SQL}
+            GROUP BY group_key, agency
         ), ranked AS (
-            SELECT item_key, agency,
-                   row_number() OVER (PARTITION BY item_key ORDER BY n DESC, agency ASC) AS rn
+            SELECT group_key, agency,
+                   row_number() OVER (PARTITION BY group_key ORDER BY n DESC, agency ASC) AS rn
             FROM agency_counts
         )
-        SELECT item_key, list(agency ORDER BY rn) AS top_agencies
-        FROM ranked WHERE rn <= 3 GROUP BY item_key
+        SELECT group_key, list(agency ORDER BY rn) AS top_agencies
+        FROM ranked WHERE rn <= 3 GROUP BY group_key
         """
     )
     con.execute(
-        """
+        f"""
         CREATE OR REPLACE TEMP TABLE catalog_sample_sources AS
         WITH ranked AS (
-            SELECT item_key, source_id,
+            SELECT group_key, source_id,
                    row_number() OVER (
-                       PARTITION BY item_key ORDER BY COALESCE(amount_thb, 0) DESC, source_id ASC
+                       PARTITION BY group_key ORDER BY COALESCE(amount_thb, 0) DESC, source_id ASC
                    ) AS rn
             FROM flagged_full
-            WHERE item_key IN (SELECT item_key FROM catalog_agg)
-              AND NOT list_contains(quality_flags,'subset_of_act_2570_draft')
+            WHERE group_key IN (SELECT group_key FROM catalog_agg)
+              AND {_CATALOG_BASE_EXCLUDE_SQL}
         )
-        SELECT item_key, list(source_id ORDER BY rn) AS sample_source_ids
-        FROM ranked WHERE rn <= 3 GROUP BY item_key
+        SELECT group_key, list(source_id ORDER BY rn) AS sample_source_ids
+        FROM ranked WHERE rn <= 3 GROUP BY group_key
         """
     )
 
     joined = con.execute(
         """
-        SELECT a.item_key, d.display_name, a.n_lines, a.years,
+        SELECT a.group_key, k.all_keys, k.n_variants, d.display_name, a.n_lines, a.years,
                up.up_min, up.up_p25, up.up_median, up.up_p75, up.up_max, up.up_n,
                amt.amt_min, amt.amt_p25, amt.amt_median, amt.amt_p75, amt.amt_max, amt.amt_n,
                ta.top_agencies, ss.sample_source_ids
         FROM catalog_agg a
-        LEFT JOIN catalog_display_name d USING (item_key)
-        LEFT JOIN catalog_unit_price up USING (item_key)
-        LEFT JOIN catalog_amount amt USING (item_key)
-        LEFT JOIN catalog_top_agencies ta USING (item_key)
-        LEFT JOIN catalog_sample_sources ss USING (item_key)
+        LEFT JOIN catalog_keys k USING (group_key)
+        LEFT JOIN catalog_display_name d USING (group_key)
+        LEFT JOIN catalog_unit_price up USING (group_key)
+        LEFT JOIN catalog_amount amt USING (group_key)
+        LEFT JOIN catalog_top_agencies ta USING (group_key)
+        LEFT JOIN catalog_sample_sources ss USING (group_key)
         """
     ).fetchall()
 
     entries: list[dict] = []
+    group_key_by_key: dict[str, str] = {}
     for row in joined:
         (
-            item_key,
+            group_key,
+            all_keys,
+            n_variants,
             display_name,
             n_lines_v,
             years,
@@ -612,15 +684,26 @@ def _build_catalog_entries(
             top_agencies,
             sample_source_ids,
         ) = row
+        all_keys = all_keys or []
+        # all_keys เรียง (n DESC, item_key ASC) แล้วจาก SQL — ตัวแรกคือ representative
+        # (variant ที่มีจำนวนแถวมากสุด, เสมอกันเรียงตัวอักษร — deterministic)
+        representative = all_keys[0]
         entry: dict = {
-            "key": item_key,
+            "key": representative,
             "name": display_name,
             "n_lines": n_lines_v,
             "years": [int(y) for y in (years or [])],
             "top_agencies": (top_agencies or [])[:3],
             "sample_source_ids": (sample_source_ids or [])[:3],
-            "shards": sorted(shard_index.get(item_key, []))[:60],
+            # ห้าม cap รายการ shard: ถ้าตัด browser จะ query ได้ไม่ครบ n_lines และ
+            # sample_source_ids อาจชี้ไปนอก shard ที่ระบุ (main thread พบ 194 entries ตอน cap=60)
+            # path ซ้ำ ๆ บีบอัดดีมาก ต้นทุนขนาดต่ำ
+            "shards": sorted(shard_index.get(group_key, [])),
         }
+        if n_variants and n_variants > 1:
+            entry["keys"] = all_keys[:CATALOG_MAX_KEYS_PER_GROUP]
+            if len(all_keys) > CATALOG_MAX_KEYS_PER_GROUP:
+                entry["keys_truncated"] = True
         if up_n:
             entry["unit_price"] = {
                 "min": _round_stat(up_min),
@@ -640,9 +723,10 @@ def _build_catalog_entries(
                 "n": amt_n,
             }
         entries.append(entry)
+        group_key_by_key[representative] = group_key
 
     entries.sort(key=lambda e: e["key"])
-    return entries
+    return entries, group_key_by_key
 
 
 def _gzip_size(payload: object) -> int:
@@ -661,16 +745,20 @@ def build_catalog(
     max_gz_bytes: int = CATALOG_MAX_GZ_BYTES_TARGET,
 ) -> CatalogBuildResult:
     """สร้าง catalog entries — ขยับ threshold อัตโนมัติถ้าจำนวนเกิน `max_entries` **หรือ** ขนาด
-    gzip เกิน `max_gz_bytes` (ตัวหลังคือตัวที่ทำให้เกินเป้าจริงในรอบวัด 19-20 ก.ย. 2569: threshold
-    (3,3,2) ได้ 131,934 entries (< 150k ผ่าน) แต่ gzip 14.27 MB (เกินเป้า 8 MB) — ต้องขยับต่อจนถึง
-    (5,3,2) → 72,854 entries / 7.43 MB gz ถึงจะผ่านทั้งสองเงื่อนไข) — รายงานทุกจุดที่ลองไว้ใน
-    `thresholds_tried` (ไปที่ manifest.json ต่อ)
+    gzip เกิน `max_gz_bytes` — รายงานทุกจุดที่ลองไว้ใน `thresholds_tried` (ไปที่ manifest.json ต่อ)
+
+    T-110c (main thread, 20 ก.ย. 2569): เปลี่ยนจาก aggregate ตาม `item_key` ตรง ๆ เป็น aggregate
+    ตาม `group_key` (ตัด whitespace) — รวม variant ที่ item_parser/OCR ต้นทางเว้นวรรคไม่เหมือนกัน
+    (เช่น "เครื่องคอมพิวเตอร์โน้ตบุ๊กสำหรับงานประมวลผล" กับ "...โน้ตบุ๊ก สำหรับ...") เข้าเป็น entry
+    เดียว — จำนวน entry ที่ได้จึงน้อยกว่าตอน aggregate ตาม item_key ตรง ๆ (วัดจริงแล้วรายงานในคอมเมนต์
+    `docs/STATUS.md`/รายงานงานนี้ ไม่ hardcode ตัวเลขไว้ในโค้ดเพราะเปลี่ยนตามข้อมูลจริง)
     """
     thresholds_tried: list[tuple[int, int, int, int, int]] = []
     n_lines, n_years, n_up = min_lines, min_years, min_unit_price_distinct
     entries: list[dict] = []
+    group_key_by_key: dict[str, str] = {}
     for _attempt in range(10):
-        entries = _build_catalog_entries(con, shard_index, n_lines, n_years, n_up)
+        entries, group_key_by_key = _build_catalog_entries(con, shard_index, n_lines, n_years, n_up)
         gz_bytes = _gzip_size(entries)
         thresholds_tried.append((n_lines, n_years, n_up, len(entries), gz_bytes))
         if len(entries) <= max_entries and gz_bytes <= max_gz_bytes:
@@ -686,6 +774,7 @@ def build_catalog(
         min_years=n_years,
         min_unit_price_distinct=n_up,
         thresholds_tried=thresholds_tried,
+        group_key_by_key=group_key_by_key,
     )
 
 
@@ -703,53 +792,59 @@ def write_json_gz(path: Path, payload: object) -> None:
 # ---------------------------------------------------------------------------
 
 
-def build_trends(con: duckdb.DuckDBPyConnection, item_keys: set[str]) -> dict[str, dict[str, dict]]:
-    """คืน `{item_key: {"unit": "thb", "basis": "...", "series":[...]}}`
+def build_trends(
+    con: duckdb.DuckDBPyConnection, group_key_by_key: dict[str, str]
+) -> dict[str, dict]:
+    """คืน `{group_key: {"key": representative, "basis": "...", "series":[...]}}`
 
-    เฉพาะ item_key ที่ series สุดท้าย (หลังเลือก basis เดียว) มี >= `TREND_MIN_YEARS` ปี — basis
+    T-110c: aggregate ตาม `group_key` (รวม whitespace variant — ดู `compute_group_key`) แทน
+    `item_key` ตรง ๆ — `group_key_by_key` คือ `{representative_key: group_key}` จาก
+    `CatalogBuildResult.group_key_by_key` (representative = ตัวแทนเดียวกับ catalog entry "key")
+
+    เฉพาะ group_key ที่ series สุดท้าย (หลังเลือก basis เดียว) มี >= `TREND_MIN_YEARS` ปี — basis
     เดียวทั้ง series เสมอ (ห้ามปน unit_price_per_line/amount_per_line ในไฟล์เดียว — เลือก basis ที่
     ครอบคลุมปีมากสุด แล้วทิ้งปีที่ไม่มีข้อมูลของ basis นั้น)
     """
-    if not item_keys:
+    if not group_key_by_key:
         return {}
-    keys_list = ", ".join(_sql_lit(k) for k in item_keys)
+    key_by_group = {g: k for k, g in group_key_by_key.items()}
+    group_keys = list(key_by_group)
+    keys_list = ", ".join(_sql_lit(k) for k in group_keys)
     rows = con.execute(
         f"""
         WITH up AS (
-            SELECT item_key, fiscal_year_be AS year_be, unit_price_thb
+            SELECT group_key, fiscal_year_be AS year_be, unit_price_thb
             FROM flagged_full
-            WHERE item_key IN ({keys_list}) AND fiscal_year_be IS NOT NULL
+            WHERE group_key IN ({keys_list}) AND fiscal_year_be IS NOT NULL
               AND unit_price_thb > 0
-              AND NOT list_contains(quality_flags,'corrupt_row')
+              AND {_CATALOG_BASE_EXCLUDE_SQL}
               AND NOT list_contains(quality_flags,'unit_price_outlier')
               AND NOT list_contains(quality_flags,'qty_is_measure')
               AND NOT list_contains(quality_flags,'qty_parsed_low_conf')
-              AND NOT list_contains(quality_flags,'subset_of_act_2570_draft')
         ), up_stats AS (
-            SELECT item_key, year_be, COUNT(*) AS n,
+            SELECT group_key, year_be, COUNT(*) AS n,
                    median(unit_price_thb) AS median_v,
                    quantile_cont(unit_price_thb, 0.25) AS p25,
                    quantile_cont(unit_price_thb, 0.75) AS p75
-            FROM up GROUP BY item_key, year_be
+            FROM up GROUP BY group_key, year_be
         ), amt AS (
-            SELECT item_key, fiscal_year_be AS year_be, amount_thb
+            SELECT group_key, fiscal_year_be AS year_be, amount_thb
             FROM flagged_full
-            WHERE item_key IN ({keys_list}) AND fiscal_year_be IS NOT NULL
+            WHERE group_key IN ({keys_list}) AND fiscal_year_be IS NOT NULL
               AND amount_thb > 0
-              AND NOT list_contains(quality_flags,'corrupt_row')
+              AND {_CATALOG_BASE_EXCLUDE_SQL}
               AND NOT list_contains(quality_flags,'unit_price_outlier')
-              AND NOT list_contains(quality_flags,'subset_of_act_2570_draft')
         ), amt_stats AS (
-            SELECT item_key, year_be, COUNT(*) AS n, median(amount_thb) AS median_v
-            FROM amt GROUP BY item_key, year_be
+            SELECT group_key, year_be, COUNT(*) AS n, median(amount_thb) AS median_v
+            FROM amt GROUP BY group_key, year_be
         )
-        SELECT COALESCE(u.item_key, a.item_key) AS item_key,
+        SELECT COALESCE(u.group_key, a.group_key) AS group_key,
                COALESCE(u.year_be, a.year_be) AS year_be,
                u.n AS up_n, u.median_v AS up_median, u.p25 AS up_p25, u.p75 AS up_p75,
                a.n AS amt_n, a.median_v AS amt_median
         FROM up_stats u
-        FULL OUTER JOIN amt_stats a USING (item_key, year_be)
-        ORDER BY item_key, year_be
+        FULL OUTER JOIN amt_stats a USING (group_key, year_be)
+        ORDER BY group_key, year_be
         """
     ).fetchall()
 
@@ -758,7 +853,7 @@ def build_trends(con: duckdb.DuckDBPyConnection, item_keys: set[str]) -> dict[st
         by_key[r[0]].append(r)
 
     trends: dict[str, dict] = {}
-    for item_key, year_rows in by_key.items():
+    for group_key, year_rows in by_key.items():
         up_years = [
             r for r in year_rows if r[2] is not None and r[2] >= TREND_MIN_UNIT_PRICE_PER_YEAR
         ]
@@ -774,7 +869,7 @@ def build_trends(con: duckdb.DuckDBPyConnection, item_keys: set[str]) -> dict[st
 
         series = []
         for r in chosen:
-            _item_key, year_be, up_n, up_median, up_p25, up_p75, amt_n, amt_median = r
+            _group_key, year_be, up_n, up_median, up_p25, up_p75, amt_n, amt_median = r
             if basis == "unit_price_per_line":
                 point = {
                     "year_be": int(year_be),
@@ -792,18 +887,25 @@ def build_trends(con: duckdb.DuckDBPyConnection, item_keys: set[str]) -> dict[st
             if int(year_be) == 2562:
                 point["note"] = "source_incomplete"
             series.append(point)
-        trends[item_key] = {"item_key": item_key, "basis": basis, "series": series}
+        trends[group_key] = {"key": key_by_group[group_key], "basis": basis, "series": series}
     return trends
 
 
 def write_trend_shards(out_dir: Path, trends: dict[str, dict]) -> dict[str, str]:
-    """เขียน `catalog/trends/{hh}.json.gz` (hh = 2 ตัวแรกของ sha1(item_key)) — คืน `{item_key: hh}`"""
+    """เขียน `catalog/trends/{hh}.json.gz` (hh = 2 ตัวแรกของ sha1(group_key)) — `trends` keyed ด้วย
+    `group_key` (จาก `build_trends`) แต่ไฟล์ที่เขียนจริง**คืน dict keyed ด้วย representative key**
+    (`payload["key"]` — ตัวแทนเดียวกับ `catalog` entry "key") เพื่อให้ browser lookup ตรง ๆ ด้วย
+    `catalogEntry.key` ได้เลยโดยไม่ต้องรู้จัก `group_key`
+
+    คืน `{representative_key: hh}` ให้ `run_publish_pipeline` เติม `entry["trend"]`
+    """
     buckets: dict[str, dict[str, dict]] = defaultdict(dict)
     key_to_hh: dict[str, str] = {}
-    for item_key, payload in trends.items():
-        hh = hashlib.sha1(item_key.encode("utf-8")).hexdigest()[:TREND_SHARD_HEX_LEN]
-        buckets[hh][item_key] = payload
-        key_to_hh[item_key] = hh
+    for group_key, payload in trends.items():
+        hh = hashlib.sha1(group_key.encode("utf-8")).hexdigest()[:TREND_SHARD_HEX_LEN]
+        representative = payload["key"]
+        buckets[hh][representative] = payload
+        key_to_hh[representative] = hh
     trends_dir = out_dir / "catalog" / "trends"
     for hh, payload in buckets.items():
         write_json_gz(trends_dir / f"{hh}.json.gz", payload)
@@ -1172,9 +1274,15 @@ def build_manifest(
 
 
 CATALOG_SCOPE_NOTE = (
-    "catalog/items.json.gz ครอบคลุมเฉพาะ item_key ที่ (n_lines >= เกณฑ์) หรือ (ปรากฏ >= เกณฑ์ปี) "
-    "หรือ (มี unit_price ที่ต่างกัน >= 2 ค่า) — ดู manifest 'catalog_threshold' รายการหางยาว "
-    "(long-tail) ที่ไม่เข้า catalog ยังค้นได้ด้วย SQL ตรงบน budget_lines shards ผ่าน DuckDB-WASM"
+    "catalog/items.json.gz แต่ละ entry คือกลุ่ม item_key ที่เหมือนกันหลังตัด whitespace ทั้งหมด "
+    "(group_key — รวม variant ที่ item_parser/OCR ต้นทางเว้นวรรคต่างกัน เช่น 'X สำหรับY' กับ "
+    "'XสำหรับY'); 'key' = variant ที่มีจำนวนแถวมากสุด (ตัวแทน, deterministic — เสมอกันเรียงตัวอักษร), "
+    "'keys' = variant ทั้งหมดของกลุ่ม (มีเฉพาะเมื่อ > 1 variant, cap 12 ตัว + 'keys_truncated:true' "
+    "ถ้าเกิน) — query budget_lines shard ด้วย `item_key IN (keys ถ้ามี มิฉะนั้นใช้ key)`; ครอบคลุม"
+    "เฉพาะกลุ่มที่ (n_lines >= เกณฑ์) หรือ (ปรากฏ >= เกณฑ์ปี) หรือ (มี unit_price ที่ต่างกัน >= 2 ค่า) "
+    "ไม่รวมแถว corrupt_row/lump_sum_category/subset_of_act_2570_draft — ดู manifest "
+    "'catalog_threshold' รายการหางยาว (long-tail) ที่ไม่เข้า catalog ยังค้นได้ด้วย SQL ตรงบน "
+    "budget_lines shards ผ่าน DuckDB-WASM"
 )
 
 
@@ -1222,10 +1330,14 @@ def run_publish_pipeline(
     shard_parts = write_all_shards(con, out_dir)
     elapsed["budget_lines"] = time.monotonic() - t0
 
-    shard_index: dict[str, list[str]] = defaultdict(list)
+    # shard_index คีย์ด้วย group_key (T-110c) — ไม่แตะ item_key จริงในไฟล์ shard เอง แค่รวม index
+    # ฝั่ง publish เพื่อให้ catalog entry ที่รวม whitespace variant แล้วหา shard ได้ครบทุก variant
+    shard_index: dict[str, set[str]] = defaultdict(set)
     for part in shard_parts:
         for key in part.item_keys:
-            shard_index[key].append(part.rel_path)
+            group_key = compute_group_key(key)
+            if group_key is not None:
+                shard_index[group_key].add(part.rel_path)
 
     t0 = time.monotonic()
     catalog_result = build_catalog(con, shard_index)
@@ -1234,12 +1346,14 @@ def run_publish_pipeline(
     elapsed["catalog"] = time.monotonic() - t0
 
     t0 = time.monotonic()
-    trend_keys = {
-        e["key"]
+    # กรองเฉพาะ entry ที่มี >= TREND_MIN_YEARS ปีก่อนส่งเข้า build_trends (ประหยัด — ไม่ query
+    # flagged_full ซ้ำสำหรับ group_key ที่รู้อยู่แล้วว่าไม่ถึงเกณฑ์)
+    trend_group_key_by_key = {
+        e["key"]: catalog_result.group_key_by_key[e["key"]]
         for e in catalog_result.entries
         if e["years"] and len(e["years"]) >= TREND_MIN_YEARS
     }
-    trends = build_trends(con, trend_keys)
+    trends = build_trends(con, trend_group_key_by_key)
     key_to_hh = write_trend_shards(out_dir, trends)
     for entry in catalog_result.entries:
         hh = key_to_hh.get(entry["key"])
