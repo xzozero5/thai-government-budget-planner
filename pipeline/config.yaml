@@ -1,0 +1,8 @@
+# TGBP pipeline config
+# path ทั้งหมด resolve แบบ relative กับตำแหน่งไฟล์นี้ (pipeline/config.yaml)
+# override raw_data_dir ได้ด้วย env TGBP_RAW_DATA_DIR
+
+raw_data_dir: "../เพราะ AI ไม่ใช่แค่ CHATBOT"
+output_dir: "../web/public/data"
+cache_dir: ".cache"
+fixtures_dir: "../web/tests/fixtures/data"
