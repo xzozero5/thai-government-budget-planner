@@ -160,7 +160,7 @@ describe('queryBudgetLinesTool', () => {
     };
     await queryBudgetLinesTool.run({ item_key: 'ของหางยาว', fiscal_years: [2566] }, ctx);
     const arg = queryLines.mock.calls[0]?.[0] as Record<string, unknown>;
-    expect(arg.itemKeys).toEqual(['ของหางยาว']);
+    expect(arg['itemKeys']).toEqual(['ของหางยาว']);
     expect('shardPaths' in arg).toBe(false);
   });
 

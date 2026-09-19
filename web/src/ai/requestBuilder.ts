@@ -28,12 +28,22 @@ import { getModelCapability, type EffortLevel, type ModelId, MAX_TOKENS_PER_TURN
 /** ADR-006 ข้อ 6: header เฉพาะ opus-5 สำหรับฟอร์ม scalar `fallbacks:"default"` */
 export const OPUS_5_FALLBACK_BETA_HEADER = 'server-side-fallback-2026-07-01';
 
+/**
+ * `system` รับได้ 2 รูปแบบ:
+ * - `string`: กรณีง่าย/เดิม — ฟังก์ชันนี้ห่อเป็น 1 บล็อกให้เองพร้อม `cache_control` ที่ท้ายบล็อกนั้น
+ *   (ยังต้อง deterministic — ห้ามมีวันที่/ค่าที่เปลี่ยนต่อ request ตามข้อ 7)
+ * - `Anthropic.TextBlockParam[]`: กรณีที่ผู้เรียกประกอบเองแล้ว (เช่น `ai/systemPrompt.ts` T-305 ที่คืน
+ *   [บล็อกคงที่ cache-able, บล็อกท้ายไม่ cache สำหรับโหมด/วันที่] ตาม ADR-006 ข้อ 7) — ฟังก์ชันนี้ส่งต่อ
+ *   ตรง ๆ โดยไม่แตะ `cache_control` ที่ผู้เรียกตั้งมาแล้ว (ไม่เดาใจว่าบล็อกไหนควร/ไม่ควร cache)
+ */
+export type SystemPromptInput = string | Anthropic.TextBlockParam[];
+
 export interface BuildRequestInput {
   model: ModelId;
   /** ค่าเริ่มต้น `DEFAULT_EFFORT` ('medium') — ถูกเพิกเฉยเมื่อรุ่นไม่รองรับ effort (Haiku 4.5) */
   effort?: EffortLevel;
-  /** system prompt ส่วนที่ cache ได้ (ต้อง deterministic — ห้ามมีวันที่/ค่าที่เปลี่ยนต่อ request ตามข้อ 7) */
-  system: string;
+  /** system prompt — ดู `SystemPromptInput` */
+  system: SystemPromptInput;
   messages: Anthropic.MessageParam[];
   /** client tools ที่จะเสนอ (เรียงคงที่จาก `tools/index.ts` — ฟังก์ชันนี้ไม่จัดเรียงเอง) */
   tools: Anthropic.Tool[];
@@ -104,6 +114,14 @@ function applyLastMessageCacheControl(messages: Anthropic.MessageParam[]): Anthr
   return updated;
 }
 
+/** ดู `SystemPromptInput` — string ห่อเป็น 1 บล็อก cache-able เอง, array ส่งต่อโดยไม่แตะ */
+function resolveSystemBlocks(system: SystemPromptInput): Anthropic.TextBlockParam[] {
+  if (typeof system === 'string') {
+    return [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }];
+  }
+  return system;
+}
+
 function buildWebSearchTool(model: ModelId): Anthropic.ToolUnion {
   const cap = getModelCapability(model);
   // boundary: `WebSearchTool20260209`/`WebSearchTool20250305` เป็นสมาชิกของ `Anthropic.ToolUnion`
@@ -125,9 +143,7 @@ export function buildRequestParams(input: BuildRequestInput): BuildRequestResult
     input.enableWebSearch === false ? [...input.tools] : [...input.tools, buildWebSearchTool(input.model)];
   const tools = applyLastToolCacheControl(toolsWithWebSearch);
 
-  const system: Anthropic.TextBlockParam[] = [
-    { type: 'text', text: input.system, cache_control: { type: 'ephemeral' } },
-  ];
+  const system = resolveSystemBlocks(input.system);
 
   const messages = applyLastMessageCacheControl(input.messages);
 

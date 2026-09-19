@@ -93,6 +93,46 @@ describe.each(MODEL_IDS)('buildRequestParams (%s)', (model) => {
   });
 });
 
+describe('buildRequestParams — system เป็น Anthropic.TextBlockParam[] (T-305 buildSystemBlocks)', () => {
+  it('ส่งต่อบล็อกตรง ๆ โดยไม่แตะ cache_control ที่ผู้เรียกตั้งมาแล้ว', () => {
+    const system: Anthropic.TextBlockParam[] = [
+      { type: 'text', text: 'ส่วนคงที่', cache_control: { type: 'ephemeral' } },
+      { type: 'text', text: 'โหมด: draft วันที่: 20 กันยายน 2569' },
+    ];
+    const { params } = buildRequestParams({
+      model: 'claude-sonnet-5',
+      system,
+      messages: sampleMessages,
+      tools: sampleTools,
+    });
+    expect(params.system).toEqual(system);
+  });
+
+  it('ไม่ mutate array ของบล็อก system ที่ผู้เรียกส่งมา', () => {
+    const system: Anthropic.TextBlockParam[] = [
+      { type: 'text', text: 'ส่วนคงที่', cache_control: { type: 'ephemeral' } },
+      { type: 'text', text: 'ท้าย' },
+    ];
+    const snapshot = JSON.parse(JSON.stringify(system)) as unknown;
+    buildRequestParams({ model: 'claude-sonnet-5', system, messages: sampleMessages, tools: sampleTools });
+    expect(JSON.parse(JSON.stringify(system))).toEqual(snapshot);
+  });
+
+  it('breakpoint รวมยังคง ≤ 4 เมื่อ system เป็น array ที่มี cache_control 1 จุด', () => {
+    const system: Anthropic.TextBlockParam[] = [
+      { type: 'text', text: 'ส่วนคงที่', cache_control: { type: 'ephemeral' } },
+      { type: 'text', text: 'ท้าย' },
+    ];
+    const { params } = buildRequestParams({
+      model: 'claude-sonnet-5',
+      system,
+      messages: sampleMessages,
+      tools: sampleTools,
+    });
+    expect(countCacheControlBreakpoints(params)).toBeLessThanOrEqual(4);
+  });
+});
+
 describe('buildRequestParams — ต่อรุ่น', () => {
   it('Haiku 4.5: ไม่ส่ง thinking และไม่ส่ง output_config.effort (ADR-006 ข้อ 2)', () => {
     const { params, betaHeaders, useBetaMessages } = buildRequestParams({
