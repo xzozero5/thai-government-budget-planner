@@ -3,7 +3,7 @@
 รูปแบบ entry: `## YYYY-MM-DD HH:MM (Asia/Bangkok) — <ใคร/agent> — <phase/task>` แล้วตามด้วย ทำอะไร / ไฟล์ที่แตะ / test / ค้าง / ไม่ยืนยัน
 
 ## สถานะปัจจุบัน
-- Phase: **3 กำลังทำ** — ตัดสินใจ **ADR-006** (model/พารามิเตอร์/tool version ตาม Claude API ปัจจุบัน; แผนเดิมบางข้อจะโดน 400) · `ai-engineer` ทำ T-301→T-302→T-303→T-309 (**SDK mocked ทั้งหมด — 0 USD**) → ต่อด้วย T-304 (agent loop) + T-305 (system prompt) → T-306 eval แบบจำกัดงบ (8 โจทย์) → T-307 security review → T-308 po review · Phase 2 **เสร็จ**
+- Phase: **3 กำลังทำ** — เสร็จ + commit แล้ว: T-301, T-302, T-303, T-309 (client/tools/validator), T-304 (agent loop), T-305 (system prompt) — **SDK mocked ทั้งหมด, ยังไม่มีการเรียก API จริงใน Phase 3** · กำลังทำขนาน: **T-306 จังหวะ 1** (eval runner + cases + dry-run ใน browser จริง; ยังห้ามแตะ key) ∥ **T-307** security review (read-only) → main thread review กลไกคุมเงินทีละบรรทัด → T-306 จังหวะ 2 (ยิงจริง core8 เพดาน 1.80 USD) → T-308 po review · Phase 2 **เสร็จ**
 - Phase 0, 1: เสร็จ · ข้อมูล production: `data_version cd15fb2dd39b…` 796 ไฟล์ (เพิ่ม `catalog/items-slim` + `catalog/search-index`), อยู่บน Pages แล้ว
 - Test ล่าสุด (main thread รันเองทั้งหมด): **web** lint 0 error · typecheck ✅ · vitest **312/312** · build ✅ (initial JS 60.3 KB gz; DuckDB/ค้นหาเป็น lazy; ไม่มี harness ใน `dist/`) · Playwright e2e **7/7** (206 จาก DuckDB worker, บล็อก cross-origin แล้ว query ผ่าน, ไม่มี CSP violation, ลำดับ range = full) · **pipeline** pytest **451** · ruff ✅ · CI ล่าสุดที่ยืนยัน: `a62b978` เขียว (web 75 s รวม e2e)
 - API ที่ `ai/` ต้องใช้: **`web/src/data/index.ts` (facade) เท่านั้น** — ESLint `no-restricted-imports` บังคับ
@@ -25,6 +25,15 @@
 - GitHub Pages: **live แล้ว** — ยืนยัน 19 ก.ย.: หน้า placeholder ขึ้น, CSP meta อยู่ใน HTML ที่ serve, `Accept-Ranges: bytes`, `Range: bytes=0-99` กับ `data/sources.json` → **206 / 100 bytes**; ยังต้องวัดกับไฟล์ parquet + DuckDB-WASM จริงใน S1 (T-201) และ `Cache-Control: max-age=600` (ข้อมูลใหม่อาจช้า ≤ 10 นาที)
 
 ## Log
+
+## 2569-09-20 14:00 (Asia/Bangkok) — Claude Code main thread (+ ai-engineer ×2, frontend-dev) — Phase 3 ช่วงแรก
+- **ADR-006**: แผนเดิมของ AI layer ล้าสมัย (จะโดน 400: `temperature`/`budget_tokens` บน Sonnet 5, `web_search_20250305` กับรุ่นใหม่) → default `claude-sonnet-5`, adaptive thinking + `effort`, tool version ต่อรุ่น, manual loop, `eager_input_streaming` + Zod, caching order, `max_uses` 3, judge แบบ rule-based (งบ)
+- **T-301/302/303/309**: client + capability ต่อรุ่น + pricing จาก `usage`, tools 9 ตัว (AC จาก po ครบ: coverage_notes, reliability n<3, `amount_per_line`, `low_specificity`, เพดาน confidence ตาม flag, null ไม่เดา), ToolLog, `emit_proposal` validator. main thread: (ก) agent รายงานว่า test ผ่านหมด แต่รันซ้ำเจอ **flaky 1 ครั้ง** → ต้นเหตุ = สคริปต์ build index ลบโฟลเดอร์ temp ที่ใช้ร่วมกัน (race จริง กระทบ `tgbp publish` ได้) → แก้ + ทดสอบ 6 process พร้อมกัน (ข) **ชุดโจมตี validator 13 เคส → ตก 1**: จำนวน/ยอดติดลบผ่านเงียบ → แก้ schema (ค) pre-commit hook บล็อก commit เพราะ key ปลอมใน test — ตรวจด้วย hash แล้ว**ไม่ใช่ key จริง และ key จริงไม่อยู่ในไฟล์ใดของ repo** → เปลี่ยนค่าปลอม ไม่ bypass hook
+- **Facade**: catalog item คืน `shardPaths` จริง, `QueryTooBroadError` บอกปี/กระทรวงที่มี, `summarizeShardPaths`; `query_budget_lines` ส่ง shard ตาม catalog (main thread ต่อเอง + test)
+- **T-304/T-305**: agent loop (stream, parallel tools → user message เดียว, `pause_turn`/`refusal`/`max_tokens`, เพดานรอบ+งบหยุดก่อนยิงรอบถัดไป, cancel, typed errors → ข้อความไทย, ไม่ mutate input) + system prompt 2 บล็อก (cache ได้ / โหมด+วันที่). main thread เขียน **ชุด invariant 15 เคส** (ประวัติต้องใช้ยิงรอบถัดไปได้ในทุกทางออก) → ผ่าน 14; เคส `pause_turn` ตรวจกับ reference แล้ว **loop ถูก invariant ของ main thread เข้มเกิน** → ปรับ test. `[UNVERIFIED]`: Opus 5 refusal fallback ยังไม่ต่อ (SDK ไม่มี beta stream ตามที่ agent รายงาน — ยังไม่ได้ตรวจซ้ำ), system prompt ~1.5k tokens < ขั้นต่ำ cache ของ Haiku (4,096) — รอดู `cache_read_input_tokens` จริง
+- ความผิดพลาดของ main thread: push commit ที่ ESLint ยังมี 1 error (ในไฟล์ test ของตัวเอง) → แก้ + push ตาม และเปลี่ยนเป็น gate commit ด้วยจำนวน error จริง
+- Test (main thread รันเอง): web lint 0 error · typecheck ✅ · vitest **522** · build ✅ (initial JS ยัง 60.3 KB gz — `ai/` ยังไม่เข้า bundle) · งบ API ใช้ไป **0.1453 / 5.00 USD** (ไม่เพิ่ม)
+- Commits: `9f73d21` `2c280f9` `a6c4678` `ecbd97f` `793da7a` `6315845`
 
 ## 2569-09-20 09:30 (Asia/Bangkok) — Claude Code main thread (+ frontend-dev ×4, data-engineer, architect) — ปิด Phase 2
 - **T-203** DuckDB client ตาม ADR-002 + `BudgetRepo` + หน้า harness (ตัดออกจาก production ด้วย alias ตาม mode) + e2e ใน Chromium จริง. main thread: e2e 7/7, `dist/` ไม่มี harness/duckdb, **sha256 ของ parquet extension ตรงกับ `extensions.duckdb.org`**, CI Linux เขียว. agent เจอบั๊กจริง 2 จุด (URL root-relative ใช้ไม่ได้จาก blob worker; Arrow `LIST(NULL)` เมื่อ list ว่างทั้งคอลัมน์)
