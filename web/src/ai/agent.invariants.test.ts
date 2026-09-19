@@ -25,7 +25,7 @@ function assertValidHistory(messages: Anthropic.MessageParam[]): void {
     const msg = messages[i];
     if (msg === undefined) continue;
     const prev = messages[i - 1];
-    if (prev !== undefined && prev.role === msg.role) {
+    if (prev?.role === msg.role) {
       // role ซ้ำติดกันยอมได้กรณีเดียว: assistant → assistant จากการทำต่อหลัง `pause_turn` (pattern ทางการ:
       // append เนื้อหา assistant แล้วยิงซ้ำ — API รวม turn ที่ role ซ้ำให้เอง) และตัวแรกต้องไม่มี tool_use
       // ของ client ค้างอยู่; user → user ไม่ควรเกิดจาก loop นี้
