@@ -1,4 +1,9 @@
-import { createDataFacade, QueryTooBroadError, type BudgetLine, type QueryLinesResult } from '@/data';
+import {
+  createDataFacade,
+  QueryTooBroadError,
+  type BudgetLine,
+  type QueryLinesResult,
+} from '@/data';
 import { describe, expect, it, vi } from 'vitest';
 import { createInMemoryIllustrationSink } from '../illustrationSink';
 import { createToolLog } from '../toolLog';
@@ -53,7 +58,10 @@ function makeLine(overrides: Partial<BudgetLine> = {}): BudgetLine {
 
 function makeCtx(): { ctx: ToolContext; toolLog: ReturnType<typeof createToolLog> } {
   const toolLog = createToolLog();
-  return { ctx: { data: createDataFacade(), toolLog, illustrationSink: createInMemoryIllustrationSink() }, toolLog };
+  return {
+    ctx: { data: createDataFacade(), toolLog, illustrationSink: createInMemoryIllustrationSink() },
+    toolLog,
+  };
 }
 
 describe('queryBudgetLinesTool', () => {
@@ -72,7 +80,9 @@ describe('queryBudgetLinesTool', () => {
       shardsScanned: 1,
       shardPaths: ['budget_lines/act_2570_draft/00000.parquet'],
       rowShards: { 'src-1': 'budget_lines/act_2570_draft/00000.parquet' },
-      coverageNotes: [{ dataset: 'act_2570_draft', status: 'pass', note: 'ครบถ้วน', decision_ref: 'V1' }],
+      coverageNotes: [
+        { dataset: 'act_2570_draft', status: 'pass', note: 'ครบถ้วน', decision_ref: 'V1' },
+      ],
       droppedRows: 0,
       warnings: [],
     };
@@ -93,6 +103,65 @@ describe('queryBudgetLinesTool', () => {
     expect(toolLog.hasSourceId('src-1')).toBe(true);
     expect(toolLog.hasDocId('doc-1')).toBe(true);
     expect(toolLog.getSourceShard('src-1')).toBe('budget_lines/act_2570_draft/00000.parquet');
+  });
+
+  it('item_key → ส่ง keys ทุก variant + shardPaths จาก catalog เข้า queryLines (จำกัดการสแกนตาม catalog)', async () => {
+    const queryLines = vi.fn().mockResolvedValue({
+      rows: [],
+      totalMatched: 0,
+      truncated: false,
+      shardsScanned: 2,
+      shardPaths: [],
+      rowShards: {},
+      coverageNotes: [],
+      droppedRows: 0,
+      warnings: [],
+    } satisfies QueryLinesResult);
+    const getCatalogItemByKey = vi.fn().mockResolvedValue({
+      key: 'เครื่องปรับอากาศ 18000 บีทียู',
+      keys: ['เครื่องปรับอากาศ 18000 บีทียู', 'เครื่องปรับอากาศ18000 บีทียู'],
+      shardPaths: ['budget_lines/pbo/2566/20000.parquet', 'budget_lines/pbo/2567/20000.parquet'],
+    });
+    const ctx: ToolContext = {
+      data: createDataFacade({ queryLines, getCatalogItemByKey }),
+      toolLog: createToolLog(),
+      illustrationSink: createInMemoryIllustrationSink(),
+    };
+    const result = await queryBudgetLinesTool.run(
+      { item_key: 'เครื่องปรับอากาศ 18000 บีทียู', fiscal_years: [2566] },
+      ctx,
+    );
+    expect(result.isError).toBe(false);
+    expect(queryLines).toHaveBeenCalledWith(
+      expect.objectContaining({
+        itemKeys: ['เครื่องปรับอากาศ 18000 บีทียู', 'เครื่องปรับอากาศ18000 บีทียู'],
+        shardPaths: ['budget_lines/pbo/2566/20000.parquet', 'budget_lines/pbo/2567/20000.parquet'],
+        fiscalYears: [2566],
+      }),
+    );
+  });
+
+  it('item_key ที่ไม่อยู่ใน catalog → ไม่ส่ง shardPaths (ปล่อยให้ queryLines เลือกจาก filter)', async () => {
+    const queryLines = vi.fn().mockResolvedValue({
+      rows: [],
+      totalMatched: 0,
+      truncated: false,
+      shardsScanned: 1,
+      shardPaths: [],
+      rowShards: {},
+      coverageNotes: [],
+      droppedRows: 0,
+      warnings: [],
+    } satisfies QueryLinesResult);
+    const ctx: ToolContext = {
+      data: createDataFacade({ queryLines, getCatalogItemByKey: vi.fn().mockResolvedValue(null) }),
+      toolLog: createToolLog(),
+      illustrationSink: createInMemoryIllustrationSink(),
+    };
+    await queryBudgetLinesTool.run({ item_key: 'ของหางยาว', fiscal_years: [2566] }, ctx);
+    const arg = queryLines.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(arg.itemKeys).toEqual(['ของหางยาว']);
+    expect('shardPaths' in arg).toBe(false);
   });
 
   it('AC2: unit_price_thb เป็น null → price_basis:"amount_per_line"', async () => {

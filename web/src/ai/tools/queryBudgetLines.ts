@@ -7,27 +7,35 @@
  *   รับได้ค่าเดียว — tool นี้ใช้แค่ตัวแรกของ array ที่ผู้ใช้ส่งมา (มี warning แจ้ง AI เมื่อส่งมากกว่า 1)
  * - 05 §3 ระบุ `keywords?: string[]` (หลายคำ) แต่ `repo.QueryLinesParams.keyword` รับ string เดียว
  *   (ILIKE '%keyword%') — ใช้แค่ตัวแรกเช่นกัน
- * - `CatalogItem.shards` (index เข้า `CatalogFile.shard_paths`) resolve เป็น shard path จริงไม่ได้
- *   จาก facade ปัจจุบัน (`shard_paths` ไม่ถูก export ผ่าน `@/data`) — จึง resolve `item_key` เป็นแค่
- *   `keys[]` (ตามที่ T-302 spec ระบุ) แล้วปล่อยให้ `queryLines` คำนวณ shard เองจาก
- *   dataset/fiscal_years/ministry_code/province ตามปกติ (ไม่ได้ scope ด้วย shard ของ item โดยตรง)
+ * - (แก้แล้ว) `getCatalogItemByKey` คืน `shardPaths` จริง → tool ส่งต่อเป็นตัวจำกัด shard ให้ `queryLines`
+ *   (intersection กับ filter ปี/กระทรวง/จังหวัด) — ลดการสแกนและโอกาสชน `QueryTooBroadError`
  */
 import { z } from 'zod';
 import type { Dataset, QueryLinesParams } from '@/data';
 import { clampRows, createTool, MAX_RESULT_ROWS, type ToolContext } from './toolKit';
 
-const ORDER_BY_VALUES = ['amount_desc', 'amount_asc', 'unit_price_desc', 'unit_price_asc', 'source_id'] as const;
+const ORDER_BY_VALUES = [
+  'amount_desc',
+  'amount_asc',
+  'unit_price_desc',
+  'unit_price_asc',
+  'source_id',
+] as const;
 
 export const QueryBudgetLinesInputSchema = z.object({
   item_key: z
     .string()
     .optional()
-    .describe('item_key จาก search_catalog — ระบบจะ resolve เป็นทุก variant ที่สะกดต่างแค่ช่องว่างให้อัตโนมัติ'),
+    .describe(
+      'item_key จาก search_catalog — ระบบจะ resolve เป็นทุก variant ที่สะกดต่างแค่ช่องว่างให้อัตโนมัติ',
+    ),
   keywords: z
     .array(z.string())
     .max(5)
     .optional()
-    .describe('คำค้นสำรองสำหรับรายการที่ไม่อยู่ใน catalog (ใช้แค่คำแรก) — ต้องระบุปี/กระทรวงร่วมด้วยเสมอ'),
+    .describe(
+      'คำค้นสำรองสำหรับรายการที่ไม่อยู่ใน catalog (ใช้แค่คำแรก) — ต้องระบุปี/กระทรวงร่วมด้วยเสมอ',
+    ),
   fiscal_years: z.array(z.number().int()).max(20).optional(),
   ministry_code: z.string().optional(),
   agency: z.string().optional().describe('ค้นแบบ substring ในชื่อหน่วยงาน'),
@@ -36,7 +44,9 @@ export const QueryBudgetLinesInputSchema = z.object({
     .array(z.string())
     .max(5)
     .optional()
-    .describe('ชื่อ dataset เช่น pbo_disbursement, act_2570_draft (ใช้ได้ทีละ 1 ค่าเท่านั้นในปัจจุบัน)'),
+    .describe(
+      'ชื่อ dataset เช่น pbo_disbursement, act_2570_draft (ใช้ได้ทีละ 1 ค่าเท่านั้นในปัจจุบัน)',
+    ),
   min_amount: z.number().optional(),
   max_amount: z.number().optional(),
   order_by: z.enum(ORDER_BY_VALUES).optional(),
@@ -107,16 +117,28 @@ export const QueryBudgetLinesOutputSchema = z.object({
 });
 export type QueryBudgetLinesOutput = z.infer<typeof QueryBudgetLinesOutputSchema>;
 
-async function resolveItemKeys(itemKey: string | undefined, ctx: ToolContext): Promise<string[] | undefined> {
+interface ResolvedItem {
+  itemKeys: string[];
+  /** shard ที่ catalog บอกว่ามี item นี้ — undefined เมื่อ resolve ไม่เจอ (ปล่อยให้ queryLines เลือกเอง) */
+  shardPaths?: string[];
+}
+
+async function resolveItem(
+  itemKey: string | undefined,
+  ctx: ToolContext,
+): Promise<ResolvedItem | undefined> {
   if (itemKey === undefined) {
     return undefined;
   }
   const item = await ctx.data.getCatalogItemByKey(itemKey);
   if (item === null) {
     // resolve ไม่เจอไม่ได้แปลว่าไม่มีข้อมูล — ส่ง key เดิมตรง ๆ ต่อให้ queryLines เผื่อ match เป๊ะ
-    return [itemKey];
+    return { itemKeys: [itemKey] };
   }
-  return item.keys !== undefined && item.keys.length > 0 ? item.keys : [item.key];
+  return {
+    itemKeys: item.keys !== undefined && item.keys.length > 0 ? item.keys : [item.key],
+    ...(item.shardPaths.length > 0 ? { shardPaths: item.shardPaths } : {}),
+  };
 }
 
 async function handler(
@@ -131,12 +153,14 @@ async function handler(
     warnings.push('รองรับ keyword ได้ทีละ 1 คำเท่านั้นในตอนนี้ — ใช้คำแรกที่ระบุ');
   }
 
-  const itemKeys = await resolveItemKeys(input.item_key, ctx);
+  const resolved = await resolveItem(input.item_key, ctx);
+  const itemKeys = resolved?.itemKeys;
   const firstKeyword = input.keywords?.[0];
   const firstDataset = input.dataset?.[0];
 
   const params: QueryLinesParams = {
     ...(itemKeys !== undefined ? { itemKeys } : {}),
+    ...(resolved?.shardPaths !== undefined ? { shardPaths: resolved.shardPaths } : {}),
     ...(firstKeyword !== undefined ? { keyword: firstKeyword } : {}),
     ...(input.fiscal_years !== undefined ? { fiscalYears: input.fiscal_years } : {}),
     ...(input.ministry_code !== undefined ? { ministryCodes: [input.ministry_code] } : {}),
@@ -154,7 +178,8 @@ async function handler(
   const result = await ctx.data.queryLines(params);
 
   const rows = clampRows(result.rows).map((line) => {
-    const priceBasis: 'unit_price' | 'amount_per_line' = line.unit_price_thb !== null ? 'unit_price' : 'amount_per_line';
+    const priceBasis: 'unit_price' | 'amount_per_line' =
+      line.unit_price_thb !== null ? 'unit_price' : 'amount_per_line';
     const confidenceNote = confidenceNoteFor(line.quality_flags);
     ctx.toolLog.recordSourceId(line.source_id);
     ctx.toolLog.recordDocId(line.source_doc_id);
@@ -182,8 +207,12 @@ async function handler(
       price_basis: priceBasis,
       quality_flags: line.quality_flags,
       source_doc_id: line.source_doc_id,
-      ...(priceBasis === 'amount_per_line' ? { price_basis_note: 'ราคาต่อรายการงบ ไม่ใช่ราคาต่อหน่วย' } : {}),
-      ...(confidenceNote !== undefined ? { max_confidence: 'medium' as const, confidence_note: confidenceNote } : {}),
+      ...(priceBasis === 'amount_per_line'
+        ? { price_basis_note: 'ราคาต่อรายการงบ ไม่ใช่ราคาต่อหน่วย' }
+        : {}),
+      ...(confidenceNote !== undefined
+        ? { max_confidence: 'medium' as const, confidence_note: confidenceNote }
+        : {}),
     };
   });
 

@@ -389,7 +389,52 @@ function loadFullCatalog(fetchImpl: typeof fetch): Promise<CatalogFile> {
 /** TODO(T-210): เพิ่ม backend ที่โหลดเฉพาะ shard ของ `catalog/detail/{hh}.json.gz` แทนการโหลด
  * catalog เต็มทุกครั้ง (F6) — ตอนนี้มีแค่ `FullCatalogDetailSource` (โหลดเต็ม + cache ถาวร) */
 export interface CatalogDetailSource {
-  getItem(i: number): Promise<CatalogFile['items'][number]>;
+  getItem(i: number): Promise<CatalogItemDetail>;
+}
+
+/**
+ * `CatalogItem` เต็ม + `shardPaths` (path จริงของแต่ละ index ใน `CatalogItem.shards` — resolve ผ่าน
+ * `CatalogFile.shard_paths`) — ช่องว่างของ facade ที่ `ai/tools/queryBudgetLines.ts` รายงานไว้ (ดู
+ * คอมเมนต์หัวไฟล์นั้น): `CatalogItem.shards` เป็นแค่ index เข้า `shard_paths` แต่ facade เดิมไม่เปิดให้
+ * resolve เป็น path จริง ทำให้ tool ที่ค้นด้วย `item_key` จำกัด shard ตาม catalog ไม่ได้
+ */
+export type CatalogItemDetail = CatalogFile['items'][number] & {
+  /** path จริง (relative ใต้ `data/`) ของทุก index ใน `shards` — เฉพาะที่ (1) index อยู่ในช่วงของ
+   * `shard_paths` และ (2) path นั้นยังอยู่ใน `manifest.files` ปัจจุบัน มิฉะนั้นตัดทิ้ง + `console.warn`
+   * (ป้องกัน citation ชี้ไป shard ที่หายไปแล้วหลัง republish) */
+  shardPaths: string[];
+};
+
+/**
+ * resolve `item.shards` (index) → path จริงผ่าน `catalog.shard_paths` แล้วกรองเฉพาะ path ที่ยังอยู่ใน
+ * `manifest.files` — index นอกช่วงหรือ path ที่ไม่รู้จักถูกตัดทิ้งพร้อม `console.warn` (ไม่ throw:
+ * แถวอื่นของรายการเดียวกันยังใช้งานได้ปกติ)
+ */
+function resolveItemShardPaths(
+  catalog: CatalogFile,
+  item: CatalogFile['items'][number],
+  knownPaths: ReadonlySet<string>,
+): string[] {
+  const resolved: string[] = [];
+  for (const index of item.shards) {
+    const path = catalog.shard_paths[index];
+    if (path === undefined) {
+      console.warn(
+        `[data/search] CatalogItem "${item.key}" อ้าง shard index ${String(index)} ที่ไม่มีใน ` +
+          `shard_paths (มีทั้งหมด ${String(catalog.shard_paths.length)} รายการ) — ข้าม index นี้`,
+      );
+      continue;
+    }
+    if (!knownPaths.has(path)) {
+      console.warn(
+        `[data/search] CatalogItem "${item.key}" ชี้ shard "${path}" (index ${String(index)}) ` +
+          'ที่ไม่อยู่ใน manifest.files ปัจจุบัน — ข้าม (อาจเป็นข้อมูลค้างจาก build ก่อนหน้า)',
+      );
+      continue;
+    }
+    resolved.push(path);
+  }
+  return resolved;
 }
 
 /**
@@ -400,7 +445,7 @@ export interface CatalogDetailSource {
  */
 function createFullCatalogDetailSource(fetchImpl: typeof fetch): CatalogDetailSource {
   return {
-    async getItem(i: number): Promise<CatalogFile['items'][number]> {
+    async getItem(i: number): Promise<CatalogItemDetail> {
       const catalog = await loadFullCatalog(fetchImpl);
       const item = catalog.items[i];
       if (!item) {
@@ -416,16 +461,19 @@ function createFullCatalogDetailSource(fetchImpl: typeof fetch): CatalogDetailSo
             `แต่ผลค้นหา/slim คาดว่าเป็น "${expected.key}" (data_version ของ catalog เต็มอาจไม่ตรงกับที่ใช้ค้นหาอยู่)`,
         );
       }
-      return item;
+      const manifest = await loadManifest(fetchImpl);
+      const knownPaths = new Set(manifest.files.map((f) => f.path));
+      return { ...item, shardPaths: resolveItemShardPaths(catalog, item, knownPaths) };
     },
   };
 }
 
-/** คืน `CatalogItem` เต็ม (มี `keys`/`shards`/สถิติราคา) ของ index `i` — โหลด catalog เต็มแบบ lazy */
+/** คืน `CatalogItem` เต็ม (มี `keys`/`shards`/สถิติราคา) + `shardPaths` (resolve แล้ว) ของ index `i` —
+ * โหลด catalog เต็มแบบ lazy */
 export function getCatalogItem(
   i: number,
   fetchImpl: typeof fetch = fetch,
-): Promise<CatalogFile['items'][number]> {
+): Promise<CatalogItemDetail> {
   return createFullCatalogDetailSource(fetchImpl).getItem(i);
 }
 
@@ -438,7 +486,7 @@ export function getCatalogItem(
 export async function getCatalogItemByKey(
   key: string,
   fetchImpl: typeof fetch = fetch,
-): Promise<CatalogFile['items'][number] | null> {
+): Promise<CatalogItemDetail | null> {
   const normalized = key.trim().replace(/\s+/g, ' ');
   const state = await loadCatalogSearch(fetchImpl);
   for (const item of state.itemsById.values()) {
@@ -447,10 +495,15 @@ export async function getCatalogItemByKey(
     }
   }
   const catalog = await loadFullCatalog(fetchImpl);
-  return (
-    catalog.items.find((it) => it.key === normalized || (it.keys?.includes(normalized) ?? false)) ??
-    null
+  const found = catalog.items.find(
+    (it) => it.key === normalized || (it.keys?.includes(normalized) ?? false),
   );
+  if (!found) {
+    return null;
+  }
+  const manifest = await loadManifest(fetchImpl);
+  const knownPaths = new Set(manifest.files.map((f) => f.path));
+  return { ...found, shardPaths: resolveItemShardPaths(catalog, found, knownPaths) };
 }
 
 // ---------------------------------------------------------------------------

@@ -26,6 +26,7 @@ import {
   queryRows,
   type SqlParam,
 } from './duckdb';
+import { summarizeShardPaths } from './shardPaths';
 import {
   type BudgetLine,
   BudgetLineSchema,
@@ -81,16 +82,40 @@ export type QueryMode = 'range' | 'full';
 // Error types — ข้อความไทยสำหรับ UI/AI เสมอ
 // ---------------------------------------------------------------------------
 
+/**
+ * field โครงสร้างที่แนบมากับ `QueryTooBroadError` (นอกเหนือจาก `shardCount`/message ไทยเดิม) — สรุปจาก
+ * `summarizeShardPaths` ของชุด shard ที่เกินเพดาน เพื่อให้ caller (เช่น AI tool) แนะนำ filter ที่แคบลง
+ * ได้ตรงจุดแทนการเดา (เช่น "มีข้อมูลปี 2566-2568 กระทรวง 15000/20000/75000 — เลือกปีหรือกระทรวงก่อน")
+ */
+export interface QueryTooBroadErrorDetail {
+  candidateShardCount: number;
+  availableYears: number[];
+  availableMinistryCodes: string[];
+}
+
 export class QueryTooBroadError extends Error {
   readonly shardCount: number;
-  constructor(shardCount: number) {
+  readonly candidateShardCount: number;
+  readonly availableYears: number[];
+  readonly availableMinistryCodes: string[];
+  constructor(shardCount: number, detail?: Partial<QueryTooBroadErrorDetail>) {
+    const availableYears = detail?.availableYears ?? [];
+    const availableMinistryCodes = detail?.availableMinistryCodes ?? [];
+    const hint =
+      availableYears.length > 0 || availableMinistryCodes.length > 0
+        ? ` (ปีที่มีข้อมูลในกลุ่มนี้: ${availableYears.length > 0 ? availableYears.join(', ') : 'ไม่ทราบ'}` +
+          `, กระทรวง: ${availableMinistryCodes.length > 0 ? availableMinistryCodes.join(', ') : 'ไม่ทราบ'})`
+        : '';
     super(
       `คำค้นกว้างเกินไป (ต้องสแกน ${shardCount.toLocaleString('th-TH')} ไฟล์ เกินเพดาน ` +
         `${MAX_SHARDS_TO_SCAN.toLocaleString('th-TH')} ไฟล์ต่อครั้ง) โปรดระบุปีงบประมาณ, ` +
-        'กระทรวง/หน่วยงาน, หรือ item_key ให้แคบลงก่อนค้นหาอีกครั้ง',
+        `กระทรวง/หน่วยงาน, หรือ item_key ให้แคบลงก่อนค้นหาอีกครั้ง${hint}`,
     );
     this.name = 'QueryTooBroadError';
     this.shardCount = shardCount;
+    this.candidateShardCount = detail?.candidateShardCount ?? shardCount;
+    this.availableYears = availableYears;
+    this.availableMinistryCodes = availableMinistryCodes;
   }
 }
 
@@ -462,7 +487,12 @@ export async function queryLines(params: QueryLinesParams): Promise<QueryLinesRe
     };
   }
   if (paths.length > MAX_SHARDS_TO_SCAN) {
-    throw new QueryTooBroadError(paths.length);
+    const summary = summarizeShardPaths(paths);
+    throw new QueryTooBroadError(paths.length, {
+      candidateShardCount: paths.length,
+      availableYears: summary.years,
+      availableMinistryCodes: summary.ministryCodes,
+    });
   }
 
   const limit = clampLimit(params.limit);
@@ -570,7 +600,12 @@ export async function getLines(sourceIds: string[], shardHints: string[]): Promi
     );
   }
   if (shardHints.length > MAX_SHARDS_TO_SCAN) {
-    throw new QueryTooBroadError(shardHints.length);
+    const summary = summarizeShardPaths(shardHints);
+    throw new QueryTooBroadError(shardHints.length, {
+      candidateShardCount: shardHints.length,
+      availableYears: summary.years,
+      availableMinistryCodes: summary.ministryCodes,
+    });
   }
   const manifest = await loadManifest();
   validateKnownShards(manifest, shardHints);

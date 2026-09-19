@@ -41,6 +41,7 @@ import {
   getNeighborLines,
   InvalidShardPathError,
   QueryTooBroadError,
+  type QueryTooBroadErrorDetail,
   queryLines,
   type GetLinesResult,
   type GetNeighborLinesResult,
@@ -49,6 +50,7 @@ import {
   RepoQueryError,
 } from './repo';
 import {
+  type CatalogItemDetail,
   getCatalogItem,
   getCatalogItemByKey,
   searchCatalog,
@@ -56,6 +58,7 @@ import {
   type SearchCatalogResult,
   type SearchMatch,
 } from './search';
+import { type ShardPathsSummary, summarizeShardPaths } from './shardPaths';
 import {
   getEconTrend as getIndicatorTrend,
   getPriceTrend as getItemPriceTrend,
@@ -92,6 +95,7 @@ export type {
   AdjustForInflationResult,
   BudgetLine,
   CatalogItem,
+  CatalogItemDetail,
   CmiIndexKey,
   CoverageNote,
   Dataset,
@@ -116,14 +120,18 @@ export type {
   QualityFlag,
   QueryLinesParams,
   QueryLinesResult,
+  QueryTooBroadErrorDetail,
   SearchCatalogOptions,
   SearchCatalogResult,
   SearchMatch,
+  ShardPathsSummary,
   SourceDoc,
   SourceDocCollection,
   SourceDocKind,
   TrendChangePct,
 };
+
+export { summarizeShardPaths };
 
 export { DocNotFoundError, EconDataMissingError, InvalidShardPathError, QueryTooBroadError, RepoQueryError };
 
@@ -192,8 +200,8 @@ async function dataVersion(): Promise<string> {
 export interface DataFacade {
   // --- catalog ---
   searchCatalog(query: string, opts?: SearchCatalogOptions): Promise<SearchCatalogResult>;
-  getCatalogItem(i: number): Promise<CatalogItem>;
-  getCatalogItemByKey(key: string): Promise<CatalogItem | null>;
+  getCatalogItem(i: number): Promise<CatalogItemDetail>;
+  getCatalogItemByKey(key: string): Promise<CatalogItemDetail | null>;
   // --- budget lines ---
   queryLines(params: QueryLinesParams): Promise<QueryLinesResult>;
   getLines(sourceIds: string[], shardHints: string[]): Promise<GetLinesResult>;

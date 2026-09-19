@@ -147,6 +147,66 @@ describe('queryLines — shard selection', () => {
     const result = await queryLines({ shardPaths: ['budget_lines/act2570/15000.parquet'] });
     expect(result.shardsScanned).toBe(1);
   });
+
+  it('shardPaths + filter ระดับไฟล์ (dataset/ministryCodes) → intersection เหลือเฉพาะ shard ที่ตรงทั้งคู่', async () => {
+    const fakeDb = setFakeResponses([
+      { rows: [{ source_id: 'src-1', __total_matched: 1 }] },
+      { rows: [makeLineRecord({})] },
+    ]);
+    // ระบุ shardPaths 2 ไฟล์ (คนละ ministry) แต่ filter ministryCodes เหลือแค่ 15000 → intersection
+    // ต้องเหลือ shard เดียว (defense in depth ตาม resolveShardPaths)
+    const result = await queryLines({
+      shardPaths: ['budget_lines/act2570/15000.parquet', 'budget_lines/act2570/20000.parquet'],
+      dataset: 'act_2570_draft',
+      ministryCodes: ['15000'],
+    });
+    expect(result.shardsScanned).toBe(1);
+    expect(result.shardPaths).toEqual(['budget_lines/act2570/15000.parquet']);
+    expect(fakeDb.connection.preparedCalls[0]?.sql).toContain('budget_lines/act2570/15000.parquet');
+    expect(fakeDb.connection.preparedCalls[0]?.sql).not.toContain(
+      'budget_lines/act2570/20000.parquet',
+    );
+  });
+
+  it('shardPaths + filter ที่ไม่ตรงกับ shard ที่ระบุเลย → intersection ว่าง → ไม่มีแถว (ไม่ throw)', async () => {
+    setFakeResponses([]);
+    const result = await queryLines({
+      shardPaths: ['budget_lines/act2570/15000.parquet'],
+      dataset: 'pbo_disbursement',
+    });
+    expect(result.shardsScanned).toBe(0);
+    expect(result.rows).toEqual([]);
+  });
+
+  it.each([
+    ['../../../etc/passwd'],
+    ['https://evil.example.com/budget_lines/act2570/15000.parquet'],
+    ['budget_lines/act2570/../act2570/15000.parquet'],
+  ])('path แปลกปลอม %s ที่ไม่อยู่ใน manifest ถูกปฏิเสธด้วย InvalidShardPathError', async (badPath) => {
+    setFakeResponses([]);
+    await expect(queryLines({ shardPaths: [badPath] })).rejects.toBeInstanceOf(InvalidShardPathError);
+  });
+
+  it('เกินเพดาน MAX_SHARDS_TO_SCAN → QueryTooBroadError มี candidateShardCount/availableYears/availableMinistryCodes', async () => {
+    setFakeResponses([]);
+    let caught: unknown;
+    try {
+      await queryLines({});
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(QueryTooBroadError);
+    const error = caught as QueryTooBroadError;
+    expect(error.candidateShardCount).toBe(error.shardCount);
+    expect(error.candidateShardCount).toBeGreaterThan(MAX_SHARDS_TO_SCAN);
+    // fixture manifest มี shard ของ pbo ปี 2566/2567/2568 และ act2570 (ไม่มีปีใน path — ไม่นับ)
+    expect(error.availableYears).toEqual(
+      expect.arrayContaining([2566, 2567, 2568]),
+    );
+    expect(error.availableMinistryCodes).toEqual(
+      expect.arrayContaining(['15000', '20000', '75000']),
+    );
+  });
 });
 
 describe('queryLines — SQL/parameter safety (ห้ามต่อ string ของผู้ใช้ลง SQL text)', () => {
