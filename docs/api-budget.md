@@ -23,6 +23,12 @@ Key อยู่ที่ `web/.env.local` (`VITE_EVAL_ANTHROPIC_API_KEY`; gitig
 |---|---|---|---|
 | 2569-09-20 | Phase 2 spikes: S3 0.0500 (6 req, Haiku 4.5: streaming, tool loop, web_search ×1, cache write+read) + S5 0.0953 (3 SVG: `claude-sonnet-5` ×2, Haiku 4.5 ×1) — ledger `web/spikes/api-spend.json` | **0.1453** (เพดาน 0.40) | **0.1453** |
 | 2569-09-20 | T-306 eval จริง case แรก `equip-aircon-18000btu` (Haiku 4.5, 5 requests, ชนเพดาน case 0.12) — ledger `web/tests/eval/api-spend.json` | **0.1202** (เพดาน T-306 1.80) | **0.2655** |
+| 2569-09-20 | T-308 รอบ 1 — รัน case เดิมซ้ำหลังลด token (Haiku 4.5, 7 requests, 2 turns เพราะโมเดลถามกลับก่อน) — **proposal ไม่ถูกบันทึกเพราะบั๊ก harness** (แก้แล้ว `97fa99e`) | **0.1283** | **0.3939** |
+
+### ข้อค้นพบรอบ 2 (หลังลด token)
+- prefix cache write 28.4k → **22.8k tokens** (−20 %); ต้นทุนต่อข้อบน Haiku ยัง ≈ **0.13 USD** เพราะ (ก) โมเดลถามกลับ 1 turn ทั้งที่โจทย์บอกให้ตั้งสมมติฐาน (ข) `emit_proposal` ≈ 7.5k output tokens (0.037 USD — ก้อนใหญ่สุด) (ค) ผล `query_budget_lines` ≈ 10k tokens
+- เพดานต่อ case 0.12 ตึงเกินสำหรับ flow ครบ → ใช้ `--max-usd-per-case-haiku 0.15` ในรอบ core8 (Sonnet คง 0.35–0.40; ยอดรวมยังถูกบังคับด้วย ledger ≤ 1.80)
+- ประมาณการสำหรับผู้ใช้จริง: **Haiku ≈ 0.13 USD/ข้อเสนอ, Sonnet 5 ≈ 0.4 USD/ข้อเสนอ** `[UNVERIFIED — Sonnet ยังไม่ได้วัดจริง คูณจากอัตราราคา 3 เท่า]` → ต้องแสดงในหน้า KeyGate/Settings
 
 ### ข้อค้นพบด้านต้นทุนจาก case แรก (2569-09-20)
 - prefix system+tools ≈ **28.4k tokens** ต่อ session (cache write ครั้งแรก; Haiku ≈ 0.037 USD, Sonnet 5 ≈ 3 เท่า) — ภาษาไทย ≈ 0.9 token/ตัวอักษร

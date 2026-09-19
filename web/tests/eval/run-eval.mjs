@@ -40,6 +40,9 @@ const DOCS_REPORT_PATH = join(REPO_ROOT, 'docs', 'eval-report.md');
 const DRY_RUN_REPORT_PATH = join(OUT_DIR, 'dry-run-report.md');
 
 const PORT = 4175;
+// outDir แยกจาก e2e ของ Playwright (`dist-e2e-harness`) — agent/CI ที่รัน e2e ขนานกันจะไม่ rebuild ทับ bundle
+// ที่ preview server ของ eval กำลัง serve อยู่กลาง case ที่จ่ายเงินแล้ว
+const HARNESS_OUT_DIR = 'dist-eval-harness';
 const BASE_URL = `http://localhost:${String(PORT)}/thai-government-budget-planner/`;
 
 // เดียวกับ `.githooks/pre-commit` (T-003) — ใช้ตรวจ output ของ eval เอง (ไม่ใช่ commit)
@@ -151,7 +154,7 @@ function buildHarnessBundle() {
   console.log('[eval] กำลัง build bundle โหมด e2e-harness...');
   execFileSync(
     NPX_BIN,
-    ['vite', 'build', '--mode', 'e2e-harness', '--outDir', 'dist-e2e-harness'],
+    ['vite', 'build', '--mode', 'e2e-harness', '--outDir', HARNESS_OUT_DIR],
     {
       cwd: WEB_DIR,
       stdio: 'inherit',
@@ -165,7 +168,7 @@ function buildHarnessBundle() {
 function startPreviewServer() {
   return spawn(
     NPX_BIN,
-    ['vite', 'preview', '--outDir', 'dist-e2e-harness', '--port', String(PORT), '--strictPort'],
+    ['vite', 'preview', '--outDir', HARNESS_OUT_DIR, '--port', String(PORT), '--strictPort'],
     { cwd: WEB_DIR, stdio: ['ignore', 'pipe', 'pipe'], shell: process.platform === 'win32' },
   );
 }

@@ -14,6 +14,7 @@ web/spikes/**/dist/
 web/spikes/**/out/
 web/dist/
 web/dist-e2e-harness/
+web/dist-eval-harness/
 web/coverage/
 web/playwright-report/
 web/test-results/
