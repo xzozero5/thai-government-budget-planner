@@ -5,12 +5,23 @@
 `item_name`, `item_key`, `ministry_code`, `province`) เป็น optional เพราะ extract stage ของ
 แต่ละ dataset (เช่น `extract/pbo.py`) ยังไม่ทำ normalize (T-102..T-104 ทำขนาน/ภายหลัง)
 `EconIndicator` จะเพิ่มใน T-111 ตามลำดับ backlog
+
+`budget_group` (T-110a — ตัดสินใจโดย main thread 19 ก.ย. 2569): A2/A3 (`ร่าง พ.ร.บ. 2570`) มี
+คอลัมน์ `group_budget` ("กลุ่มงบประมาณ" — 7 ค่า distinct เช่น `งบประมาณรายจ่ายของหน่วยรับ
+งบประมาณ`/`งบประมาณรายจ่ายบูรณาการ`/`งบประมาณรายจ่ายงบกลาง`) ที่ไม่ใช่แนวคิดเดียวกับ `strategy`
+(ยุทธศาสตร์การจัดสรรของ PBO) — เดิม `extract/act2570.py` ยัดค่านี้ลง `strategy` พร้อม flag
+`group_budget_as_strategy` ชั่วคราว ตอนนี้มี field ของตัวเองแล้วจึงลบ flag นั้นทิ้ง
+`budget_line_pyarrow_schema()` คือ pyarrow schema กลางตัวเดียวของ `budget_lines` ที่ผ่าน
+normalize stage แล้ว (T-110a `normalize/run.py`) — ทุก dataset cast เข้า schema นี้ก่อนเขียน
+`.cache/normalized/{dataset}/*.parquet` (ชนิดตาม 03 §3.1: เงิน int64, ปี int16,
+`source_row`/`source_page` int32, list<string> สำหรับ `spec_tokens`/`quality_flags`)
 """
 
 from __future__ import annotations
 
 from typing import Literal
 
+import pyarrow as pa
 from pydantic import BaseModel, ConfigDict, Field
 
 # ตาม 03 §3.2: "committee|province_budget|open_sso|pbo"
@@ -96,6 +107,7 @@ class BudgetLine(BaseModel):
     local_gov_name: str | None = None
 
     strategy: str | None = None
+    budget_group: str | None = None
     plan: str | None = None
     output_project: str | None = None
     activity: str | None = None
@@ -132,3 +144,64 @@ class BudgetLine(BaseModel):
     source_doc_id: str
 
     quality_flags: list[str] = Field(default_factory=list)
+
+
+def budget_line_pyarrow_schema() -> pa.Schema:
+    """pyarrow schema กลางตัวเดียวของ `budget_lines` หลัง normalize (03 §3.1, T-110a)
+
+    ทุก dataset (`pbo_disbursement`/`act_2570_draft`/`act_2570_province`/`local_subsidy_2570`/
+    `local_ordinance_2570`/`committee_table`) cast เข้า schema นี้ตอนจบ `normalize/run.py` —
+    คอลัมน์ที่ dataset หนึ่งไม่มี (เช่น `revised_thb` ของ committee) เป็น `null` ทั้งคอลัมน์
+    ไม่ได้แปลว่าไม่มี field นั้นจริง
+    """
+    return pa.schema(
+        [
+            pa.field("source_id", pa.string()),
+            pa.field("dataset", pa.string()),
+            pa.field("fiscal_year_be", pa.int16()),
+            pa.field("fiscal_year_ce", pa.int16()),
+            pa.field("gov_level", pa.string()),
+            pa.field("ministry", pa.string()),
+            pa.field("ministry_code", pa.string()),
+            pa.field("agency", pa.string()),
+            pa.field("agency_code", pa.string()),
+            pa.field("province", pa.string()),
+            pa.field("local_gov_name", pa.string()),
+            pa.field("strategy", pa.string()),
+            pa.field("budget_group", pa.string()),
+            pa.field("plan", pa.string()),
+            pa.field("output_project", pa.string()),
+            pa.field("activity", pa.string()),
+            pa.field("budget_type", pa.string()),
+            pa.field("expense_category", pa.string()),
+            pa.field("is_capital", pa.bool_()),
+            pa.field("item_name_raw", pa.string()),
+            pa.field("item_name", pa.string()),
+            pa.field("item_key", pa.string()),
+            pa.field("item_qty", pa.float64()),
+            pa.field("item_unit", pa.string()),
+            pa.field("spec_tokens", pa.list_(pa.string())),
+            pa.field("location_text", pa.string()),
+            pa.field("amount_thb", pa.int64()),
+            pa.field("unit_price_thb", pa.int64()),
+            pa.field("revised_thb", pa.int64()),
+            pa.field("po_thb", pa.int64()),
+            pa.field("disbursed_thb", pa.int64()),
+            pa.field("disbursed_incl_po_thb", pa.int64()),
+            pa.field("reserved_thb", pa.int64()),
+            pa.field("carryover_thb", pa.int64()),
+            pa.field("disbursement_rate", pa.float64()),
+            pa.field("description", pa.string()),
+            pa.field("legal_reference", pa.string()),
+            pa.field("source_path", pa.string()),
+            pa.field("source_sheet", pa.string()),
+            pa.field("source_row", pa.int32()),
+            pa.field("source_page", pa.int32()),
+            pa.field("source_doc_id", pa.string()),
+            pa.field("quality_flags", pa.list_(pa.string())),
+        ]
+    )
+
+
+# ชื่อคอลัมน์ที่ dataset ใดไม่มีตอนอ่าน extract-stage parquet — เติมเป็น null ก่อน cast
+BUDGET_LINE_COLUMN_NAMES: tuple[str, ...] = tuple(f.name for f in budget_line_pyarrow_schema())

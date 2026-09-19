@@ -64,13 +64,16 @@
 `normalize.thai_text.clean()` ยุบ whitespace ก่อนเทียบทั้งสองฝั่ง → `check_v2()` ใช้ `clean()`
 เสมอตอนสร้าง key เปรียบเทียบ (ไม่ใช่ raw string) ด้วยเหตุนี้
 
-ฟิลด์ที่ `normalize.schema.BudgetLine` **ไม่มี field รองรับตรง ๆ**:
-- `group_budget` (A2 Data Dict: "กลุ่มงบประมาณ" — 7 ค่า distinct เช่น
-  `งบประมาณรายจ่ายของหน่วยรับงบประมาณ`/`งบประมาณรายจ่ายบูรณาการ`/`งบประมาณรายจ่ายงบกลาง` ฯลฯ)
-  ไม่มีฟิลด์ตรงใน schema → เก็บไว้ใน `strategy` แทน (concept ใกล้เคียงที่สุดที่มีอยู่: "ยุทธศาสตร์/
-  กลุ่มการจัดสรรงบระดับบนสุด") ทุกแถว format-B (A2 + A3 format B) ติด flag
-  `group_budget_as_strategy` ให้ main thread ตัดสินใจว่าจะเพิ่ม field แยกจริงหรือไม่ — format A
-  ไม่มีข้อมูลนี้เลย (`strategy=None`)
+**แก้ 19 ก.ย. 2569 (T-110a — ตัดสินใจโดย main thread)**: A2 Data Dict คอลัมน์ `group_budget`
+("กลุ่มงบประมาณ" — 7 ค่า distinct เช่น `งบประมาณรายจ่ายของหน่วยรับงบประมาณ`/
+`งบประมาณรายจ่ายบูรณาการ`/`งบประมาณรายจ่ายงบกลาง` ฯลฯ) ตอนนี้มี field ของตัวเองแล้ว
+(`normalize.schema.BudgetLine.budget_group`) — เดิมยัดลง `strategy` พร้อม flag
+`group_budget_as_strategy` (ผิด concept: `strategy` = ยุทธศาสตร์การจัดสรรของ PBO คนละอย่างกับ
+กลุ่มงบประมาณของ พ.ร.บ.) จึงย้ายไป `budget_group` ตรง ๆ แล้วลบ flag นั้นทิ้ง; `strategy` ของ
+act2570 เป็น `None` เสมอ (dataset นี้ไม่มีข้อมูลยุทธศาสตร์จริง) — format A ไม่มีคอลัมน์
+`group_budget` เลย จึง `budget_group=None` เสมอสำหรับ format A
+
+ฟิลด์อื่นที่ `normalize.schema.BudgetLine` **ไม่มี field รองรับตรง ๆ**:
 - `cap_ncap`/`ประจำ/ลงทุน` แปลงเป็น `is_capital: bool|None` ตาม schema แต่ยังเก็บสตริงดิบไว้ใน
   คอลัมน์ extra `cap_ncap_raw` ของ cache parquet (แบบเดียวกับ `capital_type_raw` ใน `extract/pbo.py`)
   เผื่อค่าที่ map ไม่ได้ (ไม่ใช่ "รายจ่ายลงทุน"/"รายจ่ายประจำ" เป๊ะ ๆ)
@@ -115,7 +118,6 @@ AMOUNT_UNIT_SOURCE = "thb"
 MIN_LOCAL_GOV = "75000"
 MIN_STATE_ENTERPRISE = "50000"
 
-GROUP_BUDGET_FLAG = "group_budget_as_strategy"
 SUBSET_FLAG = "subset_of_act_2570_draft"
 
 ORACLE_FILENAME = "oracle.json"
@@ -347,7 +349,8 @@ def _build_field_code_record(
         "agency_code": agc_code,
         "province": province,
         "local_gov_name": local_gov_name,
-        "strategy": _text_or_none(_get(row, mapping, "group_budget")),
+        "strategy": None,
+        "budget_group": _text_or_none(_get(row, mapping, "group_budget")),
         "plan": _text_or_none(_get(row, mapping, "plan_name")),
         "output_project": _text_or_none(_get(row, mapping, "output_name")),
         "activity": _text_or_none(_get(row, mapping, "act_name")),
@@ -469,6 +472,7 @@ def _build_format_a_record(
         "province": folder_province,
         "local_gov_name": None,
         "strategy": None,
+        "budget_group": None,
         "plan": _text_or_none(_get(row, mapping, "plan")),
         "output_project": None,
         "activity": None,
@@ -511,6 +515,7 @@ def pyarrow_schema() -> pa.Schema:
             pa.field("province", pa.string()),
             pa.field("local_gov_name", pa.string()),
             pa.field("strategy", pa.string()),
+            pa.field("budget_group", pa.string()),
             pa.field("plan", pa.string()),
             pa.field("output_project", pa.string()),
             pa.field("activity", pa.string()),
@@ -612,7 +617,7 @@ def extract_draft(cfg: PipelineConfig, discovered: DiscoveredFiles, out_dir: Pat
                 source_doc_id=source_doc_id,
                 dataset=DATASET_DRAFT,
                 folder_province=None,
-                extra_quality_flags=(GROUP_BUDGET_FLAG,),
+                extra_quality_flags=(),
             )
             records.append(record)
             flag_counts.update(record["quality_flags"])
@@ -692,7 +697,7 @@ def extract_one_a3_file(cfg: PipelineConfig, path: Path, out_dir: Path) -> A3Fil
                     source_doc_id=source_doc_id,
                     dataset=dataset,
                     folder_province=folder_province,
-                    extra_quality_flags=(GROUP_BUDGET_FLAG, SUBSET_FLAG),
+                    extra_quality_flags=(SUBSET_FLAG,),
                 )
                 records.append(record)
                 flag_counts.update(record["quality_flags"])

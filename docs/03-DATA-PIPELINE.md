@@ -51,6 +51,7 @@ tgbp build --dataset all       # ทั้งหมดตามลำดับ
 tgbp sample --rows 1000        # สร้าง web/tests/fixtures/data/ สำหรับ dev/test ฝั่ง web
 ```
 ทุกขั้นเขียน intermediate ไว้ที่ `pipeline/.cache/` (gitignored) เป็น parquet เพื่อรันซ้ำเร็ว
+ลำดับ stage: `extract` → `.cache/{pbo,act2570,local,committee,docs}/` → `normalize` → `.cache/normalized/{dataset}/*.parquet` (schema กลางตัวเดียวใน `normalize/schema.py`; parse เฉพาะ distinct `item_name_raw` ด้วย process pool — 2.99 ล้านแถว ≈ 2.5 นาที) → `validate` → `.cache/validation/` → `publish` → `web/public/data/`. flag รายกลุ่มของ V3 เขียนที่ normalize; hard check รวมทำที่ validate; V6 และ flag `unit_price_outlier` (V8) / `lump_sum_category` เขียนที่ publish
 
 ## 3. Canonical schema
 
@@ -66,6 +67,7 @@ tgbp sample --rows 1000        # สร้าง web/tests/fixtures/data/ สำ
 | `province` | string | จาก item_name หรือโฟลเดอร์ (null ได้) |
 | `local_gov_name` | string | ชื่อ อปท. (เฉพาะ local) |
 | `strategy` / `plan` / `output_project` / `activity` | string | ยุทธศาสตร์/แผนงาน/ผลผลิต-โครงการ/งาน |
+| `budget_group` | string | "กลุ่มงบประมาณ" (`group_budget`) จาก A2/A3 เท่านั้น — null สำหรับ dataset อื่น (เพิ่ม 19 ก.ย. 2569) |
 | `budget_type` | string | งบบุคลากร/ดำเนินงาน/ลงทุน/อุดหนุน/รายจ่ายอื่น/งบกลาง |
 | `expense_category` | string | objc_8_name / expense_category / sub_category |
 | `is_capital` | bool | รายจ่ายลงทุน |

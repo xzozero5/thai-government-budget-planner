@@ -17,7 +17,6 @@ from tgbp_pipeline.extract.act2570 import (
     DATASET_DRAFT,
     DATASET_PROVINCE,
     DATASET_SUBSIDY,
-    GROUP_BUDGET_FLAG,
     SUBSET_FLAG,
     Act2570DiscoveryError,
     Act2570SheetError,
@@ -242,7 +241,7 @@ def test_discover_files_raises_when_draft_files_have_different_content(tmp_path:
 # ---------------------------------------------------------------------------
 
 
-def test_extract_act2570_draft_basic_fields_and_group_budget_flag(tmp_path: Path) -> None:
+def test_extract_act2570_draft_basic_fields_and_budget_group(tmp_path: Path) -> None:
     cfg = PipelineConfig.load(_write_config(tmp_path))
     row_central = _b_row(min_="02000", agc="02005", p_total_bud=1_500_000)
     row_local = _b_row(
@@ -269,8 +268,8 @@ def test_extract_act2570_draft_basic_fields_and_group_budget_flag(tmp_path: Path
     assert central["gov_level"] == "central"
     assert central["local_gov_name"] is None
     assert central["is_capital"] is True
-    assert central["strategy"] == "งบประมาณรายจ่ายของหน่วยรับงบประมาณ"
-    assert GROUP_BUDGET_FLAG in central["quality_flags"]
+    assert central["strategy"] is None
+    assert central["budget_group"] == "งบประมาณรายจ่ายของหน่วยรับงบประมาณ"
     assert central["amount_thb"] == 1_500_000
     assert central["amount_unit_source"] == "thb"
     assert central["fiscal_year_be"] == 2570
@@ -401,8 +400,8 @@ def test_extract_one_a3_file_format_b_objc8_and_jangwat_column(tmp_path: Path) -
     record = pq.read_table(str(result.cache_path)).to_pylist()[0]
     assert record["expense_category"] == "ค่าครุภัณฑ์ ที่ดิน และสิ่งก่อสร้าง"
     assert record["province"] == "เชียงใหม่"
+    assert record["budget_group"] == "งบประมาณรายจ่ายของหน่วยรับงบประมาณ"
     assert SUBSET_FLAG in record["quality_flags"]
-    assert GROUP_BUDGET_FLAG in record["quality_flags"]
 
 
 def test_extract_one_a3_file_returns_none_for_unclassified_filename(tmp_path: Path) -> None:

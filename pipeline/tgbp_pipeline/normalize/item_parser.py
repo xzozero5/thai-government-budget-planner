@@ -459,7 +459,10 @@ def _org_tail_candidate(
     return None, found_uncertain
 
 
-def parse(item_name: str, org_names: Iterable[str] | None = None) -> ParsedItem:
+_MAX_FALLBACK_RECURSION_DEPTH = 5
+
+
+def parse(item_name: str, org_names: Iterable[str] | None = None, _depth: int = 0) -> ParsedItem:
     """แยก `item_name` ออกเป็น province/amphoe/tambon, qty/unit, spec tokens และสร้าง `item_key`
 
     `org_names` เป็น hook เสริม (optional) สำหรับ T-104 (`org_master`) — ถ้าระบุ จะค้นหาชื่อ
@@ -468,6 +471,14 @@ def parse(item_name: str, org_names: Iterable[str] | None = None) -> ParsedItem:
 
     Deterministic และ idempotent: `parse(parse(x).item_key)` ต้องไม่ error (item_key ไม่มีคำนำหน้า
     สถานที่หลงเหลือให้จับซ้ำ จึงได้ province/amphoe/tambon เป็น `None` เมื่อ parse ซ้ำ)
+
+    `_depth` (T-110a — พบจริงจาก `PBO/2558.xlsx`) เป็นตัวกัน **stack overflow** ของ fixed-point
+    loop ด้านล่าง: `for _ in range(3)` เดิมจำกัดจำนวนรอบ**ต่อการเรียกหนึ่งครั้ง** แต่ไม่ได้จำกัด
+    ความลึกของการเรียกซ้อนกัน (nested) เมื่อผลลัพธ์ของรอบก่อนหน้ายังว่างอีก การเรียก `parse()`
+    ซ้อนกันจึงลึกจน `RecursionError` ได้จริง (พบ item_name จริงใน 2558 ที่ไม่ลู่เข้าจุดคงที่ภายใน
+    ~1000 ชั้น) — จำกัดความลึกรวมไว้ที่ `_MAX_FALLBACK_RECURSION_DEPTH` แล้วยอมรับผลลัพธ์ปัจจุบัน
+    (ไม่ idempotent 100% สำหรับ input ผิดปกติเหล่านี้ แต่ปลอดภัยกว่าเดิมมาก ยังคง fallback ที่ถูก
+    ต้องสำหรับ input ปกติทุกกรณีที่เคยผ่าน hold-out เพราะ input ปกติลู่เข้าภายใน 1-2 รอบเสมอ)
     """
     text = clean(item_name)
     text = _strip_all_thousands_commas(text)
@@ -655,12 +666,14 @@ def parse(item_name: str, org_names: Iterable[str] | None = None) -> ParsedItem:
         # fallback ข้างบนตัดวรรคตอน (รวม "." ใน "อ."/"จ.") ออกไปแล้ว ทำให้ re-parse ครั้งถัดไป
         # หา marker สถานที่ (ที่ต้องมีจุดกำกับ) ไม่เจออีก — ผลจึง**ไม่เท่าเดิม**เมื่อ parse ซ้ำ
         # (พบจริงจากเคส hold-out "บ้านพิมาย อ.X,Y จ.Z" ที่ input มีแต่สถานที่ล้วน ไม่มีคำอธิบายอื่น
-        # เลย) วนซ้ำจนถึงจุดคงที่ (fixed point) ไม่เกิน 3 รอบ เพื่อรับประกัน idempotent เสมอ
-        for _ in range(3):
-            next_key = parse(item_key).item_key
-            if next_key == item_key:
-                break
-            item_key = next_key
+        # เลย) วนซ้ำจนถึงจุดคงที่ (fixed point) ไม่เกิน 3 รอบ เพื่อรับประกัน idempotent เสมอ —
+        # แต่จำกัดความลึกรวมของการเรียกซ้อนด้วย `_depth` กัน `RecursionError` (ดู docstring)
+        if _depth < _MAX_FALLBACK_RECURSION_DEPTH:
+            for _ in range(3):
+                next_key = parse(item_key, _depth=_depth + 1).item_key
+                if next_key == item_key:
+                    break
+                item_key = next_key
 
     return ParsedItem(
         item_name=text,
