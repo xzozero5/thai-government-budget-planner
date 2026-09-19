@@ -66,6 +66,15 @@ PSEUDO_MINISTRY_KEYWORDS: tuple[str, ...] = (
 OrgLevel = Literal["ministry", "agency"]
 MatchMethod = Literal["exact", "alias", "fuzzy", "none"]
 
+# 03-DATA-PIPELINE.md §5 ข้อ 3 / 02 §A2 "ข้อควรระวัง" — ปิด fuzzy สำหรับชื่อ อปท.
+# (ขึ้นต้นด้วยคำเหล่านี้หลัง clean()) เพราะชื่อสั้นคล้ายกันแต่คนละที่จริง เช่น
+# "เทศบาลตำบลคลองโยง" fuzzy 94.1 ไปโดน "เทศบาลตำบลคลองยาง" (ต่างจังหวัดกัน) — ต้อง exact/alias เท่านั้น
+_LOCAL_GOV_FUZZY_EXCLUDE_PREFIXES: tuple[str, ...] = ("เทศบาล", "องค์การบริหารส่วน")
+
+
+def _is_local_gov_name(clean_name: str) -> bool:
+    return clean_name.startswith(_LOCAL_GOV_FUZZY_EXCLUDE_PREFIXES)
+
 
 @dataclass(frozen=True)
 class OrgRecord:
@@ -409,6 +418,10 @@ class OrgMaster:
                 method: MatchMethod = "exact" if key in canonical_keys else "alias"
                 score = _EXACT_SCORE if method == "exact" else _ALIAS_SCORE
                 return code, method, score
+
+        if _is_local_gov_name(key):
+            # ชื่อ อปท. ไม่ผ่าน exact/alias ข้างบน → ห้าม fuzzy ต่อ (03 §5 ข้อ 3)
+            return None, "none", 0.0
 
         names_codes = self._agency_fuzzy_by_ministry.get(ministry_code)
         if not names_codes or not names_codes[0]:

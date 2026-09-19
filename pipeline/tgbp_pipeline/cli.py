@@ -9,6 +9,7 @@ from __future__ import annotations
 import typer
 
 from tgbp_pipeline.config import load_config
+from tgbp_pipeline.extract.pbo import extract_all as extract_pbo_all
 from tgbp_pipeline.inventory import scan_raw_dir, write_inventory_appendix, write_sources_json
 
 app = typer.Typer(
@@ -74,9 +75,39 @@ def extract(
         "--dataset",
         help="pbo | act2570 | local | committee | pdf | office | all",
     ),
+    year: int | None = typer.Option(
+        None, "--year", help="จำกัดเฉพาะปีงบประมาณเดียว (เฉพาะ --dataset pbo)"
+    ),
+    limit_rows: int | None = typer.Option(
+        None, "--limit-rows", help="จำกัดจำนวนแถวข้อมูลต่อไฟล์ (ใช้ตอนทดสอบ/สุ่มดู)"
+    ),
+    config: str | None = typer.Option(
+        None, "--config", hidden=True, help="path ของ config.yaml อื่น (ใช้ใน test เท่านั้น)"
+    ),
 ) -> None:
-    """แยกข้อมูลดิบตาม dataset → pipeline/.cache/*.parquet (T-105..T-109)"""
-    _stub("T-105..T-109")
+    """แยกข้อมูลดิบตาม dataset → pipeline/.cache/*.parquet (T-105 ทำ pbo; T-106..T-109 ที่เหลือ)"""
+    if dataset != "pbo":
+        _stub("T-106..T-109")
+        return
+
+    cfg = load_config(config)
+    years = [year] if year is not None else None
+    results = extract_pbo_all(cfg, years=years, limit_rows=limit_rows)
+    if not results:
+        typer.echo("ไม่พบไฟล์ PBO ให้ extract", err=True)
+        raise typer.Exit(code=1)
+
+    partial_tag = " [PARTIAL — ไม่ทับไฟล์เต็ม, ไม่อัปเดต oracle.json]" if limit_rows is not None else ""
+    total_rows = 0
+    for r in results:
+        total_rows += r.rows_written
+        flags = dict(r.flag_counts) if r.flag_counts else {}
+        typer.echo(
+            f"PBO {r.year}: {r.rows_written:,} แถว | sheet={r.sheet_name!r} | "
+            f"grand_total_rows={r.n_grand_total_rows} | oracle={r.oracle['kind']} | "
+            f"flags={flags} | {r.cache_bytes:,} bytes | {r.elapsed_seconds:.1f}s{partial_tag}"
+        )
+    typer.echo(f"รวม {total_rows:,} แถว ({len(results)} ปี){partial_tag}")
 
 
 @app.command()

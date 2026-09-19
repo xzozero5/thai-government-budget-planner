@@ -315,6 +315,39 @@ def test_match_global_agency_fallback_when_ministry_unresolved(org_master: OrgMa
     assert "ministry_unmapped" not in result.flags
 
 
+def test_match_local_gov_name_does_not_fuzzy_match_similar_name(tmp_path: Path) -> None:
+    """T-105: ปิด fuzzy สำหรับชื่อ อปท. — "เทศบาลตำบลคลองโยง" ต้องไม่ match "...คลองยาง"
+
+    (rapidfuzz WRatio ให้คะแนน 94.1 ซึ่งเกิน threshold 92 ปกติ แต่เป็นคนละที่กันจริง)
+    """
+    a2_path = tmp_path / "a2.xlsx"
+    rows = [
+        ("75000", "องค์กรปกครองส่วนท้องถิ่น", "7510A", "เทศบาลตำบลคลองยาง"),
+    ]
+    _write_a2_fixture(a2_path, rows)
+    org_master = build_org_master(a2_path, write_cache=False)
+
+    result = org_master.match("องค์กรปกครองส่วนท้องถิ่น", "เทศบาลตำบลคลองโยง")
+
+    assert result.agency_code is None
+    assert result.method == "none"
+    assert "org_unmapped" in result.flags
+
+
+def test_match_local_gov_name_still_matches_exact(tmp_path: Path) -> None:
+    a2_path = tmp_path / "a2.xlsx"
+    rows = [
+        ("75000", "องค์กรปกครองส่วนท้องถิ่น", "7510A", "เทศบาลตำบลคลองโยง"),
+    ]
+    _write_a2_fixture(a2_path, rows)
+    org_master = build_org_master(a2_path, write_cache=False)
+
+    result = org_master.match("องค์กรปกครองส่วนท้องถิ่น", "เทศบาลตำบลคลองโยง")
+
+    assert result.agency_code == "7510A"
+    assert result.method == "exact"
+
+
 def test_match_is_lru_cached(org_master: OrgMaster) -> None:
     org_master.match("สำนักนายกรัฐมนตรี", "กรมประชาสัมพันธ์")
     org_master.match("สำนักนายกรัฐมนตรี", "กรมประชาสัมพันธ์")
