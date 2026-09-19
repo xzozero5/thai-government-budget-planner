@@ -157,7 +157,7 @@ tgbp sample --rows 1000        # สร้าง web/tests/fixtures/data/ สำ
    - spec tokens: `\d[\d,]*\s*(บีทียู|BTU|ตัน|ล้อ|ฟุต|นิ้ว|kW|กิโลวัตต์|แรงม้า|ที่นั่ง|ลิตร|ซีซี|GB|TB|นิ้ว)`, คำว่า inverter/ติดผนัง/ตั้งพื้น/แขวน
    - `item_key` = item_name − location − qty phrase − org names → lower → strip punctuation → collapse
    - ทดสอบด้วยชุด 200 ตัวอย่างใน `tests/fixtures/item_names.yaml` (target: province ถูก ≥ 95 %, qty ถูก ≥ 90 % บนชุดที่มี qty)
-3. `org_master`: master จาก A2 Data Dict (min/agc code) + alias table (`org_aliases.yaml`, เติมได้) + rapidfuzz ≥ 92 → code; ต่ำกว่า → null + flag `org_unmapped`
+3. `org_master`: master จาก A2 Data Dict (min/agc code) + alias table (`org_aliases.yaml`, เติมได้) + rapidfuzz ≥ 92 → code; ต่ำกว่า → null + flag `org_unmapped`; **ยกเว้นชื่อ อปท.** (ขึ้นต้น `เทศบาล`/`องค์การบริหารส่วน`) ไม่ใช้ fuzzy — exact/alias เท่านั้น เพราะชื่อสั้นคล้ายกันแต่คนละที่ (02 §A2)
 4. money: ล้านบาท→บาท ปัดเป็น int; ค่าติดลบใน PBO เก็บตามจริง + flag `negative_amount`
 
 ## 6. Validation (`tgbp validate`) — hard rules ต้องผ่านทั้งหมด
