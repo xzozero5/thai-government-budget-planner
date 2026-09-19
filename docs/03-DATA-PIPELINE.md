@@ -107,10 +107,27 @@ tgbp sample --rows 1000        # สร้าง web/tests/fixtures/data/ สำ
 ### 3.3 `DocChunk` (`docs/<doc_id>.json.gz`) — PDF/docx/pptx ที่มี text
 `{doc_id, page, chunk_no, text, tables: [{page, rows: [[...]]}]}` chunk ≈ 800–1,200 ตัวอักษร ไม่ตัดกลางบรรทัดตาราง
 
-### 3.4 `CatalogItem` (`catalog/items.json.gz`) — aggregate ต่อ `item_key` × `fiscal_year_be`
-`{item_key, display_name (ตัวอย่างชื่อที่พบบ่อยสุด), n_lines, n_agencies, years:[...], qty_unit, unit_price: {min, p25, median, p75, max, n}, amount: {...}, budget_type, top_agencies:[...], sample_source_ids:[≤5]}`
-ใช้เป็นดัชนี full-text ใน browser (MiniSearch) และเป็นคำตอบ "ราคาที่รัฐเคยตั้ง" ระดับสรุป
-นอกจากนี้ publish `catalog/trends/{item_key_hash}.json` เฉพาะ item_key ที่มีข้อมูล ≥ 3 ปี: `{item_key, unit, series:[{year_be, median_unit_price_thb, p25, p75, n}]}` สำหรับ trend chart (ไฟล์เล็ก โหลดตามต้องการ) — ถ้าจำนวนไฟล์เกิน 20k ให้รวมเป็น shard ตามตัวอักษรแรกของ hash
+### 3.4 Catalog (`catalog/items.json.gz`) — **schema v2 ตาม output จริง (19 ก.ย. 2569)**
+```json
+{"schema_version": 2,
+ "shard_paths": ["budget_lines/act2570/01000.parquet", "…เรียงตัวอักษร…"],
+ "items": [{
+   "key": "เครื่องคอมพิวเตอร์โน้ตบุ๊กสำหรับงานประมวลผล",      // item_key ตัวแทน = variant ที่พบมากสุด
+   "keys": ["…variant ของ item_key จริงใน shard ที่ต่างกันแค่การเว้นวรรค (≤ 12; มี keys_truncated ถ้าเกิน)…"],  // ไม่มีถ้า variant เดียว
+   "name": "ตัวอย่างชื่อเต็มที่พบบ่อยสุด (item_name_raw)",
+   "n_lines": 2811, "years": [2559, 2560], "top_agencies": ["≤3"],
+   "unit_price": {"min":0,"p25":0,"median":0,"p75":0,"max":0,"n":0},   // มีเมื่อ n ≥ 1; ไม่รวม qty_is_measure / qty_parsed_low_conf / outlier
+   "amount":     {"min":0,"p25":0,"median":0,"p75":0,"max":0,"n":0},   // ต่อบรรทัดงบ เฉพาะค่า > 0
+   "sample_source_ids": ["≤3 — อยู่ใน shard ที่ entry ชี้เสมอ (มี test)"],
+   "shards": [12, 45],                 // index เข้า shard_paths — ห้าม cap
+   "trend": "6b",                      // ชื่อ shard ใน catalog/trends/{hh}.json.gz (2 ตัวแรกของ sha1(group_key)) — มีเมื่อข้อมูล ≥ 3 ปี
+   "low_specificity": true             // key สั้น ≤ 12 ตัวอักษร หรือ amount p75/p25 ≥ 8 → ห้ามใช้เป็น benchmark ตรง ๆ (เช่น "ฝาย")
+ }]}
+```
+- จัดกลุ่มด้วย `group_key` = `item_key` ที่ตัด whitespace ทั้งหมด (ภาษาไทยเว้นวรรคไม่คงที่) — **ไม่แก้ `item_key` ใน shard**; browser ต้อง query ด้วย `item_key IN (keys)`
+- เข้า catalog เมื่อ `n_lines ≥ N` หรือ `ปี ≥ Y` หรือ `unit_price ≥ U ค่า` โดย (N,Y,U) เริ่ม (5,3,2) แล้วขยับอัตโนมัติจนไฟล์ ≤ 8 MB gz — ข้อมูลจริงได้ **(6,4,2) → 45,193 entries / 5.40 MB gz / 40.5 MB หลัง decompress**; ไม่รวมแถว `corrupt_row`, `lump_sum_category`, และ `subset_of_act_2570_draft` (กันนับซ้ำ)
+- Trends: `catalog/trends/{hh}.json.gz` → `{key, unit, basis: "unit_price"|"amount_per_line", series:[{year_be, n, median…, p25, p75, note?}]}` — basis เดียวต่อ series; ปี 2562 มี `note:"source_incomplete"`
+- ใช้เป็นดัชนี full-text ใน browser และเป็นคำตอบ "ราคาที่รัฐเคยตั้ง" ระดับสรุป; ขนาดหลัง decompress เป็นความเสี่ยงของ S2 (T-201) → ทางออกสำรอง T-208 (ไฟล์ค้นหาแบบผอม)
 
 ### 3.5 `EconIndicator` (`econ/indicators.json`)
 ```json

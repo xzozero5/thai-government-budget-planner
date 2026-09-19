@@ -121,7 +121,18 @@ Gotchas ที่ยืนยันแล้ว:
 ## D. ไฟล์ที่ไม่ใช้
 - `.DS_Store`, `.jpg` 4 ไฟล์ (รูป), `องค์การโคนม/สิ่งที่ส่งมาด้วย 1 แผนแก้ไขสถานการณ์ อสค ณ 22เม.ย.69` (ไม่มีนามสกุล — ให้ตรวจ magic bytes; ถ้าเป็น PDF ให้ปฏิบัติเหมือน PDF)
 
-## E. ประมาณการขนาดหลัง compact `[UNVERIFIED — ให้ pipeline วัดจริงและอัปเดตหัวข้อนี้]`
-- PBO 2.9 M แถว → Parquet (zstd, dictionary-encoded ชื่อกระทรวง/หน่วยงาน/แผนงาน) ≈ 150–250 MB รวม → แบ่ง shard ปี × กระทรวง ให้ทุกไฟล์ < 24 MB
-- Catalog (item_key aggregate) ≈ 2–6 MB gz
-- sources.json = **333 KB (วัดจริง 19 ก.ย. — อาจเปลี่ยนเล็กน้อยหลังแก้ rel_path เป็น posix)**
+## E. ขนาดหลัง publish — **วัดจริง 19 ก.ย. 2569** (`data_version cd15fb2dd39b…`, `tgbp build --dataset all` 12 นาที, deterministic)
+| หมวด | ไฟล์ | ขนาด |
+|---|---|---|
+| `budget_lines/pbo/{year}/{ministry_code}.parquet` (2,887,730 แถว) | 349 | 160.35 MB |
+| `budget_lines/act2570/` (96,470 แถว) | 33 | 4.09 MB |
+| `budget_lines/{act2570_province, local_subsidy, local, committee}` (9,421 แถว) | 9 | 0.59 MB |
+| `catalog/` (items v2 5.40 MB gz → **40.5 MB หลัง decompress**, 45,193 entries; trends 256 shards / 24,036 keys; facets; orgs) | 259 | 7.79 MB |
+| `docs/*.json.gz` (PDF 114 + office/committee 28) | 142 | 6.75 MB |
+| `econ/indicators.json`, `sources.json`, `manifest.json`, validation | 5 | 1.05 MB |
+| **รวม** | **794 (+.gitkeep)** | **180.6 MB** (งบ ≤ 500 MB) |
+
+- ไฟล์ใหญ่สุด `budget_lines/pbo/2564/20000.parquet` 6.17 MB (เพดาน 24 MB) — ไม่มี shard ใดต้องแตก `_part`
+- coverage ของ field (จาก `validation.json`): PBO org mapped 95.9 % · province 76.7 % · qty parsed 16.0 % · unit_price 3.0 %; act_2570_draft qty 11.3 % / unit_price 8.8 % — **ราคาต่อหน่วยมีน้อยโดยธรรมชาติของข้อมูล** (ชื่อรายการส่วนใหญ่ไม่ระบุจำนวน) → catalog ให้ทั้งสถิติ `amount` (ต่อบรรทัด) และ `unit_price` (เมื่อมี) แยกกัน
+- catalog ครอบคลุมกลุ่มรายการที่ "เทียบราคาได้" (threshold n_lines ≥ 6 หรือ ≥ 4 ปี หรือ unit_price ≥ 2 ค่า) ≈ 57 % ของแถว; ที่เหลือ (หางยาว) ค้นผ่าน SQL บน shard
+- PDF: 262 ไฟล์ → มี text layer 119 (extract แล้ว) / ไม่มี 143 (metadata only — ไม่ OCR)
