@@ -105,7 +105,7 @@ tgbp sample --rows 1000        # สร้าง web/tests/fixtures/data/ สำ
 ```
 
 ### 3.3 `DocChunk` (`docs/<doc_id>.json.gz`) — PDF/docx/pptx ที่มี text
-`{doc_id, page, chunk_no, text, tables: [{page, rows: [[...]]}]}` chunk ≈ 800–1,200 ตัวอักษร ไม่ตัดกลางบรรทัดตาราง
+`{doc_id, page, chunk_no, text, tables: [{rows: [[...]], sheet?}]}` chunk ≈ 800–1,200 ตัวอักษร ไม่ตัดกลางบรรทัดตาราง — **ตาม output จริง**: `page` เป็นเลขหน้า PDF / ลำดับสไลด์ pptx และเป็น **null** สำหรับ xlsx/docx; ตารางจาก PDF = `{rows}` (เลขหน้าอยู่ที่ chunk), จาก xlsx/xls = `{sheet, rows}`; cell เป็น string
 
 ### 3.4 Catalog (`catalog/items.json.gz`) — **schema v2 ตาม output จริง (19 ก.ย. 2569)**
 ```json
@@ -126,7 +126,7 @@ tgbp sample --rows 1000        # สร้าง web/tests/fixtures/data/ สำ
 ```
 - จัดกลุ่มด้วย `group_key` = `item_key` ที่ตัด whitespace ทั้งหมด (ภาษาไทยเว้นวรรคไม่คงที่) — **ไม่แก้ `item_key` ใน shard**; browser ต้อง query ด้วย `item_key IN (keys)`
 - เข้า catalog เมื่อ `n_lines ≥ N` หรือ `ปี ≥ Y` หรือ `unit_price ≥ U ค่า` โดย (N,Y,U) เริ่ม (5,3,2) แล้วขยับอัตโนมัติจนไฟล์ ≤ 8 MB gz — ข้อมูลจริงได้ **(6,4,2) → 45,193 entries / 5.40 MB gz / 40.5 MB หลัง decompress**; ไม่รวมแถว `corrupt_row`, `lump_sum_category`, และ `subset_of_act_2570_draft` (กันนับซ้ำ)
-- Trends: `catalog/trends/{hh}.json.gz` → `{key, unit, basis: "unit_price"|"amount_per_line", series:[{year_be, n, median…, p25, p75, note?}]}` — basis เดียวต่อ series; ปี 2562 มี `note:"source_incomplete"`
+- Trends: `catalog/trends/{hh}.json.gz` เป็น **map** `{ "<CatalogItem.key>": {key, basis, series:[…]} }` (หลาย entry ต่อไฟล์); `basis` = `"amount_per_line"` → จุด `{year_be, n, median_amount_thb, note?}` หรือ `"unit_price_per_line"` → จุด `{year_be, n, median_unit_price_thb, p25, p75, note?}` — basis เดียวต่อ series; ปี 2562 มี `note:"source_incomplete"`. ในข้อมูลจริง ~99.9 % เป็น `amount_per_line` (ราคาต่อหน่วยมีน้อย). manifest ลงเฉพาะ shard ที่เขียนในรอบนั้น (ห้าม glob — เคยทำให้ไฟล์ค้างหลุดเข้า fixture)
 - ใช้เป็นดัชนี full-text ใน browser และเป็นคำตอบ "ราคาที่รัฐเคยตั้ง" ระดับสรุป; ขนาดหลัง decompress เป็นความเสี่ยงของ S2 (T-201) → ทางออกสำรอง T-208 (ไฟล์ค้นหาแบบผอม)
 
 ### 3.5 `EconIndicator` (`econ/indicators.json`)

@@ -8,6 +8,7 @@ import tseslint from 'typescript-eslint';
 export default tseslint.config(
   {
     ignores: [
+      'spikes', // npm project แยกของ T-201 (มี lint/ts ของตัวเอง)
       'dist',
       'node_modules',
       'coverage',
