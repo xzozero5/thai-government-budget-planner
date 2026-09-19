@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import gzip
 import json
+import shutil
+import subprocess
 from pathlib import Path
 
 import duckdb
@@ -1032,7 +1034,9 @@ def test_sample_runs_end_to_end_and_resolves(tmp_path: Path) -> None:
     cfg = make_cfg(tmp_path)
     _build_rich_fixture(cfg)
 
-    result = pub.sample(cfg, rows=200)
+    # build_search_index=False: เทสต์นี้ตรวจ catalog/shard resolution ไม่เกี่ยวกับ T-208 —
+    # ไม่ควรพึ่ง node/web/node_modules จริงบนเครื่องที่รัน pytest (ดู test เฉพาะของ T-208 ด้านล่าง)
+    result = pub.sample(cfg, rows=200, build_search_index=False)
 
     assert result.manifest_path.is_file()
     assert result.out_dir == cfg.fixtures_dir
@@ -1068,7 +1072,7 @@ def test_sample_manifest_has_sample_flag_and_catalog_v2(tmp_path: Path) -> None:
     cfg = make_cfg(tmp_path)
     _build_rich_fixture(cfg)
 
-    result = pub.sample(cfg, rows=200)
+    result = pub.sample(cfg, rows=200, build_search_index=False)
 
     assert result.manifest["sample"] is True
     payload = _load_catalog_v2(cfg.fixtures_dir)
@@ -1115,3 +1119,247 @@ def test_stale_trend_shard_is_not_listed_and_gets_cleaned(tmp_path: Path) -> Non
         'glob("*.json.gz")' not in source.split("written_trend_shards")[0].split("file_entries")[-1]
     )
     assert "written_trend_shards" in source
+
+
+# ---------------------------------------------------------------------------
+# T-208: catalog/items-slim.json.gz + catalog/search-index.json.gz
+# (`web/scripts/build-search-index.mjs`, เรียกผ่าน `pub.run_search_index_script`)
+# ---------------------------------------------------------------------------
+
+
+def _fake_web_dir(tmp_path: Path, *, with_node_modules: bool = True) -> Path:
+    web_dir = tmp_path / "fake-web"
+    (web_dir / "scripts").mkdir(parents=True)
+    (web_dir / "scripts" / "build-search-index.mjs").write_text("", encoding="utf-8")
+    if with_node_modules:
+        (web_dir / "node_modules").mkdir()
+    return web_dir
+
+
+def test_run_search_index_script_calls_node_with_expected_list_args(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    web_dir = _fake_web_dir(tmp_path)
+    monkeypatch.setattr(pub, "WEB_DIR", web_dir)
+    monkeypatch.setattr(
+        shutil, "which", lambda name: r"C:\fake\node.exe" if name == "node" else None
+    )
+
+    calls: list[tuple[list[str], dict]] = []
+
+    def fake_run(args, **kwargs):
+        calls.append((args, kwargs))
+        return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(pub.subprocess, "run", fake_run)
+
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    pub.run_search_index_script(out_dir)
+
+    assert len(calls) == 1
+    args, kwargs = calls[0]
+    script_path = web_dir / "scripts" / "build-search-index.mjs"
+    assert args == [r"C:\fake\node.exe", str(script_path), "--data-dir", str(out_dir)]
+    assert kwargs["cwd"] == str(web_dir)
+    assert kwargs["check"] is True
+    assert "shell" not in kwargs  # ไม่ใช้ shell=True เด็ดขาด
+
+
+def test_run_search_index_script_raises_clear_error_when_node_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    web_dir = _fake_web_dir(tmp_path)
+    monkeypatch.setattr(pub, "WEB_DIR", web_dir)
+    monkeypatch.setattr(shutil, "which", lambda name: None)
+
+    with pytest.raises(pub.SearchIndexBuildError, match="node"):
+        pub.run_search_index_script(tmp_path / "out")
+
+
+def test_run_search_index_script_raises_clear_error_when_node_modules_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    web_dir = _fake_web_dir(tmp_path, with_node_modules=False)
+    monkeypatch.setattr(pub, "WEB_DIR", web_dir)
+    monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/node")
+
+    with pytest.raises(pub.SearchIndexBuildError, match="npm ci"):
+        pub.run_search_index_script(tmp_path / "out")
+
+
+def test_run_search_index_script_wraps_subprocess_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    web_dir = _fake_web_dir(tmp_path)
+    monkeypatch.setattr(pub, "WEB_DIR", web_dir)
+    monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/node")
+
+    def fake_run(args, **kwargs):
+        raise subprocess.CalledProcessError(1, args, output="", stderr="boom เกิดข้อผิดพลาด")
+
+    monkeypatch.setattr(pub.subprocess, "run", fake_run)
+
+    with pytest.raises(pub.SearchIndexBuildError, match="boom เกิดข้อผิดพลาด"):
+        pub.run_search_index_script(tmp_path / "out")
+
+
+def _install_fake_search_index_script(monkeypatch: pytest.MonkeyPatch) -> None:
+    """จำลอง `build-search-index.mjs` จริง: อ่าน `data_version` จาก `<out_dir>/manifest.json` ที่มี
+    อยู่บนดิสก์ตอนถูกเรียก แล้วฝังค่านั้นในไฟล์ทั้งสอง — ใช้พิสูจน์ว่า `run_publish_pipeline` แก้ปัญหา
+    ไก่กับไข่ได้จริง (ไม่ใช่แค่ mock ที่ข้ามปัญหาไป)
+    """
+
+    def fake_script(out_dir: Path) -> None:
+        manifest = json.loads((out_dir / "manifest.json").read_text(encoding="utf-8"))
+        dv = manifest["data_version"]
+        slim = {"schema_version": 1, "data_version": dv, "items": []}
+        index = {
+            "schema_version": 1,
+            "data_version": dv,
+            "tokenizer_version": "thai-fold-v1",
+            "variant": "key_only",
+        }
+        for rel, payload in (
+            ("catalog/items-slim.json.gz", slim),
+            ("catalog/search-index.json.gz", index),
+        ):
+            p = out_dir / rel
+            p.parent.mkdir(parents=True, exist_ok=True)
+            data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            with gzip.open(p, "wb") as f:
+                f.write(data)
+
+    monkeypatch.setattr(pub, "run_search_index_script", lambda out_dir, **kw: fake_script(out_dir))
+
+
+def test_build_search_index_registers_files_and_data_version_stable_across_reruns(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _install_fake_search_index_script(monkeypatch)
+    cfg = make_cfg(tmp_path)
+    _build_rich_fixture(cfg)
+
+    out1 = tmp_path / "out1"
+    out2 = tmp_path / "out2"
+    r1 = pub.run_publish_pipeline(
+        cfg, source_sql=pub.default_source_sql(cfg), out_dir=out1, build_search_index=True
+    )
+    r2 = pub.run_publish_pipeline(
+        cfg, source_sql=pub.default_source_sql(cfg), out_dir=out2, build_search_index=True
+    )
+
+    assert r1.manifest["search_index"] == {"built": True, "tokenizer_version": "thai-fold-v1"}
+    paths = {f["path"] for f in r1.manifest["files"]}
+    assert "catalog/items-slim.json.gz" in paths
+    assert "catalog/search-index.json.gz" in paths
+
+    # ประเด็นหลักของ T-208: สคริปต์จริงอ่าน data_version จาก manifest.json ที่มีอยู่ก่อนถูกเรียก
+    # (chicken-and-egg) — ถ้า data_version รวม sha256 ของ 2 ไฟล์นี้ด้วย รันสองรอบติดกันด้วยข้อมูล
+    # เดิมทุกอย่างจะได้ data_version ไม่เท่ากัน (รอบ 2 ฝังค่าของรอบ 1 ต่างจากที่รอบ 1 ฝังของรอบ 0)
+    assert r1.manifest["data_version"] == r2.manifest["data_version"]
+
+    with gzip.open(out1 / "catalog" / "search-index.json.gz", "rt", encoding="utf-8") as f:
+        embedded = json.load(f)
+    assert embedded["data_version"] == r1.manifest["data_version"]
+
+
+def test_skip_search_index_has_no_entries_and_removes_previously_built_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _install_fake_search_index_script(monkeypatch)
+    cfg = make_cfg(tmp_path)
+    _build_rich_fixture(cfg)
+    out_dir = tmp_path / "out"
+
+    r1 = pub.run_publish_pipeline(
+        cfg, source_sql=pub.default_source_sql(cfg), out_dir=out_dir, build_search_index=True
+    )
+    assert (out_dir / "catalog" / "items-slim.json.gz").is_file()
+    assert r1.manifest["search_index"]["built"] is True
+
+    r2 = pub.run_publish_pipeline(
+        cfg, source_sql=pub.default_source_sql(cfg), out_dir=out_dir, build_search_index=False
+    )
+
+    assert r2.manifest["search_index"] == {"built": False}
+    assert not (out_dir / "catalog" / "items-slim.json.gz").is_file()
+    assert not (out_dir / "catalog" / "search-index.json.gz").is_file()
+    assert all(
+        "items-slim" not in f["path"] and "search-index" not in f["path"]
+        for f in r2.manifest["files"]
+    )
+
+
+def test_search_index_failure_restores_previous_manifest_no_half_written(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg = make_cfg(tmp_path)
+    _build_rich_fixture(cfg)
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    (out_dir / "manifest.json").write_text(
+        '{"data_version": "old-sentinel", "sample": false}', encoding="utf-8"
+    )
+    original_bytes = (out_dir / "manifest.json").read_bytes()
+
+    def _boom(out_dir_arg: Path, **kw: object) -> None:
+        raise pub.SearchIndexBuildError("จำลองสคริปต์ล้มเหลว")
+
+    monkeypatch.setattr(pub, "run_search_index_script", _boom)
+
+    with pytest.raises(pub.SearchIndexBuildError):
+        pub.run_publish_pipeline(
+            cfg, source_sql=pub.default_source_sql(cfg), out_dir=out_dir, build_search_index=True
+        )
+
+    # manifest.json เดิม (จากก่อนรันรอบนี้) ต้องไม่ถูกแตะเลย — ไม่มี "manifest ครึ่ง ๆ กลาง ๆ" ค้าง
+    assert (out_dir / "manifest.json").read_bytes() == original_bytes
+
+
+def test_search_index_failure_with_no_previous_manifest_leaves_none_on_disk(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg = make_cfg(tmp_path)
+    _build_rich_fixture(cfg)
+    out_dir = tmp_path / "out"  # ไม่มี manifest.json มาก่อนเลย (publish รอบแรกในชีวิต)
+
+    def _boom(out_dir_arg: Path, **kw: object) -> None:
+        raise pub.SearchIndexBuildError("จำลองสคริปต์ล้มเหลว")
+
+    monkeypatch.setattr(pub, "run_search_index_script", _boom)
+
+    with pytest.raises(pub.SearchIndexBuildError):
+        pub.run_publish_pipeline(
+            cfg, source_sql=pub.default_source_sql(cfg), out_dir=out_dir, build_search_index=True
+        )
+
+    assert not (out_dir / "manifest.json").is_file()
+
+
+@pytest.mark.rawdata
+def test_rawdata_run_search_index_script_real_against_copied_fixture(tmp_path: Path) -> None:
+    """เรียกสคริปต์จริง (`node web/scripts/build-search-index.mjs`) กับสำเนาของ
+    `web/tests/fixtures/data` ใน tmp — skip ถ้าเครื่องนี้ไม่มี `web/node_modules` (ยังไม่ `npm ci`)"""
+    if not (pub.WEB_DIR / "node_modules").is_dir():
+        pytest.skip("ไม่มี web/node_modules บนเครื่องนี้ (รัน `cd web && npm ci` ก่อน)")
+
+    src = pub.WEB_DIR / "tests" / "fixtures" / "data"
+    if not src.is_dir():
+        pytest.skip("ไม่มี web/tests/fixtures/data บนเครื่องนี้")
+
+    dest = tmp_path / "data"
+    shutil.copytree(src, dest)
+
+    pub.run_search_index_script(dest)
+
+    slim_path = dest / "catalog" / "items-slim.json.gz"
+    index_path = dest / "catalog" / "search-index.json.gz"
+    assert slim_path.is_file()
+    assert index_path.is_file()
+
+    manifest = json.loads((dest / "manifest.json").read_text(encoding="utf-8"))
+    with gzip.open(index_path, "rt", encoding="utf-8") as f:
+        index_payload = json.load(f)
+    assert index_payload["data_version"] == manifest["data_version"]
+    assert index_payload["tokenizer_version"]

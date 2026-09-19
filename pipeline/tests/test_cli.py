@@ -28,6 +28,7 @@ def test_help_exits_zero() -> None:
 def test_publish_command_help_exits_zero() -> None:
     result = runner.invoke(app, ["publish", "--help"])
     assert result.exit_code == 0
+    assert "--skip-search-index" in result.output
 
 
 def test_build_command_help_exits_zero() -> None:
@@ -40,6 +41,7 @@ def test_sample_command_help_exits_zero() -> None:
     result = runner.invoke(app, ["sample", "--help"])
     assert result.exit_code == 0
     assert "--rows" in result.output
+    assert "--skip-search-index" in result.output
 
 
 def test_inventory_command_help_exits_zero() -> None:
@@ -438,10 +440,20 @@ def test_validate_command_fail_exits_nonzero_and_prints_hard_failures(
 # ---------------------------------------------------------------------------
 
 
-def _fake_publish_result(passed: bool = True) -> SimpleNamespace:
+def _fake_publish_result(
+    passed: bool = True, *, search_index_built: bool = True
+) -> SimpleNamespace:
+    search_index: dict = {"built": search_index_built}
+    files: list[dict] = []
+    if search_index_built:
+        search_index["tokenizer_version"] = "thai-fold-v1"
+        files = [
+            {"path": "catalog/items-slim.json.gz", "bytes": 2_000_000},
+            {"path": "catalog/search-index.json.gz", "bytes": 1_600_000},
+        ]
     return SimpleNamespace(
         manifest_path=Path("/x/manifest.json"),
-        manifest={"data_version": "abc123def456"},
+        manifest={"data_version": "abc123def456", "search_index": search_index, "files": files},
         shard_parts=[1, 2, 3],
         catalog=SimpleNamespace(
             entries=[{}] * 5, min_lines=3, min_years=3, min_unit_price_distinct=2
@@ -458,7 +470,9 @@ def test_publish_command_success_reports_and_exits_zero(
 ) -> None:
     import tgbp_pipeline.publish as publish_mod
 
-    monkeypatch.setattr(publish_mod, "publish", lambda cfg: _fake_publish_result(True))
+    monkeypatch.setattr(
+        publish_mod, "publish", lambda cfg, build_search_index=True: _fake_publish_result(True)
+    )
     config_path = _write_minimal_cli_config(tmp_path)
 
     result = runner.invoke(app, ["publish", "--config", str(config_path)])
@@ -466,6 +480,8 @@ def test_publish_command_success_reports_and_exits_zero(
     assert result.exit_code == 0
     assert "manifest.json" in result.output
     assert "validation: PASS" in result.output
+    assert "search index: built (tokenizer_version=thai-fold-v1)" in result.output
+    assert "catalog/items-slim.json.gz=2,000,000 bytes" in result.output
 
 
 def test_publish_command_validation_fail_exits_nonzero(
@@ -473,7 +489,9 @@ def test_publish_command_validation_fail_exits_nonzero(
 ) -> None:
     import tgbp_pipeline.publish as publish_mod
 
-    monkeypatch.setattr(publish_mod, "publish", lambda cfg: _fake_publish_result(False))
+    monkeypatch.setattr(
+        publish_mod, "publish", lambda cfg, build_search_index=True: _fake_publish_result(False)
+    )
     config_path = _write_minimal_cli_config(tmp_path)
 
     result = runner.invoke(app, ["publish", "--config", str(config_path)])
@@ -483,18 +501,44 @@ def test_publish_command_validation_fail_exits_nonzero(
     assert "validation: FAIL" in result.output
 
 
+def test_publish_command_skip_search_index_passes_flag_and_reports_skipped(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import tgbp_pipeline.publish as publish_mod
+
+    calls: list[bool] = []
+
+    def _fake(cfg, build_search_index=True):
+        calls.append(build_search_index)
+        return _fake_publish_result(True, search_index_built=False)
+
+    monkeypatch.setattr(publish_mod, "publish", _fake)
+    config_path = _write_minimal_cli_config(tmp_path)
+
+    result = runner.invoke(app, ["publish", "--skip-search-index", "--config", str(config_path)])
+
+    assert result.exit_code == 0
+    assert calls == [False]
+    assert "search index: ข้าม" in result.output
+
+
 def test_sample_command_success_reports_and_exits_zero(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     import tgbp_pipeline.publish as publish_mod
 
-    monkeypatch.setattr(publish_mod, "sample", lambda cfg, rows: _fake_publish_result(True))
+    monkeypatch.setattr(
+        publish_mod,
+        "sample",
+        lambda cfg, rows, build_search_index=True: _fake_publish_result(True),
+    )
     config_path = _write_minimal_cli_config(tmp_path)
 
     result = runner.invoke(app, ["sample", "--rows", "500", "--config", str(config_path)])
 
     assert result.exit_code == 0
     assert "manifest.json" in result.output
+    assert "search index: built" in result.output
 
 
 def test_sample_command_validation_fail_exits_nonzero(
@@ -502,13 +546,38 @@ def test_sample_command_validation_fail_exits_nonzero(
 ) -> None:
     import tgbp_pipeline.publish as publish_mod
 
-    monkeypatch.setattr(publish_mod, "sample", lambda cfg, rows: _fake_publish_result(False))
+    monkeypatch.setattr(
+        publish_mod,
+        "sample",
+        lambda cfg, rows, build_search_index=True: _fake_publish_result(False),
+    )
     config_path = _write_minimal_cli_config(tmp_path)
 
     result = runner.invoke(app, ["sample", "--config", str(config_path)])
 
     assert result.exit_code == 1
     assert isinstance(result.exception, SystemExit)
+
+
+def test_sample_command_skip_search_index_passes_flag(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import tgbp_pipeline.publish as publish_mod
+
+    calls: list[bool] = []
+
+    def _fake(cfg, rows, build_search_index=True):
+        calls.append(build_search_index)
+        return _fake_publish_result(True, search_index_built=False)
+
+    monkeypatch.setattr(publish_mod, "sample", _fake)
+    config_path = _write_minimal_cli_config(tmp_path)
+
+    result = runner.invoke(app, ["sample", "--skip-search-index", "--config", str(config_path)])
+
+    assert result.exit_code == 0
+    assert calls == [False]
+    assert "search index: ข้าม" in result.output
 
 
 def test_build_command_runs_all_stages_in_order(
@@ -548,6 +617,30 @@ def test_build_command_skip_extract_does_not_call_extract(
 
     assert result.exit_code == 0
     assert calls == ["normalize", "validate", "publish"]
+
+
+def test_build_command_help_shows_skip_search_index() -> None:
+    result = runner.invoke(app, ["build", "--help"])
+    assert result.exit_code == 0
+    assert "--skip-search-index" in result.output
+
+
+def test_build_command_forwards_skip_search_index_to_publish(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import tgbp_pipeline.cli as cli_mod
+
+    calls: list[dict] = []
+    monkeypatch.setattr(cli_mod, "extract", lambda **kw: None)
+    monkeypatch.setattr(cli_mod, "normalize", lambda **kw: None)
+    monkeypatch.setattr(cli_mod, "validate", lambda **kw: None)
+    monkeypatch.setattr(cli_mod, "publish", lambda **kw: calls.append(kw))
+    config_path = _write_minimal_cli_config(tmp_path)
+
+    result = runner.invoke(app, ["build", "--skip-search-index", "--config", str(config_path)])
+
+    assert result.exit_code == 0
+    assert calls == [{"skip_search_index": True, "config": str(config_path)}]
 
 
 def test_build_command_continues_and_fails_when_validate_hard_fails(

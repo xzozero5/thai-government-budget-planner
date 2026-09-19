@@ -341,8 +341,34 @@ def validate(
         raise typer.Exit(code=1)
 
 
+def _echo_search_index_summary(manifest: dict) -> None:
+    """T-208: พิมพ์สถานะ + ขนาดของ catalog/items-slim.json.gz + catalog/search-index.json.gz"""
+    search_index = manifest.get("search_index") or {"built": False}
+    if not search_index.get("built"):
+        typer.echo("search index: ข้าม (--skip-search-index)")
+        return
+    sizes = {
+        f["path"]: f["bytes"]
+        for f in manifest.get("files", [])
+        if f["path"] in ("catalog/items-slim.json.gz", "catalog/search-index.json.gz")
+    }
+    size_str = " | ".join(f"{p}={n:,} bytes" for p, n in sorted(sizes.items()))
+    typer.echo(
+        f"search index: built (tokenizer_version={search_index.get('tokenizer_version')}) | "
+        f"{size_str}"
+    )
+
+
 @app.command()
 def publish(
+    skip_search_index: bool = typer.Option(
+        False,
+        "--skip-search-index",
+        help=(
+            "ข้ามการสร้าง catalog/items-slim.json.gz + catalog/search-index.json.gz "
+            "(ต้องมี node และ web/node_modules มิฉะนั้น publish จะ error — ใช้ตอนไม่มี node บนเครื่อง)"
+        ),
+    ),
     config: str | None = typer.Option(
         None, "--config", hidden=True, help="path ของ config.yaml อื่น (ใช้ใน test เท่านั้น)"
     ),
@@ -351,7 +377,7 @@ def publish(
     from tgbp_pipeline.publish import publish as run_publish
 
     cfg = load_config(config)
-    result = run_publish(cfg)
+    result = run_publish(cfg, build_search_index=not skip_search_index)
     typer.echo(
         f"เขียน {result.manifest_path} (data_version={result.manifest['data_version'][:12]}…)"
     )
@@ -361,6 +387,7 @@ def publish(
         f"{result.catalog.min_years}/{result.catalog.min_unit_price_distinct}) | "
         f"trends: {result.n_trend_items:,} item_key | docs: {result.docs.n_copied} ไฟล์"
     )
+    _echo_search_index_summary(result.manifest)
     typer.echo(f"รวมขนาด web/public/data/: {result.total_bytes:,} bytes")
     typer.echo(f"validation: {'PASS' if result.validation_passed else 'FAIL'}")
     if not result.validation_passed:
@@ -376,6 +403,11 @@ def build(
     ),
     skip_extract: bool = typer.Option(
         False, "--skip-extract", help="ข้ามขั้น extract (ใช้ `.cache/` ที่มีอยู่แล้ว)"
+    ),
+    skip_search_index: bool = typer.Option(
+        False,
+        "--skip-search-index",
+        help="ส่งต่อไปยัง `publish` — ข้ามการสร้าง catalog/items-slim.json.gz + search-index.json.gz",
     ),
     config: str | None = typer.Option(
         None, "--config", hidden=True, help="path ของ config.yaml อื่น (ใช้ใน test เท่านั้น)"
@@ -417,7 +449,7 @@ def build(
 
     typer.echo("== publish ==")
     try:
-        publish(config=config)
+        publish(skip_search_index=skip_search_index, config=config)
     except typer.Exit as exc:
         if exc.exit_code:
             had_error = True
@@ -429,6 +461,14 @@ def build(
 @app.command()
 def sample(
     rows: int = typer.Option(1000, "--rows", help="จำนวนแถวต่อ dataset สำหรับ fixtures"),
+    skip_search_index: bool = typer.Option(
+        False,
+        "--skip-search-index",
+        help=(
+            "ข้ามการสร้าง catalog/items-slim.json.gz + catalog/search-index.json.gz "
+            "(ต้องมี node และ web/node_modules มิฉะนั้น sample จะ error)"
+        ),
+    ),
     config: str | None = typer.Option(
         None, "--config", hidden=True, help="path ของ config.yaml อื่น (ใช้ใน test เท่านั้น)"
     ),
@@ -437,13 +477,14 @@ def sample(
     from tgbp_pipeline.publish import sample as run_sample
 
     cfg = load_config(config)
-    result = run_sample(cfg, rows=rows)
+    result = run_sample(cfg, rows=rows, build_search_index=not skip_search_index)
     typer.echo(f"เขียน {result.manifest_path}")
     typer.echo(
         f"budget_lines: {len(result.shard_parts)} ไฟล์ | catalog: {len(result.catalog.entries)} "
         f"entries | trends: {result.n_trend_items} | docs: {result.docs.n_copied} ไฟล์ | "
         f"รวม {result.total_bytes:,} bytes"
     )
+    _echo_search_index_summary(result.manifest)
     if not result.validation_passed:
         typer.echo("sample validation FAIL (ไฟล์ > 24 MB หรือรวมเกินเพดาน)", err=True)
         raise typer.Exit(code=1)

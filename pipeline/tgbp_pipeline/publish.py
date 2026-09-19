@@ -32,6 +32,7 @@ import json
 import math
 import re
 import shutil
+import subprocess
 import time
 from collections import defaultdict
 from dataclasses import dataclass
@@ -1270,6 +1271,110 @@ def clean_stale_output(cfg: PipelineConfig, out_dir: Path, keep_rel_paths: set[s
 
 
 # ---------------------------------------------------------------------------
+# T-208: catalog/items-slim.json.gz + catalog/search-index.json.gz (prebuilt MiniSearch,
+# `web/scripts/build-search-index.mjs`)
+#
+# **ปัญหาไก่กับไข่ที่พบจริง (ยืนยันด้วยการรันจริง — ดูรายงานสรุปงานนี้)**: สคริปต์อ่าน
+# `data_version` จาก `<out_dir>/manifest.json` **ที่มีอยู่บนดิสก์แล้วเท่านั้น** (ไม่มีทาง override
+# ผ่าน CLI arg — ดู `build-search-index.mjs` บรรทัด `manifestRaw.data_version`) แต่ `manifest.json`
+# ตัวจริงของรอบนี้เขียนได้ก็ต่อเมื่อรู้ sha256 ของไฟล์ที่สคริปต์กำลังจะสร้าง — เขียนไม่ได้ก่อนเรียก
+# สคริปต์ ถ้าให้ `data_version` (ตามสูตรเดิม) รวม sha256 ของสองไฟล์นี้ด้วย จะไม่มีทางลู่เข้า
+# fixed point ได้ในการรันครั้งเดียว (ต้องเขียน manifest ก่อนรู้เนื้อไฟล์ที่มีผลต่อ manifest เอง) และ
+# ที่แย่กว่านั้น: รัน `publish` สองรอบติดกันด้วยข้อมูลเดิมทุกอย่างจะได้ `data_version` **ไม่เท่ากัน**
+# ทุกรอบ (รอบ 2 อ่าน data_version ของรอบ 1 ที่ต่างจากของรอบ 0 มาฝังในไฟล์ใหม่ ทำให้ sha256/hash รวม
+# เปลี่ยนต่อเนื่องไม่รู้จบ) ซึ่งขัดกับข้อกำหนด "รัน publish ซ้ำได้ data_version เท่าเดิม" ตรง ๆ
+#
+# **ทางแก้ (เฉพาะฝั่ง pipeline — ไม่แก้โค้ดใต้ web/)**: นิยาม `data_version` (ใน `build_manifest`)
+# ให้ไม่รวม sha256 ของสองไฟล์นี้ตั้งแต่แรก (สมเหตุสมผลอยู่แล้ว: มันเป็น derived artifact ของ
+# `catalog/items.json.gz` ที่ถูกนับรวมในสูตรอยู่แล้ว ไม่ใช่ "เนื้อข้อมูลงบประมาณ" ใหม่) แล้วเขียน
+# manifest.json "แกนหลัก" (ไม่มีสองไฟล์นี้ใน `files`) ลงดิสก์**ก่อน**เรียกสคริปต์ — data_version ของ
+# manifest แกนหลักตัวนี้ **เป็นค่าเดียวกับ** manifest สุดท้ายเป๊ะ (เพราะสูตรไม่รวมสองไฟล์นี้อยู่แล้ว
+# ไม่ว่าจะมีอยู่ใน `files` หรือไม่) จึงรับประกันว่า `data_version` ที่สคริปต์อ่านไปฝังในไฟล์ output
+# ตรงกับ `manifest.data_version` สุดท้ายเสมอ (เงื่อนไขที่ `web/src/data/search.ts` ตรวจก่อนใช้
+# prebuilt index) — และ `run_publish_pipeline` สองรอบติดกันได้ data_version เท่ากันเสมอ
+# ---------------------------------------------------------------------------
+
+WEB_DIR = Path(__file__).resolve().parent.parent.parent / "web"
+SEARCH_INDEX_SCRIPT_RELPATH = Path("scripts") / "build-search-index.mjs"
+SEARCH_INDEX_REL_PATHS: tuple[str, str] = (
+    "catalog/items-slim.json.gz",
+    "catalog/search-index.json.gz",
+)
+SEARCH_INDEX_SUBPROCESS_TIMEOUT_S = 300.0
+
+
+class SearchIndexBuildError(RuntimeError):
+    """สร้าง catalog/items-slim.json.gz + catalog/search-index.json.gz ไม่สำเร็จ (T-208)"""
+
+
+def run_search_index_script(
+    out_dir: Path, *, timeout: float = SEARCH_INDEX_SUBPROCESS_TIMEOUT_S
+) -> None:
+    """เรียก `node web/scripts/build-search-index.mjs --data-dir <out_dir>` จริง (list args,
+    ไม่ผ่าน shell) — ต้องเรียก**หลัง**เขียน `out_dir/manifest.json` (มี `data_version` สุดท้าย
+    ที่ถูกต้อง) ลงดิสก์แล้วเสมอ (ดูคอมเมนต์ยาวด้านบนหัวข้อนี้)
+
+    อ้างอิง `WEB_DIR` เป็นตัวแปร module-level เสมอ (ไม่ capture เป็น local ตอน import) เพื่อให้ test
+    monkeypatch `tgbp_pipeline.publish.WEB_DIR` แทนที่ได้
+
+    raise `SearchIndexBuildError` (ข้อความไทยชัดเจน + วิธีแก้) เมื่อไม่มี `node`/`web/node_modules`/
+    สคริปต์ หรือเมื่อตัว subprocess ล้มเหลว/timeout (ห่อ `CalledProcessError`/`TimeoutExpired` เดิม
+    ไว้ใน `__cause__`)
+    """
+    node_path = shutil.which("node")
+    if node_path is None:
+        raise SearchIndexBuildError(
+            "ไม่พบคำสั่ง `node` ใน PATH — ต้องติดตั้ง Node.js ก่อนสร้าง "
+            "catalog/items-slim.json.gz + catalog/search-index.json.gz "
+            "(หรือรันคำสั่งนี้พร้อม --skip-search-index เพื่อข้ามขั้นตอนนี้)"
+        )
+    node_modules_dir = WEB_DIR / "node_modules"
+    if not node_modules_dir.is_dir():
+        raise SearchIndexBuildError(
+            f"ไม่พบ {node_modules_dir} — รัน `cd web && npm ci` ก่อน "
+            "(หรือรันคำสั่งนี้พร้อม --skip-search-index เพื่อข้ามขั้นตอนนี้)"
+        )
+    script_path = WEB_DIR / SEARCH_INDEX_SCRIPT_RELPATH
+    if not script_path.is_file():
+        raise SearchIndexBuildError(f"ไม่พบสคริปต์ {script_path}")
+
+    try:
+        subprocess.run(
+            [node_path, str(script_path), "--data-dir", str(out_dir)],
+            check=True,
+            cwd=str(WEB_DIR),
+            timeout=timeout,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise SearchIndexBuildError(
+            f"{script_path} ล้มเหลว (exit code {exc.returncode}): {exc.stderr}"
+        ) from exc
+    except subprocess.TimeoutExpired as exc:
+        raise SearchIndexBuildError(f"{script_path} timeout หลัง {timeout:.0f} วินาที") from exc
+
+
+def _read_search_index_tokenizer_version(out_dir: Path) -> str:
+    path = out_dir / "catalog" / "search-index.json.gz"
+    with gzip.open(path, "rt", encoding="utf-8") as f:
+        payload = json.load(f)
+    tokenizer_version = payload.get("tokenizer_version")
+    if not isinstance(tokenizer_version, str) or not tokenizer_version:
+        raise SearchIndexBuildError(f"{path} ไม่มี tokenizer_version ที่ใช้ได้")
+    return tokenizer_version
+
+
+def _write_manifest_file(manifest_path: Path, manifest: dict) -> None:
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=False),
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Manifest
 # ---------------------------------------------------------------------------
 
@@ -1310,10 +1415,18 @@ def build_manifest(
     files_sorted = sorted(file_entries, key=lambda e: e.path)
     # data_version: hash ของรายการไฟล์ (path+sha256+rows) — ไม่ขึ้นกับ built_at/is_sample (deterministic,
     # `is_sample` เป็นแค่ metadata ป้าย ไม่ใช่ส่วนหนึ่งของเนื้อหาข้อมูล — T-114 ข้อ 8)
+    # T-208: ไม่รวม catalog/items-slim.json.gz + catalog/search-index.json.gz โดยตั้งใจ — สองไฟล์
+    # นี้เป็น derived artifact ของ catalog/items.json.gz (ถูกนับใน data_version อยู่แล้วผ่านไฟล์นั้น)
+    # ที่ `web/scripts/build-search-index.mjs` ต้องอ่าน `data_version` จาก manifest.json บนดิสก์
+    # **ก่อน**ไฟล์ทั้งสองจะถูกสร้าง (chicken-and-egg — ดูคอมเมนต์ยาวที่ `run_search_index_script`) —
+    # ถ้ารวมสองไฟล์นี้เข้าสูตรจะทำให้ data_version ไม่ deterministic ข้ามรอบรัน (รอบถัดไปอ่าน
+    # data_version ของรอบก่อนมาฝังในไฟล์ใหม่ ค่าจึงขยับทุกรอบไม่รู้จบ) การไม่รวมทำให้ data_version
+    # เสถียรข้ามรอบ **และ**ตรงกับค่าที่สคริปต์ฝังในไฟล์ทั้งสองเสมอ (เงื่อนไขที่ `data/search.ts` ตรวจ)
+    version_entries = [e for e in files_sorted if e.path not in SEARCH_INDEX_REL_PATHS]
     version_payload = json.dumps(
         [
             {"path": e.path, "sha256": e.sha256, "bytes": e.bytes, "rows": e.rows}
-            for e in files_sorted
+            for e in version_entries
         ],
         ensure_ascii=False,
         sort_keys=True,
@@ -1392,6 +1505,7 @@ def run_publish_pipeline(
     max_docs: int | None = None,
     run_validation: bool = True,
     is_sample: bool = False,
+    build_search_index: bool = False,
 ) -> PublishResult:
     elapsed: dict[str, float] = {}
     t_start = time.monotonic()
@@ -1551,23 +1665,66 @@ def run_publish_pipeline(
             ManifestFileEntry(path=doc_rel, bytes=p.stat().st_size, sha256=_sha256_file(p))
         )
 
-    totals: dict = {"files": len(file_entries), "bytes": sum(e.bytes for e in file_entries)}
     rows_by_dataset: dict[str, int] = defaultdict(int)
     for part in shard_parts:
         rows_by_dataset[part.dataset] += part.rows
-    totals["rows_by_dataset"] = dict(rows_by_dataset)
 
     coverage_notes = facets["coverage_notes"]
+    manifest_path = out_dir / "manifest.json"
+
+    def _totals() -> dict:
+        return {
+            "files": len(file_entries),
+            "bytes": sum(e.bytes for e in file_entries),
+            "rows_by_dataset": dict(rows_by_dataset),
+        }
+
+    # --- T-208: catalog/items-slim.json.gz + catalog/search-index.json.gz ---
+    # `build_manifest` ไม่รวมสองไฟล์นี้ใน data_version (ดูคอมเมนต์ที่นั่น) จึง "แกนหลัก" (ไม่มีสอง
+    # ไฟล์นี้ใน file_entries) กับ "สุดท้าย" (มี) ได้ data_version เดียวกันเป๊ะ — เขียน manifest แกน
+    # หลักลงดิสก์ก่อนเรียกสคริปต์เพื่อให้สคริปต์อ่าน data_version ที่ถูกต้อง; ถ้าสคริปต์ล้มเหลว คืน
+    # ค่า manifest.json เดิม (หรือลบถ้าไม่เคยมี) กัน "manifest ครึ่ง ๆ กลาง ๆ" ค้างบนดิสก์
+    search_index_meta: dict = {"built": False}
+    if build_search_index:
+        interim_manifest = build_manifest(
+            out_dir,
+            file_entries,
+            totals=_totals(),
+            catalog_scope=CATALOG_SCOPE_NOTE,
+            coverage_notes=coverage_notes,
+            built_at=built_at,
+            is_sample=is_sample,
+        )
+        previous_manifest_bytes = manifest_path.read_bytes() if manifest_path.is_file() else None
+        _write_manifest_file(manifest_path, interim_manifest)
+        try:
+            run_search_index_script(out_dir)
+        except Exception:
+            if previous_manifest_bytes is not None:
+                manifest_path.write_bytes(previous_manifest_bytes)
+            else:
+                manifest_path.unlink(missing_ok=True)
+            raise
+        for rel in SEARCH_INDEX_REL_PATHS:
+            p = out_dir / rel
+            file_entries.append(
+                ManifestFileEntry(path=rel, bytes=p.stat().st_size, sha256=_sha256_file(p))
+            )
+        search_index_meta = {
+            "built": True,
+            "tokenizer_version": _read_search_index_tokenizer_version(out_dir),
+        }
 
     manifest = build_manifest(
         out_dir,
         file_entries,
-        totals=totals,
+        totals=_totals(),
         catalog_scope=CATALOG_SCOPE_NOTE,
         coverage_notes=coverage_notes,
         built_at=built_at,
         is_sample=is_sample,
     )
+    manifest["search_index"] = search_index_meta
     n_low_specificity = sum(1 for e in catalog_result.entries if e.get("low_specificity"))
     manifest["catalog_threshold"] = {
         "min_lines": catalog_result.min_lines,
@@ -1580,12 +1737,7 @@ def run_publish_pipeline(
             for a, b, c, d, e in catalog_result.thresholds_tried
         ],
     }
-    manifest_path = out_dir / "manifest.json"
-    manifest_path.write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=False),
-        encoding="utf-8",
-        newline="\n",
-    )
+    _write_manifest_file(manifest_path, manifest)
 
     # --- cleanup ไฟล์เก่าที่ไม่อยู่ใน manifest (+ manifest.json เอง) ---
     keep = {e["path"] for e in manifest["files"]} | {"manifest.json"}
@@ -1650,9 +1802,18 @@ def run_publish_pipeline(
     )
 
 
-def publish(cfg: PipelineConfig) -> PublishResult:
-    """`tgbp publish` — ข้อมูลเต็ม → `cfg.output_dir` (`web/public/data/`)"""
-    return run_publish_pipeline(cfg, source_sql=default_source_sql(cfg), out_dir=cfg.output_dir)
+def publish(cfg: PipelineConfig, *, build_search_index: bool = True) -> PublishResult:
+    """`tgbp publish` — ข้อมูลเต็ม → `cfg.output_dir` (`web/public/data/`)
+
+    `build_search_index=False` (`--skip-search-index`) ข้ามการเรียก
+    `web/scripts/build-search-index.mjs` (ใช้ตอนไม่มี `node`/`web/node_modules` เช่น CI ของ pipeline)
+    """
+    return run_publish_pipeline(
+        cfg,
+        source_sql=default_source_sql(cfg),
+        out_dir=cfg.output_dir,
+        build_search_index=build_search_index,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1773,8 +1934,14 @@ SAMPLE_MAX_TOTAL_BYTES = 1_500_000
 SAMPLE_MAX_DOCS = 3
 
 
-def sample(cfg: PipelineConfig, rows: int = 1000) -> PublishResult:
-    """`tgbp sample --rows N` (T-112) — โครงเดียวกับ production แต่เล็ก → `cfg.fixtures_dir`"""
+def sample(
+    cfg: PipelineConfig, rows: int = 1000, *, build_search_index: bool = True
+) -> PublishResult:
+    """`tgbp sample --rows N` (T-112) — โครงเดียวกับ production แต่เล็ก → `cfg.fixtures_dir`
+
+    `build_search_index=False` (`--skip-search-index`) ข้ามการเรียก
+    `web/scripts/build-search-index.mjs` เหมือน `publish()`
+    """
     con = duckdb.connect()
     try:
         source_sql = build_sample_source_sql(cfg, con, rows)
@@ -1790,4 +1957,5 @@ def sample(cfg: PipelineConfig, rows: int = 1000) -> PublishResult:
         run_validation=False,
         built_at="1970-01-01T00:00:00+00:00",
         is_sample=True,
+        build_search_index=build_search_index,
     )
