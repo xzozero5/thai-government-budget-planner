@@ -21,6 +21,7 @@ export interface CollapseProps {
 }
 
 const EASE_OUT = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+const ENTER_FALLBACK_MS = 120;
 
 export function Collapse({ children, className }: CollapseProps): ReactElement {
   const reducedMotion = usePrefersReducedMotion();
@@ -34,8 +35,14 @@ export function Collapse({ children, className }: CollapseProps): ReactElement {
     const raf = requestAnimationFrame(() => {
       setEntered(true);
     });
+    // main thread (ลองใน Chrome จริงผ่าน extension): แท็บที่ไม่ได้โฟกัส/ถูก throttle จะไม่ยิง rAF → เนื้อหาค้างที่
+    // 0fr/opacity 0 จนกว่าผู้ใช้จะกดอะไรสักอย่าง — เนื้อหาต้อง "ถึงสถานะสุดท้ายเสมอ" แม้ animation ไม่รัน
+    const fallback = window.setTimeout(() => {
+      setEntered(true);
+    }, ENTER_FALLBACK_MS);
     return () => {
       cancelAnimationFrame(raf);
+      window.clearTimeout(fallback);
     };
   }, [reducedMotion]);
 
