@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactElement } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Dialog, IconButton, Meter } from '@/components/ui';
@@ -7,6 +7,7 @@ import { sessionChatController } from '@/ai/session/chatController';
 import { t } from '@/i18n';
 import { formatUsd } from '@/lib/format';
 import { useSessionStore } from '@/stores/sessionStore';
+import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog';
 import { markManualClear } from './manualClearFlag';
 import { SettingsDialog } from '@/features/settings';
 
@@ -21,6 +22,25 @@ export function WorkspaceHeader(): ReactElement {
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  // 06 §4.6: `?` เปิดแผ่นคีย์ลัด (นอกช่องพิมพ์เท่านั้น — เช็คแบบเดียวกับ `ChatPane` ที่กัน `/`)
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent): void {
+      const target = event.target;
+      const isEditable =
+        target instanceof HTMLElement &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+      if (event.key === '?' && !isEditable) {
+        event.preventDefault();
+        setShortcutsOpen(true);
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   function handleConfirmClear(): void {
     markManualClear();
@@ -64,6 +84,14 @@ export function WorkspaceHeader(): ReactElement {
         }}
         icon={<span aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span>}
       />
+      <IconButton
+        label={t('a11y.keyboardShortcuts')}
+        variant="ghost"
+        onClick={() => {
+          setShortcutsOpen(true);
+        }}
+        icon={<span aria-hidden="true">?</span>}
+      />
       <Link
         to="/about"
         className="rounded-sm px-2 py-1 text-sm text-fg-muted hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
@@ -84,6 +112,13 @@ export function WorkspaceHeader(): ReactElement {
         open={settingsOpen}
         onClose={() => {
           setSettingsOpen(false);
+        }}
+      />
+
+      <KeyboardShortcutsDialog
+        open={shortcutsOpen}
+        onClose={() => {
+          setShortcutsOpen(false);
         }}
       />
 

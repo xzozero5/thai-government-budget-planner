@@ -8,6 +8,8 @@
  */
 import { useState } from 'react';
 import type { ReactElement } from 'react';
+// import ไฟล์ตรง (ไม่ผ่าน barrel `@/components/motion`) — เหตุผลเดียวกับ `components/ui/Accordion.tsx`
+import { Collapse } from '@/components/motion/Collapse';
 import { Button, Card } from '@/components/ui';
 import { t } from '@/i18n';
 
@@ -30,38 +32,42 @@ export function WarningsPanel({
   }
 
   return (
-    <Card className="border-warn bg-surface-2">
-      <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-fg">
-        <span aria-hidden="true">!</span>
-        {t('proposal.warnings.title')}
-      </h3>
-      <ul className="space-y-3">
-        {visible.map(({ text, index }) => (
-          <li key={index} className="text-sm text-fg">
-            <p>{text}</p>
-            <div className="mt-1.5 flex gap-2">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  onRequestReview();
-                }}
-              >
-                {t('proposal.warnings.askAi')}
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setDismissed((prev) => new Set(prev).add(index));
-                }}
-              >
-                {t('proposal.warnings.dismiss')}
-              </Button>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </Card>
+    // motion.md #24 (accordion/แผงเตือน): fade+ขยายเข้าตอนโผล่ (entrance เท่านั้น — ปิดทีละรายการด้วย
+    // "รับทราบ" ยังคง unmount รายการนั้นทันทีตาม local state ด้านบน ไม่กระทบ)
+    <Collapse>
+      <Card className="border-warn bg-surface-2">
+        <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-fg">
+          <span aria-hidden="true">!</span>
+          {t('proposal.warnings.title')}
+        </h3>
+        <ul className="space-y-3">
+          {visible.map(({ text, index }) => (
+            <li key={index} className="text-sm text-fg">
+              <p>{text}</p>
+              <div className="mt-1.5 flex gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    onRequestReview();
+                  }}
+                >
+                  {t('proposal.warnings.askAi')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setDismissed((prev) => new Set(prev).add(index));
+                  }}
+                >
+                  {t('proposal.warnings.dismiss')}
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </Collapse>
   );
 }

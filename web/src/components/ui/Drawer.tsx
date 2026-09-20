@@ -47,7 +47,9 @@ export function Drawer({
         aria-labelledby={titleId}
         tabIndex={-1}
         className={cn(
-          'absolute inset-y-0 right-0 flex w-full flex-col bg-surface shadow-2 sm:w-[480px]',
+          // motion.md #15: slide-in จากขวา + fade ตอนเปิด (keyframe ล้วน — ดูเหตุผลที่ไม่ใช้
+          // `components/motion/DrawerSlide` ในคอมเมนต์ของ `tailwind.config.ts`)
+          'absolute inset-y-0 right-0 flex w-full animate-drawer-in flex-col bg-surface shadow-2 sm:w-[480px]',
         )}
       >
         <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-3">

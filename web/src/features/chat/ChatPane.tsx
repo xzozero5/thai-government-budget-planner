@@ -20,8 +20,9 @@ const SCROLL_BOTTOM_THRESHOLD_PX = 48;
 /**
  * T-405 — Chat pane (06 §4.2): รายการข้อความ + streaming + tool activity + quick replies + composer
  *
- * Keyboard shortcuts (06 §4.6): `/` โฟกัส composer (เมื่อไม่ได้พิมพ์อยู่ในช่องอื่น), `Esc` ยกเลิก turn ที่
- * กำลังรัน, `Ctrl/Cmd+Enter` ส่งข้อความ (เมื่อโฟกัสอยู่ที่ composer) — ใช้ ref เก็บค่าล่าสุดแทนการใส่ลง
+ * Keyboard shortcuts (06 §4.6): `/` โฟกัส composer (เมื่อไม่ได้พิมพ์อยู่ในช่องอื่น), `Ctrl/⌘+K` โฟกัส
+ * composer เช่นกัน (ตามสเปค 06 §4.6 — ทำงานได้ทุกที่แม้กำลังโฟกัสอินพุตอื่นอยู่ ต่างจาก `/`), `Esc` ยกเลิก
+ * turn ที่กำลังรัน, `Ctrl/Cmd+Enter` ส่งข้อความ (เมื่อโฟกัสอยู่ที่ composer) — ใช้ ref เก็บค่าล่าสุดแทนการใส่ลง
  * dependency array เพื่อไม่ต้อง add/remove listener ทุกครั้งที่พิมพ์ (motion.md #6: throttle การอัปเดต)
  */
 export function ChatPane({ onOpenToolResults }: ChatPaneProps): ReactElement {
@@ -92,6 +93,12 @@ export function ChatPane({ onOpenToolResults }: ChatPaneProps): ReactElement {
         (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
 
       if (event.key === '/' && !isEditable) {
+        event.preventDefault();
+        textareaRef.current?.focus();
+        return;
+      }
+      // 06 §4.6: Ctrl/⌘+K โฟกัส composer — เพิ่มเติมจาก `/` เดิม (ทำงานได้แม้กำลังโฟกัสช่องพิมพ์อื่นอยู่)
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
         textareaRef.current?.focus();
         return;

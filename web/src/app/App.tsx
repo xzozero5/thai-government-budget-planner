@@ -1,6 +1,6 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import type { ReactElement } from 'react';
-import { HashRouter, Route, Routes } from 'react-router-dom';
+import { HashRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { ToastProvider } from '@/components/ui';
 import { AboutPage } from '@/features/about';
 import { KeyGatePage } from '@/features/keygate';
@@ -29,11 +29,41 @@ function ThemeSync(): null {
   return null;
 }
 
+/**
+ * T-408 (06 §4.6/§6) — เปลี่ยนเส้นทาง (route) → ย้าย focus ไปที่ `<h1>` ใน `#main-content` (ถ้ามี) เพื่อให้
+ * screen reader ประกาศหัวข้อหน้าใหม่ (SPA ไม่ reload หน้าจริง จึงไม่มี browser default behavior นี้ให้ฟรี)
+ * ข้ามการ focus ตอน mount ครั้งแรก (initial load) — โฟกัสเริ่มต้นของหน้าเว็บปกติควรอยู่ที่ body/skip-link
+ * ไม่ใช่แย่ง focus ทันทีตอนโหลดหน้าแรก
+ */
+function RouteFocusManager(): null {
+  const location = useLocation();
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const heading = document.querySelector<HTMLElement>('#main-content h1');
+    if (!heading) {
+      return;
+    }
+    if (!heading.hasAttribute('tabindex')) {
+      heading.setAttribute('tabindex', '-1');
+    }
+    heading.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ตั้งใจ track เฉพาะ path ไม่ใช่ทั้ง location object
+  }, [location.pathname]);
+
+  return null;
+}
+
 export function App(): ReactElement {
   return (
     <HashRouter>
       <ToastProvider>
         <ThemeSync />
+        <RouteFocusManager />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-sm focus:bg-surface focus:px-3 focus:py-2 focus:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"

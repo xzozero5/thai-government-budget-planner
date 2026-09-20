@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ReactElement } from 'react';
 import type { BoqLine, Citation } from '@/ai/tools/proposal';
 import { IconButton, Tabs } from '@/components/ui';
+import { MotionProvider } from '@/components/motion';
 import { ChatPane } from '@/features/chat';
 import { t } from '@/i18n';
 import { getCurrentProposalVersion, useProposalStore } from '@/stores/proposalStore';
@@ -78,70 +79,74 @@ export function WorkspacePage(): ReactElement {
     warningCount > 0 ? `${t('workspace.proposalPane')} (${String(warningCount)})` : t('workspace.proposalPane');
 
   return (
-    <div className="flex h-dvh min-h-0 flex-col">
-      <WorkspaceHeader />
-      <div className="flex min-h-0 flex-1 flex-col">
-        {isDesktop ? (
-          <div className="flex min-h-0 flex-1">
-            {collapsed !== 'chat' && (
-              <section
-                aria-label={t('workspace.chatPane')}
-                className={`flex min-h-0 flex-col border-r border-line ${collapsed === 'proposal' ? 'flex-1' : 'w-2/5'}`}
-              >
-                <PaneHeader
-                  title={t('workspace.chatPane')}
-                  collapseLabel={t('workspace.collapseChat')}
-                  onCollapse={() => {
-                    setCollapsed('chat');
+    // T-411: `MotionProvider` (LazyMotion + domAnimation) ครอบทั้ง workspace ครั้งเดียว — component ที่ใช้
+    // `m.*` จาก `motion/react` (เช่น `FadeSlideIn` ในข้อความแชท) อยู่ใต้นี้ทั้งหมด ห้ามครอบซ้ำที่ไหนอีก
+    <MotionProvider>
+      <div className="flex h-dvh min-h-0 flex-col">
+        <WorkspaceHeader />
+        <div className="flex min-h-0 flex-1 flex-col">
+          {isDesktop ? (
+            <div className="flex min-h-0 flex-1">
+              {collapsed !== 'chat' && (
+                <section
+                  aria-label={t('workspace.chatPane')}
+                  className={`flex min-h-0 flex-col border-r border-line ${collapsed === 'proposal' ? 'flex-1' : 'w-2/5'}`}
+                >
+                  <PaneHeader
+                    title={t('workspace.chatPane')}
+                    collapseLabel={t('workspace.collapseChat')}
+                    onCollapse={() => {
+                      setCollapsed('chat');
+                    }}
+                  />
+                  <div className="min-h-0 flex-1">{chatPane}</div>
+                </section>
+              )}
+              {collapsed !== 'proposal' && (
+                <section
+                  aria-label={t('workspace.proposalPane')}
+                  className={`flex min-h-0 flex-col ${collapsed === 'chat' ? 'flex-1' : 'w-3/5'}`}
+                >
+                  <PaneHeader
+                    title={t('workspace.proposalPane')}
+                    collapseLabel={t('workspace.collapseProposal')}
+                    onCollapse={() => {
+                      setCollapsed('proposal');
+                    }}
+                  />
+                  <div className="min-h-0 flex-1 overflow-y-auto">{proposalPane}</div>
+                </section>
+              )}
+              {collapsed === 'chat' && (
+                <ExpandStrip
+                  label={t('workspace.expandChat')}
+                  onExpand={() => {
+                    setCollapsed('none');
                   }}
                 />
-                <div className="min-h-0 flex-1">{chatPane}</div>
-              </section>
-            )}
-            {collapsed !== 'proposal' && (
-              <section
-                aria-label={t('workspace.proposalPane')}
-                className={`flex min-h-0 flex-col ${collapsed === 'chat' ? 'flex-1' : 'w-3/5'}`}
-              >
-                <PaneHeader
-                  title={t('workspace.proposalPane')}
-                  collapseLabel={t('workspace.collapseProposal')}
-                  onCollapse={() => {
-                    setCollapsed('proposal');
+              )}
+              {collapsed === 'proposal' && (
+                <ExpandStrip
+                  label={t('workspace.expandProposal')}
+                  onExpand={() => {
+                    setCollapsed('none');
                   }}
                 />
-                <div className="min-h-0 flex-1 overflow-y-auto">{proposalPane}</div>
-              </section>
-            )}
-            {collapsed === 'chat' && (
-              <ExpandStrip
-                label={t('workspace.expandChat')}
-                onExpand={() => {
-                  setCollapsed('none');
-                }}
-              />
-            )}
-            {collapsed === 'proposal' && (
-              <ExpandStrip
-                label={t('workspace.expandProposal')}
-                onExpand={() => {
-                  setCollapsed('none');
-                }}
-              />
-            )}
-          </div>
-        ) : (
-          <Tabs
-            className="flex min-h-0 flex-1 flex-col"
-            items={[
-              { id: 'chat', label: t('workspace.chatPane'), content: chatPane },
-              { id: 'proposal', label: proposalTabLabel, content: proposalPane },
-            ]}
-          />
-        )}
+              )}
+            </div>
+          ) : (
+            <Tabs
+              className="flex min-h-0 flex-1 flex-col"
+              items={[
+                { id: 'chat', label: t('workspace.chatPane'), content: chatPane },
+                { id: 'proposal', label: proposalTabLabel, content: proposalPane },
+              ]}
+            />
+          )}
+        </div>
+        <DataLoadingIndicator />
+        <CitationDrawerContainer state={drawerState} onClose={closeDrawer} />
       </div>
-      <DataLoadingIndicator />
-      <CitationDrawerContainer state={drawerState} onClose={closeDrawer} />
-    </div>
+    </MotionProvider>
   );
 }

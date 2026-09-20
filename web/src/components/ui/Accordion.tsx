@@ -1,5 +1,9 @@
 import { useId, useState } from 'react';
 import type { ReactElement, ReactNode } from 'react';
+// import ไฟล์ตรง (ไม่ผ่าน barrel `@/components/motion`) — `Collapse` ไม่มี dependency ของ `motion/react`
+// เลย แต่ barrel นั้น re-export `FadeSlideIn`/`MotionProvider` ที่มีด้วย ถ้า import ผ่าน barrel จะดึง
+// `motion/react` เข้ามาด้วยทั้งที่ `Accordion` ถูกใช้จาก `/load` (route ที่ไม่ได้ lazy-load)
+import { Collapse } from '@/components/motion/Collapse';
 import { cn, FOCUS_RING } from '@/components/ui/utils';
 
 export interface AccordionItemData {
@@ -84,9 +88,13 @@ function AccordionRow({
         </button>
       </h3>
       {open && (
-        <div id={panelId} role="region" aria-label={item.title} className="pb-3 text-fg">
-          {item.content}
-        </div>
+        // motion.md #24: เปิด → height auto→content + fade (200ms ease-out) — animate เฉพาะตอน "เปิด"
+        // เท่านั้น ปิดให้ unmount ทันที (ดูคอมเมนต์หัวไฟล์ `Collapse.tsx`) — ไม่กระทบ role/aria-label เดิม
+        <Collapse>
+          <div id={panelId} role="region" aria-label={item.title} className="pb-3 text-fg">
+            {item.content}
+          </div>
+        </Collapse>
       )}
     </div>
   );

@@ -3,8 +3,8 @@
  * (motion.md #10: rAF, ≤600ms, ease-out, ปิดเมื่อ reduced-motion — ค่าปลายทางต้องอยู่ใน DOM เสมอ
  * ไม่ใช่แค่ตอน animation จบ เพื่อไม่ให้ screen reader อ่านค่ากลางอนิเมชัน)
  */
-import { useEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
+import { useCountUp } from '@/components/motion/useCountUp';
 import { formatNumber } from '@/lib/format';
 import { Sparkline, type SparklinePoint } from './Sparkline';
 import { cx, FOCUS_RING, usePrefersReducedMotion } from './utils';
@@ -44,51 +44,6 @@ const BASIS_CLASSES: Record<StatCardBasisKind, string> = {
   market: 'bg-basis-market-bg text-basis-market',
   estimate: 'bg-basis-estimate-bg text-basis-estimate',
 };
-
-/** rAF count-up จาก displayed ค่าก่อนหน้า → target ใหม่ — ข้ามอนิเมชันทันทีเมื่อ reduced-motion */
-function useCountUp(target: number, durationMs: number, reducedMotion: boolean): number {
-  const [display, setDisplay] = useState(target);
-  const prevTargetRef = useRef(target);
-  const rafRef = useRef<number | null>(null);
-  const isFirstRunRef = useRef(true);
-
-  useEffect(() => {
-    const from = prevTargetRef.current;
-    const to = target;
-    prevTargetRef.current = target;
-
-    // ไม่ animate ตอน mount ครั้งแรก (ไม่มี "ค่าเดิม" ให้ไต่จากจริง ๆ) หรือเมื่อค่าไม่เปลี่ยน/reduced-motion
-    if (isFirstRunRef.current || reducedMotion || from === to) {
-      isFirstRunRef.current = false;
-      setDisplay(to);
-      return;
-    }
-
-    const clampedDuration = Math.min(durationMs, MAX_ANIMATION_MS);
-    const start = performance.now();
-
-    function tick(now: number): void {
-      const elapsed = now - start;
-      const progress = Math.min(1, elapsed / clampedDuration);
-      const eased = 1 - (1 - progress) * (1 - progress); // ease-out เบา ๆ
-      setDisplay(from + (to - from) * eased);
-      if (progress < 1) {
-        rafRef.current = requestAnimationFrame(tick);
-      } else {
-        setDisplay(to);
-      }
-    }
-
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, [target, durationMs, reducedMotion]);
-
-  return display;
-}
 
 function ValueDisplay({
   value,

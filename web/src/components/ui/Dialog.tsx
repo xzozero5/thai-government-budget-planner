@@ -47,7 +47,9 @@ export function Dialog({
         aria-labelledby={titleId}
         tabIndex={-1}
         className={cn(
-          'relative flex max-h-[90vh] w-full max-w-lg flex-col rounded-md bg-surface shadow-2',
+          // motion.md #17: scale(0.98→1) + fade ตอนเปิด (keyframe ล้วน — ดูเหตุผลที่ไม่ใช้
+          // `components/motion/DrawerSlide` ในคอมเมนต์ของ `tailwind.config.ts`)
+          'relative flex max-h-[90vh] w-full max-w-lg animate-dialog-in flex-col rounded-md bg-surface shadow-2',
           className,
         )}
       >

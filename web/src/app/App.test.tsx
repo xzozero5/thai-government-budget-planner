@@ -70,6 +70,28 @@ describe('App — routes (HashRouter)', () => {
   });
 });
 
+describe('App — route change focus management (06 §4.6/§6)', () => {
+  it('โหลดครั้งแรกไม่แย่ง focus ไปที่ <h1> (initial load ไม่ใช่ route change)', () => {
+    setHash('#/');
+    render(<App />);
+    const h1 = screen.getByRole('heading', { name: t('common.appName'), level: 1 });
+    expect(h1).not.toHaveFocus();
+  });
+
+  it('เปลี่ยนเส้นทางไป /about → focus ไปที่ <h1> ใน #main-content', async () => {
+    useSessionStore.setState({ hasKey: false });
+    setHash('#/');
+    render(<App />);
+
+    setHash('#/about');
+
+    await waitFor(() => {
+      const h1 = screen.getByRole('heading', { name: t('about.title'), level: 1 });
+      expect(h1).toHaveFocus();
+    });
+  });
+});
+
 describe('App — theme sync (06 §2: data-theme บน <html>, เก็บใน sessionStore เท่านั้น ห้าม localStorage)', () => {
   it('sessionStore.theme สะท้อนเป็น data-theme บน <html> ทันทีที่ mount', () => {
     useSessionStore.setState({ theme: 'dark' });

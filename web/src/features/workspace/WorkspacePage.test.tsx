@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastProvider } from '@/components/ui';
@@ -118,6 +119,23 @@ describe('WorkspacePage — header (06 §4.2)', () => {
     fireEvent.click(screen.getByRole('button', { name: t('workspace.settings') }));
 
     expect(screen.getByRole('heading', { name: t('settings.title') })).toBeInTheDocument();
+  });
+
+  it('เปิดแผ่นคีย์ลัดได้ทั้งจากปุ่ม "?" และคีย์ลัด "?" (06 §4.6)', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    expect(screen.queryByRole('heading', { name: t('a11y.keyboardShortcuts') })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: t('a11y.keyboardShortcuts') }));
+    expect(screen.getByRole('heading', { name: t('a11y.keyboardShortcuts') })).toBeInTheDocument();
+
+    // Esc ปิด — ต้องกดจริงผ่าน userEvent (โฟกัสอยู่ในกล่องหลัง focus trap) ไม่ใช่ dispatch ที่ window ตรง ๆ
+    // (focus trap ดัก Esc ที่ document ไม่ใช่ window — ดู `useFocusTrap.ts`)
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('heading', { name: t('a11y.keyboardShortcuts') })).not.toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: '?' });
+    expect(screen.getByRole('heading', { name: t('a11y.keyboardShortcuts') })).toBeInTheDocument();
   });
 });
 

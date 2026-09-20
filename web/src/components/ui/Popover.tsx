@@ -60,7 +60,9 @@ export function Popover({ triggerLabel, children, className }: PopoverProps): Re
           id={contentId}
           role="dialog"
           className={cn(
-            'absolute left-0 top-full z-20 mt-1.5 min-w-[200px] rounded-md border border-line bg-surface p-3 text-sm text-fg shadow-2',
+            // motion.md #19: fade + translateY(4px→0) ตอนเปิด — keyframe ล้วน (เคารพ reduced-motion
+            // อัตโนมัติผ่าน global override ใน tokens.css โดยไม่ต้องเช็ค JS เพิ่ม)
+            'absolute left-0 top-full z-20 mt-1.5 min-w-[200px] animate-popover-in rounded-md border border-line bg-surface p-3 text-sm text-fg shadow-2',
             className,
           )}
         >

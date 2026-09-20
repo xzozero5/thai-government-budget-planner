@@ -99,6 +99,25 @@ describe('ChatPane — composer (06 §4.2/§4.6)', () => {
 
     expect(textarea).toHaveFocus();
   });
+
+  it('กด Ctrl/⌘+K → โฟกัส composer (06 §4.6)', () => {
+    render(<ChatPane />);
+    const textarea = screen.getByRole('textbox', { name: t('a11y.chatComposer') });
+    expect(textarea).not.toHaveFocus();
+
+    fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+
+    expect(textarea).toHaveFocus();
+  });
+
+  it('กด ⌘+K (metaKey) ก็ใช้ได้เหมือนกัน', () => {
+    render(<ChatPane />);
+    const textarea = screen.getByRole('textbox', { name: t('a11y.chatComposer') });
+
+    fireEvent.keyDown(window, { key: 'K', metaKey: true });
+
+    expect(textarea).toHaveFocus();
+  });
 });
 
 describe('ChatPane — render ข้อความจากโมเดลเป็น text node เท่านั้น (N9/T-307)', () => {

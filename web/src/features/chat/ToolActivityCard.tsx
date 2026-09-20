@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react';
+import { usePrefersReducedMotion } from '@/components/motion/usePrefersReducedMotion';
 import { Button, Spinner } from '@/components/ui';
 import { t } from '@/i18n';
 import type { ToolActivity } from '@/stores/chatStore';
@@ -41,10 +42,13 @@ function StatusIcon({ status }: { status: ToolActivity['status'] }): ReactElemen
     );
   }
   return (
+    // motion.md #9: ไอคอน tool activity เมื่อเสร็จ crossfade + scale 0.9→1 (150ms ease-out) — keyframe
+    // ล้วน เล่นครั้งเดียวตอน element นี้ mount (สลับมาจาก Spinner) เคารพ reduced-motion ผ่าน global
+    // override ใน tokens.css โดยอัตโนมัติ (สลับไอคอนทันทีตามตาราง)
     <svg
       aria-hidden="true"
       viewBox="0 0 20 20"
-      className="h-4 w-4 text-success"
+      className="h-4 w-4 animate-check-pop text-success"
       fill="none"
       stroke="currentColor"
       strokeWidth={2.5}
@@ -54,10 +58,28 @@ function StatusIcon({ status }: { status: ToolActivity['status'] }): ReactElemen
   );
 }
 
+/** motion.md #8: แถบ progress ด้านล่างการ์ด pulse วนลูปขณะ tool กำลังรัน — reduced-motion fallback:
+ * แถบคงที่ 30% (ข้อความ "กำลัง…" ข้าง ๆ สื่อสถานะอยู่แล้วผ่าน `messageFor`) */
+function RunningProgressBar({ reducedMotion }: { reducedMotion: boolean }): ReactElement {
+  if (reducedMotion) {
+    return (
+      <div className="h-0.5 w-full overflow-hidden rounded-full bg-surface" aria-hidden="true">
+        <div className="h-full w-[30%] bg-accent" />
+      </div>
+    );
+  }
+  return (
+    <div className="h-0.5 w-full overflow-hidden rounded-full bg-surface" aria-hidden="true">
+      <div className="h-full w-1/3 animate-tool-progress rounded-full bg-accent" />
+    </div>
+  );
+}
+
 /** การ์ดกิจกรรม tool ต่อ 1 การเรียก (06 §7 #25) — ต้องบอกว่าค้นอะไร/ได้กี่แถวทุกครั้ง (โปร่งใส N3/T-307) */
 export function ToolActivityCard({ activity, onViewResults }: ToolActivityCardProps): ReactElement {
   const isWebSearch = activity.name === 'web_search';
   const canViewResults = !isWebSearch && activity.status === 'done' && onViewResults !== undefined;
+  const reducedMotion = usePrefersReducedMotion();
 
   return (
     <div className="flex flex-col gap-1 rounded-sm border border-line bg-surface-2 px-3 py-2 text-sm">
@@ -67,6 +89,7 @@ export function ToolActivityCard({ activity, onViewResults }: ToolActivityCardPr
         </span>
         <span className={activity.status === 'error' ? 'text-danger' : 'text-fg'}>{messageFor(activity)}</span>
       </div>
+      {activity.status === 'running' && <RunningProgressBar reducedMotion={reducedMotion} />}
       {isWebSearch && <p className="pl-6 text-xs text-fg-muted">{t('chat.tool.web_search.notice')}</p>}
       {canViewResults && (
         <div className="pl-6">

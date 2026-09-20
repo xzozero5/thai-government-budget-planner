@@ -97,7 +97,9 @@ export function ToastProvider({
               key={toast.id}
               role="status"
               className={cn(
-                'flex items-start gap-2 rounded-md border-l-4 bg-surface p-3 shadow-2',
+                // motion.md #20: toast เข้า slide-up 12px + fade (keyframe ล้วน — reduced-motion ผ่าน
+                // global override ใน tokens.css); ออกไม่มี exit animation (unmount ทันทีตาม test เดิม)
+                'flex items-start gap-2 rounded-md border-l-4 bg-surface p-3 shadow-2 animate-toast-in',
                 VARIANT_CLASSES[toast.variant],
               )}
             >
