@@ -303,7 +303,7 @@ describe('emitProposalTool', () => {
     }
   });
 
-  it('totals mismatch → warning เท่านั้น (ไม่แก้ตัวเลขให้)', async () => {
+  it('totals mismatch → คำนวณ subtotal_thb/grand_total_thb ใหม่จากผลรวม boq ให้อัตโนมัติ พร้อม warning (หลัง demo จริง 2569-09-20 — ลด reject รอบแรกของ emit_proposal)', async () => {
     const { ctx, toolLog } = makeCtx();
     toolLog.recordSourceId('src-1');
     const proposal = baseProposal({
@@ -311,8 +311,12 @@ describe('emitProposalTool', () => {
     });
     const result = await emitProposalTool.run(proposal, ctx);
     if (!result.isError) {
-      expect(result.output.proposal.totals.subtotal_thb).toBe(999_999);
+      // baseProposal มี boq บรรทัดเดียว total_thb=500,000 (ไม่มี contingency) — ทั้ง subtotal/grand_total
+      // ถูกคำนวณใหม่ให้ตรงกับผลรวมจริงโดยอัตโนมัติ (ไม่ใช่การประมาณ — เป็นเลขคณิตจากค่าที่ตรวจแล้ว)
+      expect(result.output.proposal.totals.subtotal_thb).toBe(500_000);
+      expect(result.output.proposal.totals.grand_total_thb).toBe(500_000);
       expect(result.output.warnings.some((w) => w.includes('subtotal_thb'))).toBe(true);
+      expect(result.output.warnings.some((w) => w.includes('grand_total_thb'))).toBe(true);
     } else {
       throw new Error('expected success');
     }
@@ -348,5 +352,112 @@ describe('emitProposalTool', () => {
     expect(r2.output.attempt).toBe(2);
     expect(r3.output.attempt).toBe(3);
     expect(r3.output.warnings.some((w) => w.includes('รอบแก้ไข'))).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// T-410 ข้อ 2 (หลัง demo จริง 2569-09-20, docs/api-budget.md "0.52 USD/ข้อเสนอ ชนเพดาน 8 รอบ") — repair
+// layer ที่รันก่อน Zod parse เพื่อลด reject รอบแรกของ emit_proposal (ก้อนที่แพงที่สุด ~7k output tokens)
+// ---------------------------------------------------------------------------
+describe('emit_proposal — repair layer ก่อน Zod parse (ซ่อมสิ่งที่ปลอดภัยแทนการ reject ทั้งก้อน)', () => {
+  it('string เกินเพดาน (title) → ตัดส่วนเกิน + "…" พร้อม warning แทนการ reject ทั้งก้อน', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('src-1');
+    const longTitle = 'ก'.repeat(400); // เกินเพดาน title (300 ตัวอักษร)
+    const result = await emitProposalTool.run({ ...baseProposal(), title: longTitle }, ctx);
+    if (result.isError) throw new Error('expected success — string เกินเพดานต้องซ่อมได้ ไม่ reject');
+    expect(result.output.proposal.title.length).toBeLessThanOrEqual(300);
+    expect(result.output.proposal.title.endsWith('…')).toBe(true);
+    expect(result.output.warnings.some((w) => w.includes('title'))).toBe(true);
+  });
+
+  it('enum ตัวพิมพ์ใหญ่/มีช่องว่างส่วนเกิน (mode) → normalize แทนการ reject', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('src-1');
+    const result = await emitProposalTool.run({ ...baseProposal(), mode: ' DRAFT ' }, ctx);
+    if (result.isError) throw new Error('expected success — enum พิมพ์ใหญ่/เว้นวรรคต้อง normalize ได้');
+    expect(result.output.proposal.mode).toBe('draft');
+    expect(result.output.warnings.some((w) => w.includes('mode'))).toBe(true);
+  });
+
+  it('field optional เป็น null (boq[].spec) → ถือเป็นไม่มี field นี้ แทนการ reject', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('src-1');
+    // จงใจไม่ผ่าน baseProposal()/typed helper (type ของ Proposal ไม่ยอมรับ `null` สำหรับ field
+    // optional) — `rawInput` ของ `run()` เป็น `unknown` เพราะโมเดลจริงส่ง JSON ที่ TS ตรวจไม่ได้ล่วงหน้า
+    const rawProposal: unknown = { ...baseProposal(), boq: [{ ...baseBoqLine(), spec: null }] };
+    const result = await emitProposalTool.run(rawProposal, ctx);
+    if (result.isError) throw new Error('expected success — spec:null ต้องถือเป็นไม่มี field นี้');
+    expect(result.output.proposal.boq[0]?.spec).toBeUndefined();
+  });
+
+  it('array เกินเพดาน (objectives) → ตัดรายการส่วนเกินท้ายออกพร้อม warning แทนการ reject', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('src-1');
+    const manyObjectives = Array.from({ length: 60 }, (_, i) => `เป้าหมายที่ ${String(i)}`); // เกินเพดาน 50
+    const result = await emitProposalTool.run({ ...baseProposal(), objectives: manyObjectives }, ctx);
+    if (result.isError) throw new Error('expected success — array เกินเพดานต้องตัดท้ายได้ ไม่ reject');
+    expect(result.output.proposal.objectives).toHaveLength(50);
+    expect(result.output.warnings.some((w) => w.includes('objectives'))).toBe(true);
+  });
+
+  it('total_thb ไม่ตรง qty×unit_price_thb → คำนวณใหม่จาก qty×unit_price_thb (ไม่แก้ qty/unit_price)', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('src-1');
+    const badTotalLine = { ...baseBoqLine(), qty: 2, unit_price_thb: 500_000, total_thb: 1 };
+    const result = await emitProposalTool.run(
+      baseProposal({
+        boq: [badTotalLine],
+        totals: { subtotal_thb: 1, vat_included: false, grand_total_thb: 1 },
+      }),
+      ctx,
+    );
+    if (result.isError) throw new Error('expected success');
+    expect(result.output.proposal.boq[0]?.total_thb).toBe(1_000_000);
+    expect(result.output.proposal.boq[0]?.qty).toBe(2);
+    expect(result.output.proposal.boq[0]?.unit_price_thb).toBe(500_000);
+    expect(result.output.proposal.totals.subtotal_thb).toBe(1_000_000);
+    expect(result.output.proposal.totals.grand_total_thb).toBe(1_000_000);
+  });
+
+  it('จำนวนติดลบยังคงถูกปฏิเสธ — repair layer ไม่ทำให้เกณฑ์ความปลอดภัยเดิมหลวมลง', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('src-1');
+    const negativeQtyLine = { ...baseBoqLine(), qty: -5 };
+    const result = await emitProposalTool.run(baseProposal({ boq: [negativeQtyLine] }), ctx);
+    expect(result.isError).toBe(true);
+  });
+
+  it('enum ที่ไม่ตรงรูปแบบจริงแม้ normalize แล้ว (mode="maybe") → ยังคงถูกปฏิเสธ ไม่ใช่เดาความหมาย', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('src-1');
+    const result = await emitProposalTool.run({ ...baseProposal(), mode: 'maybe' }, ctx);
+    expect(result.isError).toBe(true);
+  });
+});
+
+describe('emit_proposal — trend_ref kind=indicator ที่เคยผ่าน get_econ_indicator (T-410 ข้อ 3, หลัง demo จริง)', () => {
+  it('เคยเรียก get_econ_indicator ของตัวชี้วัดนี้ (มีค่าจริง) → trend_ref ใช้ได้แม้ไม่เคยเรียก get_price_trend', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('src-1');
+    toolLog.recordEconValue('cmi_steel', 2567);
+    const proposal = baseProposal({
+      stat_cards: [{ trend_ref: { kind: 'indicator', key: 'cmi_steel' }, headline_th: 'เหล็กขึ้นราคา' }],
+    });
+    const result = await emitProposalTool.run(proposal, ctx);
+    if (result.isError) throw new Error('expected success');
+    expect(result.output.proposal.stat_cards).toHaveLength(1);
+    expect(result.output.warnings.some((w) => w.includes('trend_ref'))).toBe(false);
+  });
+
+  it('ยังไม่เคยเรียก get_econ_indicator/get_price_trend เลย → trend_ref ยังถูกตัดตามเดิม', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('src-1');
+    const proposal = baseProposal({
+      stat_cards: [{ trend_ref: { kind: 'indicator', key: 'cmi_steel' }, headline_th: 'เหล็กขึ้นราคา' }],
+    });
+    const result = await emitProposalTool.run(proposal, ctx);
+    if (result.isError) throw new Error('expected success');
+    expect(result.output.proposal.stat_cards).toHaveLength(0);
   });
 });

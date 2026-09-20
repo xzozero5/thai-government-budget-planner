@@ -46,6 +46,9 @@ const TEXT_MAX = 2000;
 const LONG_TEXT_MAX = 4000;
 const ARRAY_MAX = 50;
 const CITATIONS_PER_LINE_MAX = 20;
+const BOQ_MAX = 200;
+const ILLUSTRATIONS_MAX = 3;
+const STAT_CARDS_MAX = 4;
 
 // T-308 (prompt-tuning รอบ 1): `.meta({id})` บังคับให้ `z.toJSONSchema` (`../jsonSchema.ts`) แยกสอง
 // schema นี้ไปไว้ที่ `$defs` แล้วแทนที่ทุกจุดที่ใช้ซ้ำ (`BoqLineSchema.citations`/`.trend_ref`,
@@ -200,17 +203,352 @@ export const ProposalSchema = z.object({
   objectives: z.array(z.string().max(TEXT_MAX)).max(ARRAY_MAX),
   scope_and_specs: z.array(ScopeSectionSchema).max(ARRAY_MAX),
   assumptions: z.array(AssumptionSchema).max(ARRAY_MAX),
-  boq: z.array(BoqLineSchema).min(1).max(200),
+  boq: z.array(BoqLineSchema).min(1).max(BOQ_MAX),
   totals: TotalsSchema,
   comparables: z.array(ComparableSchema).max(ARRAY_MAX),
   risks: z.array(RiskSchema).max(ARRAY_MAX),
   audit_findings: z.array(AuditFindingSchema).max(ARRAY_MAX).optional(),
   open_questions: z.array(z.string().max(TEXT_MAX)).max(ARRAY_MAX),
   citations_web: z.array(WebCitationSchema).max(ARRAY_MAX),
-  illustrations: z.array(IllustrationRefSchema).max(3),
-  stat_cards: z.array(StatCardSchema).max(4),
+  illustrations: z.array(IllustrationRefSchema).max(ILLUSTRATIONS_MAX),
+  stat_cards: z.array(StatCardSchema).max(STAT_CARDS_MAX),
 });
 export type Proposal = z.infer<typeof ProposalSchema>;
+
+// ---------------------------------------------------------------------------
+// Repair layer — รันบน `rawInput` (unknown) ก่อน Zod parse เสมอ (T-toolKit `repairInput`)
+//
+// main thread (หลัง demo จริงครั้งแรก 2569-09-20, docs/api-budget.md "0.52 USD/ข้อเสนอ ชนเพดาน 8 รอบ") —
+// `emit_proposal` เดิม reject "ทั้งก้อน" เมื่อ Zod พบปัญหาแม้เล็กน้อย (string เกินเพดาน 1 ตัวอักษร, enum
+// พิมพ์ใหญ่, ส่ง `null` แทนการไม่ใส่ field optional) ทั้งที่เนื้อหาที่เหลือถูกต้องทั้งหมด — โมเดลต้องพิมพ์
+// output ~7k tokens ใหม่ทั้งก้อน (แพงที่สุดใน session) ชั้นนี้ normalize ปัญหาที่ "ซ่อมได้อย่างปลอดภัย"
+// เท่านั้นแล้วใส่ warning ให้เห็น แทนการ reject — ปัญหาที่เหลือ (enum ไม่ตรงแม้ normalize แล้ว, จำนวน/ราคา
+// ติดลบ, field ที่หายไปจริง ๆ) ยังคงถูก Zod ปฏิเสธตามปกติพร้อม path ชัดเจน (`toolKit.ts#invalidInputContent`)
+//
+// **ห้ามซ่อมในชั้นนี้เด็ดขาด** (ความปลอดภัย N3/T-307 — ทำใน `validateAndNormalizeProposal` ด้วยการตรวจ
+// ToolLog จริงเท่านั้น ไม่ใช่การเดา/แก้ตรงนี้): citation ปลอม, จำนวน/ราคาติดลบหรือ NaN/Infinity (ปล่อยให้
+// Zod ปฏิเสธ — ห้ามเดาแทนโมเดล), ค่า enum ที่ไม่ตรงรูปแบบจริงแม้ trim/lowercase แล้ว (เช่น "maybe" ไม่ใช่
+// สมาชิกของ enum ใด — ปฏิเสธพร้อม path ดีกว่าเดาความหมาย) ตัวเลขความสอดคล้อง (total_thb vs qty×unit_price,
+// totals.subtotal/grand_total vs ผลรวม) **ไม่ได้ทำที่นี่** เพราะไม่เคยทำให้ Zod ปฏิเสธอยู่แล้ว (ไม่มี
+// constraint เชื่อมฟิลด์เหล่านี้ใน schema) — แก้ไขจริงอยู่ใน `processBoqLine`/`validateAndNormalizeProposal`
+// หลัง Zod parse (ที่ชนิดข้อมูลยืนยันแล้วว่าเป็นตัวเลขจริง ปลอดภัยกว่าคำนวณจาก `unknown`)
+// ---------------------------------------------------------------------------
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+/** ตั้งเป็น `undefined` แทนการ `delete` (กัน `@typescript-eslint/no-dynamic-delete` และไม่จำเป็นต้อง delete
+ * จริง — Zod เข้าถึง `input[key]` แบบเดียวกันไม่ว่า key จะขาดหายไปหรือมีค่า `undefined` อยู่ ผลลัพธ์ต่อการ
+ * parse ของ field ที่เป็น `.optional()` จึงเหมือนกันทุกประการ) */
+function dropNullField(obj: Record<string, unknown>, key: string): void {
+  if (obj[key] === null) {
+    obj[key] = undefined;
+  }
+}
+
+/** `null` ถือเป็น "ไม่ใส่ field นี้" เสมอ (field optional ที่ AI ส่ง `null` มาแทนการไม่ใส่ key เลย) แล้วตัด
+ * ข้อความยาวเกินเพดานพร้อม "…" — ไม่แตะค่าที่ไม่ใช่ string (ปล่อยให้ Zod ปฏิเสธ type ผิดตามปกติ) */
+function repairStringField(
+  obj: Record<string, unknown>,
+  key: string,
+  max: number,
+  warnings: string[],
+  label: string,
+): void {
+  dropNullField(obj, key);
+  const value = obj[key];
+  if (typeof value === 'string' && value.length > max) {
+    warnings.push(
+      `${label}.${key}: ข้อความยาว ${String(value.length)} ตัวอักษร เกินเพดาน ${String(max)} — ตัดส่วนเกินออกอัตโนมัติ (เนื้อหาหลักยังอยู่ครบ)`,
+    );
+    obj[key] = `${value.slice(0, max - 1)}…`;
+  }
+}
+
+/** normalize ตัวพิมพ์ใหญ่/ช่องว่างส่วนเกินของ enum ให้ตรงกับสมาชิกจริง — ค่าที่ trim/lowercase แล้วยังไม่ตรง
+ * สมาชิกใด ๆ จะถูกปล่อยผ่านโดยไม่แตะ (ให้ Zod ปฏิเสธพร้อม path ชัดเจน ไม่ใช่หน้าที่ชั้นนี้จะเดาความหมาย) */
+function repairEnumField(
+  obj: Record<string, unknown>,
+  key: string,
+  allowed: readonly string[],
+  warnings: string[],
+  label: string,
+): void {
+  dropNullField(obj, key);
+  const value = obj[key];
+  if (typeof value !== 'string' || allowed.includes(value)) {
+    return;
+  }
+  const normalized = value.trim().toLowerCase();
+  if (allowed.includes(normalized)) {
+    warnings.push(
+      `${label}.${key}: ค่า "${value}" ไม่ตรงรูปแบบ (ตัวพิมพ์ใหญ่/ช่องว่างส่วนเกิน) — ปรับเป็น "${normalized}" อัตโนมัติ`,
+    );
+    obj[key] = normalized;
+  }
+}
+
+function repairStringArrayField(
+  obj: Record<string, unknown>,
+  key: string,
+  itemMax: number,
+  arrayMax: number,
+  warnings: string[],
+  label: string,
+): void {
+  dropNullField(obj, key);
+  const value = obj[key];
+  if (!Array.isArray(value)) {
+    return;
+  }
+  const items: unknown[] = value.map((item: unknown, i: number) => {
+    if (typeof item === 'string' && item.length > itemMax) {
+      warnings.push(
+        `${label}.${key}[${String(i)}]: ยาวเกินเพดาน ${String(itemMax)} ตัวอักษร — ตัดส่วนเกินออกอัตโนมัติ`,
+      );
+      return `${item.slice(0, itemMax - 1)}…`;
+    }
+    return item;
+  });
+  if (items.length > arrayMax) {
+    warnings.push(
+      `${label}.${key}: มี ${String(items.length)} รายการ เกินเพดาน ${String(arrayMax)} — ตัดรายการส่วนเกินท้ายออกอัตโนมัติ`,
+    );
+    obj[key] = items.slice(0, arrayMax);
+  } else {
+    obj[key] = items;
+  }
+}
+
+function repairObjectArrayField(
+  obj: Record<string, unknown>,
+  key: string,
+  arrayMax: number,
+  warnings: string[],
+  label: string,
+  repairItem: (item: unknown, warnings: string[], itemLabel: string) => unknown,
+): void {
+  dropNullField(obj, key);
+  const value = obj[key];
+  if (!Array.isArray(value)) {
+    return;
+  }
+  const repaired = value.map((item: unknown, i: number) => repairItem(item, warnings, `${label}.${key}[${String(i)}]`));
+  if (repaired.length > arrayMax) {
+    warnings.push(
+      `${label}.${key}: มี ${String(repaired.length)} รายการ เกินเพดาน ${String(arrayMax)} — ตัดรายการส่วนเกินท้ายออกอัตโนมัติ`,
+    );
+    obj[key] = repaired.slice(0, arrayMax);
+  } else {
+    obj[key] = repaired;
+  }
+}
+
+function repairTrendRef(raw: unknown, warnings: string[], label: string): unknown {
+  const obj = asRecord(raw);
+  if (obj === undefined) return raw;
+  repairEnumField(obj, 'kind', ['item', 'indicator'], warnings, label);
+  repairStringField(obj, 'key', ID_MAX, warnings, label);
+  return obj;
+}
+
+function repairCitation(raw: unknown, warnings: string[], label: string): unknown {
+  const obj = asRecord(raw);
+  if (obj === undefined) return raw;
+  repairEnumField(obj, 'kind', ['budget_line', 'document', 'econ', 'web'], warnings, label);
+  switch (obj['kind']) {
+    case 'budget_line':
+      repairStringField(obj, 'source_id', ID_MAX, warnings, label);
+      repairStringField(obj, 'note', TEXT_MAX, warnings, label);
+      break;
+    case 'document':
+      repairStringField(obj, 'doc_id', ID_MAX, warnings, label);
+      dropNullField(obj, 'page');
+      repairStringField(obj, 'quote', TEXT_MAX, warnings, label);
+      break;
+    case 'econ':
+      repairStringField(obj, 'indicator', ID_MAX, warnings, label);
+      break;
+    case 'web':
+      repairStringField(obj, 'url', TEXT_MAX, warnings, label);
+      repairStringField(obj, 'title', LABEL_MAX, warnings, label);
+      repairStringField(obj, 'retrieved_at', 50, warnings, label);
+      repairStringField(obj, 'price_note', TEXT_MAX, warnings, label);
+      break;
+    default:
+      break;
+  }
+  return obj;
+}
+
+function repairCitationsField(obj: Record<string, unknown>, warnings: string[], label: string): void {
+  repairObjectArrayField(obj, 'citations', CITATIONS_PER_LINE_MAX, warnings, label, repairCitation);
+}
+
+function repairBoqLine(raw: unknown, warnings: string[], label: string): unknown {
+  const obj = asRecord(raw);
+  if (obj === undefined) return raw;
+  repairStringField(obj, 'id', ID_MAX, warnings, label);
+  repairStringField(obj, 'category', LABEL_MAX, warnings, label);
+  repairStringField(obj, 'item', TEXT_MAX, warnings, label);
+  repairStringField(obj, 'spec', TEXT_MAX, warnings, label);
+  repairStringField(obj, 'unit', LABEL_MAX, warnings, label);
+  repairEnumField(obj, 'basis', ['historical', 'market', 'estimate'], warnings, label);
+  repairEnumField(obj, 'confidence', ['high', 'medium', 'low'], warnings, label);
+  repairStringField(obj, 'rationale', LONG_TEXT_MAX, warnings, label);
+
+  dropNullField(obj, 'price_derivation');
+  const pd = asRecord(obj['price_derivation']);
+  if (pd !== undefined) {
+    repairStringField(pd, 'indicator', ID_MAX, warnings, `${label}.price_derivation`);
+  }
+
+  repairCitationsField(obj, warnings, label);
+
+  if (obj['trend_ref'] !== undefined) {
+    obj['trend_ref'] = repairTrendRef(obj['trend_ref'], warnings, `${label}.trend_ref`);
+  }
+  dropNullField(obj, 'trend_ref');
+
+  // total_thb ไม่ตรง qty×unit_price_thb → คำนวณใหม่ "หลัง" Zod parse ใน processBoqLine (ดูคอมเมนต์หัวบล็อกนี้)
+  return obj;
+}
+
+function repairScopeSection(raw: unknown, warnings: string[], label: string): unknown {
+  const obj = asRecord(raw);
+  if (obj === undefined) return raw;
+  repairStringField(obj, 'section', LABEL_MAX, warnings, label);
+  repairStringArrayField(obj, 'items', TEXT_MAX, ARRAY_MAX, warnings, label);
+  return obj;
+}
+
+function repairAssumption(raw: unknown, warnings: string[], label: string): unknown {
+  const obj = asRecord(raw);
+  if (obj === undefined) return raw;
+  repairStringField(obj, 'text', TEXT_MAX, warnings, label);
+  repairEnumField(obj, 'impact', ['high', 'medium', 'low'], warnings, label);
+  return obj;
+}
+
+function repairRisk(raw: unknown, warnings: string[], label: string): unknown {
+  const obj = asRecord(raw);
+  if (obj === undefined) return raw;
+  repairStringField(obj, 'text', TEXT_MAX, warnings, label);
+  repairStringField(obj, 'mitigation', TEXT_MAX, warnings, label);
+  return obj;
+}
+
+function repairComparable(raw: unknown, warnings: string[], label: string): unknown {
+  const obj = asRecord(raw);
+  if (obj === undefined) return raw;
+  repairStringField(obj, 'source_id', ID_MAX, warnings, label);
+  repairStringField(obj, 'agency', LABEL_MAX, warnings, label);
+  repairStringField(obj, 'item_name', TEXT_MAX, warnings, label);
+  repairStringField(obj, 'similarity_note', TEXT_MAX, warnings, label);
+  dropNullField(obj, 'unit_price_thb');
+  return obj;
+}
+
+function repairWebCitationObject(raw: unknown, warnings: string[], label: string): unknown {
+  const obj = asRecord(raw);
+  if (obj === undefined) return raw;
+  repairStringField(obj, 'url', TEXT_MAX, warnings, label);
+  repairStringField(obj, 'title', LABEL_MAX, warnings, label);
+  repairStringField(obj, 'retrieved_at', 50, warnings, label);
+  repairStringField(obj, 'price_note', TEXT_MAX, warnings, label);
+  return obj;
+}
+
+function repairAuditFinding(raw: unknown, warnings: string[], label: string): unknown {
+  const obj = asRecord(raw);
+  if (obj === undefined) return raw;
+  repairStringField(obj, 'text', TEXT_MAX, warnings, label);
+  repairEnumField(obj, 'severity', ['info', 'warn', 'high'], warnings, label);
+  repairCitationsField(obj, warnings, label);
+  return obj;
+}
+
+function repairIllustrationRef(raw: unknown, warnings: string[], label: string): unknown {
+  const obj = asRecord(raw);
+  if (obj === undefined) return raw;
+  repairStringField(obj, 'illustration_id', ID_MAX, warnings, label);
+  repairStringField(obj, 'title', LABEL_MAX, warnings, label);
+  repairStringField(obj, 'caption', TEXT_MAX, warnings, label);
+  repairEnumField(obj, 'kind', ['map', 'cross_section', 'isometric', 'diagram'], warnings, label);
+  return obj;
+}
+
+function repairStatCard(raw: unknown, warnings: string[], label: string): unknown {
+  const obj = asRecord(raw);
+  if (obj === undefined) return raw;
+  repairStringField(obj, 'headline_th', LABEL_MAX, warnings, label);
+  if (obj['trend_ref'] !== undefined) {
+    obj['trend_ref'] = repairTrendRef(obj['trend_ref'], warnings, `${label}.trend_ref`);
+  }
+  return obj;
+}
+
+function repairRequesterContext(raw: unknown, warnings: string[], label: string): unknown {
+  const obj = asRecord(raw);
+  if (obj === undefined) return raw;
+  repairStringField(obj, 'area', LABEL_MAX, warnings, label);
+  repairStringField(obj, 'owner_agency', LABEL_MAX, warnings, label);
+  repairStringField(obj, 'target_group', LABEL_MAX, warnings, label);
+  dropNullField(obj, 'duration_months');
+  return obj;
+}
+
+function repairTotalsObject(raw: unknown): unknown {
+  const obj = asRecord(raw);
+  if (obj === undefined) return raw;
+  dropNullField(obj, 'contingency_pct');
+  dropNullField(obj, 'contingency_thb');
+  return obj;
+}
+
+/** จุดเข้าเดียวของ repair layer — ส่งเป็น `repairInput` ให้ `createTool` (`toolKit.ts`) เรียกก่อน Zod parse
+ * เสมอ ดูคอมเมนต์หัวบล็อกนี้สำหรับขอบเขต (ซ่อมอะไรได้/ห้ามซ่อมอะไร) */
+export function repairProposalInput(raw: unknown): { data: unknown; warnings: string[] } {
+  const warnings: string[] = [];
+  const obj = asRecord(raw);
+  if (obj === undefined) {
+    // ไม่ใช่ object เลย (เช่น array/string/number/null) — ไม่มีอะไรให้ซ่อม ปล่อยให้ Zod ปฏิเสธตามปกติ
+    return { data: raw, warnings };
+  }
+
+  repairStringField(obj, 'title', LABEL_MAX, warnings, 'proposal');
+  repairStringField(obj, 'summary', LONG_TEXT_MAX, warnings, 'proposal');
+  repairEnumField(obj, 'mode', ['audit', 'draft'], warnings, 'proposal');
+
+  if (obj['requester_context'] !== undefined) {
+    obj['requester_context'] = repairRequesterContext(
+      obj['requester_context'],
+      warnings,
+      'proposal.requester_context',
+    );
+  }
+
+  repairStringArrayField(obj, 'objectives', TEXT_MAX, ARRAY_MAX, warnings, 'proposal');
+  repairObjectArrayField(obj, 'scope_and_specs', ARRAY_MAX, warnings, 'proposal', repairScopeSection);
+  repairObjectArrayField(obj, 'assumptions', ARRAY_MAX, warnings, 'proposal', repairAssumption);
+  repairObjectArrayField(obj, 'boq', BOQ_MAX, warnings, 'proposal', repairBoqLine);
+  repairObjectArrayField(obj, 'comparables', ARRAY_MAX, warnings, 'proposal', repairComparable);
+  repairObjectArrayField(obj, 'risks', ARRAY_MAX, warnings, 'proposal', repairRisk);
+  repairObjectArrayField(obj, 'audit_findings', ARRAY_MAX, warnings, 'proposal', repairAuditFinding);
+  repairStringArrayField(obj, 'open_questions', TEXT_MAX, ARRAY_MAX, warnings, 'proposal');
+  repairObjectArrayField(obj, 'citations_web', ARRAY_MAX, warnings, 'proposal', repairWebCitationObject);
+  repairObjectArrayField(obj, 'illustrations', ILLUSTRATIONS_MAX, warnings, 'proposal', repairIllustrationRef);
+  repairObjectArrayField(obj, 'stat_cards', STAT_CARDS_MAX, warnings, 'proposal', repairStatCard);
+
+  if (obj['totals'] !== undefined) {
+    obj['totals'] = repairTotalsObject(obj['totals']);
+  }
+
+  return { data: obj, warnings };
+}
 
 // ---------------------------------------------------------------------------
 // Validator — citation integrity + totals (05 §5 ท้ายหัวข้อ)
@@ -375,6 +713,18 @@ function priceTraceableViaInflation(
   return Math.abs(line.unit_price_thb - found.adjustedThb) <= 1;
 }
 
+/** T-410 ข้อ 3 (หลัง demo จริง 2569-09-20) — `trend_ref` เป็น pointer ให้ UI โหลด series เองมาวาดกราฟ
+ * (ไม่ใช่ตัวเลขอ้างอิงที่ต้อง trace ค่า) ดังนั้นสำหรับ `kind:'indicator'` การเคยเห็นค่าจริงของตัวชี้วัดนั้น
+ * ผ่าน `get_econ_indicator` (ปีใดก็ได้) ก็ถือว่า "ใช้ trend_ref ชี้ไปตัวชี้วัดนั้นได้" เท่ากับผ่าน
+ * `get_price_trend` แล้ว — `hasEconIndicatorAny` เป็น optional (backward-compat ตาม T-307) ไม่มี = ต้องผ่าน
+ * `hasTrendRef` เท่านั้นเหมือนเดิมทุกประการ */
+function isTrendRefUsable(ref: TrendRef, ctx: ToolContext): boolean {
+  if (ctx.toolLog.hasTrendRef(ref)) {
+    return true;
+  }
+  return ref.kind === 'indicator' && (ctx.toolLog.hasEconIndicatorAny?.(ref.key) ?? false);
+}
+
 function processBoqLine(line: BoqLine, ctx: ToolContext, warnings: string[]): BoqLine {
   const label = `BOQ "${line.item}" (id=${line.id})`;
   const originalCount = line.citations.length;
@@ -537,15 +887,26 @@ function processBoqLine(line: BoqLine, ctx: ToolContext, warnings: string[]): Bo
     }
   }
 
+  // main thread (หลัง demo จริง 2569-09-20) — เดิมแค่เตือนแล้วปล่อยเลขที่ไม่ตรงกันของ AI ไว้เฉย ๆ (ผู้ใช้ต้อง
+  // แก้เอง) เปลี่ยนเป็นคำนวณ total_thb ใหม่จาก qty×unit_price_thb ให้อัตโนมัติเสมอ (ตัวเลขสองตัวนี้ผ่านการ
+  // ตรวจ/ลดระดับ basis ข้างบนแล้ว — คำนวณคูณตรงไม่มีอะไรให้ "เดา" ต่างจาก unit_price/qty ที่เป็นการประมาณ
+  // ของโมเดลเองซึ่งห้ามแก้ให้) ยังคง warning ไว้เพื่อความโปร่งใส (N3) — แค่ไม่ปล่อยเลขที่คำนวณผิดแพร่ต่อ
+  let totalThb = line.total_thb;
   const expectedTotal = line.qty * line.unit_price_thb;
-  if (Math.abs(expectedTotal - line.total_thb) > EPSILON_THB) {
+  if (Math.abs(expectedTotal - totalThb) > EPSILON_THB) {
     warnings.push(
-      `${label}: total_thb (${String(line.total_thb)}) ไม่ตรงกับ qty×unit_price_thb (${expectedTotal.toFixed(2)}) เกิน ±1 บาท`,
+      `${label}: total_thb (${String(totalThb)}) ไม่ตรงกับ qty×unit_price_thb (${expectedTotal.toFixed(2)}) — คำนวณ total_thb ใหม่จาก qty×unit_price_thb ให้อัตโนมัติ (ไม่แก้ qty/unit_price_thb)`,
     );
+    totalThb = expectedTotal;
   }
 
+  // T-410 ข้อ 3 (หลัง demo จริง 2569-09-20) — trend_ref เป็นแค่ pointer ให้ UI โหลด series เองมาวาดกราฟ
+  // (ไม่ใช่ตัวเลขอ้างอิงที่ต้อง trace ค่าตรง ๆ เหมือน citation อื่น) ถ้าโมเดลเคยเรียก get_econ_indicator ของ
+  // ตัวชี้วัดนี้แล้ว (มีค่าจริงอย่างน้อย 1 ปีใน ToolLog) ก็ถือว่าใช้ trend_ref ชี้ไปตัวชี้วัดนั้นได้ ไม่ต้อง
+  // บังคับเรียก get_price_trend ซ้ำสำหรับตัวชี้วัดเดียวกันอีกรอบ (ไม่กระทบ citation integrity — ไม่มีตัวเลข
+  // ใดถูก "ยืนยัน" จาก trend_ref เอง ตัวเลขจริงมาจาก series ที่ UI ดึงเองผ่าน facade เสมอ)
   let trendRef = line.trend_ref;
-  if (trendRef !== undefined && !ctx.toolLog.hasTrendRef(trendRef)) {
+  if (trendRef !== undefined && !isTrendRefUsable(trendRef, ctx)) {
     warnings.push(
       `${label}: trend_ref (${trendRef.kind}:${trendRef.key}) ไม่เคยผ่าน get_price_trend ในบทสนทนานี้ — ตัดออก`,
     );
@@ -559,7 +920,7 @@ function processBoqLine(line: BoqLine, ctx: ToolContext, warnings: string[]): Bo
     qty: line.qty,
     unit: line.unit,
     unit_price_thb: line.unit_price_thb,
-    total_thb: line.total_thb,
+    total_thb: totalThb,
     basis,
     confidence,
     rationale: line.rationale,
@@ -675,7 +1036,7 @@ export function validateAndNormalizeProposal(
   });
 
   const statCards = input.stat_cards.filter((s) => {
-    if (!ctx.toolLog.hasTrendRef(s.trend_ref)) {
+    if (!isTrendRefUsable(s.trend_ref, ctx)) {
       warnings.push(
         `stat_cards: trend_ref (${s.trend_ref.kind}:${s.trend_ref.key}) ไม่เคยผ่าน get_price_trend ในบทสนทนานี้ — ตัดออก`,
       );
@@ -695,27 +1056,33 @@ export function validateAndNormalizeProposal(
     ),
   }));
 
+  // main thread (หลัง demo จริง 2569-09-20) — totals ที่ไม่ตรงผลรวม boq[].total_thb (ซึ่งอาจถูกคำนวณใหม่
+  // ไปแล้วข้างบนใน processBoqLine) หรือ grand_total ที่ไม่ตรง subtotal+contingency เดิมแค่เตือนแล้วปล่อย
+  // เลขผิดไว้ให้ผู้ใช้แก้เอง — เปลี่ยนเป็นคำนวณใหม่ให้อัตโนมัติเสมอ (เป็นเลขคณิตล้วนจากค่าที่ตรวจแล้ว ไม่ใช่
+  // การประมาณ) ยังคง warning ไว้เพื่อความโปร่งใส (N3)
+  let totals = input.totals;
   const sumBoq = boq.reduce((sum, line) => sum + line.total_thb, 0);
-  if (Math.abs(sumBoq - input.totals.subtotal_thb) > EPSILON_THB) {
+  if (Math.abs(sumBoq - totals.subtotal_thb) > EPSILON_THB) {
     warnings.push(
-      `totals.subtotal_thb (${String(input.totals.subtotal_thb)}) ไม่ตรงกับผลรวม boq[].total_thb (${sumBoq.toFixed(2)}) เกิน ±1 บาท`,
+      `totals.subtotal_thb (${String(totals.subtotal_thb)}) ไม่ตรงกับผลรวม boq[].total_thb (${sumBoq.toFixed(2)}) — คำนวณ subtotal_thb ใหม่จากผลรวม boq ให้อัตโนมัติ`,
     );
+    totals = { ...totals, subtotal_thb: sumBoq };
   }
   const contingencyAmount =
-    input.totals.contingency_thb ??
-    (input.totals.contingency_pct !== undefined
-      ? (input.totals.subtotal_thb * input.totals.contingency_pct) / 100
-      : 0);
-  const expectedGrand = input.totals.subtotal_thb + contingencyAmount;
-  if (Math.abs(expectedGrand - input.totals.grand_total_thb) > EPSILON_THB) {
+    totals.contingency_thb ??
+    (totals.contingency_pct !== undefined ? (totals.subtotal_thb * totals.contingency_pct) / 100 : 0);
+  const expectedGrand = totals.subtotal_thb + contingencyAmount;
+  if (Math.abs(expectedGrand - totals.grand_total_thb) > EPSILON_THB) {
     warnings.push(
-      `totals.grand_total_thb (${String(input.totals.grand_total_thb)}) ไม่สอดคล้องกับ subtotal+contingency (${expectedGrand.toFixed(2)}) เกิน ±1 บาท`,
+      `totals.grand_total_thb (${String(totals.grand_total_thb)}) ไม่สอดคล้องกับ subtotal+contingency (${expectedGrand.toFixed(2)}) — คำนวณ grand_total_thb ใหม่ให้อัตโนมัติ`,
     );
+    totals = { ...totals, grand_total_thb: expectedGrand };
   }
 
   const proposal: Proposal = {
     ...input,
     boq,
+    totals,
     citations_web: citationsWeb,
     comparables,
     illustrations,
@@ -747,18 +1114,27 @@ function generateProposalId(): string {
 
 // ไม่มี await ในนี้จริง ๆ (validator เป็น pure function ทั้งหมด) — ไม่ใช้ `async` เพื่อไม่ให้
 // eslint (`@typescript-eslint/require-await`) เตือน แต่ `createTool` ต้องการ handler ที่คืน Promise
-function handler(input: Proposal, ctx: ToolContext): Promise<EmitProposalOutput> {
+//
+// `repairWarnings` (T-toolKit `repairInput`, หลัง demo จริง 2569-09-20) — ข้อความ warning จาก repair layer
+// ที่รันบน `rawInput` ก่อน Zod parse (`repairProposalInput` ด้านบน) รวมไว้ "หน้าสุด" ของ `warnings[]` เสมอ
+// เพื่อให้ผู้ใช้/โมเดลเห็นก่อนว่า input ถูกปรับอัตโนมัติตรงไหนบ้าง ก่อนเห็น warning จากการตรวจ citation
+function handler(
+  input: Proposal,
+  ctx: ToolContext,
+  repairWarnings: readonly string[],
+): Promise<EmitProposalOutput> {
   const { proposal, warnings } = validateAndNormalizeProposal(input, ctx);
+  const allWarnings = [...repairWarnings, ...warnings];
   const attempt = ctx.toolLog.recordProposalAttempt();
   if (attempt > MAX_RECOMMENDED_ATTEMPTS) {
-    warnings.push(
+    allWarnings.push(
       `นี่คือรอบแก้ไขที่ ${String(attempt)} (แนะนำไม่เกิน ${String(MAX_RECOMMENDED_ATTEMPTS)} รอบ) — ระบบจะแสดงผลตามที่ได้พร้อม badge ให้ผู้ใช้ตัดสินใจต่อ`,
     );
   }
   return Promise.resolve({
     ok: true,
     proposal_id: generateProposalId(),
-    warnings,
+    warnings: allWarnings,
     proposal,
     attempt,
   });
@@ -766,6 +1142,7 @@ function handler(input: Proposal, ctx: ToolContext): Promise<EmitProposalOutput>
 
 export const emitProposalTool = createTool({
   name: 'emit_proposal',
+  repairInput: repairProposalInput,
   description:
     'ส่งข้อเสนอโครงการฉบับสมบูรณ์ (BOQ + citations + totals) — ทุกตัวเลขที่ basis≠estimate ต้องมี ' +
     'citation ที่มาจากผล tool จริงในบทสนทนานี้เท่านั้น (ตรวจกับ ToolLog อัตโนมัติ อ้างอิงที่หาไม่พบจะถูก ' +

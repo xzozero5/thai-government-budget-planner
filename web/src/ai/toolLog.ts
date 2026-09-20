@@ -81,6 +81,13 @@ export interface ToolLog {
   hasSourceId(sourceId: string): boolean;
   hasDocId(docId: string): boolean;
   hasEconValue(indicator: string, yearBe: number): boolean;
+  /** T-410 ข้อ 3 (หลัง demo จริง 2569-09-20) — true เมื่อเคยเรียก `get_econ_indicator` สำเร็จ (ค่าไม่ null)
+   * สำหรับ `indicator` นี้ "ปีใดก็ได้" ในบทสนทนานี้ — ใช้ผ่อนเกณฑ์ `trend_ref.kind==='indicator'` ใน
+   * `tools/proposal.ts`: trend_ref เป็นแค่ pointer ให้ UI โหลด series เองมาวาดกราฟ ไม่ใช่ตัวเลขอ้างอิงที่
+   * ต้อง trace ค่าตรง ๆ เหมือน citation อื่น ดังนั้นการเคยเห็นตัวชี้วัดนี้จริงก็เพียงพอ ไม่จำเป็นต้องบังคับให้
+   * เรียก `get_price_trend` ซ้ำสำหรับตัวชี้วัดเดียวกัน (optional เหมือนเมธอด T-307 อื่น ๆ — ดูคอมเมนต์หัวไฟล์
+   * เรื่อง backward-compat; ไม่มีเมธอดนี้ = พฤติกรรมเดิมทุกประการ คือต้องผ่าน `hasTrendRef` เท่านั้น) */
+  hasEconIndicatorAny?(indicator: string): boolean;
   /** คืน entry ที่ตรงทั้ง fromAmountThb/fromYearBe/toYearBe/indicator (ไม่รวม factor — ใช้เทียบ factor
    * ที่ AI ประกาศใน `price_derivation` ว่าตรงกับผลจริงของ `adjust_for_inflation` หรือไม่) */
   findInflationAdjustment(
@@ -153,6 +160,7 @@ export function createToolLog(): ToolLog {
   const sourceShards = new Map<string, string>();
   const docIds = new Set<string>();
   const econValues = new Set<string>();
+  const econIndicatorsSeen = new Set<string>();
   const inflationAdjustments = new Map<string, InflationAdjustmentLogEntry>();
   const trendRefs = new Set<string>();
   const illustrationIds = new Set<string>();
@@ -186,6 +194,7 @@ export function createToolLog(): ToolLog {
     },
     recordEconValue(indicator, yearBe) {
       econValues.add(econKey(indicator, yearBe));
+      econIndicatorsSeen.add(indicator);
     },
     recordInflationAdjustment(entry) {
       inflationAdjustments.set(inflationKey(entry), entry);
@@ -221,6 +230,9 @@ export function createToolLog(): ToolLog {
     },
     hasEconValue(indicator, yearBe) {
       return econValues.has(econKey(indicator, yearBe));
+    },
+    hasEconIndicatorAny(indicator) {
+      return econIndicatorsSeen.has(indicator);
     },
     findInflationAdjustment(key) {
       return inflationAdjustments.get(inflationKey(key));
@@ -290,6 +302,7 @@ export function createToolLog(): ToolLog {
       sourceShards.clear();
       docIds.clear();
       econValues.clear();
+      econIndicatorsSeen.clear();
       inflationAdjustments.clear();
       trendRefs.clear();
       illustrationIds.clear();

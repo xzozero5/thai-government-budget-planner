@@ -103,6 +103,35 @@ describe('ToolActivityCard (06 §7 #25)', () => {
       expect(screen.getByText('search_catalog: พบ 5 รายการ')).toBeInTheDocument();
     });
 
+    it('T-410 ข้อ 1 (หลัง demo จริง 2569-09-20): status=error มี summary.reason → แสดงเหตุผลจริงแทน "เรียกใช้ไม่สำเร็จ" เฉย ๆ', () => {
+      render(
+        <ToolActivityCard
+          activity={activity({
+            status: 'error',
+            inputSummary: 'search_catalog: เรียกใช้ไม่สำเร็จ',
+            summary: { tool: 'search_catalog', status: 'error', reason: 'คำค้นว่างเปล่า' },
+          })}
+        />,
+      );
+      expect(
+        screen.getByText(t('chat.tool.search_catalog.error', { reason: 'คำค้นว่างเปล่า' })),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('search_catalog: เรียกใช้ไม่สำเร็จ')).not.toBeInTheDocument();
+    });
+
+    it('status=error ไม่มี summary.reason → fallback ข้อความเดิม ("เรียกใช้ไม่สำเร็จ")', () => {
+      render(
+        <ToolActivityCard
+          activity={activity({
+            status: 'error',
+            inputSummary: 'search_catalog: เรียกใช้ไม่สำเร็จ',
+            summary: { tool: 'search_catalog', status: 'error' },
+          })}
+        />,
+      );
+      expect(screen.getByText('search_catalog: เรียกใช้ไม่สำเร็จ')).toBeInTheDocument();
+    });
+
     it('web_search ยังต้องแสดง query เสมอแม้มี summary (ไม่ใช้ chat.tool.web_search.done)', () => {
       render(
         <ToolActivityCard

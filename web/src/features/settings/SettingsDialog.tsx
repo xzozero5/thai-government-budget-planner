@@ -112,9 +112,11 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps): ReactEle
         <div className="flex flex-col gap-0.5 text-xs text-fg-muted">
           <p>{t('settings.modelCostHint')}</p>
           <p>
-            {t('common.costPerProposalEstimate', {
-              usd: formatNumber(costEstimate.usd, { fractionDigits: 2 }),
-              thb: formatNumber(usdToThbApprox(costEstimate.usd), { fractionDigits: 0 }),
+            {t('common.costPerProposalRange', {
+              usdMin: formatNumber(costEstimate.minUsd, { fractionDigits: 2 }),
+              usdMax: formatNumber(costEstimate.maxUsd, { fractionDigits: 2 }),
+              thbMin: formatNumber(usdToThbApprox(costEstimate.minUsd), { fractionDigits: 0 }),
+              thbMax: formatNumber(usdToThbApprox(costEstimate.maxUsd), { fractionDigits: 0 }),
               date: COST_ESTIMATE_CHECKED_AT_TH,
             })}
           </p>

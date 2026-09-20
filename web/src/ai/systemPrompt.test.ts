@@ -126,6 +126,12 @@ describe('buildSystemBlocks', () => {
     expect(text).toContain('get_price_trend');
   });
 
+  it('T-410 ข้อ 3 (หลัง demo จริง 2569-09-20): มีคำแนะนำให้เรียกเครื่องมือที่อิสระต่อกันพร้อมกันในรอบเดียว', () => {
+    const [cached] = buildSystemBlocks(baseInput());
+    const text = cached?.text ?? '';
+    expect(text).toContain('เรียกเครื่องมือหลายตัวพร้อมกัน');
+  });
+
   it('แนบ econ indicator ที่ส่งเข้ามาไว้ในบล็อกคงที่ (JSON)', () => {
     const [cached] = buildSystemBlocks(baseInput());
     expect(cached?.text).toContain('cpi_headline_index');

@@ -142,6 +142,29 @@ describe('runAgentTurn — tool loop 2 รอบ', () => {
     expect(getEconValue).toHaveBeenCalledTimes(1); // เรียกจริงเฉพาะรอบที่ผ่าน schema
   });
 
+  it('T-410 ข้อ 1 (หลัง demo จริง 2569-09-20): tool error แนบ `summary.reason` เป็นข้อความไทยสั้นจาก message_th', async () => {
+    const ctx = makeCtx();
+    const round1 = makeMessage({
+      content: [makeToolUseBlock('tu_bad', 'get_econ_indicator', { indicators: [], years_be: [2567] })], // ผิด schema (min 1)
+      stop_reason: 'tool_use',
+    });
+    const round2 = makeMessage({ content: [makeTextBlock('เรียบร้อย')], stop_reason: 'end_turn' });
+    const fake = createFakeAnthropicClient({
+      turns: [
+        { kind: 'message', message: round1 },
+        { kind: 'message', message: round2 },
+      ],
+    });
+    const events: AgentEvent[] = [];
+    await runAgentTurn(baseInput({ client: fake.client, toolContext: ctx, onEvent: (e) => events.push(e) }));
+
+    const toolResultEvent = events.find((e) => e.type === 'tool_result' && e.isError);
+    if (toolResultEvent?.type !== 'tool_result') throw new Error('expected tool_result event');
+    expect(toolResultEvent.summary.reason).toBeDefined();
+    expect(toolResultEvent.summary.reason?.length ?? 0).toBeGreaterThan(0);
+    expect(toolResultEvent.summary.reason?.length ?? 0).toBeLessThanOrEqual(160);
+  });
+
   it('parallel 3 tools → tool_result ทุกตัวอยู่ใน user message เดียว เรียงลำดับตาม tool_use เดิม', async () => {
     const getEconValue = vi.fn().mockResolvedValue({
       value: 1,
@@ -382,6 +405,56 @@ describe('runAgentTurn — เพดานรอบ (max_rounds)', () => {
     expect(fake.callCount()).toBe(1);
     expect(result.endedBecause).toBe('max_rounds');
     expect(events.some((e) => e.type === 'warning' && e.messageTh.includes('เพดาน'))).toBe(true);
+  });
+
+  it('T-410 ข้อ 3 (หลัง demo จริง 2569-09-20): ชนเพดานรอบแต่ emit_proposal สำเร็จไปแล้วใน turn นี้ → ไม่เตือนให้กด "ทำต่อ"', async () => {
+    const ctx = makeCtx();
+    ctx.toolLog.recordSourceId('src-1');
+    const proposal = {
+      version: 1,
+      title: 'ทดสอบ',
+      summary: 'สรุปโครงการทดสอบสำหรับ agent loop',
+      mode: 'draft',
+      requester_context: { fiscal_year_be: 2570 },
+      objectives: ['ทดสอบ'],
+      scope_and_specs: [{ section: 'ทั่วไป', items: ['รายการ'] }],
+      assumptions: [],
+      boq: [
+        {
+          id: 'b1',
+          category: 'c',
+          item: 'i',
+          qty: 1,
+          unit: 'u',
+          unit_price_thb: 100,
+          total_thb: 100,
+          basis: 'historical',
+          confidence: 'high',
+          rationale: 'r',
+          citations: [{ kind: 'budget_line', source_id: 'src-1' }],
+        },
+      ],
+      totals: { subtotal_thb: 100, vat_included: false, grand_total_thb: 100 },
+      comparables: [],
+      risks: [],
+      open_questions: [],
+      citations_web: [],
+      illustrations: [],
+      stat_cards: [],
+    };
+    const round1 = makeMessage({
+      content: [makeToolUseBlock('tu_p', 'emit_proposal', proposal)],
+      stop_reason: 'tool_use',
+    });
+    const fake = createFakeAnthropicClient({ turns: [{ kind: 'message', message: round1 }] });
+    const events: AgentEvent[] = [];
+    const result = await runAgentTurn(
+      baseInput({ client: fake.client, toolContext: ctx, budget: { maxToolRounds: 1 }, onEvent: (e) => events.push(e) }),
+    );
+
+    expect(result.endedBecause).toBe('max_rounds');
+    expect(result.proposal).toBeDefined();
+    expect(events.some((e) => e.type === 'warning' && e.messageTh.includes('เพดาน'))).toBe(false);
   });
 });
 

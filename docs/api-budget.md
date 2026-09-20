@@ -33,6 +33,13 @@ Key อยู่ที่ `web/.env.local` (`VITE_EVAL_ANTHROPIC_API_KEY`; gitig
 - เพดานต่อ case 0.12 ตึงเกินสำหรับ flow ครบ → ใช้ `--max-usd-per-case-haiku 0.15` ในรอบ core8 (Sonnet คง 0.35–0.40; ยอดรวมยังถูกบังคับด้วย ledger ≤ 1.80)
 - ประมาณการสำหรับผู้ใช้จริง: **Haiku ≈ 0.13 USD/ข้อเสนอ, Sonnet 5 ≈ 0.4 USD/ข้อเสนอ** `[UNVERIFIED — Sonnet ยังไม่ได้วัดจริง คูณจากอัตราราคา 3 เท่า]` → ต้องแสดงในหน้า KeyGate/Settings
 
+### demo จริงครั้งแรก 2569-09-20: 0.52 USD — จ่ายด้วย key ของคุณนิวเอง ไม่นับในงบ 5 USD ของโปรเจกต์
+- โจทย์: 2 รายการ + ปรับเงินเฟ้อ (โมเดล Haiku 4.5) ผ่านหน้าเว็บจริง (ไม่ใช่ eval harness) — 1 ข้อเสนอ = **0.52 USD**, ชนเพดานจำนวนรอบเครื่องมือสูงสุด (8 รอบ) ก่อนจบ
+- ลำดับ tool ที่เกิดขึ้นจริง: `search_catalog` ✓ → `query_budget_lines` ✗ ✗ → ✓ (12 รายการ) → ✗ → … → `adjust_for_inflation` ✓ → `emit_proposal` ✗ → `emit_proposal` ✓ → ชนเพดาน 8 รอบ — เสียรอบ/เงินไปกับการเรียกที่ล้มซ้ำ ๆ (`query_budget_lines` กว้างเกินเพดานสแกน, `emit_proposal` ล้มรอบแรกด้วยปัญหา schema ที่ซ่อมได้)
+- ผลกระทบ/สิ่งที่แก้แล้ว: (1) `query_budget_lines` auto-narrow ปีล่าสุด 3→2→1 เมื่อชน `QueryTooBroadError` (คอมมิต `2092521`) (2) `emit_proposal` เพิ่ม repair layer ก่อน Zod parse — normalize string/array เกินเพดาน, enum พิมพ์ใหญ่/เว้นวรรค, `null` ของ field optional แทนการ reject ทั้งก้อน (ลดโอกาสล้มรอบแรกที่พบใน demo นี้) (3) เหตุผลของ tool error แสดงบนการ์ดแทน "เรียกใช้ไม่สำเร็จ" เฉย ๆ (4) ถ้า `emit_proposal` สำเร็จแล้วในรอบนั้นไม่เตือนให้กด "ทำต่อ" อีก
+- **ค่าใช้จ่ายนี้จ่ายด้วย API key ส่วนตัวของคุณนิว ไม่ได้หักจากเครดิต 5 USD ของโปรเจกต์** (เครดิตโปรเจกต์ยังคงเหลือตามยอดสะสมด้านบน) — ใช้เป็นหลักฐาน "ต้นทุนต่อข้อเสนอที่ผู้ใช้จริงจะเจอ" เท่านั้น
+- ปรับประมาณการที่แสดงผู้ใช้ (`ai/session/costEstimates.ts`) จากตัวเลขจุดเดียว 0.13 USD → ช่วง **0.15–0.55 USD** (Haiku, ครอบคลุมค่าที่วัดจริงทั้ง 3 ครั้ง: 0.1202, 0.1283, 0.52) พร้อมป้าย "ยังไม่ได้วัดจริง" สำหรับ Sonnet/Opus (คำนวณจากอัตราส่วนราคา)
+
 ### ข้อค้นพบด้านต้นทุนจาก case แรก (2569-09-20)
 - prefix system+tools ≈ **28.4k tokens** ต่อ session (cache write ครั้งแรก; Haiku ≈ 0.037 USD, Sonnet 5 ≈ 3 เท่า) — ภาษาไทย ≈ 0.9 token/ตัวอักษร
 - ผล `search_catalog`/`query_budget_lines` รอบละ ≈ 10k tokens; `emit_proposal` ≈ 6.4k output tokens

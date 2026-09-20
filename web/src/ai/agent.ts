@@ -24,6 +24,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { costFromUsage } from './pricing';
 import type { EffortLevel, ModelId } from './models';
 import { buildRequestParams, type SystemPromptInput } from './requestBuilder';
+import { redactSecrets } from './session/redactSecrets';
 import type { ChatMode } from './systemPrompt';
 import { TOOL_REGISTRY, toApiTools, type ToolContext } from './tools';
 import { EmitProposalOutputSchema, type EmitProposalOutput } from './tools/proposal';
@@ -94,6 +95,10 @@ export interface ToolResultSummary {
   count?: number;
   /** คำค้นที่ผู้ใช้/โมเดลส่งมา — มีเฉพาะ tool ที่รับพารามิเตอร์ชื่อ `query` */
   query?: string;
+  /** T-410 ข้อ 1 (หลัง demo จริง 2569-09-20 — การ์ด error เดิมโชว์แค่ "เรียกใช้ไม่สำเร็จ" ไม่มีเหตุผล) —
+   * ข้อความไทยสั้น (≤ 160 ตัวอักษร, ผ่าน `redactSecrets` แล้ว) ดึงจาก `message_th` ของ tool error จริง
+   * (`tools/toolKit.ts#invalidInputContent`/`toolErrorContent`) — มีเฉพาะ `status:'error'` เท่านั้น */
+  reason?: string;
 }
 
 export type AgentEvent =
@@ -315,6 +320,36 @@ function processServerToolBlocks(
 // tool_use เดิม (ADR-006 ข้อ 5)
 // ---------------------------------------------------------------------------
 
+/** T-410 ข้อ 1 (หลัง demo จริง 2569-09-20 — การ์ด error เดิมโชว์แค่ "เรียกใช้ไม่สำเร็จ" ไม่มีเหตุผล) —
+ * เพดานความยาวของ `reason` ที่แสดงใต้ชื่อ tool ในการ์ด error (การ์ดไม่ใช่ที่แสดงข้อความยาว — ให้สั้น อ่านจบ
+ * ในบรรทัดเดียว) */
+const MAX_TOOL_ERROR_REASON_LENGTH = 160;
+
+function truncateToolErrorReason(reason: string): string {
+  return reason.length > MAX_TOOL_ERROR_REASON_LENGTH
+    ? `${reason.slice(0, MAX_TOOL_ERROR_REASON_LENGTH - 1)}…`
+    : reason;
+}
+
+/** ดึง `message_th` จาก content ของ tool ที่ error — `toolKit.ts#run()` ห่อ error เป็น JSON เสมอ
+ * (`{error:true, message_th, issues?}` จาก `invalidInputContent`/`toolErrorContent`) แต่ฟังก์ชันนี้กัน
+ * ไว้ด้วย try/catch เผื่อ tool ในอนาคต/นอก `ai/**` ไม่ทำตามสัญญานี้ (parse ไม่ได้ = ไม่มี reason ให้แสดง
+ * ไม่ใช่ throw) — ผ่าน `redactSecrets` เสมอก่อนคืนค่า (T-307 §9 ข้อ 7) */
+function extractToolErrorReason(content: string): string | undefined {
+  try {
+    const parsed: unknown = JSON.parse(content);
+    if (parsed !== null && typeof parsed === 'object') {
+      const messageTh = (parsed as { message_th?: unknown }).message_th;
+      if (typeof messageTh === 'string' && messageTh.length > 0) {
+        return redactSecrets(truncateToolErrorReason(messageTh));
+      }
+    }
+  } catch {
+    // content ไม่ใช่ JSON ที่ parse ได้ — ไม่มี reason ให้แสดง (ไม่ใช่ข้อผิดพลาดร้ายแรง)
+  }
+  return undefined;
+}
+
 /** สรุปผลลัพธ์ของ tool 1 ตัวแบบมีโครงสร้าง (T-410 ข้อ 3, US-2.2) — `summaryTh` ยังเป็นข้อความอังกฤษ
  * ปนไทยแบบเดิมทุกตัวอักษร (backward compatible กับ UI ปัจจุบันที่ยังอ่าน field นี้ตรง ๆ) ส่วน `summary`
  * เป็น field ใหม่ให้ผู้เรียก (เช่น `chatController`) map เข้า copy key `chat.tool.*` เอง โดยไม่ต้อง
@@ -332,7 +367,11 @@ function buildToolResultSummary(
   });
 
   if (result.isError) {
-    return { summaryTh: `${name}: เรียกใช้ไม่สำเร็จ`, summary: withQuery({ status: 'error' }) };
+    const reason = extractToolErrorReason(result.content);
+    return {
+      summaryTh: `${name}: เรียกใช้ไม่สำเร็จ`,
+      summary: withQuery({ status: 'error', ...(reason !== undefined ? { reason } : {}) }),
+    };
   }
   const output = result.output;
   if (output !== null && typeof output === 'object') {
@@ -477,10 +516,15 @@ export async function runAgentTurn(input: RunAgentTurnInput): Promise<RunAgentTu
       return finish(null, 'budget');
     }
     if (round >= maxToolRounds) {
-      emit({
-        type: 'warning',
-        messageTh: `ถึงเพดานจำนวนรอบเครื่องมือสูงสุดต่อการสนทนา (${String(maxToolRounds)} รอบ) แล้ว กด "ทำต่อ" เพื่อดำเนินการต่อ`,
-      });
+      // T-410 ข้อ 3 (หลัง demo จริง 2569-09-20) — ถ้า emit_proposal สำเร็จไปแล้วใน turn นี้ งานที่ผู้ใช้
+      // ต้องการก็เสร็จแล้ว (proposal แสดงอยู่บนหน้าจอ) การเตือนให้กด "ทำต่อ" จะสับสน/ไม่จำเป็น — ข้ามคำเตือน
+      // นี้ไปเงียบ ๆ (ยังคง `endedBecause:'max_rounds'` เหมือนเดิมสำหรับ caller ที่สนใจเหตุผลจริง)
+      if (latestProposal === undefined) {
+        emit({
+          type: 'warning',
+          messageTh: `ถึงเพดานจำนวนรอบเครื่องมือสูงสุดต่อการสนทนา (${String(maxToolRounds)} รอบ) แล้ว กด "ทำต่อ" เพื่อดำเนินการต่อ`,
+        });
+      }
       return finish(null, 'max_rounds');
     }
 

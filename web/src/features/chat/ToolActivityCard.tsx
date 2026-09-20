@@ -33,6 +33,13 @@ function messageFromStructuredSummary(activity: ToolActivity): string | null {
   if (summary.query !== undefined) {
     params['query'] = summary.query;
   }
+  // T-410 ข้อ 1 (หลัง demo จริง 2569-09-20) — `chat.tool.<tool>.error` มี `{reason}` อยู่แล้วในทุก tool
+  // (ดู docs/ui/copy.th.json) แต่ไม่เคยมีค่าจริงส่งมาให้ก่อนหน้านี้ (ToolResultSummary ไม่มี field นี้) —
+  // ไม่มีค่า (`reason` undefined) → placeholder ไม่ครบ → `renderToolTemplateIfComplete` คืน `null` แล้ว
+  // ผู้เรียก fallback ไปใช้ `inputSummary` เดิม ("X: เรียกใช้ไม่สำเร็จ") ตามที่ตั้งใจ (ไม่ถือว่าถอยหลัง)
+  if (summary.reason !== undefined) {
+    params['reason'] = summary.reason;
+  }
   return renderToolTemplateIfComplete(key, params);
 }
 

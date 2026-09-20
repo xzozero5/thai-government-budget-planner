@@ -97,10 +97,17 @@ export function wrapToolResultData(output: unknown, nonce?: string): string {
   return `${open}\n${escaped}\n${close}\n${TOOL_DATA_NOTICE}`;
 }
 
+// main thread (หลัง demo จริงครั้งแรก 2569-09-20) — ข้อความเดิม ("กรุณาตรวจสอบพารามิเตอร์แล้วลองใหม่")
+// ไม่บอกว่าต้องแก้ตรงไหน/ส่งใหม่แบบไหน โมเดลจึงมักพิมพ์ input ใหม่ทั้งก้อนแบบเดา ๆ (แพงโดยเฉพาะ
+// `emit_proposal` ที่ output ~7k tokens/ครั้ง) — ระบุ "แก้เฉพาะ path ที่ชี้ + ต้องส่งทั้งก้อนใหม่เสมอ"
+// ตรง ๆ ส่วน `issues[]` (path+message ของ Zod) ยังคงอยู่เหมือนเดิมสำหรับรายละเอียดต่อ field
 function invalidInputContent(error: z.ZodError): string {
   return JSON.stringify({
     error: true,
-    message_th: 'input ไม่ตรงรูปแบบ (schema) ของเครื่องมือนี้ กรุณาตรวจสอบพารามิเตอร์แล้วลองใหม่',
+    message_th:
+      'input ไม่ตรงรูปแบบ (schema) ของเครื่องมือนี้ — แก้เฉพาะ field ที่ path ใน issues ด้านล่างชี้ไว้ ' +
+      '(ค่าอื่นที่ไม่ได้ระบุปัญหาไม่ต้องแตะ) แล้วเรียกเครื่องมือนี้ใหม่ด้วย input ฉบับสมบูรณ์ทั้งก้อนอีกครั้ง ' +
+      '(schema นี้ไม่รองรับการส่งแค่บางส่วน)',
     issues: error.issues.map((i) => ({ path: i.path, message: i.message })),
   });
 }
@@ -132,12 +139,20 @@ export interface ToolRunError {
 
 export type ToolRunResult<TOutput> = ToolRunOk<TOutput> | ToolRunError;
 
+/** ผลลัพธ์ของ `CreateToolSpec.repairInput` — ดูคอมเมนต์ที่ field นั้น */
+export interface RepairedToolInput {
+  data: unknown;
+  /** ข้อความไทยอธิบายการซ่อมแบบอัตโนมัติแต่ละจุด (เช่น "ตัดข้อความส่วนเกินออก") — ผู้เรียก (handler) เป็น
+   * คนตัดสินใจว่าจะรวมเข้า `warnings[]` ของ output หรือไม่ (ไม่ใช่ทุก tool มีแนวคิด warnings) */
+  warnings: string[];
+}
+
 export interface ToolDefinition<TInput, TOutput> {
   name: string;
   description: string;
   inputSchema: z.ZodType<TInput>;
   outputSchema: z.ZodType<TOutput>;
-  handler: (input: TInput, ctx: ToolContext) => Promise<TOutput>;
+  handler: (input: TInput, ctx: ToolContext, repairWarnings: readonly string[]) => Promise<TOutput>;
   /** `Anthropic.Tool` พร้อมส่งใน `tools[]` ของ `messages.create`/`stream` (`eager_input_streaming:true` เสมอ) */
   toApiTool: () => Anthropic.Tool;
   /** validate + รัน handler + ห่อผลลัพธ์/error ให้พร้อมเป็น `tool_result.content` */
@@ -149,7 +164,17 @@ export interface CreateToolSpec<TInput, TOutput> {
   description: string;
   inputSchema: z.ZodType<TInput>;
   outputSchema: z.ZodType<TOutput>;
-  handler: (input: TInput, ctx: ToolContext) => Promise<TOutput>;
+  handler: (input: TInput, ctx: ToolContext, repairWarnings: readonly string[]) => Promise<TOutput>;
+  /**
+   * main thread (หลัง demo จริงครั้งแรก 2569-09-20, `docs/api-budget.md`) — hook ที่รันบน `rawInput`
+   * **ก่อน** Zod validate เสมอ สำหรับ normalize ปัญหาที่ "ซ่อมได้อย่างปลอดภัย" (string/array เกินเพดาน,
+   * enum ตัวพิมพ์ใหญ่/มีช่องว่างส่วนเกิน, `null` ในฟิลด์ optional) แทนการปล่อยให้ Zod ปฏิเสธทั้งก้อนแล้วให้
+   * โมเดลพิมพ์ output ใหม่ทั้งหมด (แพงมากสำหรับ tool ที่ output ก้อนใหญ่อย่าง `emit_proposal`) —
+   * ต้องคืนค่าเสมอ (ไม่ throw) แม้ `rawInput` จะมีรูปร่างแปลกแค่ไหน (สิ่งที่ซ่อมไม่ได้ให้ปล่อยผ่านตามเดิม
+   * แล้วให้ Zod ปฏิเสธพร้อมชี้ path — ไม่ใช่หน้าที่ของ hook นี้ที่จะเดา/ปฏิเสธเอง) ไม่ระบุ = ไม่มีการซ่อมใด ๆ
+   * (พฤติกรรมเดิมทุกประการ)
+   */
+  repairInput?: (rawInput: unknown) => RepairedToolInput;
 }
 
 export function createTool<TInput, TOutput>(
@@ -173,12 +198,13 @@ export function createTool<TInput, TOutput>(
       };
     },
     async run(rawInput, ctx) {
-      const parsedInput = spec.inputSchema.safeParse(rawInput);
+      const repaired = spec.repairInput?.(rawInput) ?? { data: rawInput, warnings: [] };
+      const parsedInput = spec.inputSchema.safeParse(repaired.data);
       if (!parsedInput.success) {
         return { isError: true, content: invalidInputContent(parsedInput.error) };
       }
       try {
-        const output = await spec.handler(parsedInput.data, ctx);
+        const output = await spec.handler(parsedInput.data, ctx, repaired.warnings);
         return { isError: false, content: wrapToolResultData(output, ctx.nonce), output };
       } catch (err) {
         return { isError: true, content: toolErrorContent(err) };
