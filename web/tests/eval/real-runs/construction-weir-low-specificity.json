@@ -1,0 +1,1449 @@
+{
+  "caseId": "construction-weir-low-specificity",
+  "model": "claude-sonnet-5",
+  "mode": "draft",
+  "turns": [
+    {
+      "turnIndex": 0,
+      "userText": "อบต. ขนาดเล็กของเราจะสร้างฝายน้ำล้นขนาดเล็กกั้นลำห้วยในหมู่บ้าน ความสูงประมาณ 1.5 เมตร ความยาวสันฝาย 8 เมตร เป็นฝายคอนกรีตแบบง่าย ไม่ใช่เขื่อนหรือฝายชลประทานขนาดใหญ่ ปีงบประมาณ 2569 ช่วยประเมินงบประมาณที่เหมาะสมโดยเทียบกับฝายขนาดใกล้เคียงกันที่เคยมีการจัดสรรงบมาก่อน แล้วทำข้อเสนอ BOQ ให้เลย ถ้าข้อมูลไม่ครบให้ใช้สมมติฐานที่เหมาะสมแล้วสรุปเป็นข้อเสนอเลย",
+      "assistantText": "",
+      "endedBecause": "max_rounds",
+      "stopReason": null,
+      "usageTotals": {
+        "inputTokens": 16,
+        "outputTokens": 19937,
+        "cacheCreationInputTokens": 57782,
+        "cacheReadInputTokens": 272265,
+        "webSearchRequests": 0
+      },
+      "costUsd": 0.39831,
+      "warnings": []
+    }
+  ],
+  "toolCalls": [
+    {
+      "id": "toolu_015LJfJonBruBqPFNuVtYZGY",
+      "name": "search_catalog",
+      "round": 1,
+      "turnIndex": 0,
+      "isError": false,
+      "input": {
+        "query": "ฝายน้ำล้น",
+        "fiscal_years": [
+          2566,
+          2567,
+          2568
+        ]
+      },
+      "outputPreview": {
+        "total": 7793,
+        "item_keys": [
+          "ก่อสร้างฝายน้ำล้น",
+          "โครงการก่อสร้างฝายน้ำล้น",
+          "ปรับปรุงซ่อมแซมฝายน้ำล้น",
+          "ซ่อมแซมฝายน้ำล้น",
+          "โครงการก่อสร้างฝายน้ำล้นมข 2527",
+          "ก่อสร้างฝายน้ำล้นตามแบบ มข 2527",
+          "เขื่อนป้องกันตลิ่งท้ายฝายน้ำล้นห้วยน้ำชม",
+          "ฝายต้นน้ำแบบผสมผสาน",
+          "โครงการก่อสร้างฝายน้ำล้น ท 4 01",
+          "ฝายต้นน้ำแบบกึ่งถาวร ขนาด 4 เมตร"
+        ],
+        "any_low_specificity": false,
+        "coverage_notes": [
+          {
+            "dataset": "pbo_disbursement",
+            "fiscal_year_be": 2562,
+            "status": "source_incomplete",
+            "note": "PBO/2562.xlsx (sheet \"เบิกจ่ายภาพรวมทุกมิติ (3)\") ขาดข้อมูลทั้งกระทรวงของ 6 รายการข้างต้น (ไม่มีแถวเลย) และมีข้อมูลไม่ครบของกระทรวงเกษตรฯ/สำนักนายกฯ ทั้งที่ Grand Total ในไฟล์ระบุ 3,000,000 ล้านบาท (ตรงกับ พ.ร.บ. งบประมาณปี 2562 จริง) — ยังไม่ทราบสาเหตุที่แท้จริง (สงสัยว่าไฟล์ export จาก PBO ต้นทางไ…"
+          },
+          {
+            "dataset": "pbo_disbursement",
+            "fiscal_year_be": 2567,
+            "status": "no_oracle",
+            "note": "ไม่มี Grand Total/Sheet1 ให้ตรวจยอดในไฟล์ต้นทาง — ตรวจแค่จำนวนแถว (soft)"
+          },
+          {
+            "dataset": "local_ordinance_2570",
+            "fiscal_year_be": 2570,
+            "status": "upstream_ocr_group_mismatch",
+            "note": "อบต. ราชาเทวะ: ตัวเลขระดับแถวถอดจาก OCR ของต้นทาง (ไม่ใช่เรา OCR) — 10/38 กลุ่ม (plan, activity, budget_type) ยอดไม่ตรง summary ที่พิมพ์ในเอกสาร (flag group_total_mismatch) ยอดรวมทั้งไฟล์ต่างกัน 0.21% เท่านั้น"
+          }
+        ]
+      },
+      "outputChars": 5795
+    },
+    {
+      "id": "toolu_01LHcJNfkqnHR5Kqg68UPh7K",
+      "name": "search_catalog",
+      "round": 1,
+      "turnIndex": 0,
+      "isError": false,
+      "input": {
+        "query": "ฝายคอนกรีต"
+      },
+      "outputPreview": {
+        "total": 8398,
+        "item_keys": [
+          "ปรับปรุงดาดคอนกรีต คลองส่งน้ำสาย mc โครงการฝายยาง",
+          "ก่อสร้างฝายชะลอน้ำกึ่งถาวรดาดด้วยคอนกรีต",
+          "ซ่อมแซมคอนกรีตดาดคลองส่งน้ำสาย lmc ระบบส่งน้ำฝายตะคร้อ",
+          "ซ่อมแซมคอนกรีตดาดคลองส่งน้ำ ระบบส่งน้ำฝายเพชรน้ำผึ้ง",
+          "ก่อสร้างบานระบายทดน้ำ และฝายคอนกรีตระบาย",
+          "ซ่อมแซมคอนกรีตดาดและคันคลอง ระบบส่งน้ำฝายตะคร้อ",
+          "ก่อสร้างฝายระบบน้ำล้นคอนกรีตเสริมเหล็กฯ",
+          "ซ่อมแซมคอนกรีตดาดคลองส่งน้ำสาย 1r rmc กม 0+000 4+194 ฝายคลองท่าทน",
+          "ซ่อมแซมคอนกรีตดาดคลองส่งน้ำฝายยาง lmc",
+          "ก่อสร้างฝายน้ำล้นคอนกรีตเสริมเหล็ก"
+        ],
+        "any_low_specificity": false,
+        "coverage_notes": [
+          {
+            "dataset": "pbo_disbursement",
+            "fiscal_year_be": 2562,
+            "status": "source_incomplete",
+            "note": "PBO/2562.xlsx (sheet \"เบิกจ่ายภาพรวมทุกมิติ (3)\") ขาดข้อมูลทั้งกระทรวงของ 6 รายการข้างต้น (ไม่มีแถวเลย) และมีข้อมูลไม่ครบของกระทรวงเกษตรฯ/สำนักนายกฯ ทั้งที่ Grand Total ในไฟล์ระบุ 3,000,000 ล้านบาท (ตรงกับ พ.ร.บ. งบประมาณปี 2562 จริง) — ยังไม่ทราบสาเหตุที่แท้จริง (สงสัยว่าไฟล์ export จาก PBO ต้นทางไ…"
+          },
+          {
+            "dataset": "pbo_disbursement",
+            "fiscal_year_be": 2567,
+            "status": "no_oracle",
+            "note": "ไม่มี Grand Total/Sheet1 ให้ตรวจยอดในไฟล์ต้นทาง — ตรวจแค่จำนวนแถว (soft)"
+          },
+          {
+            "dataset": "local_ordinance_2570",
+            "fiscal_year_be": 2570,
+            "status": "upstream_ocr_group_mismatch",
+            "note": "อบต. ราชาเทวะ: ตัวเลขระดับแถวถอดจาก OCR ของต้นทาง (ไม่ใช่เรา OCR) — 10/38 กลุ่ม (plan, activity, budget_type) ยอดไม่ตรง summary ที่พิมพ์ในเอกสาร (flag group_total_mismatch) ยอดรวมทั้งไฟล์ต่างกัน 0.21% เท่านั้น"
+          }
+        ]
+      },
+      "outputChars": 6127
+    },
+    {
+      "id": "toolu_0167989Pb4QjvD2JiAFEVXvh",
+      "name": "query_budget_lines",
+      "round": 1,
+      "turnIndex": 0,
+      "isError": true,
+      "input": {
+        "keywords": [
+          "ฝายน้ำล้น"
+        ],
+        "fiscal_years": [
+          2568,
+          2567,
+          2566
+        ],
+        "order_by": "amount_desc"
+      },
+      "errorPreview": "{\"error\":true,\"message_th\":\"คำค้นกว้างเกินไป (ต้องสแกน 97 ไฟล์ เกินเพดาน 12 ไฟล์ต่อครั้ง) โปรดระบุปีงบประมาณ, กระทรวง/หน่วยงาน, หรือ item_key ให้แคบลงก่อนค้นหาอีกครั้ง (ปีที่มีข้อมูลในกลุ่มนี้: 2566, 2567, 2568, กระทรวง: 01000, 02000, 03000, 04000, 05000, 06000, 07000, 08000, 09000, 11000, 12000, 13000, 15000, 16000, 17000, 18000, 20000, 21000, 22000, 23000, 25000, 27000, 28000, 29000, 50000, 56000, 60000, 65000, 70000, 75000, 80000, 90000, 95000)\"}"
+    },
+    {
+      "id": "toolu_01La7Uoiapf1P7FVFHZANmv6",
+      "name": "query_budget_lines",
+      "round": 2,
+      "turnIndex": 0,
+      "isError": false,
+      "input": {
+        "item_key": "ก่อสร้างฝายน้ำล้น",
+        "fiscal_years": [
+          2568,
+          2567,
+          2566
+        ],
+        "order_by": "amount_asc"
+      },
+      "outputPreview": {
+        "total": 1,
+        "truncated": false,
+        "row_count": 1,
+        "datasets": [
+          "pbo_disbursement"
+        ],
+        "fiscal_years_be": [
+          2566
+        ],
+        "source_ids": [
+          "27c7328298b23538"
+        ],
+        "coverage_notes": [],
+        "warnings": [
+          "แถวส่วนใหญ่ที่คืนเป็น price_basis=\"amount_per_line\" — amount_thb เป็นยอดรวมต่อบรรทัดงบ อาจครอบคลุมหลายหน่วย ห้ามใช้เป็นราคาต่อหน่วยตรง ๆ (ดู implied_unit_price_hint ถ้ามี หรือใช้ get_price_trend)"
+        ]
+      },
+      "outputChars": 932
+    },
+    {
+      "id": "toolu_01MnQzbTcMPGvbvkBrD9rSFm",
+      "name": "query_budget_lines",
+      "round": 2,
+      "turnIndex": 0,
+      "isError": false,
+      "input": {
+        "item_key": "ก่อสร้างฝายน้ำล้นตามแบบ มข 2527",
+        "fiscal_years": [
+          2568,
+          2567,
+          2566
+        ]
+      },
+      "outputPreview": {
+        "total": 6,
+        "truncated": false,
+        "row_count": 6,
+        "datasets": [
+          "pbo_disbursement"
+        ],
+        "fiscal_years_be": [
+          2566,
+          2567,
+          2568
+        ],
+        "source_ids": [
+          "05df3280f3718b90",
+          "3693e67a35d8bf21",
+          "82f03b2b14e2e983",
+          "b968829dfda76f08",
+          "bbed79c1ad93f06f",
+          "ec5d73dbbeb97e54"
+        ],
+        "coverage_notes": [
+          {
+            "dataset": "pbo_disbursement",
+            "fiscal_year_be": 2567,
+            "status": "no_oracle",
+            "note": "ไม่มี Grand Total/Sheet1 ให้ตรวจยอดในไฟล์ต้นทาง — ตรวจแค่จำนวนแถว (soft)"
+          }
+        ],
+        "warnings": [
+          "แถวส่วนใหญ่ที่คืนเป็น price_basis=\"amount_per_line\" — amount_thb เป็นยอดรวมต่อบรรทัดงบ อาจครอบคลุมหลายหน่วย ห้ามใช้เป็นราคาต่อหน่วยตรง ๆ (ดู implied_unit_price_hint ถ้ามี หรือใช้ get_price_trend)"
+        ]
+      },
+      "outputChars": 4235
+    },
+    {
+      "id": "toolu_019i6jboD9xgJDSKJZcRTVo1",
+      "name": "get_econ_indicator",
+      "round": 2,
+      "turnIndex": 0,
+      "isError": false,
+      "input": {
+        "indicators": [
+          "cmi_cement",
+          "cmi_concrete",
+          "construction_material_index",
+          "cpi_headline_index"
+        ],
+        "years_be": [
+          2566,
+          2567,
+          2568,
+          2569
+        ]
+      },
+      "outputPreview": {
+        "total": 16,
+        "values": [
+          {
+            "indicator": "cmi_cement",
+            "year_be": 2566,
+            "value": 100.04,
+            "unit": "index 2558=100 (TPSO CMI หมวด: ซีเมนต์ (Cement))",
+            "source_name": "กระทรวงพาณิชย์ (สนค., TPSO) — ดัชนีราคาวัสดุก่อสร้างหมวด ซีเมนต์ (Cement)",
+            "source_url": "https://index.tpso.go.th/api/cmi/year",
+            "verified": false,
+            "note": "official_annual_average: ค่า averageIndex ที่ สนค. (TPSO) คำนวณและเผยแพร่เองรายปีผ่าน API (ไม่ใช่ค่าที่ทีมนี้ derived เฉลี่ยเอง). วิธีเรียกซ้ำ: POST https://index.tpso.go.th/api/cmi/year body={\"YearBase\":2558,\"TimeOption\":true,\"Categories\":[\"2\"],\"Period\":{\"StartYear\":2558,\"StartMonth\":1,\"EndYear\":2569,\"EndMonth\":12}} (Content-Type: application/json; ไม่ต้องใช้ cookie/csrf/referer — ทดสอบแล้ว 200 OK โดยไม่มี header พิเศษ; endpoint ไม่สนใจ Period ที่ส่งไป คืนข้อมูลเต็มประวัติเสมอ). ปีฐาน 2558=100 เดียวกันทุกปีที่คืนมา (เทียบกับ YearBase=2564 แล้วพบว่า API คำนวณ re-base ให้ทั้ง series ใหม่ได้เอง จึงไม่มีปัญหา base_year_differs ถ้าเลือกฐานเดียวใช้ตลอดช่วง — เลือกใช้ 2558=100 เพราะตรงกับฉบับ PDF รายเดือนที่เคยตรวจสอบไว้)."
+          },
+          {
+            "indicator": "cmi_cement",
+            "year_be": 2567,
+            "value": 99.51,
+            "unit": "index 2558=100 (TPSO CMI หมวด: ซีเมนต์ (Cement))",
+            "source_name": "กระทรวงพาณิชย์ (สนค., TPSO) — ดัชนีราคาวัสดุก่อสร้างหมวด ซีเมนต์ (Cement)",
+            "source_url": "https://index.tpso.go.th/api/cmi/year",
+            "verified": false,
+            "note": "official_annual_average: ค่า averageIndex ที่ สนค. (TPSO) คำนวณและเผยแพร่เองรายปีผ่าน API (ไม่ใช่ค่าที่ทีมนี้ derived เฉลี่ยเอง). วิธีเรียกซ้ำ: POST https://index.tpso.go.th/api/cmi/year body={\"YearBase\":2558,\"TimeOption\":true,\"Categories\":[\"2\"],\"Period\":{\"StartYear\":2558,\"StartMonth\":1,\"EndYear\":2569,\"EndMonth\":12}} (Content-Type: application/json; ไม่ต้องใช้ cookie/csrf/referer — ทดสอบแล้ว 200 OK โดยไม่มี header พิเศษ; endpoint ไม่สนใจ Period ที่ส่งไป คืนข้อมูลเต็มประวัติเสมอ). ปีฐาน 2558=100 เดียวกันทุกปีที่คืนมา (เทียบกับ YearBase=2564 แล้วพบว่า API คำนวณ re-base ให้ทั้ง series ใหม่ได้เอง จึงไม่มีปัญหา base_year_differs ถ้าเลือกฐานเดียวใช้ตลอดช่วง — เลือกใช้ 2558=100 เพราะตรงกับฉบับ PDF รายเดือนที่เคยตรวจสอบไว้)."
+          },
+          {
+            "indicator": "cmi_cement",
+            "year_be": 2568,
+            "value": 103.19,
+            "unit": "index 2558=100 (TPSO CMI หมวด: ซีเมนต์ (Cement))",
+            "source_name": "กระทรวงพาณิชย์ (สนค., TPSO) — ดัชนีราคาวัสดุก่อสร้างหมวด ซีเมนต์ (Cement)",
+            "source_url": "https://index.tpso.go.th/api/cmi/year",
+            "verified": false,
+            "note": "official_annual_average: ค่า averageIndex ที่ สนค. (TPSO) คำนวณและเผยแพร่เองรายปีผ่าน API (ไม่ใช่ค่าที่ทีมนี้ derived เฉลี่ยเอง). วิธีเรียกซ้ำ: POST https://index.tpso.go.th/api/cmi/year body={\"YearBase\":2558,\"TimeOption\":true,\"Categories\":[\"2\"],\"Period\":{\"StartYear\":2558,\"StartMonth\":1,\"EndYear\":2569,\"EndMonth\":12}} (Content-Type: application/json; ไม่ต้องใช้ cookie/csrf/referer — ทดสอบแล้ว 200 OK โดยไม่มี header พิเศษ; endpoint ไม่สนใจ Period ที่ส่งไป คืนข้อมูลเต็มประวัติเสมอ). ปีฐาน 2558=100 เดียวกันทุกปีที่คืนมา (เทียบกับ YearBase=2564 แล้วพบว่า API คำนวณ re-base ให้ทั้ง series ใหม่ได้เอง จึงไม่มีปัญหา base_year_differs ถ้าเลือกฐานเดียวใช้ตลอดช่วง — เลือกใช้ 2558=100 เพราะตรงกับฉบับ PDF รายเดือนที่เคยตรวจสอบไว้)."
+          },
+          {
+            "indicator": "cmi_cement",
+            "year_be": 2569,
+            "value": null,
+            "unit": "index 2558=100 (TPSO CMI หมวด: ซีเมนต์ (Cement))",
+            "source_name": "กระทรวงพาณิชย์ (สนค., TPSO) — ดัชนีราคาวัสดุก่อสร้างหมวด ซีเมนต์ (Cement)",
+            "source_url": "https://index.tpso.go.th/api/cmi/year",
+            "verified": false,
+            "note": "TPSO ยังไม่เผยแพร่ averageIndex ปี 2569 (2026) ในชุด CMI ณ retrieved_at — ทดสอบแล้วทั้ง POST /api/cmi/year (คืนเฉพาะปี 2558-2568) และ POST /api/cmi/filter ด้วย SpecificTimes ครบ 12 เดือนของปี 2569 (TimeOption:false) ได้ผลลัพธ์ว่าง []; แม้ /api/cmi/master จะรายงาน period.end = {\"year\":2569,\"month\":8} ก็ตาม (อาจหมายถึง metadata cutoff ของระบบ ไม่ใช่ข้อมูล CMI จริง)"
+          },
+          {
+            "indicator": "cmi_concrete",
+            "year_be": 2566,
+            "value": 110.36,
+            "unit": "index 2558=100 (TPSO CMI หมวด: ผลิตภัณฑ์คอนกรีต (Concrete Ingredient))",
+            "source_name": "กระทรวงพาณิชย์ (สนค., TPSO) — ดัชนีราคาวัสดุก่อสร้างหมวด ผลิตภัณฑ์คอนกรีต (Concrete Ingredient)",
+            "source_url": "https://index.tpso.go.th/api/cmi/year",
+            "verified": false,
+            "note": "official_annual_average: ค่า averageIndex ที่ สนค. (TPSO) คำนวณและเผยแพร่เองรายปีผ่าน API (ไม่ใช่ค่าที่ทีมนี้ derived เฉลี่ยเอง). วิธีเรียกซ้ำ: POST https://index.tpso.go.th/api/cmi/year body={\"YearBase\":2558,\"TimeOption\":true,\"Categories\":[\"3\"],\"Period\":{\"StartYear\":2558,\"StartMonth\":1,\"EndYear\":2569,\"EndMonth\":12}} (Content-Type: application/json; ไม่ต้องใช้ cookie/csrf/referer — ทดสอบแล้ว 200 OK โดยไม่มี header พิเศษ; endpoint ไม่สนใจ Period ที่ส่งไป คืนข้อมูลเต็มประวัติเสมอ). ปีฐาน 2558=100 เดียวกันทุกปีที่คืนมา (เทียบกับ YearBase=2564 แล้วพบว่า API คำนวณ re-base ให้ทั้ง series ใหม่ได้เอง จึงไม่มีปัญหา base_year_differs ถ้าเลือกฐานเดียวใช้ตลอดช่วง — เลือกใช้ 2558=100 เพราะตรงกับฉบับ PDF รายเดือนที่เคยตรวจสอบไว้)."
+          },
+          {
+            "indicator": "cmi_concrete",
+            "year_be": 2567,
+            "value": 111.58,
+            "unit": "index 2558=100 (TPSO CMI หมวด: ผลิตภัณฑ์คอนกรีต (Concrete Ingredient))",
+            "source_name": "กระทรวงพาณิชย์ (สนค., TPSO) — ดัชนีราคาวัสดุก่อสร้างหมวด ผลิตภัณฑ์คอนกรีต (Concrete Ingredient)",
+            "source_url": "https://index.tpso.go.th/api/cmi/year",
+            "verified": false,
+            "note": "official_annual_average: ค่า averageIndex ที่ สนค. (TPSO) คำนวณและเผยแพร่เองรายปีผ่าน API (ไม่ใช่ค่าที่ทีมนี้ derived เฉลี่ยเอง). วิธีเรียกซ้ำ: POST https://index.tpso.go.th/api/cmi/year body={\"YearBase\":2558,\"TimeOption\":true,\"Categories\":[\"3\"],\"Period\":{\"StartYear\":2558,\"StartMonth\":1,\"EndYear\":2569,\"EndMonth\":12}} (Content-Type: application/json; ไม่ต้องใช้ cookie/csrf/referer — ทดสอบแล้ว 200 OK โดยไม่มี header พิเศษ; endpoint ไม่สนใจ Period ที่ส่งไป คืนข้อมูลเต็มประวัติเสมอ). ปีฐาน 2558=100 เดียวกันทุกปีที่คืนมา (เทียบกับ YearBase=2564 แล้วพบว่า API คำนวณ re-base ให้ทั้ง series ใหม่ได้เอง จึงไม่มีปัญหา base_year_differs ถ้าเลือกฐานเดียวใช้ตลอดช่วง — เลือกใช้ 2558=100 เพราะตรงกับฉบับ PDF รายเดือนที่เคยตรวจสอบไว้)."
+          },
+          {
+            "indicator": "cmi_concrete",
+            "year_be": 2568,
+            "value": 112.64,
+            "unit": "index 2558=100 (TPSO CMI หมวด: ผลิตภัณฑ์คอนกรีต (Concrete Ingredient))",
+            "source_name": "กระทรวงพาณิชย์ (สนค., TPSO) — ดัชนีราคาวัสดุก่อสร้างหมวด ผลิตภัณฑ์คอนกรีต (Concrete Ingredient)",
+            "source_url": "https://index.tpso.go.th/api/cmi/year",
+            "verified": false,
+            "note": "official_annual_average: ค่า averageIndex ที่ สนค. (TPSO) คำนวณและเผยแพร่เองรายปีผ่าน API (ไม่ใช่ค่าที่ทีมนี้ derived เฉลี่ยเอง). วิธีเรียกซ้ำ: POST https://index.tpso.go.th/api/cmi/year body={\"YearBase\":2558,\"TimeOption\":true,\"Categories\":[\"3\"],\"Period\":{\"StartYear\":2558,\"StartMonth\":1,\"EndYear\":2569,\"EndMonth\":12}} (Content-Type: application/json; ไม่ต้องใช้ cookie/csrf/referer — ทดสอบแล้ว 200 OK โดยไม่มี header พิเศษ; endpoint ไม่สนใจ Period ที่ส่งไป คืนข้อมูลเต็มประวัติเสมอ). ปีฐาน 2558=100 เดียวกันทุกปีที่คืนมา (เทียบกับ YearBase=2564 แล้วพบว่า API คำนวณ re-base ให้ทั้ง series ใหม่ได้เอง จึงไม่มีปัญหา base_year_differs ถ้าเลือกฐานเดียวใช้ตลอดช่วง — เลือกใช้ 2558=100 เพราะตรงกับฉบับ PDF รายเดือนที่เคยตรวจสอบไว้)."
+          },
+          {
+            "indicator": "cmi_concrete",
+            "year_be": 2569,
+            "value": null,
+            "unit": "index 2558=100 (TPSO CMI หมวด: ผลิตภัณฑ์คอนกรีต (Concrete Ingredient))",
+            "source_name": "กระทรวงพาณิชย์ (สนค., TPSO) — ดัชนีราคาวัสดุก่อสร้างหมวด ผลิตภัณฑ์คอนกรีต (Concrete Ingredient)",
+            "source_url": "https://index.tpso.go.th/api/cmi/year",
+            "verified": false,
+            "note": "TPSO ยังไม่เผยแพร่ averageIndex ปี 2569 (2026) ในชุด CMI ณ retrieved_at — ทดสอบแล้วทั้ง POST /api/cmi/year (คืนเฉพาะปี 2558-2568) และ POST /api/cmi/filter ด้วย SpecificTimes ครบ 12 เดือนของปี 2569 (TimeOption:false) ได้ผลลัพธ์ว่าง []; แม้ /api/cmi/master จะรายงาน period.end = {\"year\":2569,\"month\":8} ก็ตาม (อาจหมายถึง metadata cutoff ของระบบ ไม่ใช่ข้อมูล CMI จริง)"
+          },
+          {
+            "indicator": "construction_material_index",
+            "year_be": 2566,
+            "value": 112.88,
+            "unit": "index 2558=100 (TPSO CMI หมวด: ดัชนีรวม (All Commodities))",
+            "source_name": "กระทรวงพาณิชย์ (สนค., TPSO) — ดัชนีราคาวัสดุก่อสร้างหมวด ดัชนีรวม (All Commodities)",
+            "source_url": "https://index.tpso.go.th/api/cmi/year",
+            "verified": false,
+            "note": "official_annual_average: ค่า averageIndex ที่ สนค. (TPSO) คำนวณและเผยแพร่เองรายปีผ่าน API (ไม่ใช่ค่าที่ทีมนี้ derived เฉลี่ยเอง). วิธีเรียกซ้ำ: POST https://index.tpso.go.th/api/cmi/year body={\"YearBase\":2558,\"TimeOption\":true,\"Categories\":[\"0\"],\"Period\":{\"StartYear\":2558,\"StartMonth\":1,\"EndYear\":2569,\"EndMonth\":12}} (Content-Type: application/json; ไม่ต้องใช้ cookie/csrf/referer — ทดสอบแล้ว 200 OK โดยไม่มี header พิเศษ; endpoint ไม่สนใจ Period ที่ส่งไป คืนข้อมูลเต็มประวัติเสมอ). ปีฐาน 2558=100 เดียวกันทุกปีที่คืนมา (เทียบกับ YearBase=2564 แล้วพบว่า API คำนวณ re-base ให้ทั้ง series ใหม่ได้เอง จึงไม่มีปัญหา base_year_differs ถ้าเลือกฐานเดียวใช้ตลอดช่วง — เลือกใช้ 2558=100 เพราะตรงกับฉบับ PDF รายเดือนที่เคยตรวจสอบไว้)."
+          },
+          {
+            "indicator": "construction_material_index",
+            "year_be": 2567,
+            "value": 112.72,
+            "unit": "index 2558=100 (TPSO CMI หมวด: ดัชนีรวม (All Commodities))",
+            "source_name": "กระทรวงพาณิชย์ (สนค., TPSO) — ดัชนีราคาวัสดุก่อสร้างหมวด ดัชนีรวม (All Commodities)",
+            "source_url": "https://index.tpso.go.th/api/cmi/year",
+            "verified": false,
+            "note": "official_annual_average: ค่า averageIndex ที่ สนค. (TPSO) คำนวณและเผยแพร่เองรายปีผ่าน API (ไม่ใช่ค่าที่ทีมนี้ derived เฉลี่ยเอง). วิธีเรียกซ้ำ: POST https://index.tpso.go.th/api/cmi/year body={\"YearBase\":2558,\"TimeOption\":true,\"Categories\":[\"0\"],\"Period\":{\"StartYear\":2558,\"StartMonth\":1,\"EndYear\":2569,\"EndMonth\":12}} (Content-Type: application/json; ไม่ต้องใช้ cookie/csrf/referer — ทดสอบแล้ว 200 OK โดยไม่มี header พิเศษ; endpoint ไม่สนใจ Period ที่ส่งไป คืนข้อมูลเต็มประวัติเสมอ). ปีฐาน 2558=100 เดียวกันทุกปีที่คืนมา (เทียบกับ YearBase=2564 แล้วพบว่า API คำนวณ re-base ให้ทั้ง series ใหม่ได้เอง จึงไม่มีปัญหา base_year_differs ถ้าเลือกฐานเดียวใช้ตลอดช่วง — เลือกใช้ 2558=100 เพราะตรงกับฉบับ PDF รายเดือนที่เคยตรวจสอบไว้)."
+          },
+          {
+            "indicator": "construction_material_index",
+            "year_be": 2568,
+            "value": 113.08,
+            "unit": "index 2558=100 (TPSO CMI หมวด: ดัชนีรวม (All Commodities))",
+            "source_name": "กระทรวงพาณิชย์ (สนค., TPSO) — ดัชนีราคาวัสดุก่อสร้างหมวด ดัชนีรวม (All Commodities)",
+            "source_url": "https://index.tpso.go.th/api/cmi/year",
+            "verified": false,
+            "note": "official_annual_average: ค่า averageIndex ที่ สนค. (TPSO) คำนวณและเผยแพร่เองรายปีผ่าน API (ไม่ใช่ค่าที่ทีมนี้ derived เฉลี่ยเอง). วิธีเรียกซ้ำ: POST https://index.tpso.go.th/api/cmi/year body={\"YearBase\":2558,\"TimeOption\":true,\"Categories\":[\"0\"],\"Period\":{\"StartYear\":2558,\"StartMonth\":1,\"EndYear\":2569,\"EndMonth\":12}} (Content-Type: application/json; ไม่ต้องใช้ cookie/csrf/referer — ทดสอบแล้ว 200 OK โดยไม่มี header พิเศษ; endpoint ไม่สนใจ Period ที่ส่งไป คืนข้อมูลเต็มประวัติเสมอ). ปีฐาน 2558=100 เดียวกันทุกปีที่คืนมา (เทียบกับ YearBase=2564 แล้วพบว่า API คำนวณ re-base ให้ทั้ง series ใหม่ได้เอง จึงไม่มีปัญหา base_year_differs ถ้าเลือกฐานเดียวใช้ตลอดช่วง — เลือกใช้ 2558=100 เพราะตรงกับฉบับ PDF รายเดือนที่เคยตรวจสอบไว้)."
+          },
+          {
+            "indicator": "construction_material_index",
+            "year_be": 2569,
+            "value": null,
+            "unit": "index 2558=100 (TPSO CMI หมวด: ดัชนีรวม (All Commodities))",
+            "source_name": "กระทรวงพาณิชย์ (สนค., TPSO) — ดัชนีราคาวัสดุก่อสร้างหมวด ดัชนีรวม (All Commodities)",
+            "source_url": "https://index.tpso.go.th/api/cmi/year",
+            "verified": false,
+            "note": "TPSO ยังไม่เผยแพร่ averageIndex ปี 2569 (2026) ในชุด CMI ณ retrieved_at — ทดสอบแล้วทั้ง POST /api/cmi/year (คืนเฉพาะปี 2558-2568) และ POST /api/cmi/filter ด้วย SpecificTimes ครบ 12 เดือนของปี 2569 (TimeOption:false) ได้ผลลัพธ์ว่าง []; แม้ /api/cmi/master จะรายงาน period.end = {\"year\":2569,\"month\":8} ก็ตาม (อาจหมายถึง metadata cutoff ของระบบ ไม่ใช่ข้อมูล CMI จริง)"
+          },
+          {
+            "indicator": "cpi_headline_index",
+            "year_be": 2566,
+            "value": 100,
+            "unit": "index 2566=100 (TPSO CPI ทั่วไปของประเทศ, Type=TG)",
+            "source_name": "กระทรวงพาณิชย์ (สนค., TPSO) — ดัชนีราคาผู้บริโภคทั่วไปของประเทศ",
+            "source_url": "https://index.tpso.go.th/api/cpig/year",
+            "verified": false,
+            "note": "official_source: ดัชนีราคาผู้บริโภคทั่วไปของประเทศ (Type=TG, commodityCode=00000 ALL COMMODITIES) จาก สนค. (TPSO) โดยตรง ปีฐาน 2566=100 (ยืนยันจาก /api/cpig/master: yearBase=[2566]). วิธีเรียกซ้ำ: POST https://index.tpso.go.th/api/cpig/year body={\"YearBase\":2566,\"TimeOption\":true,\"Categories\":[\"00000\"],\"Types\":[\"TG\"],\"Period\":{\"StartYear\":2558,\"StartMonth\":1,\"EndYear\":2569,\"EndMonth\":12}} (Content-Type: application/json; ไม่ต้อง cookie/csrf/referer; endpoint คืนประวัติเต็มเสมอไม่สนใจ Period). crosscheck_worldbank: 122.08 (base 2010=100, FP.CPI.TOTL, World Bank Open Data — ค่าต่างกันเพราะปีฐานคนละปี ห้ามต่อ series ปนกัน)"
+          },
+          {
+            "indicator": "cpi_headline_index",
+            "year_be": 2567,
+            "value": 100.4,
+            "unit": "index 2566=100 (TPSO CPI ทั่วไปของประเทศ, Type=TG)",
+            "source_name": "กระทรวงพาณิชย์ (สนค., TPSO) — ดัชนีราคาผู้บริโภคทั่วไปของประเทศ",
+            "source_url": "https://index.tpso.go.th/api/cpig/year",
+            "verified": false,
+            "note": "official_source: ดัชนีราคาผู้บริโภคทั่วไปของประเทศ (Type=TG, commodityCode=00000 ALL COMMODITIES) จาก สนค. (TPSO) โดยตรง ปีฐาน 2566=100 (ยืนยันจาก /api/cpig/master: yearBase=[2566]). วิธีเรียกซ้ำ: POST https://index.tpso.go.th/api/cpig/year body={\"YearBase\":2566,\"TimeOption\":true,\"Categories\":[\"00000\"],\"Types\":[\"TG\"],\"Period\":{\"StartYear\":2558,\"StartMonth\":1,\"EndYear\":2569,\"EndMonth\":12}} (Content-Type: application/json; ไม่ต้อง cookie/csrf/referer; endpoint คืนประวัติเต็มเสมอไม่สนใจ Period). crosscheck_worldbank: 122.57 (base 2010=100, FP.CPI.TOTL, World Bank Open Data — ค่าต่างกันเพราะปีฐานคนละปี ห้ามต่อ series ปนกัน)"
+          },
+          {
+            "indicator": "cpi_headline_index",
+            "year_be": 2568,
+            "value": 100.26,
+            "unit": "index 2566=100 (TPSO CPI ทั่วไปของประเทศ, Type=TG)",
+            "source_name": "กระทรวงพาณิชย์ (สนค., TPSO) — ดัชนีราคาผู้บริโภคทั่วไปของประเทศ",
+            "source_url": "https://index.tpso.go.th/api/cpig/year",
+            "verified": false,
+            "note": "official_source: ดัชนีราคาผู้บริโภคทั่วไปของประเทศ (Type=TG, commodityCode=00000 ALL COMMODITIES) จาก สนค. (TPSO) โดยตรง ปีฐาน 2566=100 (ยืนยันจาก /api/cpig/master: yearBase=[2566]). วิธีเรียกซ้ำ: POST https://index.tpso.go.th/api/cpig/year body={\"YearBase\":2566,\"TimeOption\":true,\"Categories\":[\"00000\"],\"Types\":[\"TG\"],\"Period\":{\"StartYear\":2558,\"StartMonth\":1,\"EndYear\":2569,\"EndMonth\":12}} (Content-Type: application/json; ไม่ต้อง cookie/csrf/referer; endpoint คืนประวัติเต็มเสมอไม่สนใจ Period). crosscheck_worldbank: 122.4 (base 2010=100, FP.CPI.TOTL, World Bank Open Data — ค่าต่างกันเพราะปีฐานคนละปี ห้ามต่อ series ปนกัน)"
+          },
+          {
+            "indicator": "cpi_headline_index",
+            "year_be": 2569,
+            "value": null,
+            "unit": "index 2566=100 (TPSO CPI ทั่วไปของประเทศ, Type=TG)",
+            "source_name": "กระทรวงพาณิชย์ (สนค., TPSO) — ดัชนีราคาผู้บริโภคทั่วไปของประเทศ",
+            "source_url": "https://index.tpso.go.th/api/cpig/year",
+            "verified": false,
+            "note": "TPSO ยังไม่เผยแพร่ averageIndex/averageChange ปี 2569 (2026) ในชุด CPI ทั่วไป ณ retrieved_at (ทดสอบ POST /api/cpig/year แล้ว ปีล่าสุดที่คืนมาคือ 2568)"
+          }
+        ]
+      },
+      "outputChars": 14805
+    },
+    {
+      "id": "toolu_017snWttscTDnLH4Xrea6Z2D",
+      "name": "get_budget_line",
+      "round": 3,
+      "turnIndex": 0,
+      "isError": false,
+      "input": {
+        "source_ids": [
+          "3eeb7c30764f30f4",
+          "8321d354c1be4898",
+          "22ab1bf11378d38d",
+          "05df3280f3718b90",
+          "3693e67a35d8bf21"
+        ]
+      },
+      "outputPreview": {
+        "total": 2,
+        "datasets": [
+          "pbo_disbursement"
+        ],
+        "source_ids": [
+          "05df3280f3718b90",
+          "3693e67a35d8bf21"
+        ],
+        "not_found": [
+          "3eeb7c30764f30f4",
+          "8321d354c1be4898",
+          "22ab1bf11378d38d"
+        ]
+      },
+      "outputChars": 2237
+    },
+    {
+      "id": "toolu_01KSZjbr2TTimEemwtLaodVf",
+      "name": "adjust_for_inflation",
+      "round": 4,
+      "turnIndex": 0,
+      "isError": false,
+      "input": {
+        "amount_thb": 849000,
+        "from_year_be": 2566,
+        "to_year_be": 2569,
+        "indicator": "construction_material_index",
+        "allow_latest_available": true
+      },
+      "outputPreview": {
+        "adjusted_thb": 850504,
+        "factor": 1.001772,
+        "indicator": "construction_material_index",
+        "warnings": [
+          "ไม่มีข้อมูลตัวชี้วัด \"construction_material_index\" สำหรับปี พ.ศ. 2569 — ใช้ปีล่าสุดที่มีข้อมูลแทน (พ.ศ. 2568)"
+        ]
+      },
+      "outputChars": 503
+    },
+    {
+      "id": "toolu_015gTh4qHbaqiMRA5pjTGRYA",
+      "name": "get_price_trend",
+      "round": 4,
+      "turnIndex": 0,
+      "isError": false,
+      "input": {
+        "kind": "indicator",
+        "key": "construction_material_index",
+        "years_be": [
+          2558,
+          2568
+        ]
+      },
+      "outputPreview": {
+        "has_series": true,
+        "kind": "indicator",
+        "key": "construction_material_index",
+        "points_count": 10,
+        "change_pct": 16.22
+      },
+      "outputChars": 833
+    },
+    {
+      "id": "toolu_01DJbg9x7rYEXBSd5xGuMZ4k",
+      "name": "get_price_trend",
+      "round": 4,
+      "turnIndex": 0,
+      "isError": false,
+      "input": {
+        "kind": "item",
+        "key": "ก่อสร้างฝายน้ำล้น",
+        "years_be": [
+          2558,
+          2568
+        ]
+      },
+      "outputPreview": {
+        "has_series": true,
+        "kind": "item",
+        "key": "ก่อสร้างฝายน้ำล้น",
+        "points_count": 7,
+        "change_pct": 128.09
+      },
+      "outputChars": 703
+    },
+    {
+      "id": "toolu_015K9iUuuHrJWLzoBSj9Xnmw",
+      "name": "query_budget_lines",
+      "round": 5,
+      "turnIndex": 0,
+      "isError": false,
+      "input": {
+        "item_key": "ก่อสร้างฝายน้ำล้นตามแบบ มข 2527",
+        "fiscal_years": [
+          2565,
+          2564,
+          2563
+        ],
+        "order_by": "amount_desc"
+      },
+      "outputPreview": {
+        "total": 0,
+        "truncated": false,
+        "row_count": 0,
+        "datasets": [],
+        "fiscal_years_be": [],
+        "source_ids": [],
+        "coverage_notes": [],
+        "warnings": []
+      },
+      "outputChars": 123
+    },
+    {
+      "id": "toolu_01RbfxFaZ7UxBHkhU1vRRExo",
+      "name": "query_budget_lines",
+      "round": 5,
+      "turnIndex": 0,
+      "isError": false,
+      "input": {
+        "item_key": "ก่อสร้างฝายน้ำล้น ตามแบบ มข 2527",
+        "fiscal_years": [
+          2568,
+          2567
+        ],
+        "order_by": "amount_desc"
+      },
+      "outputPreview": {
+        "total": 4,
+        "truncated": false,
+        "row_count": 4,
+        "datasets": [
+          "pbo_disbursement"
+        ],
+        "fiscal_years_be": [
+          2567,
+          2568
+        ],
+        "source_ids": [
+          "82f03b2b14e2e983",
+          "b968829dfda76f08",
+          "bbed79c1ad93f06f",
+          "ec5d73dbbeb97e54"
+        ],
+        "coverage_notes": [
+          {
+            "dataset": "pbo_disbursement",
+            "fiscal_year_be": 2567,
+            "status": "no_oracle",
+            "note": "ไม่มี Grand Total/Sheet1 ให้ตรวจยอดในไฟล์ต้นทาง — ตรวจแค่จำนวนแถว (soft)"
+          }
+        ],
+        "warnings": [
+          "แถวส่วนใหญ่ที่คืนเป็น price_basis=\"amount_per_line\" — amount_thb เป็นยอดรวมต่อบรรทัดงบ อาจครอบคลุมหลายหน่วย ห้ามใช้เป็นราคาต่อหน่วยตรง ๆ (ดู implied_unit_price_hint ถ้ามี หรือใช้ get_price_trend)"
+        ]
+      },
+      "outputChars": 2996
+    },
+    {
+      "id": "toolu_01NbvnVFU9Qiex16SUpyn9zo",
+      "name": "query_budget_lines",
+      "round": 6,
+      "turnIndex": 0,
+      "isError": false,
+      "input": {
+        "item_key": "ก่อสร้างฝายน้ำล้น",
+        "fiscal_years": [
+          2565,
+          2564,
+          2563
+        ],
+        "order_by": "amount_desc",
+        "limit": 10
+      },
+      "outputPreview": {
+        "total": 45,
+        "truncated": true,
+        "row_count": 10,
+        "datasets": [
+          "pbo_disbursement"
+        ],
+        "fiscal_years_be": [
+          2563,
+          2564,
+          2565
+        ],
+        "source_ids": [
+          "ea90cef581145f97",
+          "ca10a564147d4ea7",
+          "d62e83b38a5c613d",
+          "05f76730b49b74e3",
+          "08bfd3a37c33b77f",
+          "1a3fb511a96c21eb",
+          "2e520a1469cb1753",
+          "310eddef34903d37",
+          "419ce3a519fe3670",
+          "49bd6641729d9fd4"
+        ],
+        "coverage_notes": [],
+        "warnings": [
+          "แถวส่วนใหญ่ที่คืนเป็น price_basis=\"amount_per_line\" — amount_thb เป็นยอดรวมต่อบรรทัดงบ อาจครอบคลุมหลายหน่วย ห้ามใช้เป็นราคาต่อหน่วยตรง ๆ (ดู implied_unit_price_hint ถ้ามี หรือใช้ get_price_trend)"
+        ]
+      },
+      "outputChars": 5601
+    },
+    {
+      "id": "toolu_01AerN65jUMXHLTHdkvK4JDj",
+      "name": "emit_illustration",
+      "round": 7,
+      "turnIndex": 0,
+      "isError": false,
+      "input": {
+        "title": "ผังเชิงแนวคิดฝายน้ำล้นคอนกรีตขนาดเล็ก (ตัดขวาง และ แผนผังด้านบน)",
+        "caption": "ภาพร่างเชิงแผนผังแสดงมิติทางกายภาพโดยประมาณ (ความสูงสันฝาย และความยาวสันฝาย) ไม่ใช่แบบก่อสร้างจริง ใช้เพื่อประกอบความเข้าใจขนาดโครงการเท่านั้น",
+        "kind": "cross_section",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 440 220\">\n  <rect x=\"0\" y=\"0\" width=\"440\" height=\"220\" fill=\"#f4f4f4\" stroke=\"none\"/>\n  <text x=\"10\" y=\"18\" font-size=\"13\" fill=\"#222222\">ภาพตัดขวาง (Cross Section)</text>\n  <line x1=\"10\" y1=\"170\" x2=\"200\" y2=\"170\" stroke=\"#555555\" stroke-width=\"2\"/>\n  <polygon points=\"90,170 130,110 150,110 150,170\" fill=\"#9e9e9e\" stroke=\"#333333\" stroke-width=\"1.5\"/>\n  <rect x=\"20\" y=\"130\" width=\"70\" height=\"40\" fill=\"#8fb3d9\" opacity=\"0.6\" stroke=\"#3d6b96\"/>\n  <text x=\"25\" y=\"125\" font-size=\"10\" fill=\"#2c5b82\">น้ำเหนือฝาย</text>\n  <rect x=\"150\" y=\"160\" width=\"45\" height=\"10\" fill=\"#b0b0b0\" stroke=\"#333333\"/>\n  <text x=\"150\" y=\"185\" font-size=\"9\" fill=\"#333333\">พื้นดาดคอนกรีตท้ายฝาย (Apron)</text>\n  <line x1=\"70\" y1=\"170\" x2=\"70\" y2=\"110\" stroke=\"#c62828\" stroke-width=\"1\"/>\n  <line x1=\"65\" y1=\"110\" x2=\"75\" y2=\"110\" stroke=\"#c62828\" stroke-width=\"1\"/>\n  <line x1=\"65\" y1=\"170\" x2=\"75\" y2=\"170\" stroke=\"#c62828\" stroke-width=\"1\"/>\n  <text x=\"78\" y=\"140\" font-size=\"11\" fill=\"#c62828\">สูง 1.5 ม.</text>\n\n  <text x=\"230\" y=\"18\" font-size=\"13\" fill=\"#222222\">แผนผังด้านบน (Plan View)</text>\n  <line x1=\"220\" y1=\"60\" x2=\"420\" y2=\"60\" stroke=\"#3d6b96\" stroke-width=\"6\" opacity=\"0.5\"/>\n  <rect x=\"240\" y=\"50\" width=\"160\" height=\"20\" fill=\"#9e9e9e\" stroke=\"#333333\" stroke-width=\"1.5\"/>\n  <line x1=\"240\" y1=\"90\" x2=\"240\" y2=\"105\" stroke=\"#c62828\" stroke-width=\"1\"/>\n  <line x1=\"400\" y1=\"90\" x2=\"400\" y2=\"105\" stroke=\"#c62828\" stroke-width=\"1\"/>\n  <line x1=\"240\" y1=\"98\" x2=\"400\" y2=\"98\" stroke=\"#c62828\" stroke-width=\"1\"/>\n  <text x=\"285\" y=\"112\" font-size=\"11\" fill=\"#c62828\">ยาวสันฝาย 8 ม.</text>\n  <text x=\"230\" y=\"150\" font-size=\"9\" fill=\"#555555\">ลำห้วยกว้างประมาณ (สมมติฐาน)</text>\n  <line x1=\"220\" y1=\"60\" x2=\"240\" y2=\"60\" stroke=\"#3d6b96\" stroke-width=\"10\" opacity=\"0.4\"/>\n  <line x1=\"400\" y1=\"60\" x2=\"420\" y2=\"60\" stroke=\"#3d6b96\" stroke-width=\"10\" opacity=\"0.4\"/>\n</svg>"
+      },
+      "outputPreview": {
+        "illustration_id": "illus_mu9pk9fl_t0ctiuiu",
+        "warnings": []
+      },
+      "outputChars": 69
+    },
+    {
+      "id": "toolu_01TiDE8VXEfNHSqJC5PQqtxi",
+      "name": "emit_proposal",
+      "round": 8,
+      "turnIndex": 0,
+      "isError": false,
+      "input": {
+        "version": 1,
+        "title": "ก่อสร้างฝายน้ำล้นคอนกรีตเสริมเหล็กขนาดเล็ก กั้นลำห้วยในหมู่บ้าน (สูง 1.5 ม. ยาวสันฝาย 8 ม.) ปีงบประมาณ 2569",
+        "summary": "ประเมินงบสำหรับฝายน้ำล้น คสล. ขนาดเล็ก (สูง 1.5 ม. ยาวสันฝาย 8 ม.) ของ อบต. โดยเทียบกับโครงการก่อสร้างฝายน้ำล้นขนาดใกล้เคียงของ อปท. อื่นในอดีต (ปี 2564-2566) จำนวน 5 รายการ ซึ่งมีมูลค่าตั้งแต่ 570,000-1,443,000 บาท ค่ากลางอยู่ที่ประมาณ 849,000 บาท โดยเฉพาะโครงการ \"ตามแบบ มข.2527\" ซึ่งเป็นแบบมาตรฐานขนาดเล็กที่ อปท. ใช้กันแพร่หลายและใกล้เคียงกับสเปคที่ผู้ใช้ระบุมากที่สุด หลังปรับด้วยดัชนีราคาวัสดุก่อสร้างถึงปี 2569 (ใช้ข้อมูลปี 2568 ล่าสุดที่มี เนื่องจากดัชนีปี 2569 ยังไม่เผยแพร่) ราคาโครงสร้างหลักปรับเป็นประมาณ 850,500 บาท รวมค่าใช้จ่ายเสริม (ป้ายโครงการ/ความปลอดภัย, ค่าสำรวจออกแบบและควบคุมงาน) และเผื่อเหลือเผื่อขาด 10% ได้งบประมาณรวมโดยประมาณ 998,800 บาท ทั้งนี้ ข้อมูลงบเก่าที่ใช้เป็น \"ยอดรวมต่อโครงการ\" (amount_per_line) ไม่ใช่ราคาต่อหน่วยพื้นที่/ปริมาตร จึงมีความไม่แน่นอนจากความแตกต่างของสภาพพื้นที่และสเปคย่อยของแต่ละโครงการ",
+        "mode": "draft",
+        "requester_context": {
+          "fiscal_year_be": 2569,
+          "owner_agency": "องค์การบริหารส่วนตำบล (อบต. ขนาดเล็ก) — ไม่ระบุจังหวัด",
+          "area": "ลำห้วยในหมู่บ้าน (ไม่ระบุจังหวัด/ภาค — สมมติฐาน)",
+          "target_group": "ครัวเรือนเกษตรกร/ชาวบ้านในหมู่บ้านที่ใช้น้ำจากลำห้วย",
+          "duration_months": 6
+        },
+        "objectives": [
+          "กักเก็บ/ยกระดับน้ำในลำห้วยเพื่อการเกษตรและใช้สอยของชุมชนในช่วงฤดูแล้ง",
+          "ชะลอการไหลของน้ำในช่วงน้ำหลากเพื่อลดการกัดเซาะลำห้วย",
+          "ใช้แบบฝายมาตรฐานขนาดเล็กที่ก่อสร้างและดูแลรักษาง่าย เหมาะกับงบประมาณของ อบต. ขนาดเล็ก"
+        ],
+        "scope_and_specs": [
+          {
+            "section": "ลักษณะโครงสร้างฝาย",
+            "items": [
+              "ฝายน้ำล้นคอนกรีตเสริมเหล็ก (ไม่ใช่ประตูระบายน้ำ/ฝายชลประทานขนาดใหญ่)",
+              "ความสูงสันฝาย (จากพื้นท้องน้ำ) ประมาณ 1.5 เมตร",
+              "ความยาวสันฝาย 8 เมตร",
+              "มีพื้นดาดคอนกรีตป้องกันการกัดเซาะท้ายฝาย (Apron)",
+              "ไม่รวมบันไดปลาโจน/บานประตูระบายน้ำ (สมมติฐาน — ฝายแบบง่าย)"
+            ]
+          },
+          {
+            "section": "งานที่เกี่ยวข้อง",
+            "items": [
+              "ป้ายโครงการและมาตรการความปลอดภัยระหว่างก่อสร้าง",
+              "ค่าสำรวจ ออกแบบ และควบคุมงานก่อสร้าง"
+            ]
+          }
+        ],
+        "assumptions": [
+          {
+            "text": "ไม่ทราบจังหวัด/ภาคที่ตั้งโครงการ จึงใช้ค่ากลางจากโครงการเปรียบเทียบทั่วประเทศ (อุบลราชธานี, ขอนแก่น, นราธิวาส, บึงกาฬ) แทนราคาเฉพาะพื้นที่ — หากอยู่ในพื้นที่ห่างไกล/ขนส่งวัสดุยาก ราคาจริงอาจสูงกว่านี้",
+            "impact": "medium"
+          },
+          {
+            "text": "สมมติว่าเป็นฝายแบบง่ายไม่มีบานประตูระบายน้ำ/บันไดปลาโจน ตามที่ผู้ใช้ระบุ หากต้องเพิ่มองค์ประกอบเหล่านี้ในอนาคต งบจะเพิ่มขึ้นอย่างมีนัยสำคัญ",
+            "impact": "medium"
+          },
+          {
+            "text": "ใช้แบบมาตรฐานใกล้เคียง 'ฝายน้ำล้นตามแบบ มข.2527' ซึ่งเป็นแบบที่ อปท. ทั่วประเทศใช้กันแพร่หลายสำหรับฝายขนาดเล็ก แต่ไม่ทราบสันฝายยาวเท่าใดในแบบอ้างอิงจริง จึงมีความไม่แน่นอนเรื่องสเปคละเอียด",
+            "impact": "medium"
+          },
+          {
+            "text": "สมมติสภาพลำห้วยเป็นดินปกติ ไม่มีชั้นหินแข็งหรือดินอ่อนเป็นพิเศษที่ต้องเพิ่มงานฐานรากพิเศษ",
+            "impact": "medium"
+          },
+          {
+            "text": "ราคาที่อ้างอิงจากงบเก่าถือว่ารวม VAT แล้ว (ตามธรรมเนียมการตั้งงบ อปท.)",
+            "impact": "low"
+          }
+        ],
+        "boq": [
+          {
+            "id": "weir-main",
+            "category": "งานก่อสร้างฝายน้ำล้น",
+            "item": "ก่อสร้างฝายน้ำล้นคอนกรีตเสริมเหล็ก สูง 1.5 ม. ยาวสันฝาย 8 ม. (รวมฐานราก งานตัวฝาย และพื้นดาดคอนกรีตป้องกันการกัดเซาะท้ายฝาย)",
+            "qty": 1,
+            "unit": "โครงการ (แห่ง)",
+            "unit_price_thb": 850500,
+            "total_thb": 850500,
+            "basis": "historical",
+            "confidence": "medium",
+            "rationale": "อ้างอิงจากโครงการ 'ก่อสร้างฝายน้ำล้นตามแบบ มข.2527' ของ อบต.พังเคน อ.นาตาล จ.อุบลราชธานี ปีงบ 2566 จำนวน 2 โครงการ (849,000 บาท เท่ากันทั้งคู่) ซึ่งเป็นแบบมาตรฐานขนาดเล็กที่ใกล้เคียงสเปคที่ผู้ใช้ระบุมากที่สุดในข้อมูลที่ค้นพบ ปรับมูลค่าจากปี 2566 มาปี 2569 ด้วยดัชนีราคาวัสดุก่อสร้างรวม (ใช้ข้อมูลปี 2568 ล่าสุดที่เผยแพร่แทน เนื่องจากปี 2569 ยังไม่มีข้อมูล) ได้ 850,504 บาท (ปัดเป็น 850,500 บาท) ทั้งนี้ยอดนี้เป็น 'ยอดรวมต่อโครงการ' ไม่ใช่ราคาต่อตารางเมตร/ลูกบาศก์เมตร จึงอาจไม่ครอบคลุมความแตกต่างของสเปคย่อยหรือสภาพพื้นที่ทุกกรณี — ดูช่วงราคาเปรียบเทียบ 570,000-1,443,000 บาท ในส่วน comparables",
+            "citations": [
+              {
+                "kind": "budget_line",
+                "source_id": "05df3280f3718b90",
+                "note": "ก่อสร้างฝายน้ำล้นตามแบบ มข.2527 หมู่ 7 บ้านโนนขุมคำ ต.พังเคน อ.นาตาล จ.อุบลราชธานี ปีงบ 2566 มูลค่า 849,000 บาท"
+              },
+              {
+                "kind": "budget_line",
+                "source_id": "3693e67a35d8bf21",
+                "note": "ก่อสร้างฝายน้ำล้นตามแบบ มข.2527 หมู่ 8 บ้านด่านฮัง ต.พังเคน อ.นาตาล จ.อุบลราชธานี ปีงบ 2566 มูลค่า 849,000 บาท"
+              },
+              {
+                "kind": "econ",
+                "indicator": "construction_material_index",
+                "year_be": 2566
+              },
+              {
+                "kind": "econ",
+                "indicator": "construction_material_index",
+                "year_be": 2568
+              }
+            ],
+            "price_derivation": {
+              "from_amount_thb": 849000,
+              "from_year_be": 2566,
+              "to_year_be": 2569,
+              "indicator": "construction_material_index",
+              "factor": 1.001772
+            },
+            "trend_ref": {
+              "kind": "item",
+              "key": "ก่อสร้างฝายน้ำล้น"
+            }
+          },
+          {
+            "id": "signage-safety",
+            "category": "งานความปลอดภัยและป้ายโครงการ",
+            "item": "ป้ายโครงการ รั้ว/แนวป้องกันคนพลัดตกชั่วคราว และป้ายเตือนความปลอดภัยระหว่างก่อสร้าง",
+            "qty": 1,
+            "unit": "รายการ",
+            "unit_price_thb": 15000,
+            "total_thb": 15000,
+            "basis": "estimate",
+            "confidence": "low",
+            "rationale": "ไม่พบข้อมูลราคาย้อนหลังเฉพาะรายการนี้ในระบบ ใช้ค่าประมาณตามธรรมเนียมโครงการก่อสร้างขนาดเล็กของ อปท. ทั่วไป",
+            "citations": []
+          },
+          {
+            "id": "design-supervision",
+            "category": "ค่าใช้จ่ายในการสำรวจออกแบบและควบคุมงาน",
+            "item": "ค่าสำรวจ ออกแบบ และควบคุมงานก่อสร้าง (ประมาณ 5% ของงานโครงสร้างหลัก)",
+            "qty": 1,
+            "unit": "รายการ",
+            "unit_price_thb": 42500,
+            "total_thb": 42500,
+            "basis": "estimate",
+            "confidence": "low",
+            "rationale": "ไม่พบข้อมูลย้อนหลังเฉพาะรายการนี้ในระบบ ใช้อัตราประมาณ 5% ของมูลค่างานโครงสร้างหลักตามธรรมเนียมงานก่อสร้างขนาดเล็กของหน่วยงานท้องถิ่น",
+            "citations": []
+          }
+        ],
+        "totals": {
+          "subtotal_thb": 908000,
+          "vat_included": true,
+          "contingency_pct": 10,
+          "contingency_thb": 90800,
+          "grand_total_thb": 998800
+        },
+        "comparables": [
+          {
+            "source_id": "05df3280f3718b90",
+            "fiscal_year_be": 2566,
+            "agency": "อบต.พังเคน อ.นาตาล จ.อุบลราชธานี (ผ่านกรมส่งเสริมการปกครองท้องถิ่น)",
+            "item_name": "ก่อสร้างฝายน้ำล้นตามแบบ มข.2527 หมู่ 7 บ้านโนนขุมคำ",
+            "amount_thb": 849000,
+            "similarity_note": "แบบมาตรฐาน มข.2527 ขนาดเล็ก ใกล้เคียงสเปคที่ผู้ใช้ระบุมากที่สุด แต่ไม่ทราบความยาวสันฝายจริงของแบบนี้"
+          },
+          {
+            "source_id": "3693e67a35d8bf21",
+            "fiscal_year_be": 2566,
+            "agency": "อบต.พังเคน อ.นาตาล จ.อุบลราชธานี (ผ่านกรมส่งเสริมการปกครองท้องถิ่น)",
+            "item_name": "ก่อสร้างฝายน้ำล้นตามแบบ มข.2527 หมู่ 8 บ้านด่านฮัง",
+            "amount_thb": 849000,
+            "similarity_note": "โครงการคู่แบบเดียวกัน มูลค่าเท่ากันพอดี ยืนยันความสม่ำเสมอของราคาแบบมาตรฐานนี้ในพื้นที่/ปีเดียวกัน"
+          },
+          {
+            "source_id": "ea90cef581145f97",
+            "fiscal_year_be": 2565,
+            "agency": "กรมการปกครอง อ.รือเสาะ จ.นราธิวาส",
+            "item_name": "ก่อสร้างฝายน้ำล้น อำเภอรือเสาะ",
+            "amount_thb": 1443000,
+            "similarity_note": "มูลค่าสูงกว่าค่ากลางมาก อาจเป็นฝายขนาดใหญ่กว่าหรือสภาพพื้นที่ก่อสร้างยากกว่า (เช่น ดินอ่อน/เข้าถึงยาก) — ใช้เป็นขอบบนของช่วงราคา"
+          },
+          {
+            "source_id": "ca10a564147d4ea7",
+            "fiscal_year_be": 2565,
+            "agency": "อบต.ห้วยยาง อ.กระนวน จ.ขอนแก่น (ผ่านกรมส่งเสริมการปกครองท้องถิ่น)",
+            "item_name": "ก่อสร้างฝายน้ำล้น ลำห้วยยางบ้านห้วยยาง",
+            "amount_thb": 617000,
+            "similarity_note": "มูลค่าต่ำกว่าค่ากลาง อาจเป็นฝายที่เล็กกว่าหรือสภาพพื้นที่ก่อสร้างง่ายกว่า — ใช้เป็นขอบล่างของช่วงราคา"
+          },
+          {
+            "source_id": "d62e83b38a5c613d",
+            "fiscal_year_be": 2564,
+            "agency": "อบต.นาแสง อ.ศรีวิไล จ.บึงกาฬ (ผ่านกรมส่งเสริมการปกครองท้องถิ่น)",
+            "item_name": "ก่อสร้างฝายน้ำล้น หมู่ 6 บ้านคำแคนพัฒนา",
+            "amount_thb": 570000,
+            "similarity_note": "มูลค่าต่ำสุดในกลุ่มเปรียบเทียบ อาจสะท้อนฝายขนาดเล็กกว่าที่ผู้ใช้ระบุ"
+          }
+        ],
+        "risks": [
+          {
+            "text": "ทุกโครงการเปรียบเทียบเป็น 'ยอดรวมต่อโครงการ' (amount_per_line) ไม่ใช่ราคาต่อหน่วยพื้นที่/ปริมาตร คอนกรีต จึงไม่สามารถยืนยันได้ว่าสัดส่วนกับความสูง/ความยาวสันฝายที่ผู้ใช้ระบุตรงกันเป๊ะ",
+            "mitigation": "ควรให้วิศวกรโยธาประมาณปริมาณคอนกรีต/เหล็กเสริมจากแบบก่อสร้างจริงก่อนอนุมัติงบขั้นสุดท้าย"
+          },
+          {
+            "text": "ราคาวัสดุก่อสร้าง (ปูนซีเมนต์/คอนกรีต) อาจเปลี่ยนแปลงระหว่างช่วงจัดทำงบและช่วงประกวดราคาจริงในปี 2569 เนื่องจากดัชนีปี 2569 ยังไม่มีข้อมูลเผยแพร่",
+            "mitigation": "ตรวจสอบราคาวัสดุก่อสร้างล่าสุด ณ ช่วงจัดทำ BOQ รายละเอียดก่อนประกวดราคา"
+          },
+          {
+            "text": "สภาพลำห้วยจริง (ความกว้าง ชนิดดิน ปริมาณน้ำหลาก) อาจทำให้ต้องเพิ่มงานฐานรากหรือขนาดโครงสร้างมากกว่าที่ประมาณ",
+            "mitigation": "สำรวจสภาพพื้นที่จริงและออกแบบโดยวิศวกรก่อนกำหนดงบประมาณขั้นสุดท้าย"
+          }
+        ],
+        "open_questions": [
+          "อบต. อยู่จังหวัด/ภาคใด (กระทบราคาขนส่งวัสดุและค่าแรงในพื้นที่)",
+          "สภาพลำห้วย (ความกว้าง ความลึก ชนิดดินท้องน้ำ) เพื่อออกแบบฐานรากและประมาณปริมาณคอนกรีตที่แม่นยำกว่านี้",
+          "ต้องการงานป้องกันตลิ่งข้างฝายหรือบันไดปลาโจนเพิ่มเติมหรือไม่",
+          "อบต. มีแบบแปลนมาตรฐาน (เช่น มข.2527 หรือแบบกรมชลประทาน) ที่ต้องการใช้อยู่แล้วหรือไม่"
+        ],
+        "citations_web": [],
+        "illustrations": [
+          {
+            "illustration_id": "illus_mu9pk9fl_t0ctiuiu",
+            "title": "ผังเชิงแนวคิดฝายน้ำล้นคอนกรีตขนาดเล็ก (ตัดขวาง และ แผนผังด้านบน)",
+            "caption": "ภาพร่างเชิงแผนผังแสดงมิติทางกายภาพโดยประมาณ (ความสูงสันฝาย และความยาวสันฝาย) ไม่ใช่แบบก่อสร้างจริง ใช้เพื่อประกอบความเข้าใจขนาดโครงการเท่านั้น",
+            "kind": "cross_section"
+          }
+        ],
+        "stat_cards": [
+          {
+            "trend_ref": {
+              "kind": "item",
+              "key": "ก่อสร้างฝายน้ำล้น"
+            },
+            "headline_th": "มูลค่าต่อโครงการก่อสร้างฝายน้ำล้น (บาท/รายการ) ย้อนหลัง พ.ศ. 2558-2565 จากงบ อปท./งบกลาง"
+          },
+          {
+            "trend_ref": {
+              "kind": "indicator",
+              "key": "construction_material_index"
+            },
+            "headline_th": "ดัชนีราคาวัสดุก่อสร้างรวม (2558=100) พ.ศ. 2559-2568 — ข้อมูล TPSO ยังไม่ผ่านการยืนยันซ้ำ (verified:false)"
+          }
+        ]
+      },
+      "outputPreview": {
+        "ok": true,
+        "proposal_id": "prop_mu9pmqga_uxwlte0y",
+        "warnings": [
+          "BOQ \"ก่อสร้างฝายน้ำล้นคอนกรีตเสริมเหล็ก สูง 1.5 ม. ยาวสันฝาย 8 ม. (รวมฐานราก งานตัวฝาย และพื้นดาดคอนกรีตป้องกันการกัดเซาะท้ายฝาย)\" (id=weir-main): unit_price_thb (850500) ตรวจสอบย้อนกลับไปยัง citation ไม่ได้ (price_not_traceable) — จำกัด confidence ไม่เกิน low"
+        ],
+        "proposal": {
+          "version": 1,
+          "title": "ก่อสร้างฝายน้ำล้นคอนกรีตเสริมเหล็กขนาดเล็ก กั้นลำห้วยในหมู่บ้าน (สูง 1.5 ม. ยาวสันฝาย 8 ม.) ปีงบประมาณ 2569",
+          "summary": "ประเมินงบสำหรับฝายน้ำล้น คสล. ขนาดเล็ก (สูง 1.5 ม. ยาวสันฝาย 8 ม.) ของ อบต. โดยเทียบกับโครงการก่อสร้างฝายน้ำล้นขนาดใกล้เคียงของ อปท. อื่นในอดีต (ปี 2564-2566) จำนวน 5 รายการ ซึ่งมีมูลค่าตั้งแต่ 570,000-1,443,000 บาท ค่ากลางอยู่ที่ประมาณ 849,000 บาท โดยเฉพาะโครงการ \"ตามแบบ มข.2527\" ซึ่งเป็นแบบมาตรฐานขนาดเล็กที่ อปท. ใช้กันแพร่หลายและใกล้เคียงกับสเปคที่ผู้ใช้ระบุมากที่สุด หลังปรับด้วยดัชนีราคาวัสดุก่อสร้างถึงปี 2569 (ใช้ข้อมูลปี 2568 ล่าสุดที่มี เนื่องจากดัชนีปี 2569 ยังไม่เผยแพร่) ราคาโครงสร้างหลักปรับเป็นประมาณ 850,500 บาท รวมค่าใช้จ่ายเสริม (ป้ายโครงการ/ความปลอดภัย, ค่าสำรวจออกแบบและควบคุมงาน) และเผื่อเหลือเผื่อขาด 10% ได้งบประมาณรวมโดยประมาณ 998,800 บาท ทั้งนี้ ข้อมูลงบเก่าที่ใช้เป็น \"ยอดรวมต่อโครงการ\" (amount_per_line) ไม่ใช่ราคาต่อหน่วยพื้นที่/ปริมาตร จึงมีความไม่แน่นอนจากความแตกต่างของสภาพพื้นที่และสเปคย่อยของแต่ละโครงการ",
+          "mode": "draft",
+          "requester_context": {
+            "area": "ลำห้วยในหมู่บ้าน (ไม่ระบุจังหวัด/ภาค — สมมติฐาน)",
+            "owner_agency": "องค์การบริหารส่วนตำบล (อบต. ขนาดเล็ก) — ไม่ระบุจังหวัด",
+            "target_group": "ครัวเรือนเกษตรกร/ชาวบ้านในหมู่บ้านที่ใช้น้ำจากลำห้วย",
+            "fiscal_year_be": 2569,
+            "duration_months": 6
+          },
+          "objectives": [
+            "กักเก็บ/ยกระดับน้ำในลำห้วยเพื่อการเกษตรและใช้สอยของชุมชนในช่วงฤดูแล้ง",
+            "ชะลอการไหลของน้ำในช่วงน้ำหลากเพื่อลดการกัดเซาะลำห้วย",
+            "ใช้แบบฝายมาตรฐานขนาดเล็กที่ก่อสร้างและดูแลรักษาง่าย เหมาะกับงบประมาณของ อบต. ขนาดเล็ก"
+          ],
+          "scope_and_specs": [
+            {
+              "section": "ลักษณะโครงสร้างฝาย",
+              "items": [
+                "ฝายน้ำล้นคอนกรีตเสริมเหล็ก (ไม่ใช่ประตูระบายน้ำ/ฝายชลประทานขนาดใหญ่)",
+                "ความสูงสันฝาย (จากพื้นท้องน้ำ) ประมาณ 1.5 เมตร",
+                "ความยาวสันฝาย 8 เมตร",
+                "มีพื้นดาดคอนกรีตป้องกันการกัดเซาะท้ายฝาย (Apron)",
+                "ไม่รวมบันไดปลาโจน/บานประตูระบายน้ำ (สมมติฐาน — ฝายแบบง่าย)"
+              ]
+            },
+            {
+              "section": "งานที่เกี่ยวข้อง",
+              "items": [
+                "ป้ายโครงการและมาตรการความปลอดภัยระหว่างก่อสร้าง",
+                "ค่าสำรวจ ออกแบบ และควบคุมงานก่อสร้าง"
+              ]
+            }
+          ],
+          "assumptions": [
+            {
+              "text": "ไม่ทราบจังหวัด/ภาคที่ตั้งโครงการ จึงใช้ค่ากลางจากโครงการเปรียบเทียบทั่วประเทศ (อุบลราชธานี, ขอนแก่น, นราธิวาส, บึงกาฬ) แทนราคาเฉพาะพื้นที่ — หากอยู่ในพื้นที่ห่างไกล/ขนส่งวัสดุยาก ราคาจริงอาจสูงกว่านี้",
+              "impact": "medium"
+            },
+            {
+              "text": "สมมติว่าเป็นฝายแบบง่ายไม่มีบานประตูระบายน้ำ/บันไดปลาโจน ตามที่ผู้ใช้ระบุ หากต้องเพิ่มองค์ประกอบเหล่านี้ในอนาคต งบจะเพิ่มขึ้นอย่างมีนัยสำคัญ",
+              "impact": "medium"
+            },
+            {
+              "text": "ใช้แบบมาตรฐานใกล้เคียง 'ฝายน้ำล้นตามแบบ มข.2527' ซึ่งเป็นแบบที่ อปท. ทั่วประเทศใช้กันแพร่หลายสำหรับฝายขนาดเล็ก แต่ไม่ทราบสันฝายยาวเท่าใดในแบบอ้างอิงจริง จึงมีความไม่แน่นอนเรื่องสเปคละเอียด",
+              "impact": "medium"
+            },
+            {
+              "text": "สมมติสภาพลำห้วยเป็นดินปกติ ไม่มีชั้นหินแข็งหรือดินอ่อนเป็นพิเศษที่ต้องเพิ่มงานฐานรากพิเศษ",
+              "impact": "medium"
+            },
+            {
+              "text": "ราคาที่อ้างอิงจากงบเก่าถือว่ารวม VAT แล้ว (ตามธรรมเนียมการตั้งงบ อปท.)",
+              "impact": "low"
+            }
+          ],
+          "boq": [
+            {
+              "id": "weir-main",
+              "category": "งานก่อสร้างฝายน้ำล้น",
+              "item": "ก่อสร้างฝายน้ำล้นคอนกรีตเสริมเหล็ก สูง 1.5 ม. ยาวสันฝาย 8 ม. (รวมฐานราก งานตัวฝาย และพื้นดาดคอนกรีตป้องกันการกัดเซาะท้ายฝาย)",
+              "qty": 1,
+              "unit": "โครงการ (แห่ง)",
+              "unit_price_thb": 850500,
+              "total_thb": 850500,
+              "basis": "historical",
+              "confidence": "low",
+              "rationale": "อ้างอิงจากโครงการ 'ก่อสร้างฝายน้ำล้นตามแบบ มข.2527' ของ อบต.พังเคน อ.นาตาล จ.อุบลราชธานี ปีงบ 2566 จำนวน 2 โครงการ (849,000 บาท เท่ากันทั้งคู่) ซึ่งเป็นแบบมาตรฐานขนาดเล็กที่ใกล้เคียงสเปคที่ผู้ใช้ระบุมากที่สุดในข้อมูลที่ค้นพบ ปรับมูลค่าจากปี 2566 มาปี 2569 ด้วยดัชนีราคาวัสดุก่อสร้างรวม (ใช้ข้อมูลปี 2568 ล่าสุดที่เผยแพร่แทน เนื่องจากปี 2569 ยังไม่มีข้อมูล) ได้ 850,504 บาท (ปัดเป็น 850,500 บาท) ทั้งนี้ยอดนี้เป็น 'ยอดรวมต่อโครงการ' ไม่ใช่ราคาต่อตารางเมตร/ลูกบาศก์เมตร จึงอาจไม่ครอบคลุมความแตกต่างของสเปคย่อยหรือสภาพพื้นที่ทุกกรณี — ดูช่วงราคาเปรียบเทียบ 570,000-1,443,000 บาท ในส่วน comparables",
+              "citations": [
+                {
+                  "kind": "budget_line",
+                  "source_id": "05df3280f3718b90",
+                  "note": "ก่อสร้างฝายน้ำล้นตามแบบ มข.2527 หมู่ 7 บ้านโนนขุมคำ ต.พังเคน อ.นาตาล จ.อุบลราชธานี ปีงบ 2566 มูลค่า 849,000 บาท"
+                },
+                {
+                  "kind": "budget_line",
+                  "source_id": "3693e67a35d8bf21",
+                  "note": "ก่อสร้างฝายน้ำล้นตามแบบ มข.2527 หมู่ 8 บ้านด่านฮัง ต.พังเคน อ.นาตาล จ.อุบลราชธานี ปีงบ 2566 มูลค่า 849,000 บาท"
+                },
+                {
+                  "kind": "econ",
+                  "indicator": "construction_material_index",
+                  "year_be": 2566
+                },
+                {
+                  "kind": "econ",
+                  "indicator": "construction_material_index",
+                  "year_be": 2568
+                }
+              ],
+              "price_derivation": {
+                "from_amount_thb": 849000,
+                "from_year_be": 2566,
+                "to_year_be": 2569,
+                "indicator": "construction_material_index",
+                "factor": 1.001772
+              },
+              "trend_ref": {
+                "kind": "item",
+                "key": "ก่อสร้างฝายน้ำล้น"
+              }
+            },
+            {
+              "id": "signage-safety",
+              "category": "งานความปลอดภัยและป้ายโครงการ",
+              "item": "ป้ายโครงการ รั้ว/แนวป้องกันคนพลัดตกชั่วคราว และป้ายเตือนความปลอดภัยระหว่างก่อสร้าง",
+              "qty": 1,
+              "unit": "รายการ",
+              "unit_price_thb": 15000,
+              "total_thb": 15000,
+              "basis": "estimate",
+              "confidence": "low",
+              "rationale": "ไม่พบข้อมูลราคาย้อนหลังเฉพาะรายการนี้ในระบบ ใช้ค่าประมาณตามธรรมเนียมโครงการก่อสร้างขนาดเล็กของ อปท. ทั่วไป",
+              "citations": []
+            },
+            {
+              "id": "design-supervision",
+              "category": "ค่าใช้จ่ายในการสำรวจออกแบบและควบคุมงาน",
+              "item": "ค่าสำรวจ ออกแบบ และควบคุมงานก่อสร้าง (ประมาณ 5% ของงานโครงสร้างหลัก)",
+              "qty": 1,
+              "unit": "รายการ",
+              "unit_price_thb": 42500,
+              "total_thb": 42500,
+              "basis": "estimate",
+              "confidence": "low",
+              "rationale": "ไม่พบข้อมูลย้อนหลังเฉพาะรายการนี้ในระบบ ใช้อัตราประมาณ 5% ของมูลค่างานโครงสร้างหลักตามธรรมเนียมงานก่อสร้างขนาดเล็กของหน่วยงานท้องถิ่น",
+              "citations": []
+            }
+          ],
+          "totals": {
+            "subtotal_thb": 908000,
+            "contingency_pct": 10,
+            "contingency_thb": 90800,
+            "vat_included": true,
+            "grand_total_thb": 998800
+          },
+          "comparables": [
+            {
+              "source_id": "05df3280f3718b90",
+              "fiscal_year_be": 2566,
+              "agency": "อบต.พังเคน อ.นาตาล จ.อุบลราชธานี (ผ่านกรมส่งเสริมการปกครองท้องถิ่น)",
+              "item_name": "ก่อสร้างฝายน้ำล้นตามแบบ มข.2527 หมู่ 7 บ้านโนนขุมคำ",
+              "amount_thb": 849000,
+              "similarity_note": "แบบมาตรฐาน มข.2527 ขนาดเล็ก ใกล้เคียงสเปคที่ผู้ใช้ระบุมากที่สุด แต่ไม่ทราบความยาวสันฝายจริงของแบบนี้"
+            },
+            {
+              "source_id": "3693e67a35d8bf21",
+              "fiscal_year_be": 2566,
+              "agency": "อบต.พังเคน อ.นาตาล จ.อุบลราชธานี (ผ่านกรมส่งเสริมการปกครองท้องถิ่น)",
+              "item_name": "ก่อสร้างฝายน้ำล้นตามแบบ มข.2527 หมู่ 8 บ้านด่านฮัง",
+              "amount_thb": 849000,
+              "similarity_note": "โครงการคู่แบบเดียวกัน มูลค่าเท่ากันพอดี ยืนยันความสม่ำเสมอของราคาแบบมาตรฐานนี้ในพื้นที่/ปีเดียวกัน"
+            },
+            {
+              "source_id": "ea90cef581145f97",
+              "fiscal_year_be": 2565,
+              "agency": "กรมการปกครอง อ.รือเสาะ จ.นราธิวาส",
+              "item_name": "ก่อสร้างฝายน้ำล้น อำเภอรือเสาะ",
+              "amount_thb": 1443000,
+              "similarity_note": "มูลค่าสูงกว่าค่ากลางมาก อาจเป็นฝายขนาดใหญ่กว่าหรือสภาพพื้นที่ก่อสร้างยากกว่า (เช่น ดินอ่อน/เข้าถึงยาก) — ใช้เป็นขอบบนของช่วงราคา"
+            },
+            {
+              "source_id": "ca10a564147d4ea7",
+              "fiscal_year_be": 2565,
+              "agency": "อบต.ห้วยยาง อ.กระนวน จ.ขอนแก่น (ผ่านกรมส่งเสริมการปกครองท้องถิ่น)",
+              "item_name": "ก่อสร้างฝายน้ำล้น ลำห้วยยางบ้านห้วยยาง",
+              "amount_thb": 617000,
+              "similarity_note": "มูลค่าต่ำกว่าค่ากลาง อาจเป็นฝายที่เล็กกว่าหรือสภาพพื้นที่ก่อสร้างง่ายกว่า — ใช้เป็นขอบล่างของช่วงราคา"
+            },
+            {
+              "source_id": "d62e83b38a5c613d",
+              "fiscal_year_be": 2564,
+              "agency": "อบต.นาแสง อ.ศรีวิไล จ.บึงกาฬ (ผ่านกรมส่งเสริมการปกครองท้องถิ่น)",
+              "item_name": "ก่อสร้างฝายน้ำล้น หมู่ 6 บ้านคำแคนพัฒนา",
+              "amount_thb": 570000,
+              "similarity_note": "มูลค่าต่ำสุดในกลุ่มเปรียบเทียบ อาจสะท้อนฝายขนาดเล็กกว่าที่ผู้ใช้ระบุ"
+            }
+          ],
+          "risks": [
+            {
+              "text": "ทุกโครงการเปรียบเทียบเป็น 'ยอดรวมต่อโครงการ' (amount_per_line) ไม่ใช่ราคาต่อหน่วยพื้นที่/ปริมาตร คอนกรีต จึงไม่สามารถยืนยันได้ว่าสัดส่วนกับความสูง/ความยาวสันฝายที่ผู้ใช้ระบุตรงกันเป๊ะ",
+              "mitigation": "ควรให้วิศวกรโยธาประมาณปริมาณคอนกรีต/เหล็กเสริมจากแบบก่อสร้างจริงก่อนอนุมัติงบขั้นสุดท้าย"
+            },
+            {
+              "text": "ราคาวัสดุก่อสร้าง (ปูนซีเมนต์/คอนกรีต) อาจเปลี่ยนแปลงระหว่างช่วงจัดทำงบและช่วงประกวดราคาจริงในปี 2569 เนื่องจากดัชนีปี 2569 ยังไม่มีข้อมูลเผยแพร่",
+              "mitigation": "ตรวจสอบราคาวัสดุก่อสร้างล่าสุด ณ ช่วงจัดทำ BOQ รายละเอียดก่อนประกวดราคา"
+            },
+            {
+              "text": "สภาพลำห้วยจริง (ความกว้าง ชนิดดิน ปริมาณน้ำหลาก) อาจทำให้ต้องเพิ่มงานฐานรากหรือขนาดโครงสร้างมากกว่าที่ประมาณ",
+              "mitigation": "สำรวจสภาพพื้นที่จริงและออกแบบโดยวิศวกรก่อนกำหนดงบประมาณขั้นสุดท้าย"
+            }
+          ],
+          "open_questions": [
+            "อบต. อยู่จังหวัด/ภาคใด (กระทบราคาขนส่งวัสดุและค่าแรงในพื้นที่)",
+            "สภาพลำห้วย (ความกว้าง ความลึก ชนิดดินท้องน้ำ) เพื่อออกแบบฐานรากและประมาณปริมาณคอนกรีตที่แม่นยำกว่านี้",
+            "ต้องการงานป้องกันตลิ่งข้างฝายหรือบันไดปลาโจนเพิ่มเติมหรือไม่",
+            "อบต. มีแบบแปลนมาตรฐาน (เช่น มข.2527 หรือแบบกรมชลประทาน) ที่ต้องการใช้อยู่แล้วหรือไม่"
+          ],
+          "citations_web": [],
+          "illustrations": [
+            {
+              "illustration_id": "illus_mu9pk9fl_t0ctiuiu",
+              "title": "ผังเชิงแนวคิดฝายน้ำล้นคอนกรีตขนาดเล็ก (ตัดขวาง และ แผนผังด้านบน)",
+              "caption": "ภาพร่างเชิงแผนผังแสดงมิติทางกายภาพโดยประมาณ (ความสูงสันฝาย และความยาวสันฝาย) ไม่ใช่แบบก่อสร้างจริง ใช้เพื่อประกอบความเข้าใจขนาดโครงการเท่านั้น",
+              "kind": "cross_section"
+            }
+          ],
+          "stat_cards": [
+            {
+              "trend_ref": {
+                "kind": "item",
+                "key": "ก่อสร้างฝายน้ำล้น"
+              },
+              "headline_th": "มูลค่าต่อโครงการก่อสร้างฝายน้ำล้น (บาท/รายการ) ย้อนหลัง พ.ศ. 2558-2565 จากงบ อปท./งบกลาง"
+            },
+            {
+              "trend_ref": {
+                "kind": "indicator",
+                "key": "construction_material_index"
+              },
+              "headline_th": "ดัชนีราคาวัสดุก่อสร้างรวม (2558=100) พ.ศ. 2559-2568 — ข้อมูล TPSO ยังไม่ผ่านการยืนยันซ้ำ (verified:false)"
+            }
+          ]
+        },
+        "attempt": 1
+      },
+      "outputChars": 9142
+    }
+  ],
+  "perRequestUsage": [
+    {
+      "turnIndex": 0,
+      "model": "claude-sonnet-5",
+      "inputTokens": 2,
+      "outputTokens": 1198,
+      "cacheCreationInputTokens": 14738,
+      "cacheReadInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUsd": 0.048829
+    },
+    {
+      "turnIndex": 0,
+      "model": "claude-sonnet-5",
+      "inputTokens": 2,
+      "outputTokens": 799,
+      "cacheCreationInputTokens": 10011,
+      "cacheReadInputTokens": 14738,
+      "webSearchRequests": 0,
+      "costUsd": 0.0359691
+    },
+    {
+      "turnIndex": 0,
+      "model": "claude-sonnet-5",
+      "inputTokens": 2,
+      "outputTokens": 1045,
+      "cacheCreationInputTokens": 14498,
+      "cacheReadInputTokens": 24749,
+      "webSearchRequests": 0,
+      "costUsd": 0.05164880000000001
+    },
+    {
+      "turnIndex": 0,
+      "model": "claude-sonnet-5",
+      "inputTokens": 2,
+      "outputTokens": 1815,
+      "cacheCreationInputTokens": 2652,
+      "cacheReadInputTokens": 39247,
+      "webSearchRequests": 0,
+      "costUsd": 0.03263340000000001
+    },
+    {
+      "turnIndex": 0,
+      "model": "claude-sonnet-5",
+      "inputTokens": 2,
+      "outputTokens": 3135,
+      "cacheCreationInputTokens": 3608,
+      "cacheReadInputTokens": 41899,
+      "webSearchRequests": 0,
+      "costUsd": 0.0487538
+    },
+    {
+      "turnIndex": 0,
+      "model": "claude-sonnet-5",
+      "inputTokens": 2,
+      "outputTokens": 255,
+      "cacheCreationInputTokens": 5601,
+      "cacheReadInputTokens": 45507,
+      "webSearchRequests": 0,
+      "costUsd": 0.025657900000000004
+    },
+    {
+      "turnIndex": 0,
+      "model": "claude-sonnet-5",
+      "inputTokens": 2,
+      "outputTokens": 2530,
+      "cacheCreationInputTokens": 3909,
+      "cacheReadInputTokens": 51108,
+      "webSearchRequests": 0,
+      "costUsd": 0.04529810000000001
+    },
+    {
+      "turnIndex": 0,
+      "model": "claude-sonnet-5",
+      "inputTokens": 2,
+      "outputTokens": 9160,
+      "cacheCreationInputTokens": 2765,
+      "cacheReadInputTokens": 55017,
+      "webSearchRequests": 0,
+      "costUsd": 0.1095199
+    }
+  ],
+  "toolLogSummary": {
+    "sourceIdCount": 76,
+    "docIdCount": 6,
+    "econValueCount": 16,
+    "webUrlCount": 0,
+    "trendRefCount": 2,
+    "illustrationCount": 1,
+    "proposalAttemptCount": 1
+  },
+  "proposal": {
+    "version": 1,
+    "title": "ก่อสร้างฝายน้ำล้นคอนกรีตเสริมเหล็กขนาดเล็ก กั้นลำห้วยในหมู่บ้าน (สูง 1.5 ม. ยาวสันฝาย 8 ม.) ปีงบประมาณ 2569",
+    "summary": "ประเมินงบสำหรับฝายน้ำล้น คสล. ขนาดเล็ก (สูง 1.5 ม. ยาวสันฝาย 8 ม.) ของ อบต. โดยเทียบกับโครงการก่อสร้างฝายน้ำล้นขนาดใกล้เคียงของ อปท. อื่นในอดีต (ปี 2564-2566) จำนวน 5 รายการ ซึ่งมีมูลค่าตั้งแต่ 570,000-1,443,000 บาท ค่ากลางอยู่ที่ประมาณ 849,000 บาท โดยเฉพาะโครงการ \"ตามแบบ มข.2527\" ซึ่งเป็นแบบมาตรฐานขนาดเล็กที่ อปท. ใช้กันแพร่หลายและใกล้เคียงกับสเปคที่ผู้ใช้ระบุมากที่สุด หลังปรับด้วยดัชนีราคาวัสดุก่อสร้างถึงปี 2569 (ใช้ข้อมูลปี 2568 ล่าสุดที่มี เนื่องจากดัชนีปี 2569 ยังไม่เผยแพร่) ราคาโครงสร้างหลักปรับเป็นประมาณ 850,500 บาท รวมค่าใช้จ่ายเสริม (ป้ายโครงการ/ความปลอดภัย, ค่าสำรวจออกแบบและควบคุมงาน) และเผื่อเหลือเผื่อขาด 10% ได้งบประมาณรวมโดยประมาณ 998,800 บาท ทั้งนี้ ข้อมูลงบเก่าที่ใช้เป็น \"ยอดรวมต่อโครงการ\" (amount_per_line) ไม่ใช่ราคาต่อหน่วยพื้นที่/ปริมาตร จึงมีความไม่แน่นอนจากความแตกต่างของสภาพพื้นที่และสเปคย่อยของแต่ละโครงการ",
+    "mode": "draft",
+    "requester_context": {
+      "area": "ลำห้วยในหมู่บ้าน (ไม่ระบุจังหวัด/ภาค — สมมติฐาน)",
+      "owner_agency": "องค์การบริหารส่วนตำบล (อบต. ขนาดเล็ก) — ไม่ระบุจังหวัด",
+      "target_group": "ครัวเรือนเกษตรกร/ชาวบ้านในหมู่บ้านที่ใช้น้ำจากลำห้วย",
+      "fiscal_year_be": 2569,
+      "duration_months": 6
+    },
+    "objectives": [
+      "กักเก็บ/ยกระดับน้ำในลำห้วยเพื่อการเกษตรและใช้สอยของชุมชนในช่วงฤดูแล้ง",
+      "ชะลอการไหลของน้ำในช่วงน้ำหลากเพื่อลดการกัดเซาะลำห้วย",
+      "ใช้แบบฝายมาตรฐานขนาดเล็กที่ก่อสร้างและดูแลรักษาง่าย เหมาะกับงบประมาณของ อบต. ขนาดเล็ก"
+    ],
+    "scope_and_specs": [
+      {
+        "section": "ลักษณะโครงสร้างฝาย",
+        "items": [
+          "ฝายน้ำล้นคอนกรีตเสริมเหล็ก (ไม่ใช่ประตูระบายน้ำ/ฝายชลประทานขนาดใหญ่)",
+          "ความสูงสันฝาย (จากพื้นท้องน้ำ) ประมาณ 1.5 เมตร",
+          "ความยาวสันฝาย 8 เมตร",
+          "มีพื้นดาดคอนกรีตป้องกันการกัดเซาะท้ายฝาย (Apron)",
+          "ไม่รวมบันไดปลาโจน/บานประตูระบายน้ำ (สมมติฐาน — ฝายแบบง่าย)"
+        ]
+      },
+      {
+        "section": "งานที่เกี่ยวข้อง",
+        "items": [
+          "ป้ายโครงการและมาตรการความปลอดภัยระหว่างก่อสร้าง",
+          "ค่าสำรวจ ออกแบบ และควบคุมงานก่อสร้าง"
+        ]
+      }
+    ],
+    "assumptions": [
+      {
+        "text": "ไม่ทราบจังหวัด/ภาคที่ตั้งโครงการ จึงใช้ค่ากลางจากโครงการเปรียบเทียบทั่วประเทศ (อุบลราชธานี, ขอนแก่น, นราธิวาส, บึงกาฬ) แทนราคาเฉพาะพื้นที่ — หากอยู่ในพื้นที่ห่างไกล/ขนส่งวัสดุยาก ราคาจริงอาจสูงกว่านี้",
+        "impact": "medium"
+      },
+      {
+        "text": "สมมติว่าเป็นฝายแบบง่ายไม่มีบานประตูระบายน้ำ/บันไดปลาโจน ตามที่ผู้ใช้ระบุ หากต้องเพิ่มองค์ประกอบเหล่านี้ในอนาคต งบจะเพิ่มขึ้นอย่างมีนัยสำคัญ",
+        "impact": "medium"
+      },
+      {
+        "text": "ใช้แบบมาตรฐานใกล้เคียง 'ฝายน้ำล้นตามแบบ มข.2527' ซึ่งเป็นแบบที่ อปท. ทั่วประเทศใช้กันแพร่หลายสำหรับฝายขนาดเล็ก แต่ไม่ทราบสันฝายยาวเท่าใดในแบบอ้างอิงจริง จึงมีความไม่แน่นอนเรื่องสเปคละเอียด",
+        "impact": "medium"
+      },
+      {
+        "text": "สมมติสภาพลำห้วยเป็นดินปกติ ไม่มีชั้นหินแข็งหรือดินอ่อนเป็นพิเศษที่ต้องเพิ่มงานฐานรากพิเศษ",
+        "impact": "medium"
+      },
+      {
+        "text": "ราคาที่อ้างอิงจากงบเก่าถือว่ารวม VAT แล้ว (ตามธรรมเนียมการตั้งงบ อปท.)",
+        "impact": "low"
+      }
+    ],
+    "boq": [
+      {
+        "id": "weir-main",
+        "category": "งานก่อสร้างฝายน้ำล้น",
+        "item": "ก่อสร้างฝายน้ำล้นคอนกรีตเสริมเหล็ก สูง 1.5 ม. ยาวสันฝาย 8 ม. (รวมฐานราก งานตัวฝาย และพื้นดาดคอนกรีตป้องกันการกัดเซาะท้ายฝาย)",
+        "qty": 1,
+        "unit": "โครงการ (แห่ง)",
+        "unit_price_thb": 850500,
+        "total_thb": 850500,
+        "basis": "historical",
+        "confidence": "low",
+        "rationale": "อ้างอิงจากโครงการ 'ก่อสร้างฝายน้ำล้นตามแบบ มข.2527' ของ อบต.พังเคน อ.นาตาล จ.อุบลราชธานี ปีงบ 2566 จำนวน 2 โครงการ (849,000 บาท เท่ากันทั้งคู่) ซึ่งเป็นแบบมาตรฐานขนาดเล็กที่ใกล้เคียงสเปคที่ผู้ใช้ระบุมากที่สุดในข้อมูลที่ค้นพบ ปรับมูลค่าจากปี 2566 มาปี 2569 ด้วยดัชนีราคาวัสดุก่อสร้างรวม (ใช้ข้อมูลปี 2568 ล่าสุดที่เผยแพร่แทน เนื่องจากปี 2569 ยังไม่มีข้อมูล) ได้ 850,504 บาท (ปัดเป็น 850,500 บาท) ทั้งนี้ยอดนี้เป็น 'ยอดรวมต่อโครงการ' ไม่ใช่ราคาต่อตารางเมตร/ลูกบาศก์เมตร จึงอาจไม่ครอบคลุมความแตกต่างของสเปคย่อยหรือสภาพพื้นที่ทุกกรณี — ดูช่วงราคาเปรียบเทียบ 570,000-1,443,000 บาท ในส่วน comparables",
+        "citations": [
+          {
+            "kind": "budget_line",
+            "source_id": "05df3280f3718b90",
+            "note": "ก่อสร้างฝายน้ำล้นตามแบบ มข.2527 หมู่ 7 บ้านโนนขุมคำ ต.พังเคน อ.นาตาล จ.อุบลราชธานี ปีงบ 2566 มูลค่า 849,000 บาท"
+          },
+          {
+            "kind": "budget_line",
+            "source_id": "3693e67a35d8bf21",
+            "note": "ก่อสร้างฝายน้ำล้นตามแบบ มข.2527 หมู่ 8 บ้านด่านฮัง ต.พังเคน อ.นาตาล จ.อุบลราชธานี ปีงบ 2566 มูลค่า 849,000 บาท"
+          },
+          {
+            "kind": "econ",
+            "indicator": "construction_material_index",
+            "year_be": 2566
+          },
+          {
+            "kind": "econ",
+            "indicator": "construction_material_index",
+            "year_be": 2568
+          }
+        ],
+        "price_derivation": {
+          "from_amount_thb": 849000,
+          "from_year_be": 2566,
+          "to_year_be": 2569,
+          "indicator": "construction_material_index",
+          "factor": 1.001772
+        },
+        "trend_ref": {
+          "kind": "item",
+          "key": "ก่อสร้างฝายน้ำล้น"
+        }
+      },
+      {
+        "id": "signage-safety",
+        "category": "งานความปลอดภัยและป้ายโครงการ",
+        "item": "ป้ายโครงการ รั้ว/แนวป้องกันคนพลัดตกชั่วคราว และป้ายเตือนความปลอดภัยระหว่างก่อสร้าง",
+        "qty": 1,
+        "unit": "รายการ",
+        "unit_price_thb": 15000,
+        "total_thb": 15000,
+        "basis": "estimate",
+        "confidence": "low",
+        "rationale": "ไม่พบข้อมูลราคาย้อนหลังเฉพาะรายการนี้ในระบบ ใช้ค่าประมาณตามธรรมเนียมโครงการก่อสร้างขนาดเล็กของ อปท. ทั่วไป",
+        "citations": []
+      },
+      {
+        "id": "design-supervision",
+        "category": "ค่าใช้จ่ายในการสำรวจออกแบบและควบคุมงาน",
+        "item": "ค่าสำรวจ ออกแบบ และควบคุมงานก่อสร้าง (ประมาณ 5% ของงานโครงสร้างหลัก)",
+        "qty": 1,
+        "unit": "รายการ",
+        "unit_price_thb": 42500,
+        "total_thb": 42500,
+        "basis": "estimate",
+        "confidence": "low",
+        "rationale": "ไม่พบข้อมูลย้อนหลังเฉพาะรายการนี้ในระบบ ใช้อัตราประมาณ 5% ของมูลค่างานโครงสร้างหลักตามธรรมเนียมงานก่อสร้างขนาดเล็กของหน่วยงานท้องถิ่น",
+        "citations": []
+      }
+    ],
+    "totals": {
+      "subtotal_thb": 908000,
+      "contingency_pct": 10,
+      "contingency_thb": 90800,
+      "vat_included": true,
+      "grand_total_thb": 998800
+    },
+    "comparables": [
+      {
+        "source_id": "05df3280f3718b90",
+        "fiscal_year_be": 2566,
+        "agency": "อบต.พังเคน อ.นาตาล จ.อุบลราชธานี (ผ่านกรมส่งเสริมการปกครองท้องถิ่น)",
+        "item_name": "ก่อสร้างฝายน้ำล้นตามแบบ มข.2527 หมู่ 7 บ้านโนนขุมคำ",
+        "amount_thb": 849000,
+        "similarity_note": "แบบมาตรฐาน มข.2527 ขนาดเล็ก ใกล้เคียงสเปคที่ผู้ใช้ระบุมากที่สุด แต่ไม่ทราบความยาวสันฝายจริงของแบบนี้"
+      },
+      {
+        "source_id": "3693e67a35d8bf21",
+        "fiscal_year_be": 2566,
+        "agency": "อบต.พังเคน อ.นาตาล จ.อุบลราชธานี (ผ่านกรมส่งเสริมการปกครองท้องถิ่น)",
+        "item_name": "ก่อสร้างฝายน้ำล้นตามแบบ มข.2527 หมู่ 8 บ้านด่านฮัง",
+        "amount_thb": 849000,
+        "similarity_note": "โครงการคู่แบบเดียวกัน มูลค่าเท่ากันพอดี ยืนยันความสม่ำเสมอของราคาแบบมาตรฐานนี้ในพื้นที่/ปีเดียวกัน"
+      },
+      {
+        "source_id": "ea90cef581145f97",
+        "fiscal_year_be": 2565,
+        "agency": "กรมการปกครอง อ.รือเสาะ จ.นราธิวาส",
+        "item_name": "ก่อสร้างฝายน้ำล้น อำเภอรือเสาะ",
+        "amount_thb": 1443000,
+        "similarity_note": "มูลค่าสูงกว่าค่ากลางมาก อาจเป็นฝายขนาดใหญ่กว่าหรือสภาพพื้นที่ก่อสร้างยากกว่า (เช่น ดินอ่อน/เข้าถึงยาก) — ใช้เป็นขอบบนของช่วงราคา"
+      },
+      {
+        "source_id": "ca10a564147d4ea7",
+        "fiscal_year_be": 2565,
+        "agency": "อบต.ห้วยยาง อ.กระนวน จ.ขอนแก่น (ผ่านกรมส่งเสริมการปกครองท้องถิ่น)",
+        "item_name": "ก่อสร้างฝายน้ำล้น ลำห้วยยางบ้านห้วยยาง",
+        "amount_thb": 617000,
+        "similarity_note": "มูลค่าต่ำกว่าค่ากลาง อาจเป็นฝายที่เล็กกว่าหรือสภาพพื้นที่ก่อสร้างง่ายกว่า — ใช้เป็นขอบล่างของช่วงราคา"
+      },
+      {
+        "source_id": "d62e83b38a5c613d",
+        "fiscal_year_be": 2564,
+        "agency": "อบต.นาแสง อ.ศรีวิไล จ.บึงกาฬ (ผ่านกรมส่งเสริมการปกครองท้องถิ่น)",
+        "item_name": "ก่อสร้างฝายน้ำล้น หมู่ 6 บ้านคำแคนพัฒนา",
+        "amount_thb": 570000,
+        "similarity_note": "มูลค่าต่ำสุดในกลุ่มเปรียบเทียบ อาจสะท้อนฝายขนาดเล็กกว่าที่ผู้ใช้ระบุ"
+      }
+    ],
+    "risks": [
+      {
+        "text": "ทุกโครงการเปรียบเทียบเป็น 'ยอดรวมต่อโครงการ' (amount_per_line) ไม่ใช่ราคาต่อหน่วยพื้นที่/ปริมาตร คอนกรีต จึงไม่สามารถยืนยันได้ว่าสัดส่วนกับความสูง/ความยาวสันฝายที่ผู้ใช้ระบุตรงกันเป๊ะ",
+        "mitigation": "ควรให้วิศวกรโยธาประมาณปริมาณคอนกรีต/เหล็กเสริมจากแบบก่อสร้างจริงก่อนอนุมัติงบขั้นสุดท้าย"
+      },
+      {
+        "text": "ราคาวัสดุก่อสร้าง (ปูนซีเมนต์/คอนกรีต) อาจเปลี่ยนแปลงระหว่างช่วงจัดทำงบและช่วงประกวดราคาจริงในปี 2569 เนื่องจากดัชนีปี 2569 ยังไม่มีข้อมูลเผยแพร่",
+        "mitigation": "ตรวจสอบราคาวัสดุก่อสร้างล่าสุด ณ ช่วงจัดทำ BOQ รายละเอียดก่อนประกวดราคา"
+      },
+      {
+        "text": "สภาพลำห้วยจริง (ความกว้าง ชนิดดิน ปริมาณน้ำหลาก) อาจทำให้ต้องเพิ่มงานฐานรากหรือขนาดโครงสร้างมากกว่าที่ประมาณ",
+        "mitigation": "สำรวจสภาพพื้นที่จริงและออกแบบโดยวิศวกรก่อนกำหนดงบประมาณขั้นสุดท้าย"
+      }
+    ],
+    "open_questions": [
+      "อบต. อยู่จังหวัด/ภาคใด (กระทบราคาขนส่งวัสดุและค่าแรงในพื้นที่)",
+      "สภาพลำห้วย (ความกว้าง ความลึก ชนิดดินท้องน้ำ) เพื่อออกแบบฐานรากและประมาณปริมาณคอนกรีตที่แม่นยำกว่านี้",
+      "ต้องการงานป้องกันตลิ่งข้างฝายหรือบันไดปลาโจนเพิ่มเติมหรือไม่",
+      "อบต. มีแบบแปลนมาตรฐาน (เช่น มข.2527 หรือแบบกรมชลประทาน) ที่ต้องการใช้อยู่แล้วหรือไม่"
+    ],
+    "citations_web": [],
+    "illustrations": [
+      {
+        "illustration_id": "illus_mu9pk9fl_t0ctiuiu",
+        "title": "ผังเชิงแนวคิดฝายน้ำล้นคอนกรีตขนาดเล็ก (ตัดขวาง และ แผนผังด้านบน)",
+        "caption": "ภาพร่างเชิงแผนผังแสดงมิติทางกายภาพโดยประมาณ (ความสูงสันฝาย และความยาวสันฝาย) ไม่ใช่แบบก่อสร้างจริง ใช้เพื่อประกอบความเข้าใจขนาดโครงการเท่านั้น",
+        "kind": "cross_section"
+      }
+    ],
+    "stat_cards": [
+      {
+        "trend_ref": {
+          "kind": "item",
+          "key": "ก่อสร้างฝายน้ำล้น"
+        },
+        "headline_th": "มูลค่าต่อโครงการก่อสร้างฝายน้ำล้น (บาท/รายการ) ย้อนหลัง พ.ศ. 2558-2565 จากงบ อปท./งบกลาง"
+      },
+      {
+        "trend_ref": {
+          "kind": "indicator",
+          "key": "construction_material_index"
+        },
+        "headline_th": "ดัชนีราคาวัสดุก่อสร้างรวม (2558=100) พ.ศ. 2559-2568 — ข้อมูล TPSO ยังไม่ผ่านการยืนยันซ้ำ (verified:false)"
+      }
+    ]
+  },
+  "proposalWarnings": [
+    "BOQ \"ก่อสร้างฝายน้ำล้นคอนกรีตเสริมเหล็ก สูง 1.5 ม. ยาวสันฝาย 8 ม. (รวมฐานราก งานตัวฝาย และพื้นดาดคอนกรีตป้องกันการกัดเซาะท้ายฝาย)\" (id=weir-main): unit_price_thb (850500) ตรวจสอบย้อนกลับไปยัง citation ไม่ได้ (price_not_traceable) — จำกัด confidence ไม่เกิน low"
+  ],
+  "totalCostUsd": 0.39831,
+  "elapsedMs": 258081,
+  "finalEndedBecause": "max_rounds",
+  "ranAt": "2026-09-20T11:05:26.891Z",
+  "isDryRun": false,
+  "promptStats": {
+    "systemChars": 7521,
+    "toolsJsonChars": 15098,
+    "toolCount": 10
+  }
+}
