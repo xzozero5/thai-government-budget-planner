@@ -1,4 +1,4 @@
-import { createDataFacade, type CatalogItem, type Facets, type SearchCatalogResult } from '@/data';
+import { createDataFacade, type CatalogItemDetail, type Facets, type SearchCatalogResult } from '@/data';
 import { describe, expect, it, vi } from 'vitest';
 import { createInMemoryIllustrationSink } from '../illustrationSink';
 import { createToolLog } from '../toolLog';
@@ -13,7 +13,10 @@ function makeCtx(): ToolContext {
   return { data: createDataFacade(), toolLog: createToolLog(), illustrationSink: createInMemoryIllustrationSink() };
 }
 
-const baseCatalogItem: CatalogItem = {
+// T-604(B): `getCatalogItem` จริงคืน `CatalogItemDetail` (มี `shardPaths` resolve แล้วเสมอ) — mock ต้อง
+// ใส่ field นี้ด้วย มิฉะนั้น `searchCatalogTool` (ที่อ่าน `full.shardPaths` เพื่อบันทึก candidate shard)
+// จะพังตอน `.length` ของ `undefined`
+const baseCatalogItem: CatalogItemDetail = {
   key: 'เครื่องปรับอากาศ 18000 บีทียู',
   name: 'เครื่องปรับอากาศ 18000 บีทียู',
   n_lines: 42,
@@ -21,6 +24,7 @@ const baseCatalogItem: CatalogItem = {
   top_agencies: ['กรมทดสอบ'],
   sample_source_ids: ['src-1', 'src-2'],
   shards: [0],
+  shardPaths: ['budget_lines/act_2570_draft/00000.parquet'],
 };
 
 describe('searchCatalogTool', () => {
@@ -41,7 +45,7 @@ describe('searchCatalogTool', () => {
       ],
       total: 1,
     };
-    const item: CatalogItem = {
+    const item: CatalogItemDetail = {
       ...baseCatalogItem,
       unit_price: { min: 10000, p25: 12000, median: 15000, p75: 18000, max: 20000, n: 10 },
     };
@@ -67,6 +71,10 @@ describe('searchCatalogTool', () => {
     }
     expect(toolLog.hasSourceId('src-1')).toBe(true);
     expect(toolLog.hasSourceId('src-2')).toBe(true);
+    // T-604(B): sample_source_ids ต้องมี candidate shard ผูกไว้ด้วย (ไม่ใช่แค่ recordSourceIds เฉย ๆ)
+    // มิฉะนั้น get_budget_line/citation drawer จะหา shard ของ id เหล่านี้ไม่เจอทั้งที่เพิ่งค้นมาเอง
+    expect(toolLog.getSourceShardCandidates?.('src-1')).toEqual(baseCatalogItem.shardPaths);
+    expect(toolLog.getSourceShardCandidates?.('src-2')).toEqual(baseCatalogItem.shardPaths);
   });
 
   it('AC2: unit_price.n < 3 → reliability:"low" + คำเตือน และ cap confidence ของ sample_source_ids', async () => {
@@ -81,7 +89,7 @@ describe('searchCatalogTool', () => {
       ],
       total: 1,
     };
-    const item: CatalogItem = {
+    const item: CatalogItemDetail = {
       ...baseCatalogItem,
       unit_price: { min: 10000, p25: 10000, median: 10000, p75: 10000, max: 10000, n: 2 },
     };
@@ -116,7 +124,7 @@ describe('searchCatalogTool', () => {
       ],
       total: 1,
     };
-    const item: CatalogItem = {
+    const item: CatalogItemDetail = {
       ...baseCatalogItem,
       amount: { min: 1000, p25: 1000, median: 1000, p75: 1000, max: 1000, n: 5 },
     };
@@ -142,7 +150,7 @@ describe('searchCatalogTool', () => {
       ],
       total: 1,
     };
-    const item: CatalogItem = {
+    const item: CatalogItemDetail = {
       ...baseCatalogItem,
       low_specificity: true,
       unit_price: { min: 1, p25: 2, median: 3, p75: 4, max: 5, n: 100 },
@@ -162,7 +170,7 @@ describe('searchCatalogTool', () => {
   });
 });
 
-function makeCtxWith(searchResult: SearchCatalogResult, item: CatalogItem): ToolContext {
+function makeCtxWith(searchResult: SearchCatalogResult, item: CatalogItemDetail): ToolContext {
   return {
     data: createDataFacade({
       searchCatalog: vi.fn().mockResolvedValue(searchResult),

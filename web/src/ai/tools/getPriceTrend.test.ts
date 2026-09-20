@@ -1,23 +1,89 @@
-import { createDataFacade, type EconTrend, type PriceTrend } from '@/data';
+import { createDataFacade, type CatalogItemDetail, type EconTrend, type PriceTrend, type SearchCatalogResult } from '@/data';
 import { describe, expect, it, vi } from 'vitest';
 import { createInMemoryIllustrationSink } from '../illustrationSink';
 import { createToolLog } from '../toolLog';
 import { getPriceTrendTool } from './getPriceTrend';
 import type { ToolContext } from './toolKit';
 
+function makeCatalogItemDetail(overrides: Partial<CatalogItemDetail> = {}): CatalogItemDetail {
+  return {
+    key: 'x',
+    name: 'x',
+    n_lines: 5,
+    years: [2566],
+    top_agencies: [],
+    sample_source_ids: [],
+    shards: [0],
+    shardPaths: [],
+    ...overrides,
+  };
+}
+
 describe('getPriceTrendTool', () => {
-  it('AC5: ไม่มีข้อมูล → {series:null} (ห้ามประดิษฐ์)', async () => {
+  it('AC5: ไม่มีข้อมูล (indicator ไม่รู้จัก) → {series:null, warnings:[]} (ห้ามประดิษฐ์)', async () => {
     const ctx: ToolContext = {
       data: createDataFacade({ getPriceTrend: vi.fn().mockResolvedValue(null) }),
       toolLog: createToolLog(),
       illustrationSink: createInMemoryIllustrationSink(),
     };
-    const result = await getPriceTrendTool.run({ kind: 'item', key: 'x' }, ctx);
+    const result = await getPriceTrendTool.run({ kind: 'indicator', key: 'x' }, ctx);
     expect(result.isError).toBe(false);
     if (!result.isError) {
       expect(result.output.series).toBeNull();
       expect(result.output.summary).toBeNull();
+      expect(result.output.warnings).toEqual([]);
     }
+  });
+
+  describe('T-604(A): kind="item" ไม่มีค่า → แยกกรณี key ไม่ตรง catalog vs item มีจริงแต่ยังไม่มี trend', () => {
+    it('key ไม่ตรง catalog เป๊ะเลย (เช่น "has_series:false" ในเคสจริง fiscal-year-2562-gap) → warnings แนะนำ key ใกล้เคียง', async () => {
+      const getCatalogItemByKey = vi.fn().mockResolvedValue(null);
+      const searchCatalog = vi.fn().mockResolvedValue({
+        matches: [
+          { item: { i: 0, key: 'รถบรรทุก ดีเซล ขนาด 1 ตัน', name: 'x', n_lines: 5, years: [2566], has_unit_price: false }, score: 3, matchedTerms: [], lowSpecificity: false },
+        ],
+        total: 1,
+      } satisfies SearchCatalogResult);
+      const ctx: ToolContext = {
+        data: createDataFacade({
+          getPriceTrend: vi.fn().mockResolvedValue(null),
+          getCatalogItemByKey,
+          searchCatalog,
+        }),
+        toolLog: createToolLog(),
+        illustrationSink: createInMemoryIllustrationSink(),
+      };
+      const result = await getPriceTrendTool.run(
+        { kind: 'item', key: 'รถบรรทุก (ดีเซล) ขนาด 1 ตัน' },
+        ctx,
+      );
+      expect(result.isError).toBe(false);
+      if (result.isError) throw new Error('expected success');
+      expect(result.output.series).toBeNull();
+      const warning = result.output.warnings.find((w) => w.includes('ไม่ตรงกับ key ใดใน catalog'));
+      expect(warning).toBeDefined();
+      expect(warning).toContain('รถบรรทุก ดีเซล ขนาด 1 ตัน');
+    });
+
+    it('item มีจริงใน catalog แต่ยังไม่มี trend series (เช่นข้อมูล < 3 ปี) → series:null โดยไม่มี warning เข้าใจผิด', async () => {
+      const getCatalogItemByKey = vi.fn().mockResolvedValue(makeCatalogItemDetail());
+      const searchCatalog = vi.fn();
+      const ctx: ToolContext = {
+        data: createDataFacade({
+          getPriceTrend: vi.fn().mockResolvedValue(null),
+          getCatalogItemByKey,
+          searchCatalog,
+        }),
+        toolLog: createToolLog(),
+        illustrationSink: createInMemoryIllustrationSink(),
+      };
+      const result = await getPriceTrendTool.run({ kind: 'item', key: 'x' }, ctx);
+      expect(result.isError).toBe(false);
+      if (result.isError) throw new Error('expected success');
+      expect(result.output.series).toBeNull();
+      expect(result.output.warnings).toEqual([]);
+      expect(searchCatalog).not.toHaveBeenCalled();
+    });
   });
 
   it('item trend (unit_price_per_line): บันทึก trend_ref และคืน caveats/points', async () => {

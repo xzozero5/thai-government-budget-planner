@@ -28,6 +28,19 @@ describe('ToolLog', () => {
     expect(log.getSourceShard('src-1')).toBe('budget_lines/pbo/2567/00000.parquet');
   });
 
+  it('T-604(B): candidate shard ต่อ source_id — ว่างก่อน record, สะสม (ไม่เขียนทับ) เมื่อ record ซ้ำ', () => {
+    const log = createToolLog();
+    expect(log.getSourceShardCandidates?.('src-1')).toEqual([]);
+    log.recordSourceShardCandidates?.('src-1', ['a.parquet', 'b.parquet']);
+    expect(log.getSourceShardCandidates?.('src-1')).toEqual(['a.parquet', 'b.parquet']);
+    // record ซ้ำด้วย candidate ที่ทับซ้อนบางส่วน — รวมเข้าด้วยกัน ไม่ซ้ำ ไม่เขียนทับของเดิม
+    log.recordSourceShardCandidates?.('src-1', ['b.parquet', 'c.parquet']);
+    expect(log.getSourceShardCandidates?.('src-1')).toEqual(['a.parquet', 'b.parquet', 'c.parquet']);
+    // reset() ต้องล้าง candidate ด้วย (เหมือน state อื่นทั้งหมดของ session)
+    log.reset();
+    expect(log.getSourceShardCandidates?.('src-1')).toEqual([]);
+  });
+
   it('econ value ต้องตรงทั้ง indicator และปี', () => {
     const log = createToolLog();
     log.recordEconValue('cpi_headline_index', 2567);

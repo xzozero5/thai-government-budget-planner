@@ -117,6 +117,14 @@ async function handler(input: SearchCatalogInput, ctx: ToolContext): Promise<Sea
   for (const match of matches) {
     const full = await ctx.data.getCatalogItem(match.item.i);
     ctx.toolLog.recordSourceIds(full.sample_source_ids);
+    // T-604(B): sample_source_ids ยืนยันแล้วว่าอยู่ใน "หนึ่งใน" shard ของ item นี้เสมอ
+    // (`catalogIntegrity.test.ts`) แต่ไม่รู้ว่าไฟล์ไหนแน่ — จำไว้เป็น candidate ให้ get_budget_line/
+    // citation drawer ไล่ค้นเป็นชุด ๆ แทนที่จะ "หา shard ไม่เจอ" ทั้งที่เป็น id จริงจากการค้นนี้เอง
+    if (full.shardPaths.length > 0) {
+      for (const sourceId of full.sample_source_ids) {
+        ctx.toolLog.recordSourceShardCandidates?.(sourceId, full.shardPaths);
+      }
+    }
     const stats = full.unit_price ?? full.amount ?? null;
     if (stats !== null && stats.n < 3) {
       // AC2: อ้างรายการที่มีตัวอย่างน้อย (n<3) ต้องไม่ได้ confidence สูงสุด — cap ทุก sample source_id

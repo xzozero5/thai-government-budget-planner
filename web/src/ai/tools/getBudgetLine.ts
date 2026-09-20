@@ -5,9 +5,69 @@
  * `ToolLog` (บันทึกไว้ตอน `query_budget_lines`/`search_catalog` เจอแถวนั้นมาก่อน) `source_id` ที่ไม่
  * เคยผ่าน tool อื่นมาก่อนในบทสนทนานี้จะ "หา shard ไม่เจอ" (ไม่ scan ทุกไฟล์ ตาม ADR-002 — เป็นข้อจำกัด
  * ที่ตั้งใจ ไม่ใช่บั๊ก) → คืน error ต่อรายการนั้นแทนที่จะทำให้ทั้ง call ล้ม
+ *
+ * T-604(B) (main thread, รายงานปัญหาจาก eval จริง): `search_catalog` เคยบันทึกแค่ "id เคยปรากฏ"
+ * (`recordSourceIds`) ของ `sample_source_ids` โดยไม่รู้ shard จริง (มีแค่ "candidate" — ดู
+ * `ai/toolLog.ts#recordSourceShardCandidates`) ทำให้ `get_budget_line` ตอบ not_found กับ id ที่จริง ๆ
+ * ค้นเจอมาแล้ว — ก่อนยอมแพ้ ให้ไล่ค้น candidate shard เป็นชุด ๆ ละ ≤ `MAX_SHARDS_TO_SCAN` (จำกัดจำนวน
+ * ชุดที่ไล่ด้วย `MAX_CANDIDATE_SHARD_BATCHES` กันรายการที่มี candidate มากผิดปกติกินเวลา/แบนด์วิดท์เกินไป)
+ * แล้วบันทึก shard จริงที่เจอด้วย `recordSourceShard` ให้ครั้งถัดไปไม่ต้องไล่ซ้ำ
  */
 import { z } from 'zod';
+import { MAX_SHARDS_TO_SCAN } from '@/data';
 import { clampRows, createTool, type ToolContext } from './toolKit';
+
+/** เพดานจำนวนชุด (แต่ละชุด ≤ `MAX_SHARDS_TO_SCAN` shard) ที่ไล่ค้นหา candidate ต่อการเรียก 1 ครั้ง —
+ * กัน item ที่มี shard ผิดปกติเยอะ (เช่น ครุภัณฑ์ที่ปรากฏแทบทุกกระทรวง/ปี) ไล่ค้นไม่รู้จบ (60 ไฟล์รวม
+ * ต่อการเรียก 1 ครั้งถือว่าเพียงพอกับกรณีทั่วไป — ถ้าไม่เจอในนี้ค่อยแจ้ง not_found ตามพฤติกรรมเดิม) */
+const MAX_CANDIDATE_SHARD_BATCHES = 5;
+
+/**
+ * ไล่หา shard จริงของ `sourceIds` ที่ยังไม่รู้ shard (ผ่าน `ToolLog.getSourceShard`) แต่มี candidate
+ * shard ที่ `search_catalog` บันทึกไว้ (`getSourceShardCandidates`) — รวม candidate ของทุก id ที่ค้าง
+ * เป็นชุดเดียว (ประหยัดรอบ `getLines` กว่าไล่ทีละ id) แล้วยิงเป็นชุด ๆ ละ ≤ `MAX_SHARDS_TO_SCAN` จนกว่า
+ * จะเจอครบหรือครบเพดานจำนวนชุด — เจอ id ไหนแล้วบันทึก shard จริงด้วย `recordSourceShard` ทันที (ครั้ง
+ * ถัดไปในบทสนทนานี้ไม่ต้องไล่ซ้ำ) ไม่ throw แม้หาไม่เจอเลย (ปล่อยให้ logic เดิมรายงาน not_found ต่อ)
+ */
+async function resolveShardsViaCandidates(sourceIds: readonly string[], ctx: ToolContext): Promise<void> {
+  const pending = new Set(sourceIds.filter((id) => ctx.toolLog.getSourceShard(id) === undefined));
+  if (pending.size === 0) {
+    return;
+  }
+
+  const candidateShards: string[] = [];
+  const seen = new Set<string>();
+  for (const id of pending) {
+    for (const path of ctx.toolLog.getSourceShardCandidates?.(id) ?? []) {
+      if (!seen.has(path)) {
+        seen.add(path);
+        candidateShards.push(path);
+      }
+    }
+  }
+  if (candidateShards.length === 0) {
+    return;
+  }
+
+  const maxShardsToTry = MAX_SHARDS_TO_SCAN * MAX_CANDIDATE_SHARD_BATCHES;
+  for (
+    let offset = 0;
+    offset < candidateShards.length && offset < maxShardsToTry && pending.size > 0;
+    offset += MAX_SHARDS_TO_SCAN
+  ) {
+    const batch = candidateShards.slice(offset, offset + MAX_SHARDS_TO_SCAN);
+    try {
+      const result = await ctx.data.getLines([...pending], batch);
+      for (const [sourceId, shardPath] of Object.entries(result.rowShards)) {
+        ctx.toolLog.recordSourceShard(sourceId, shardPath);
+        pending.delete(sourceId);
+      }
+    } catch {
+      // best-effort: ชุดนี้ล้มเหลว (เช่น เครือข่ายขัดข้อง) — ปล่อยผ่านไปชุดถัดไป/จบแล้วให้ logic เดิม
+      // รายงาน not_found ตามปกติ ไม่ทำให้ทั้ง call ล้มเพราะ candidate ที่หวังว่าจะช่วยแต่พลาด
+    }
+  }
+}
 
 export const GetBudgetLineInputSchema = z.object({
   source_ids: z
@@ -82,6 +142,10 @@ export type GetBudgetLineOutput = z.infer<typeof GetBudgetLineOutputSchema>;
 
 async function handler(input: GetBudgetLineInput, ctx: ToolContext): Promise<GetBudgetLineOutput> {
   const requested = clampRows(input.source_ids, 20);
+
+  // T-604(B): ไล่หา shard จริงจาก candidate ของ search_catalog ก่อน (ถ้ามี) — ต้องทำก่อนอ่าน
+  // `getSourceShard` ด้านล่าง เพราะเมธอดนี้ resolve เจอแล้วจะ `recordSourceShard` ให้ทันที
+  await resolveShardsViaCandidates(requested, ctx);
 
   const resolvable: string[] = [];
   const notFound: z.infer<typeof NotFoundEntrySchema>[] = [];

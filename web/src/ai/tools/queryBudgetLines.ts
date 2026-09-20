@@ -9,14 +9,23 @@
  *   (ILIKE '%keyword%') — ใช้แค่ตัวแรกเช่นกัน
  * - (แก้แล้ว) `getCatalogItemByKey` คืน `shardPaths` จริง → tool ส่งต่อเป็นตัวจำกัด shard ให้ `queryLines`
  *   (intersection กับ filter ปี/กระทรวง/จังหวัด) — ลดการสแกนและโอกาสชน `QueryTooBroadError`
+ *
+ * T-604 (main thread, รายงานปัญหาจาก eval จริง 2569-09-20, `web/tests/eval/real-runs/*.json`):
+ * `keywords`/`item_key` ที่ catalog resolve ไม่เจอ ชน `QueryTooBroadError` ซ้ำ ๆ เมื่อ shard ที่ต้องสแกน
+ * (ตาม fiscal_years/ministry_code ที่ให้มา) เกินเพดานแม้ auto-narrow ปีแล้ว (1 ปีก็ยังมี ~30 shard/
+ * กระทรวง) — แก้โดยลอง **จัดอันดับ shard ด้วย `search_catalog`** (ข้อมูลที่มีอยู่แล้ว ไม่ใช่การเดา) ก่อน
+ * ตัดปีทิ้ง เพราะรักษาช่วงปีที่ผู้ใช้ขอไว้ได้ครบกว่า — ดู `tryNarrowByCatalogSearch`/`queryWithAutoNarrow`
  */
 import { z } from 'zod';
 import {
+  MAX_SHARDS_TO_SCAN,
   QueryTooBroadError,
+  summarizeShardPaths,
   type Dataset,
   type QueryLinesParams,
   type QueryLinesResult,
 } from '@/data';
+import { itemKeyNotFoundWarning, suggestCatalogKeys } from './catalogKeyLookup';
 import { computeImpliedUnitPriceHint } from './impliedUnitPrice';
 import {
   clampRows,
@@ -38,21 +47,160 @@ const ORDER_BY_VALUES = [
 /** จำนวนปีล่าสุดที่ลองค้นให้อัตโนมัติเมื่อคำค้นกว้างเกินเพดานสแกน (ลองจากมากไปน้อย) */
 const AUTO_NARROW_YEAR_COUNTS = [3, 2, 1] as const;
 
+/** จำนวน catalog item สูงสุดที่พิจารณาต่อครั้งตอนจัดอันดับ shard (เท่ากับเพดานจริงของ `searchCatalog`,
+ * `data/search.ts#SEARCH_CATALOG_MAX_LIMIT` — ไม่ได้ export ผ่าน facade เพราะเป็นรายละเอียดภายในของ
+ * `searchCatalog` เอง ไม่ใช่สัญญาที่ tool ควรพึ่งพาโดยตรง จึงจดค่าตรงนี้พร้อมอ้างอิงที่มา ค่านี้ผิดไปจาก
+ * ต้นทาง (เช่น ลดเพดานลงในอนาคต) อย่างมากที่สุดคือได้ candidate น้อยลง ไม่ทำให้ผลผิด) */
+const CATALOG_NARROW_SEARCH_LIMIT = 20;
+
+/**
+ * main thread (T-604, ยืนยันด้วย production data จริงระหว่างพัฒนา — `web/public/data`): item หนึ่ง ๆ
+ * (เช่น "กล้องสำรวจแบบประมวลผลรวม total station") มักปรากฏในหลายปีงบ (`CatalogItem.shards` ครอบ
+ * shard ของ**ทุกปี**ที่ item นั้นเคยตั้งงบ ไม่ใช่แค่ปีที่ผู้ใช้ขอ) — ถ้าเลือก shard ตามลำดับ
+ * `detail.shardPaths` ดิบโดยไม่กรองปีก่อน จะได้ shard ของปีอื่นปนมาเต็มโควตา แล้วโดน
+ * `resolveShardPaths` (`data/repo.ts`) intersect กับ `fiscalYears` ทีหลังจนเหลือ shard ที่ตรงจริง
+ * น้อยกว่าที่ควร (พิสูจน์แล้วจริง: เคส "Total Station" 3 ปี ได้ shard ที่ตรงปีจริงแค่ 1 จาก 12 ที่เลือก
+ * แบบไม่กรอง) ⇒ ต้องกรอง path ที่ **รู้แน่ชัด** ว่าเป็นปีอื่นทิ้งก่อน select (path ที่ parse ปีไม่ได้ เช่น
+ * dataset ที่ไม่มีปีในชื่อไฟล์ ให้เก็บไว้ก่อน — `summarizeShardPaths` คืน `[]` ให้เมื่อไม่รู้จริง ๆ)
+ */
+function filterShardPathsByYear(paths: readonly string[], fiscalYears: number[] | undefined): string[] {
+  if (fiscalYears === undefined) {
+    return [...paths];
+  }
+  return paths.filter((path) => {
+    const years = summarizeShardPaths([path]).years;
+    return years.length === 0 || years.some((y) => fiscalYears.includes(y));
+  });
+}
+
+/**
+ * T-604 — ใช้ `search_catalog` (มีอยู่แล้ว, MiniSearch จัดอันดับความเกี่ยวข้องจริงจาก `item.key`) หา
+ * catalog item ที่ตรงคำค้นที่สุด แล้ว resolve เป็น shard path จริงผ่าน `getCatalogItem` (แหล่งเดียวกับที่
+ * `resolveItem` ใช้กับ `item_key`) รวมเป็นชุด ≤ `cap` shard แบบ deterministic (เรียงตามคะแนนค้นหา แล้ว
+ * ตามลำดับ shardPaths ของแต่ละ item ที่กรองปีแล้ว) — คืน `undefined` เมื่อ catalog ไม่มีอะไรใกล้เคียงเลย
+ * (ให้ caller fallback ไปตัดปีแทน ไม่ใช่การเดา — N7: ใช้ข้อมูลที่มีอยู่แล้วเท่านั้น)
+ */
+async function selectShardsBySearchCatalog(
+  searchText: string,
+  fiscalYears: number[] | undefined,
+  cap: number,
+  ctx: ToolContext,
+): Promise<string[] | undefined> {
+  const trimmed = searchText.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+  const searchResult = await ctx.data.searchCatalog(trimmed, {
+    limit: CATALOG_NARROW_SEARCH_LIMIT,
+    ...(fiscalYears !== undefined ? { years: fiscalYears } : {}),
+  });
+  const selected: string[] = [];
+  const seen = new Set<string>();
+  for (const match of searchResult.matches) {
+    if (selected.length >= cap) {
+      break;
+    }
+    const detail = await ctx.data.getCatalogItem(match.item.i);
+    const candidatePaths = filterShardPathsByYear(detail.shardPaths, fiscalYears);
+    for (const path of candidatePaths) {
+      if (selected.length >= cap) {
+        break;
+      }
+      if (seen.has(path)) {
+        continue;
+      }
+      seen.add(path);
+      selected.push(path);
+    }
+  }
+  return selected.length > 0 ? selected : undefined;
+}
+
+/**
+ * T-604 — กลยุทธ์ที่ 1 เมื่อกว้างเกิน (ลองก่อนตัดปีเสมอถ้ามีคำค้น): เลือก shard ที่ "น่าจะมีรายการตรงมาก
+ * ที่สุด" ผ่าน `search_catalog` แทนการเดา/สแกนทุกไฟล์ (เพดาน `MAX_SHARDS_TO_SCAN` มีไว้เพื่อ performance
+ * ของ DuckDB-WASM ในเบราว์เซอร์ — ห้ามยกเพดาน ดู `docs/decisions/SPIKES.md`) — คง `fiscalYears` ที่ผู้ใช้
+ * ขอไว้ครบ (ต่างจากกลยุทธ์ตัดปี) เพราะ `resolveShardPaths` (`data/repo.ts`) ยัง intersect shard ที่เลือก
+ * กับ fiscalYears/ministryCodes/province เดิมอยู่ดี — ผลจึงถูกต้องเสมอ ไม่มีทาง exceed cap ต่อให้
+ * intersect แล้วเหลือ shard น้อยกว่าที่เลือกมา (ไม่มีทางมากกว่า) คืน `undefined` เมื่อ catalog ไม่มีอะไร
+ * ใกล้เคียงเลย (ให้ caller fallback ไปกลยุทธ์ตัดปีต่อ)
+ */
+async function tryNarrowByCatalogSearch(
+  params: QueryLinesParams,
+  ctx: ToolContext,
+  searchText: string,
+  err: QueryTooBroadError,
+  warnings: string[],
+): Promise<QueryLinesResult | undefined> {
+  const selected = await selectShardsBySearchCatalog(
+    searchText,
+    params.fiscalYears,
+    MAX_SHARDS_TO_SCAN,
+    ctx,
+  );
+  if (selected === undefined) {
+    return undefined;
+  }
+  const narrowed = await ctx.data.queryLines({ ...params, shardPaths: selected });
+  const ministrySummary = summarizeShardPaths(narrowed.shardPaths);
+  const ministryNote =
+    ministrySummary.ministryCodes.length > 0
+      ? ` (กระทรวง: ${ministrySummary.ministryCodes.join(', ')})`
+      : '';
+  warnings.push(
+    `คำค้นกว้างเกินเพดานสแกน ระบบจึงค้นเฉพาะ ${narrowed.shardPaths.length.toLocaleString('th-TH')} ` +
+      `ไฟล์ที่มีรายการตรงกับคำค้นมากที่สุดจากทั้งหมด ${err.candidateShardCount.toLocaleString('th-TH')} ` +
+      `ไฟล์${ministryNote} — ผลนี้จึงไม่ครบทุกไฟล์ที่เข้าเงื่อนไข ระบุ ministry_code หรือ item_key ให้ ` +
+      'เจาะจงขึ้นเพื่อค้นให้ครบ',
+  );
+  return narrowed;
+}
+
 /**
  * main thread (หลัง demo จริงครั้งแรก 2569-09-20): โมเดลมักส่ง `fiscal_years` กว้าง (5–11 ปี) แล้วชน
  * `QueryTooBroadError` ซ้ำ ๆ — เสียรอบ tool + เงินของผู้ใช้โดยไม่ได้ข้อมูล (3 ใน 4 ครั้งล้มใน session จริง)
  * ⇒ เมื่อกว้างเกิน ให้ค้น "ปีล่าสุดที่มีข้อมูล" ให้เองแล้วบอกตรง ๆ ใน warnings ว่าจำกัดปีไว้เท่าไร (ไม่เงียบ — N3)
  * ถ้าจำกัดเหลือ 1 ปีแล้วยังกว้างเกิน จึงค่อยคืน error เดิมให้โมเดลระบุกระทรวง/หน่วยงานเพิ่ม
+ *
+ * T-604: ก่อนตัดปีทิ้ง ลองกลยุทธ์ `tryNarrowByCatalogSearch` ก่อนเสมอเมื่อมี `catalogSearchText` (มาจาก
+ * `keywords`/`item_key` ที่ catalog resolve แบบตรงเป๊ะไม่เจอ — ดูจุดเรียกใน `handler`) เพราะเจาะจงกว่า
+ * (อิงรายการที่ตรงคำค้นจริง) และไม่ต้องเสียสละช่วงปีที่ผู้ใช้ขอ ตัดปีเป็น fallback ลำดับถัดไปเมื่อ catalog
+ * ไม่มีอะไรใกล้เคียงเลย (เช่น รายการหางยาวที่ไม่เคยเข้า catalog)
  */
 async function queryWithAutoNarrow(
   params: QueryLinesParams,
   ctx: ToolContext,
   warnings: string[],
+  catalogSearchText: string | undefined,
 ): Promise<QueryLinesResult> {
   try {
     return await ctx.data.queryLines(params);
   } catch (err) {
-    if (!(err instanceof QueryTooBroadError) || err.availableYears.length === 0) {
+    if (!(err instanceof QueryTooBroadError)) {
+      throw err;
+    }
+
+    if (catalogSearchText !== undefined) {
+      // best-effort: ความล้มเหลวของกลยุทธ์นี้ (ไม่ว่าจะ "ไม่มี match" หรือ error อื่นระหว่างเรียก
+      // search_catalog/getCatalogItem เช่นเครือข่ายขัดข้อง) ต้องไม่ทำให้ทั้ง query ล้มไปด้วย — ตกไปลอง
+      // กลยุทธ์ตัดปีต่อเสมอ (ท้ายสุดยังคืน `err` เดิมที่มีคำแนะนำอยู่แล้วถ้าทุกกลยุทธ์ไม่สำเร็จ)
+      try {
+        const narrowedByCatalog = await tryNarrowByCatalogSearch(
+          params,
+          ctx,
+          catalogSearchText,
+          err,
+          warnings,
+        );
+        if (narrowedByCatalog !== undefined) {
+          return narrowedByCatalog;
+        }
+      } catch {
+        // ตกไปกลยุทธ์ตัดปีด้านล่าง
+      }
+    }
+
+    if (err.availableYears.length === 0) {
       throw err;
     }
     const requested = params.fiscalYears;
@@ -197,6 +345,10 @@ interface ResolvedItem {
   itemKeys: string[];
   /** shard ที่ catalog บอกว่ามี item นี้ — undefined เมื่อ resolve ไม่เจอ (ปล่อยให้ queryLines เลือกเอง) */
   shardPaths?: string[];
+  /** T-604(A): true เมื่อ catalog หา item_key นี้ไม่เจอเลย (ทั้งแบบตรงเป๊ะและ normalize ช่องว่าง) —
+   * ต่างจากกรณีเจอ item แต่ shardPaths resolve ไม่ได้ (manifest ไม่มี path นั้นแล้ว) ซึ่ง itemKeys ยังมา
+   * จาก catalog จริง — ใช้ตัดสินว่าควรเสนอ key ที่ใกล้เคียงเมื่อผลลัพธ์สุดท้ายว่างเปล่า */
+  notFoundInCatalog: boolean;
 }
 
 async function resolveItem(
@@ -209,10 +361,11 @@ async function resolveItem(
   const item = await ctx.data.getCatalogItemByKey(itemKey);
   if (item === null) {
     // resolve ไม่เจอไม่ได้แปลว่าไม่มีข้อมูล — ส่ง key เดิมตรง ๆ ต่อให้ queryLines เผื่อ match เป๊ะ
-    return { itemKeys: [itemKey] };
+    return { itemKeys: [itemKey], notFoundInCatalog: true };
   }
   return {
     itemKeys: item.keys !== undefined && item.keys.length > 0 ? item.keys : [item.key],
+    notFoundInCatalog: false,
     ...(item.shardPaths.length > 0 ? { shardPaths: item.shardPaths } : {}),
   };
 }
@@ -251,7 +404,25 @@ async function handler(
     ...(input.limit !== undefined ? { limit: input.limit } : {}),
   };
 
-  const result = await queryWithAutoNarrow(params, ctx, warnings);
+  // T-604: shard candidate ให้ narrow ตอนกว้างเกิน — เฉพาะเมื่อยังไม่มี shardPaths ที่ catalog resolve
+  // ไว้แน่นอนแล้ว (item_key ที่เจอตรง ๆ ใน catalog ไม่ต้องพึ่งการจัดอันดับนี้)
+  const catalogSearchText =
+    resolved?.shardPaths !== undefined ? undefined : (firstKeyword ?? input.item_key);
+
+  const result = await queryWithAutoNarrow(params, ctx, warnings, catalogSearchText);
+
+  // T-604(A): item_key ที่ catalog หาไม่เจอเลย (แม้ normalize ช่องว่างแล้ว) แล้วผลลัพธ์สุดท้ายว่างเปล่า —
+  // เดิมเงียบ (total=0 ไม่มีคำอธิบาย) ทำให้โมเดลสรุปผิดว่า "ไม่มีข้อมูล" ทั้งที่ key สะกดคลาดเคลื่อน (N3)
+  if (resolved?.notFoundInCatalog === true && result.totalMatched === 0 && input.item_key !== undefined) {
+    // best-effort: การแนะนำ key ใกล้เคียงพลาด (เช่นเครือข่ายขัดข้องตอนเรียก search_catalog) ต้องไม่ทำให้
+    // ผลลัพธ์ที่ถูกต้องอยู่แล้ว (แค่ไม่มีแถว) กลายเป็น error ทั้ง call
+    try {
+      const suggestions = await suggestCatalogKeys(ctx, input.item_key);
+      warnings.push(itemKeyNotFoundWarning(input.item_key, suggestions));
+    } catch {
+      // ปล่อยผ่าน — ไม่มีคำแนะนำเพิ่มเติม แต่ผลลัพธ์หลัก (total:0) ยังถูกต้อง
+    }
+  }
 
   const rows = clampRows(result.rows).map((line) => {
     const priceBasis: 'unit_price' | 'amount_per_line' =
@@ -338,8 +509,10 @@ export const queryBudgetLinesTool = createTool({
   name: 'query_budget_lines',
   description:
     'ค้นบรรทัดงบประมาณจริง (DuckDB — ไม่รับ SQL) ต้องระบุ item_key หรือ keyword+ปี/กระทรวงเสมอ ' +
-    '(กว้างเกินไปจะถูกปฏิเสธพร้อมคำแนะนำ) fiscal_years ใส่ ~2-3 ปีต่อครั้งพอ ผลลัพธ์ ≤ 50 แถว ' +
-    'อ่าน coverage_notes/quality_flags ก่อนสรุปว่า "ไม่พบ" (ปี 2562 ข้อมูลไม่ครบ ไม่ใช่ไม่มีงบ)',
+    'fiscal_years ใส่ ~2-3 ปีต่อครั้งพอ ผลลัพธ์ ≤ 50 แถว — คำค้นกว้างเกินเพดานสแกนจะไม่ถูกปฏิเสธเสมอไป ' +
+    'ระบบอาจเลือกค้นเฉพาะไฟล์ที่ตรงคำค้นที่สุดให้แทน (ดู warnings ว่าครบทุกไฟล์หรือไม่) ยังกว้างเกินไปจริง ๆ ' +
+    'จึงถูกปฏิเสธพร้อมคำแนะนำ อ่าน coverage_notes/quality_flags ก่อนสรุปว่า "ไม่พบ" ' +
+    '(ปี 2562 ข้อมูลไม่ครบ ไม่ใช่ไม่มีงบ)',
   inputSchema: QueryBudgetLinesInputSchema,
   outputSchema: QueryBudgetLinesOutputSchema,
   handler,

@@ -62,6 +62,16 @@ export interface ToolLog {
    * `shardHints` ของ `data.getLines` แทนที่จะต้องให้ AI ทราบ path ของไฟล์ parquet เอง */
   recordSourceShard(sourceId: string, shardPath: string): void;
   getSourceShard(sourceId: string): string | undefined;
+  /** T-604(B) — จำ "shard ที่เป็นไปได้" ของ `sourceId` (จาก `CatalogItem.shards` ตอน `search_catalog`
+   * คืน `sample_source_ids` — รู้แค่ว่าอยู่ใน "หนึ่งในนี้" ไม่รู้ว่าไฟล์ไหนแน่ ต่างจาก
+   * `recordSourceShard`/`getSourceShard` ที่รู้ไฟล์จริงแล้วจาก `rowShards` ของ `queryLines`/`getLines`)
+   * — optional เหมือนเมธอด T-307/T-308 อื่น ๆ (ดูคอมเมนต์หัวไฟล์เรื่อง backward-compat) เรียกซ้ำ
+   * sourceId เดิมได้ (รวม candidate ใหม่เข้ากับของเดิม ไม่เขียนทับ) */
+  recordSourceShardCandidates?(sourceId: string, shardPaths: readonly string[]): void;
+  /** candidate shard ทั้งหมดที่เคยบันทึกไว้ของ `sourceId` นี้ (`[]` ถ้าไม่เคยบันทึก/รู้ shard จริงแล้ว
+   * ผ่าน `recordSourceShard` แทน) — ผู้เรียก (เช่น `get_budget_line`) เป็นคนไล่ค้นเป็นชุด ๆ เอง (เพดาน
+   * `MAX_SHARDS_TO_SCAN` ต่อ `getLines` ครั้งเดียว) */
+  getSourceShardCandidates?(sourceId: string): readonly string[];
   recordDocId(docId: string): void;
   recordEconValue(indicator: string, yearBe: number): void;
   recordInflationAdjustment(entry: InflationAdjustmentLogEntry): void;
@@ -158,6 +168,7 @@ function docChunkKey(docId: string, page: number | null): string {
 export function createToolLog(): ToolLog {
   const sourceIds = new Set<string>();
   const sourceShards = new Map<string, string>();
+  const sourceShardCandidates = new Map<string, string[]>();
   const docIds = new Set<string>();
   const econValues = new Set<string>();
   const econIndicatorsSeen = new Set<string>();
@@ -188,6 +199,21 @@ export function createToolLog(): ToolLog {
     },
     getSourceShard(sourceId) {
       return sourceShards.get(sourceId);
+    },
+    recordSourceShardCandidates(sourceId, shardPaths) {
+      const existing = sourceShardCandidates.get(sourceId);
+      if (existing === undefined) {
+        sourceShardCandidates.set(sourceId, [...shardPaths]);
+        return;
+      }
+      for (const path of shardPaths) {
+        if (!existing.includes(path)) {
+          existing.push(path);
+        }
+      }
+    },
+    getSourceShardCandidates(sourceId) {
+      return sourceShardCandidates.get(sourceId) ?? [];
     },
     recordDocId(docId) {
       docIds.add(docId);
@@ -300,6 +326,7 @@ export function createToolLog(): ToolLog {
     reset() {
       sourceIds.clear();
       sourceShards.clear();
+      sourceShardCandidates.clear();
       docIds.clear();
       econValues.clear();
       econIndicatorsSeen.clear();

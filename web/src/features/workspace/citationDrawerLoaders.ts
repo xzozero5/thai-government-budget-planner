@@ -15,6 +15,7 @@
  * `LoadPage.tsx`)
  */
 import type { ToolLog } from '@/ai/toolLog';
+import { MAX_SHARDS_TO_SCAN, data } from '@/data';
 import {
   createBudgetLineLoaders,
   loadDocumentChunkFromData,
@@ -22,12 +23,46 @@ import {
   type CitationDrawerLoaders,
 } from '@/features/citations';
 
+/** จำนวนชุด (ชุดละ ≤ `MAX_SHARDS_TO_SCAN` ไฟล์) สูงสุดที่ยอมไล่หา shard ของ source_id ที่รู้แค่ "candidate" —
+ * ตัวเลขเดียวกับ `ai/tools/getBudgetLine.ts#MAX_CANDIDATE_SHARD_BATCHES` */
+const MAX_CANDIDATE_SHARD_BATCHES = 5;
+
+/**
+ * T-603 (พบจาก eval จริง T-604): `sample_source_ids` ของ `search_catalog` อ้างเป็น citation ได้ แต่ ToolLog รู้แค่
+ * "shard ที่เป็นไปได้" (จาก `CatalogItem.shards`) ไม่ใช่ shard ตัวจริง — ถ้าโมเดลอ้าง id นั้นโดยไม่เคยเรียก
+ * `get_budget_line` drawer จะขึ้น "อ้างอิงไม่พบ" กับอ้างอิงที่ถูกต้อง → ไล่หาเป็นชุด ๆ ตอนผู้ใช้กดชิป (lazy)
+ * แล้วจำ shard ตัวจริงไว้ใน ToolLog (ไฟล์ `.tgbp.json` ที่บันทึกหลังจากนั้นจะมี hint ของ id นี้ด้วย)
+ */
+async function resolveShardFromCandidates(toolLog: ToolLog, sourceId: string): Promise<string | undefined> {
+  const candidates = toolLog.getSourceShardCandidates?.(sourceId) ?? [];
+  const maxShards = MAX_SHARDS_TO_SCAN * MAX_CANDIDATE_SHARD_BATCHES;
+  for (let offset = 0; offset < candidates.length && offset < maxShards; offset += MAX_SHARDS_TO_SCAN) {
+    const batch = candidates.slice(offset, offset + MAX_SHARDS_TO_SCAN);
+    try {
+      const result = await data.getLines([sourceId], batch);
+      const shard = result.rowShards[sourceId];
+      if (shard !== undefined) {
+        toolLog.recordSourceShard(sourceId, shard);
+        return shard;
+      }
+    } catch {
+      // ชุดนี้เปิดไม่ได้ (shard ไม่อยู่ใน manifest ปัจจุบัน ฯลฯ) — ลองชุดถัดไป
+    }
+  }
+  return undefined;
+}
+
 export function createCitationDrawerLoaders(toolLog: ToolLog | null): CitationDrawerLoaders {
   const { loadBudgetLine, loadNeighbors } = createBudgetLineLoaders((sourceId) =>
     toolLog?.getSourceShard(sourceId),
   );
   return {
-    loadBudgetLine,
+    async loadBudgetLine(sourceId) {
+      if (toolLog !== null && toolLog.getSourceShard(sourceId) === undefined) {
+        await resolveShardFromCandidates(toolLog, sourceId);
+      }
+      return loadBudgetLine(sourceId);
+    },
     loadNeighbors,
     loadDocumentChunk: loadDocumentChunkFromData,
     loadEconPoint: loadEconPointFromData,

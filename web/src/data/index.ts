@@ -40,6 +40,7 @@ import {
   getLines,
   getNeighborLines,
   InvalidShardPathError,
+  MAX_SHARDS_TO_SCAN,
   QueryTooBroadError,
   type QueryTooBroadErrorDetail,
   queryLines,
@@ -134,6 +135,11 @@ export type {
 export { summarizeShardPaths };
 
 export { DocNotFoundError, EconDataMissingError, InvalidShardPathError, QueryTooBroadError, RepoQueryError };
+
+/** T-604 — เพดานจำนวน shard ต่อ query เดียว (ADR-002/`data/repo.ts`) — `ai/tools/queryBudgetLines.ts`
+ * ใช้ค่านี้ตัดสินว่าจะเลือก shard ผ่าน catalog ได้กี่ไฟล์ก่อนเรียก `queryLines` ซ้ำ (ต้องมาจากค่าจริง
+ * ของ data layer เสมอ ห้าม hard-code ซ้ำในชั้น tool — ผิด N7/module boundary ถ้าค่าเพี้ยนกันได้) */
+export { MAX_SHARDS_TO_SCAN };
 
 // ---------------------------------------------------------------------------
 // DataResultMeta — ทุกเมธอดที่อ่าน "แถวข้อมูลงบ" คืน field เหล่านี้ปนอยู่ใน result เสมอ (T-206 B2/B3/F8)

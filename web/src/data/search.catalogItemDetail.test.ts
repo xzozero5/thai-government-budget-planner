@@ -206,4 +206,27 @@ describe('getCatalogItemByKey — shardPaths ทั้งเส้นทาง s
     const found = await getCatalogItemByKey('ไม่มีอยู่จริงแน่ๆ xyz', fetchImpl);
     expect(found).toBeNull();
   });
+
+  // T-604(A): variant ที่ต่างกันแค่ตำแหน่งช่องว่าง (ไม่ใช่แค่ "collapse ช่องว่างซ้ำเป็นตัวเดียว" ที่โค้ด
+  // เดิมทำอยู่แล้ว) ที่ pipeline ไม่ได้เก็บไว้ใน `keys[]` (จำกัดจำนวน variant ต่อกลุ่ม) — ต้อง normalize
+  // แบบตัด whitespace ทั้งหมด (เดียวกับ `compute_group_key` ของ pipeline) ก่อนถึงจะเจอ
+  it('variant ที่ต่างตำแหน่งช่องว่าง (ไม่อยู่ใน keys[]) → เจอผ่าน group-key normalize (ตัด whitespace ทั้งหมด)', async () => {
+    const shardPaths = ['budget_lines/act2570/15000.parquet'];
+    // key ตัวแทนเว้นวรรคตำแหน่งหนึ่ง — โมเดลพิมพ์เว้นวรรคคนละตำแหน่ง (ไม่ใช่ variant ที่ถูกเก็บใน keys[])
+    const item = baseItem({ key: 'โน้ตบุ๊ก สำหรับงานประมวลผล', shards: [0] });
+    const fetchImpl = setupFetch(makeManifest(shardPaths), makeCatalog(shardPaths, [item]), makeSlim([item]));
+
+    const found = await getCatalogItemByKey('โน้ตบุ๊กสำหรับ งานประมวลผล', fetchImpl);
+    expect(found?.key).toBe('โน้ตบุ๊ก สำหรับงานประมวลผล');
+    expect(found?.shardPaths).toEqual(shardPaths);
+  });
+
+  it('ต่างกันด้วยอักขระอื่นที่ไม่ใช่ whitespace (เช่นวงเล็บ) → group-key normalize ยังจับไม่ได้ (คืน null ตามเดิม — ต้องพึ่ง search_catalog แทน)', async () => {
+    const shardPaths = ['budget_lines/act2570/15000.parquet'];
+    const item = baseItem({ key: 'รถบรรทุก ดีเซล ขนาด 1 ตัน', shards: [0] });
+    const fetchImpl = setupFetch(makeManifest(shardPaths), makeCatalog(shardPaths, [item]), makeSlim([item]));
+
+    const found = await getCatalogItemByKey('รถบรรทุก (ดีเซล) ขนาด 1 ตัน', fetchImpl);
+    expect(found).toBeNull();
+  });
 });

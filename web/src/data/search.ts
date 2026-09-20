@@ -477,11 +477,35 @@ export function getCatalogItem(
   return createFullCatalogDetailSource(fetchImpl).getItem(i);
 }
 
+/** T-604(A): normalize เดียวกับ pipeline `compute_group_key`/`publish.py` (ตัด whitespace ทั้งหมด ไม่ใช่
+ * แค่ collapse) — ใช้จับ variant ที่ต่างกันแค่การเว้นวรรคแต่ pipeline ไม่ได้เก็บไว้ใน `keys[]` เพราะจำกัด
+ * จำนวน variant ต่อกลุ่ม (`CATALOG_MAX_KEYS_PER_GROUP` = 12) ไว้ ต้องตรงนิยามฝั่ง Python ทุกประการ */
+function stripAllWhitespace(value: string): string {
+  return value.replace(/\s+/g, '');
+}
+
+async function resolveCatalogItemDetail(
+  found: CatalogFile['items'][number],
+  catalog: CatalogFile,
+  fetchImpl: typeof fetch,
+): Promise<CatalogItemDetail> {
+  const manifest = await loadManifest(fetchImpl);
+  const knownPaths = new Set(manifest.files.map((f) => f.path));
+  return { ...found, shardPaths: resolveItemShardPaths(catalog, found, knownPaths) };
+}
+
 /**
  * T-206 item 7: หา `CatalogItem` เต็มจาก `key` — รองรับทั้ง key ตัวแทน (`CatalogItemSlim.key`, หาเจอ
  * ทันทีจาก slim ที่โหลดอยู่แล้ว ไม่ต้องโหลด catalog เต็ม) และ key ที่เป็น variant ใน `CatalogItem.keys`
  * (ต่างกันแค่ช่องว่าง/รูปแบบ) — **ข้อจำกัด**: variant lookup ต้องโหลด catalog เต็ม (~5.4 MB gz) มา
  * สแกนก่อน (เกิดเฉพาะตอนหา variant ที่ไม่ใช่ key ตัวแทนเท่านั้น ไม่ใช่ทุกครั้งที่เรียกฟังก์ชันนี้)
+ *
+ * T-604(A) (main thread, รายงานปัญหาจาก eval จริง — `fiscal-year-2562-gap`): เมื่อ exact/variant match
+ * ไม่เจอเลย (เช่น โมเดลลอก item_key มาจาก `item_name_raw` ที่มีวงเล็บ/คำเพิ่มติดมา) ลอง normalize แบบ
+ * `stripAllWhitespace` (เดียวกับ `pipeline/tgbp_pipeline/publish.py#compute_group_key`) อีกรอบก่อนยอมแพ้
+ * — จับ variant ที่ต่างกันแค่ช่องว่างแต่ไม่ได้อยู่ใน `keys[]` (ถูกตัดออกเพราะ pipeline จำกัดจำนวน variant
+ * ต่อกลุ่ม) ไม่ครอบคลุมกรณีต่างกันด้วยอักขระอื่น (เช่นวงเล็บ) — กรณีนั้น caller (`ai/tools/*`) ควรเรียก
+ * `searchCatalog` เพื่อแนะนำ key ที่ใกล้เคียงแทน (ดู `ai/tools/catalogKeyLookup.ts`)
  */
 export async function getCatalogItemByKey(
   key: string,
@@ -498,12 +522,23 @@ export async function getCatalogItemByKey(
   const found = catalog.items.find(
     (it) => it.key === normalized || (it.keys?.includes(normalized) ?? false),
   );
-  if (!found) {
+  if (found) {
+    return resolveCatalogItemDetail(found, catalog, fetchImpl);
+  }
+
+  const strippedQuery = stripAllWhitespace(normalized);
+  const foundByGroupKey =
+    strippedQuery.length > 0
+      ? catalog.items.find(
+          (it) =>
+            stripAllWhitespace(it.key) === strippedQuery ||
+            (it.keys?.some((k) => stripAllWhitespace(k) === strippedQuery) ?? false),
+        )
+      : undefined;
+  if (!foundByGroupKey) {
     return null;
   }
-  const manifest = await loadManifest(fetchImpl);
-  const knownPaths = new Set(manifest.files.map((f) => f.path));
-  return { ...found, shardPaths: resolveItemShardPaths(catalog, found, knownPaths) };
+  return resolveCatalogItemDetail(foundByGroupKey, catalog, fetchImpl);
 }
 
 // ---------------------------------------------------------------------------

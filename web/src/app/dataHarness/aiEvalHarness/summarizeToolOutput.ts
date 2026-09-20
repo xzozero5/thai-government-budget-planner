@@ -93,6 +93,9 @@ function summarizeGetPriceTrend(output: GetPriceTrendOutput): ToolOutputPreview 
     key: output.series?.key ?? null,
     points_count: output.series?.points.length ?? 0,
     change_pct: output.summary?.change_pct ?? null,
+    // T-604(A): เผื่อ transcript ต้องวิเคราะห์ว่า has_series:false เพราะ key ไม่ตรง catalog หรือไม่มี
+    // ข้อมูลจริง (ดู `ai/tools/getPriceTrend.ts`)
+    warnings: output.warnings,
   };
 }
 

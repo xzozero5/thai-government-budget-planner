@@ -7,8 +7,14 @@
  * **ช่องว่างของ facade**: `years_be` (ช่วงปีที่ขอ) ไม่มีพารามิเตอร์รองรับใน
  * `data.getPriceTrend`/`buildPriceTrend`/`getEconTrend` (คืนแค่ ≤10 จุดล่าสุดเสมอ) — tool นี้กรอง
  * ช่วงปีที่ขอ **หลัง** ได้ผลลัพธ์มาแล้วแทน (ไม่กระทบ caveat/แหล่งข้อมูลเดิม)
+ *
+ * T-604(A) (main thread, รายงานปัญหาจาก eval จริง): `kind:'item'` ที่ `key` ไม่ตรง catalog เป๊ะ (เช่น
+ * ลอกมาจาก `item_name_raw`) เดิมคืน `{series:null}` เงียบ ๆ เหมือนกรณี "ไม่มีข้อมูลจริง" ทำให้แยกไม่ออก
+ * ว่า key สะกดผิดหรือไม่มีข้อมูลจริง — ใช้ helper เดียวกับ `query_budget_lines`
+ * (`ai/tools/catalogKeyLookup.ts`) แนะนำ key ที่ใกล้เคียงใน `warnings[]` เมื่อเป็นกรณี key ไม่ตรง
  */
 import { z } from 'zod';
+import { itemKeyNotFoundWarning, suggestCatalogKeys } from './catalogKeyLookup';
 import { createTool, type ToolContext } from './toolKit';
 
 export const GetPriceTrendInputSchema = z.object({
@@ -56,6 +62,8 @@ export const GetPriceTrendOutputSchema = z.object({
       change_pct: z.number().nullable(),
     })
     .nullable(),
+  /** T-604(A): แจ้ง key ที่ใกล้เคียงเมื่อ `kind:'item'` แล้ว `key` ไม่ตรง catalog เป๊ะ ([] ปกติ) */
+  warnings: z.array(z.string()),
 });
 export type GetPriceTrendOutput = z.infer<typeof GetPriceTrendOutputSchema>;
 
@@ -81,7 +89,23 @@ async function handler(input: GetPriceTrendInput, ctx: ToolContext): Promise<Get
   const trend = await ctx.data.getPriceTrend({ kind: input.kind, key: input.key });
   if (trend === null) {
     // AC5: ไม่มีค่า → {series: null} — ห้ามประดิษฐ์ (04 §D10/US-8.1)
-    return { series: null, summary: null };
+    // T-604(A): เฉพาะ kind='item' ที่ key ไม่ตรง catalog เป๊ะเลย (ต่างจาก item ที่มีจริงแต่ยังไม่มี
+    // trend series สะสมพอ — เช่นน้อยกว่า 3 ปี — กรณีนั้น series:null เป็นคำตอบที่ถูกต้องอยู่แล้ว ไม่ใช่
+    // บั๊ก จึงต้องเช็ค catalog แยกก่อนสรุปว่า "key ไม่ตรง" กันข้อความเตือนที่เข้าใจผิด)
+    const warnings: string[] = [];
+    if (input.kind === 'item') {
+      // best-effort: ตรวจ/แนะนำ key ล้มเหลว (เช่นเครือข่ายขัดข้อง) ต้องไม่ทำให้ผลลัพธ์ที่ถูกต้องอยู่แล้ว
+      // (series:null ตาม AC5) กลายเป็น error ทั้ง call
+      try {
+        const item = await ctx.data.getCatalogItemByKey(input.key);
+        if (item === null) {
+          warnings.push(itemKeyNotFoundWarning(input.key, await suggestCatalogKeys(ctx, input.key)));
+        }
+      } catch {
+        // ปล่อยผ่าน — ไม่มีคำแนะนำเพิ่มเติม
+      }
+    }
+    return { series: null, summary: null, warnings };
   }
 
   ctx.toolLog.recordTrendRef({ kind: input.kind, key: input.key });
@@ -139,6 +163,7 @@ async function handler(input: GetPriceTrendInput, ctx: ToolContext): Promise<Get
       last,
       change_pct: trend.changePct?.pct ?? null,
     },
+    warnings: [],
   };
 }
 
