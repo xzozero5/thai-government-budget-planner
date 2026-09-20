@@ -59,25 +59,25 @@
 - [x] T-405 `frontend-dev` Workspace layout + Chat pane (4.2) รวม tool activity cards, quick replies, streaming, cancel; **T-307**: แสดง query ของ `web_search` ทุกครั้งใน tool activity card + สวิตช์ปิด web search (`enableWebSearch:false` มีแล้วใน `runAgentTurn`); เพดานเงินต่อ turn/session ปรับได้ใน settings (default 0.50 / 3.00 USD) และแสดงยอดใช้สะสม
 - [x] T-406 `frontend-dev` Proposal pane (4.3) + BOQ table (inline edit, recompute, "ให้ AI ทบทวน", version selector)
 - [x] T-407 `frontend-dev` Citation drawer (4.4) ทุกประเภท + "ดูแถวใกล้เคียง" + `ExternalLink` component (US-4.3: เปิดแท็บใหม่, https-only, copy URL) ใช้ใน BOQ chip/drawer/แชท — drawer แสดง `item_name_raw` เต็ม (ไม่มี `item_name`/`location_text` ใน shard), badge ของ quality flags + ข้อความ "ตัวเลขถอดจาก OCR ของต้นทาง โปรดตรวจหน้า N", ป้าย "เอกสารสแกน ระบบไม่ได้อ่านเนื้อหา"; **T-307**: `ExternalLink` = https-only + `rel="noopener noreferrer"` + `target="_blank"` + ไม่ prefetch + **ไม่โหลด favicon/รูป/preview จากโดเมนนั้น**
-- [~] T-408 `frontend-dev` Data loading indicator, toasts, keyboard shortcuts, responsive/mobile; แสดง progress ของการ prefetch DuckDB/ดัชนีค้นหา (lazy ~12 MB gz รวม) ระหว่าง AI ถามคำถาม
-- [ ] T-411 `frontend-dev` Motion layer ตาม `docs/ui/motion.md` (`motion`, reduced-motion guard, count-up, skeletons, button states) ; tests prop-level
+- [x] T-408 `frontend-dev` Data loading indicator, toasts, keyboard shortcuts, responsive/mobile; แสดง progress ของการ prefetch DuckDB/ดัชนีค้นหา (lazy ~12 MB gz รวม) ระหว่าง AI ถามคำถาม
+- [x] T-411 `frontend-dev` Motion layer ตาม `docs/ui/motion.md` (`motion`, reduced-motion guard, count-up, skeletons, button states) ; tests prop-level
 - [x] T-412 `frontend-dev` `Sparkline`, `TrendChart`, `StatCard` (Recharts) + `IllustrationFrame` (sanitized SVG, lightbox, สร้างใหม่/ซ่อน) และต่อเข้า Proposal pane/BOQ/drawer ; tests; **T-307**: SVG ต้องผ่าน `sanitizeSvg(...).node()` เท่านั้น (ห้ามนำสตริง `.svg` ไป innerHTML); เพิ่ม **e2e ใน Chromium จริง** ของชุดโจมตี sanitizer (CSS escape, `image-set()`, `feImage`, entity) พร้อม server ปลอมที่ยืนยันว่าไม่มี request ออก — ตอนนี้ยืนยันแค่ใน jsdom
-- [ ] T-409 `qa-engineer` e2e happy path + storage audit (07 §3.3 ข้อ 1–3) กับ mock API
-- [ ] T-410 `po` + `ui-designer` review ตาม 06 §1/§5; แก้ copy; STATUS
+- [x] T-409 `qa-engineer` e2e happy path + storage audit (07 §3.3 ข้อ 1–3) กับ mock API
+- [x] T-410 `po` + `ui-designer` review ตาม 06 §1/§5; แก้ copy; STATUS
 
 ## Phase 5 — Export (เป้า: 1 วัน)
 - [x] T-501 `frontend-dev` `features/export/pdf/*` react-pdf document (ปก, สรุป, BOQ ตารางข้ามหน้า, สมมติฐาน/ความเสี่ยง, appendix citations พร้อม **`<Link>` กดได้สำหรับ URL เว็บ**, footer) + Sarabun register; test snapshot text — **จาก S4** (`@react-pdf/renderer@4.9.0` + Sarabun OFL): (1) ตัดบรรทัดไทยกลางคำและส่วนเกินถูกตัดทิ้ง — `hyphenationCallback` ไม่ช่วย → แทรก `U+200B` ตาม `Intl.Segmenter('th')` ก่อนส่งข้อความ; (2) ToUnicode เพี้ยน (`า`→U+001E/1F, `ำ` แตก) → test extract text ต้อง normalize; (3) ตัวอักษรท้าย block หายในเอกสารหลายหน้า (`ฯลฯ`→`ฯ`) สาเหตุ `[UNVERIFIED]` → ต้องหาสาเหตุ/ทางเลี่ยงก่อนปิด task
 - [x] T-502 `frontend-dev` Export dialog + progress; Save/Load `.tgbp.json` (+ `/load` route read-only)
-- [~] T-504 `frontend-dev` SVG/กราฟ → PNG (canvas 2×) ใส่ PDF: ส่วน "ภาพรวมโครงการ" และ "แนวโน้มราคาที่เกี่ยวข้อง" ; test ว่า PDF มี image objects — ใช้ `data:` URL ตอนแปลง SVG → PNG (`blob:` ถูก CSP บล็อก — S5); ยอมรับฟอนต์ระบบในภาพ
+- [x] T-504 `frontend-dev` SVG/กราฟ → PNG (canvas 2×) ใส่ PDF: ส่วน "ภาพรวมโครงการ" และ "แนวโน้มราคาที่เกี่ยวข้อง" ; test ว่า PDF มี image objects — ใช้ `data:` URL ตอนแปลง SVG → PNG (`blob:` ถูก CSP บล็อก — S5); ยอมรับฟอนต์ระบบในภาพ
 - [ ] T-503 `qa-engineer` ตรวจ PDF ใน 4 viewer (A8) + ภาพ/กราฟ ; bug → แก้; เพิ่มเคส "ค้น/คัดลอกข้อความไทยใน PDF viewer" (ToUnicode เพี้ยน — S4)
 
 ## Phase 6 — QA & hardening (เป้า: 2 วัน)
-- [ ] T-601 `qa-engineer` รัน `08-QA-CHECKLIST.md` ทั้งหมด → `docs/qa/run-<date>.md` + `bugs.md`
-- [ ] T-602 `security-reviewer` รัน 09 §5 C1–C9 ; แก้
+- [~] T-601 `qa-engineer` รัน `08-QA-CHECKLIST.md` ทั้งหมด → `docs/qa/run-<date>.md` + `bugs.md`
+- [x] T-602 `security-reviewer` รัน 09 §5 C1–C9 ; แก้
 - [ ] T-603 `frontend-dev` แก้ bug severity high/medium ทั้งหมด; a11y fixes จาก axe
 - [ ] T-604 `ai-engineer` รัน eval รอบสุดท้าย → eval-report
-- [ ] T-605 `frontend-dev` ตรวจ production deploy บน GitHub Pages: CSP meta ทำงาน, range request/latency บน URL จริง (บันทึกลง SPIKES.md), Lighthouse, README deploy section; ยืนยันว่า CSP meta ไม่ถูก strip และบันทึกผลกระทบที่ไม่มี `frame-ancestors` (ADR-003 ข้อ 1); custom domain (ถ้ามี) เป็น post-MVP; workflow ต้อง deploy `web/public/duckdb-ext/**` + smoke ว่า `.wasm` ถูก serve และถูกบีบอัดหรือไม่
-- [ ] T-606 `po` release notes `docs/RELEASE-0.1.md`, STATUS = "MVP done", รายการ post-MVP (F6 data browser, OCR, share link ฯลฯ)
+- [~] T-605 `frontend-dev` ตรวจ production deploy บน GitHub Pages: CSP meta ทำงาน, range request/latency บน URL จริง (บันทึกลง SPIKES.md), Lighthouse, README deploy section; ยืนยันว่า CSP meta ไม่ถูก strip และบันทึกผลกระทบที่ไม่มี `frame-ancestors` (ADR-003 ข้อ 1); custom domain (ถ้ามี) เป็น post-MVP; workflow ต้อง deploy `web/public/duckdb-ext/**` + smoke ว่า `.wasm` ถูก serve และถูกบีบอัดหรือไม่
+- [~] T-606 `po` release notes `docs/RELEASE-0.1.md`, STATUS = "MVP done", รายการ post-MVP (F6 data browser, OCR, share link ฯลฯ)
 
 ## Post-MVP ideas (ไม่ทำตอนนี้)
 - เติม econ `diesel/gasoline95/min_wage_*` หรือประกาศปิดถาวรใน `econ-sources.md` (ทบทวนใน Phase 6) · Data browser (F6) · Image-gen provider ภายนอกสำหรับภาพเหมือนจริง (ตัดออกโดยคุณนิว — ทบทวนหลัง MVP) · OCR pipeline แยกโปรเจกต์ · Export DOCX · เปรียบเทียบสองข้อเสนอ · ภาษาอังกฤษ · โหลดข้อมูลจาก URL ภายนอกที่ผู้ใช้กำหนด (ต้องทบทวน security)
