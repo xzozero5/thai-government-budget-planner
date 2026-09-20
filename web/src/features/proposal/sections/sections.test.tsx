@@ -68,6 +68,7 @@ describe('ComparablesSection', () => {
   it('render ตารางเทียบเคียงพร้อมปีงบประมาณ พ.ศ. และยอดเงินแบบไทย', () => {
     render(
       <ComparablesSection
+        onOpenCitation={vi.fn()}
         comparables={[
           {
             source_id: 'src-1',
@@ -87,8 +88,53 @@ describe('ComparablesSection', () => {
   });
 
   it('ไม่มีข้อมูล → empty text', () => {
-    render(<ComparablesSection comparables={[]} />);
+    render(<ComparablesSection comparables={[]} onOpenCitation={vi.fn()} />);
     expect(screen.getByText('ส่วนนี้ยังไม่มีเนื้อหา')).toBeInTheDocument();
+  });
+
+  it('M5: มี source_id เสมอ → คลิก chip อ้างอิงเรียก onOpenCitation ด้วย citation kind=budget_line', async () => {
+    const user = userEvent.setup();
+    const onOpenCitation = vi.fn();
+    render(
+      <ComparablesSection
+        onOpenCitation={onOpenCitation}
+        comparables={[
+          {
+            source_id: 'src-1',
+            fiscal_year_be: 2568,
+            agency: 'กรมชลประทาน',
+            item_name: 'คอนกรีต 240 ksc',
+            amount_thb: 199750,
+            unit_price_thb: 2350,
+            similarity_note: 'สเปคตรงกัน',
+          },
+        ]}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: /src-1/ }));
+    expect(onOpenCitation).toHaveBeenCalledWith({ kind: 'budget_line', source_id: 'src-1' });
+  });
+
+  it('M5: unit_price_thb เท่ากับ amount_thb เป๊ะ → ไม่แสดงราคาต่อหน่วยซ้ำ', () => {
+    render(
+      <ComparablesSection
+        onOpenCitation={vi.fn()}
+        comparables={[
+          {
+            source_id: 'src-2',
+            fiscal_year_be: 2568,
+            agency: 'ศึกษาธิการ',
+            item_name: 'เครื่องปรับอากาศ',
+            amount_thb: 279000,
+            unit_price_thb: 279000,
+            similarity_note: 'สเปคใกล้เคียง',
+          },
+        ]}
+      />,
+    );
+    // ราคาต่อหน่วย/ยอดรวมเท่ากันเป๊ะ (qty=1) — คอลัมน์ราคาต่อหน่วยต้องแสดง "—" ไม่ใช่ ฿279,000 ซ้ำ
+    expect(screen.getAllByText('฿279,000')).toHaveLength(1);
+    expect(screen.getByText('—')).toBeInTheDocument();
   });
 });
 

@@ -17,3 +17,17 @@ const UNRESOLVED_PLACEHOLDER = /\{[a-zA-Z0-9_]+\}/g;
 export function renderToolTemplate(key: CopyKey, params?: Record<string, string | number>): string {
   return t(key, params).replace(UNRESOLVED_PLACEHOLDER, '…');
 }
+
+/**
+ * T-410 M4 — เหมือน `renderToolTemplate` แต่คืน `null` เมื่อ template ยังมี placeholder เหลือหลังแทนค่า
+ * (แปลว่า `params` ที่มีให้ไม่พอจะเติมประโยคนี้ให้ครบ) แทนการโชว์ "…" — ผู้เรียก (`ToolActivityCard`)
+ * ใช้เพื่อตัดสินว่าจะใช้ข้อความไทยเต็มจาก `chat.tool.<tool>.<status>` (ชุด A `ToolActivity.summary`) หรือ
+ * ต้อง fallback ไปใช้ `inputSummary` เดิมที่ `ai/agent.ts` เตรียมมาให้ (ซึ่งมีค่าจริงครบกว่าในบาง tool)
+ */
+export function renderToolTemplateIfComplete(
+  key: CopyKey,
+  params: Record<string, string | number> = {},
+): string | null {
+  const rendered = t(key, params);
+  return /\{[a-zA-Z0-9_]+\}/.test(rendered) ? null : rendered;
+}

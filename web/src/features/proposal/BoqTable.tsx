@@ -12,7 +12,6 @@ import {
   BasisBadge,
   Button,
   Card,
-  Chip,
   ConfidenceDots,
   ExternalLink,
   Popover,
@@ -25,6 +24,7 @@ import {
   Tooltip,
 } from '@/components/ui';
 import type { Basis } from '@/components/ui';
+import { CitationChip } from '@/features/citations';
 import { formatFiscalYearBe, formatNumber, formatThb } from '@/lib/format';
 import { t } from '@/i18n';
 import { BoqInlineEditCell } from './BoqInlineEditCell';
@@ -86,6 +86,9 @@ export interface BoqTableProps {
   /** ป้าย citation chip แบบละเอียด (เช่น "PBO 2566 · กรมพลังงาน") — ไม่ส่งมา/คืน `undefined` ต่อ
    * citation หนึ่ง ๆ = ใช้ label ย่อเดิมจาก `citationChipLabel` (ไม่ทำลาย test เดิมของ T-406) */
   resolveCitationLabel?: ((citation: Citation) => string | undefined) | undefined;
+  /** M2 (06 §4.3, po-review): citation นี้ resolve กับข้อมูล/ToolLog ปัจจุบันไม่ได้ → แสดง badge เทา
+   * "อ้างอิงไม่พบ" — ไม่ส่ง prop นี้มา (เช่นหน้า `/load` ที่ไม่มี ToolLog) = ไม่ตัดสิน ไม่แสดง badge เลย */
+  isCitationUnresolved?: ((citation: Citation) => boolean) | undefined;
 }
 
 interface CategoryGroup {
@@ -157,47 +160,79 @@ function RationalePopover({ line }: { line: BoqLine }): ReactElement {
   );
 }
 
+/** M2: badge เล็ก ๆ "อ้างอิงไม่พบ" — ใช้ทั้งกรณีไม่มี citation เหลือเลยในบรรทัดที่ basis≠estimate และ
+ * กรณี citation ของ kind='web' (ซึ่งคง markup เดิมของ T-406 ไว้เป๊ะแทนการเปลี่ยนไปใช้ `CitationChip` ทั้งก้อน
+ * — ดูคอมเมนต์ `CitationChips` ด้านล่างเรื่อง aria-label ที่ต้องคงเดิม) resolve ไม่ได้ */
+function UnresolvedBadge(): ReactElement {
+  return (
+    <span className="inline-flex items-center gap-1 text-xs text-danger">
+      <span aria-hidden="true">!</span>
+      {t('proposal.citationUnresolved')}
+    </span>
+  );
+}
+
 function CitationChips({
   line,
   onOpenCitation,
   resolveCitationLabel,
+  isCitationUnresolved,
 }: {
   line: BoqLine;
   onOpenCitation: (citation: Citation, line: BoqLine) => void;
   resolveCitationLabel?: ((citation: Citation) => string | undefined) | undefined;
+  isCitationUnresolved?: ((citation: Citation) => boolean) | undefined;
 }): ReactElement {
   if (line.citations.length === 0) {
+    // M2 (po-review): บรรทัดที่ basis≠estimate ต้องมี citation รองรับ — ถ้าหลุดมาจนไม่มี citation
+    // เหลือเลย (เช่น validator ตัดทิ้งหมดเพราะอ้างอิงไม่พบ) ต้องเตือนแทน "—" เฉย ๆ
+    if (line.basis !== 'estimate') {
+      return <UnresolvedBadge />;
+    }
     return <span className="text-xs text-fg-muted">—</span>;
   }
   return (
     <div className="flex flex-wrap gap-1.5">
       {line.citations.map((citation, index) => {
         const label = resolveCitationLabel?.(citation) ?? citationChipLabel(citation);
-        return isWebCitation(citation) ? (
-          <span key={`${line.id}-${String(index)}`} className="inline-flex items-center gap-1">
-            <ExternalLink href={citation.url} hideCopyButton>
-              {label}
-            </ExternalLink>
-            <button
-              type="button"
-              aria-label={t('citation.drawerTitle')}
-              onClick={() => {
-                onOpenCitation(citation, line);
-              }}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-fg-muted hover:bg-surface-2"
-            >
-              ⓘ
-            </button>
-          </span>
-        ) : (
-          <Chip
+        const unresolved = isCitationUnresolved?.(citation) ?? false;
+        // kind='web' คงโครงสร้างเดิมของ T-406 ไว้เป๊ะ (ลิงก์เปิดแท็บใหม่ https + ปุ่มเปิด drawer แยก
+        // aria-label={t('citation.drawerTitle')}) แทนการสลับไปใช้ `CitationChip` ทั้งก้อน — `CitationChip`
+        // ใช้ `t('a11y.citationDrawer')` เป็น aria-label ของปุ่มนี้ ซึ่งเป็นข้อความคนละคำ (เปลี่ยนแล้วเสี่ยง
+        // ชน e2e/a11y test ที่อ้าง aria-label เดิม ตามกฎห้ามเปลี่ยน aria-label ที่มีอยู่)
+        if (isWebCitation(citation)) {
+          return (
+            <span key={`${line.id}-${String(index)}`} className="inline-flex items-center gap-1">
+              <ExternalLink href={citation.url} hideCopyButton>
+                {label}
+              </ExternalLink>
+              <button
+                type="button"
+                aria-label={t('citation.drawerTitle')}
+                onClick={() => {
+                  onOpenCitation(citation, line);
+                }}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-fg-muted hover:bg-surface-2"
+              >
+                ⓘ
+              </button>
+              {unresolved && <UnresolvedBadge />}
+            </span>
+          );
+        }
+        // M2: kind อื่น ๆ ใช้ `CitationChip` ของ `@/features/citations` แทน `Chip` เปล่าเดิม (คง
+        // onClick/label เดิมทุกอย่าง — accessible name ของปุ่มยังเป็น `label` เหมือนก่อน เพราะ mark
+        // ประเภทแหล่งของ `CitationChip` เป็น `aria-hidden`)
+        return (
+          <CitationChip
             key={`${line.id}-${String(index)}`}
-            onClick={() => {
+            citation={citation}
+            onOpenDrawer={() => {
               onOpenCitation(citation, line);
             }}
-          >
-            {label}
-          </Chip>
+            label={label}
+            unresolved={unresolved}
+          />
         );
       })}
     </div>
@@ -229,6 +264,7 @@ function BoqLineRow({
   onOpenCitation,
   renderTrend,
   resolveCitationLabel,
+  isCitationUnresolved,
 }: {
   line: BoqLine;
   edited: boolean;
@@ -238,6 +274,7 @@ function BoqLineRow({
   onOpenCitation: (citation: Citation, line: BoqLine) => void;
   renderTrend: ((trendRef: TrendRef) => ReactNode) | undefined;
   resolveCitationLabel?: ((citation: Citation) => string | undefined) | undefined;
+  isCitationUnresolved?: ((citation: Citation) => boolean) | undefined;
 }): ReactElement {
   return (
     <TableRow
@@ -309,6 +346,7 @@ function BoqLineRow({
           line={line}
           onOpenCitation={onOpenCitation}
           resolveCitationLabel={resolveCitationLabel}
+          isCitationUnresolved={isCitationUnresolved}
         />
       </TableCell>
     </TableRow>
@@ -322,6 +360,7 @@ function BoqLineCard({
   onRequestReview,
   onOpenCitation,
   resolveCitationLabel,
+  isCitationUnresolved,
 }: {
   line: BoqLine;
   edited: boolean;
@@ -329,6 +368,7 @@ function BoqLineCard({
   onRequestReview: (lineId?: string) => void;
   onOpenCitation: (citation: Citation, line: BoqLine) => void;
   resolveCitationLabel?: ((citation: Citation) => string | undefined) | undefined;
+  isCitationUnresolved?: ((citation: Citation) => boolean) | undefined;
 }): ReactElement {
   return (
     <Card className="space-y-2">
@@ -364,6 +404,7 @@ function BoqLineCard({
         line={line}
         onOpenCitation={onOpenCitation}
         resolveCitationLabel={resolveCitationLabel}
+        isCitationUnresolved={isCitationUnresolved}
       />
       {edited && (
         <div className="flex flex-wrap items-center gap-2">
@@ -385,6 +426,7 @@ export function BoqTable({
   onOpenCitation,
   renderTrend,
   resolveCitationLabel,
+  isCitationUnresolved,
 }: BoqTableProps): ReactElement {
   const groups = groupByCategory(proposal.boq);
   const editedSet = new Set(editedLineIds);
@@ -441,6 +483,7 @@ export function BoqTable({
                       onOpenCitation={onOpenCitation}
                       renderTrend={renderTrend}
                       resolveCitationLabel={resolveCitationLabel}
+                      isCitationUnresolved={isCitationUnresolved}
                     />
                   ))}
                   <TableRow className="bg-surface-2 font-medium">
@@ -467,6 +510,7 @@ export function BoqTable({
             onRequestReview={onRequestReview}
             onOpenCitation={onOpenCitation}
             resolveCitationLabel={resolveCitationLabel}
+            isCitationUnresolved={isCitationUnresolved}
           />
         ))}
       </div>

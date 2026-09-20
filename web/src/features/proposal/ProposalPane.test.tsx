@@ -60,7 +60,9 @@ describe('ProposalPane — proposal จริงจากโมเดล (fixtur
 
   it('ยอดรวมแสดงด้วยตัวคั่นหลักพันแบบไทย', () => {
     render(<ProposalPane {...baseProps({ proposal: realAircondProposal })} />);
-    expect(screen.getByText('1,078,500 บาท')).toBeInTheDocument();
+    // M6: ยอดรวมโผล่ทั้งที่ header (ProposalHeader) และ section "สรุปยอดรวม" (TotalsSection) — fixture นี้
+    // subtotal_thb === grand_total_thb (ไม่มีค่าเผื่อเหลือเผื่อขาด) จึงมีมากกว่าหนึ่งจุด
+    expect(screen.getAllByText('1,078,500 บาท').length).toBeGreaterThan(0);
   });
 
   it('โหมด audit แสดง section ข้อสังเกตจากการตรวจสอบ', () => {
@@ -185,6 +187,21 @@ describe('ProposalPane — ปุ่ม export/save', () => {
     await user.click(screen.getByRole('button', { name: 'บันทึกไฟล์' }));
     expect(onExport).toHaveBeenCalledTimes(1);
     expect(onSave).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('ProposalPane — S14 (po-review ชุด B): ปุ่มคัดลอกสรุป', () => {
+  it('กด "คัดลอกสรุป" → เรียก navigator.clipboard.writeText ด้วย markdown ของ proposal', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+
+    render(<ProposalPane {...baseProps({ proposal: realAircondProposal })} />);
+    await user.click(screen.getByRole('button', { name: 'คัดลอกสรุป' }));
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    const [copied] = writeText.mock.calls[0] as [string];
+    expect(copied).toContain(`# ${realAircondProposal.title}`);
   });
 });
 

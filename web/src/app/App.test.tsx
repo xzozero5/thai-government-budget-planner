@@ -42,12 +42,19 @@ describe('App — routes (HashRouter)', () => {
     expect(screen.queryByRole('heading', { name: t('errors.notFoundTitle') })).not.toBeInTheDocument();
   });
 
-  it('"/load" แสดง placeholder ของ T-502 (เปิดไฟล์ .tgbp.json โดยไม่ต้องมี key)', () => {
+  it('"/load" แสดง placeholder ของ T-502 (เปิดไฟล์ .tgbp.json โดยไม่ต้องมี key)', async () => {
     setHash('#/load');
     render(<App />);
 
-    expect(screen.getByRole('heading', { name: t('export.load.title') })).toBeInTheDocument();
-  });
+    // งานลดขนาด entry chunk (20 ก.ย. 2569): "/load" เป็น `React.lazy` แล้ว (ลาก ProposalPane/
+    // CitationDrawer/ExportDialog ออกจาก entry bundle) — ต้องรอ dynamic import resolve ก่อน
+    await waitFor(
+      () => {
+        expect(screen.getByRole('heading', { name: t('export.load.title') })).toBeInTheDocument();
+      },
+      { timeout: 10_000 },
+    );
+  }, 15_000);
 
   it('"/workspace" โดยไม่มี key → guard redirect กลับไปหน้า KeyGate ("/")', async () => {
     useSessionStore.setState({ hasKey: false });

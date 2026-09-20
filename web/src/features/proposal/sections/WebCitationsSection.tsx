@@ -1,9 +1,12 @@
 /**
- * T-406 — แหล่งจากเว็บระดับข้อเสนอ (05 §5 `citations_web[]`) — ใช้ `ExternalLink` เสมอ (N5/T-307:
- * https-only, เปิดแท็บใหม่ noopener noreferrer, ไม่ prefetch)
+ * T-406/T-410 (po-review ชุด B) — แหล่งจากเว็บระดับข้อเสนอ (05 §5 `citations_web[]`) — ใช้
+ * `ExternalLink` เสมอ (N5/T-307: https-only, เปิดแท็บใหม่ noopener noreferrer, ไม่ prefetch)
  *
- * [MISSING COPY KEY] ไม่มี key หัวข้อ section นี้ใน `proposal.sections.*` (`webCitations`) — ใช้
- * `citation.web.title` ("แหล่งจากเว็บ") แทนเพราะความหมายตรงกัน
+ * หมายเหตุ: หัวข้อ accordion ของ section นี้ใน `ProposalPane.tsx` ยังใช้ `citation.web.title`
+ * ("แหล่งจากเว็บ") ไม่ใช่ `proposal.sections.webCitations` ("แหล่งอ้างอิงจากเว็บ") ที่เพิ่มมาใน copy.th.json
+ * ชุด A ทั้งที่ความหมายตรงกัน — ตั้งใจไม่สลับ เพราะเป็น**ข้อความที่มองเห็นได้จริง** (accessible name ของ
+ * `role="region"`) ซึ่งงานนี้ (ชุด B) ถูกห้ามเปลี่ยนข้อความที่มีอยู่แล้วโดยเด็ดขาด (มี e2e ของ qa-engineer
+ * รันขนานอยู่ + `ProposalPane.test.tsx` เดิมอ้างชื่อนี้ตรง ๆ) รายงานเป็น key ที่ยังไม่ถูกใช้จริงท้ายงาน
  */
 import type { ReactElement } from 'react';
 import { ExternalLink } from '@/components/ui';

@@ -255,6 +255,56 @@ describe('BoqTable', () => {
       expect(row).not.toBeNull();
       expect(within(row as HTMLElement).getByText('—')).toBeInTheDocument();
     });
+
+    it('M2: isCitationUnresolved=true → CitationChip แสดงป้าย "อ้างอิงไม่พบ"', () => {
+      render(
+        <BoqTable
+          proposal={richProposalFixture}
+          editedLineIds={[]}
+          onEditLine={vi.fn()}
+          onRequestReview={vi.fn()}
+          onOpenCitation={vi.fn()}
+          isCitationUnresolved={() => true}
+        />,
+      );
+      const desktop = screen.getByTestId('boq-table-desktop');
+      expect(within(desktop).getAllByText(/อ้างอิงไม่พบ/).length).toBeGreaterThan(0);
+    });
+
+    it('M2: basis≠estimate แต่ไม่มี citation เหลือเลย → badge "อ้างอิงไม่พบ" แทน "—"', () => {
+      const [firstLine, ...restLines] = richProposalFixture.boq;
+      if (!firstLine) throw new Error('fixture ต้องมีอย่างน้อยหนึ่งบรรทัด');
+      const proposalWithUnresolvedLine = {
+        ...richProposalFixture,
+        boq: [{ ...firstLine, citations: [] }, ...restLines],
+      };
+      render(
+        <BoqTable
+          proposal={proposalWithUnresolvedLine}
+          editedLineIds={[]}
+          onEditLine={vi.fn()}
+          onRequestReview={vi.fn()}
+          onOpenCitation={vi.fn()}
+        />,
+      );
+      const desktop = screen.getByTestId('boq-table-desktop');
+      const row = within(desktop).getByText('คอนกรีตผสมเสร็จ 240 ksc').closest('tr');
+      expect(row).not.toBeNull();
+      expect(within(row as HTMLElement).getByText('อ้างอิงไม่พบ')).toBeInTheDocument();
+    });
+
+    it('หน้า /load (ไม่ส่ง isCitationUnresolved) → ไม่แสดงป้าย "อ้างอิงไม่พบ" แม้ resolve ไม่ได้จริง', () => {
+      render(
+        <BoqTable
+          proposal={richProposalFixture}
+          editedLineIds={[]}
+          onEditLine={vi.fn()}
+          onRequestReview={vi.fn()}
+          onOpenCitation={vi.fn()}
+        />,
+      );
+      expect(screen.queryByText(/อ้างอิงไม่พบ/)).not.toBeInTheDocument();
+    });
   });
 
   describe('ⓘ เหตุผล', () => {

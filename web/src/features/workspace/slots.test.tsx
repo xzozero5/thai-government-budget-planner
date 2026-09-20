@@ -22,9 +22,14 @@ import { useToolLogStore } from '@/stores/toolLogStore';
 import { CitationDrawerContainer, ProposalPaneContainer, type CitationDrawerOpenState } from './slots';
 
 const SVG_FIXTURES_DIR = join(__dirname, '../../lib/__fixtures__/svg');
+const GOOD_ILLUSTRATIONS_DIR = join(__dirname, '../../../../docs/ui/illustrations');
 
 function readSvgFixture(name: string): string {
   return readFileSync(join(SVG_FIXTURES_DIR, name), 'utf8');
+}
+
+function readGoodIllustration(name: string): string {
+  return readFileSync(join(GOOD_ILLUSTRATIONS_DIR, name), 'utf8');
 }
 
 function makeBudgetLine(overrides: Partial<BudgetLine> = {}): BudgetLine {
@@ -76,6 +81,7 @@ function makeBudgetLine(overrides: Partial<BudgetLine> = {}): BudgetLine {
 vi.mock('@/ai/session/chatController', () => ({
   sessionChatController: {
     requestReview: vi.fn(),
+    sendMessage: vi.fn(),
   },
 }));
 
@@ -133,6 +139,7 @@ beforeEach(() => {
   useChatStore.getState().reset();
   useToolLogStore.getState().reset();
   vi.mocked(sessionChatController.requestReview).mockClear();
+  vi.mocked(sessionChatController.sendMessage).mockClear();
   vi.mocked(saveSessionFile).mockReset();
   dataMocks.getLines.mockReset();
   dataMocks.getNeighborLines.mockReset();
@@ -306,12 +313,14 @@ describe('CitationDrawerContainer — tool activity fallback (T-405 เดิม
   it('เปิดจาก tool activity (ไม่มี citation เดี่ยว) → คงข้อความ fallback เดิม', () => {
     function ToolActivityHarness(): ReactElement {
       return (
-        <CitationDrawerContainer
-          state={{ kind: 'toolActivity', context: { id: 't1', name: 'query_budget_lines', label: 'ค้นหา 5 แถว' } }}
-          onClose={() => {
-            /* noop */
-          }}
-        />
+        <ToastProvider>
+          <CitationDrawerContainer
+            state={{ kind: 'toolActivity', context: { id: 't1', name: 'query_budget_lines', label: 'ค้นหา 5 แถว' } }}
+            onClose={() => {
+              /* noop */
+            }}
+          />
+        </ToastProvider>
       );
     }
     render(<ToolActivityHarness />);
@@ -319,7 +328,11 @@ describe('CitationDrawerContainer — tool activity fallback (T-405 เดิม
   });
 
   it('state=null → drawer ปิดอยู่', () => {
-    render(<CitationDrawerContainer state={null} onClose={vi.fn()} />);
+    render(
+      <ToastProvider>
+        <CitationDrawerContainer state={null} onClose={vi.fn()} />
+      </ToastProvider>,
+    );
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
@@ -351,5 +364,106 @@ describe('ProposalPaneContainer — renderIllustration ผ่าน sanitizer', 
 
     render(<Harness />);
     expect(screen.queryByTestId('illustration-svg-mount')).not.toBeInTheDocument();
+  });
+
+  describe('S9 (po-review ชุด B, US-7.1): ซ่อน/แสดง/สร้างภาพใหม่', () => {
+    function attachGoodIllustration(): void {
+      const sink = createInMemoryIllustrationSink();
+      sink.add({
+        illustrationId: richProposalFixture.illustrations[0]?.illustration_id ?? '',
+        title: richProposalFixture.illustrations[0]?.title ?? '',
+        caption: richProposalFixture.illustrations[0]?.caption ?? '',
+        kind: 'cross_section',
+        svg: readGoodIllustration('02-cross-section-weir.svg'),
+        warnings: [],
+      });
+      useToolLogStore.getState().attach(createToolLog(), sink);
+    }
+
+    it('กด "ซ่อนภาพ" → ภาพหาย + ปุ่ม "แสดงภาพ" กด "แสดงภาพ" → ภาพกลับมา', async () => {
+      const user = userEvent.setup();
+      attachGoodIllustration();
+      useProposalStore.getState().pushVersion(richProposalFixture, [], 'ai');
+      render(<Harness />);
+
+      expect(screen.getByTestId('illustration-svg-mount')).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: t('proposal.illustration.hide') }));
+      expect(screen.queryByTestId('illustration-svg-mount')).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: t('proposal.illustration.show') }));
+      expect(screen.getByTestId('illustration-svg-mount')).toBeInTheDocument();
+    });
+
+    it('กด "สร้างภาพใหม่" → เรียก sessionChatController.sendMessage ด้วยข้อความขอภาพใหม่จาก copy', async () => {
+      const user = userEvent.setup();
+      attachGoodIllustration();
+      useProposalStore.getState().pushVersion(richProposalFixture, [], 'ai');
+      render(<Harness />);
+
+      await user.click(screen.getByRole('button', { name: t('proposal.illustration.regenerate') }));
+      expect(sessionChatController.sendMessage).toHaveBeenCalledWith(
+        t('proposal.illustration.regenerateRequest', {
+          title: richProposalFixture.illustrations[0]?.title ?? '',
+        }),
+      );
+    });
+
+    it('AI กำลังรัน (isRunning) → ไม่มีปุ่ม "สร้างภาพใหม่"', () => {
+      attachGoodIllustration();
+      useProposalStore.getState().pushVersion(richProposalFixture, [], 'ai');
+      useChatStore.getState().setIsRunning(true);
+      render(<Harness />);
+
+      expect(
+        screen.queryByRole('button', { name: t('proposal.illustration.regenerate') }),
+      ).not.toBeInTheDocument();
+    });
+  });
+});
+
+describe('M2 (po-review ชุด B): badge "อ้างอิงไม่พบ" ต่อกับ ToolLog จริง', () => {
+  it('source_id ไม่เคยปรากฏใน ToolLog ของบทสนทนานี้ → CitationChip แสดงป้าย "อ้างอิงไม่พบ"', () => {
+    // ToolLog ว่างเปล่า (ไม่เคย record source_id ของ B-1 เลย) — เหมือน citation ที่หลุดรอดมาโดยไม่เคยเห็นจริง
+    useToolLogStore.getState().attach(createToolLog(), createInMemoryIllustrationSink());
+    useProposalStore.getState().pushVersion(realAircondProposal, [], 'ai');
+    render(<Harness />);
+
+    const desktop = screen.getByTestId('boq-table-desktop');
+    expect(within(desktop).getAllByText(new RegExp(t('proposal.citationUnresolved'))).length).toBeGreaterThan(0);
+  });
+
+  it('source_id เคย record ไว้ใน ToolLog → ไม่แสดงป้าย "อ้างอิงไม่พบ"', () => {
+    const toolLog = createToolLog();
+    // fixture จริงอ้าง budget_line 2 แถว — ต้อง record ครบทุกตัว ไม่งั้นตัวที่เหลือก็ควรขึ้นป้าย (ถูกต้องแล้ว)
+    for (const line of realAircondProposal.boq) {
+      for (const citation of line.citations) {
+        if (citation.kind === 'budget_line') toolLog.recordSourceId(citation.source_id);
+      }
+    }
+    useToolLogStore.getState().attach(toolLog, createInMemoryIllustrationSink());
+    useProposalStore.getState().pushVersion(realAircondProposal, [], 'ai');
+    render(<Harness />);
+
+    const desktop = screen.getByTestId('boq-table-desktop');
+    expect(within(desktop).queryByText(new RegExp(t('proposal.citationUnresolved')))).not.toBeInTheDocument();
+  });
+});
+
+describe('S10 (po-review ชุด B, US-4.3): "ไม่เอาราคานี้" ของ web citation', () => {
+  it('กด "ไม่เอาราคานี้" → เรียก sessionChatController.sendMessage + toast ยืนยันด้วยชื่อโดเมน', async () => {
+    const user = userEvent.setup();
+    useToolLogStore.getState().attach(createToolLog(), createInMemoryIllustrationSink());
+    useProposalStore.getState().pushVersion(richProposalFixture, [], 'ai');
+    render(<Harness />);
+
+    const desktop = screen.getByTestId('boq-table-desktop');
+    await user.click(within(desktop).getByRole('button', { name: t('citation.drawerTitle') }));
+
+    await user.click(await screen.findByRole('button', { name: t('citation.web.reject') }));
+
+    expect(sessionChatController.sendMessage).toHaveBeenCalledWith(
+      t('citation.web.rejectRequest', { url: 'https://shopee.co.th/เหล็กเส้น-DB12-SD40' }),
+    );
+    expect(await screen.findByText(t('toast.citationRejected', { domain: 'shopee.co.th' }))).toBeInTheDocument();
   });
 });

@@ -3,8 +3,8 @@ import { usePrefersReducedMotion } from '@/components/motion/usePrefersReducedMo
 import { Button, Spinner } from '@/components/ui';
 import { t } from '@/i18n';
 import type { ToolActivity } from '@/stores/chatStore';
-import { renderToolTemplate } from './toolCopy';
-import { isKnownToolName, RUNNING_KEY } from './toolNames';
+import { renderToolTemplate, renderToolTemplateIfComplete } from './toolCopy';
+import { isKnownToolName, RUNNING_KEY, STATUS_KEY } from './toolNames';
 
 export interface ToolActivityCardProps {
   activity: ToolActivity;
@@ -12,18 +12,48 @@ export interface ToolActivityCardProps {
   onViewResults?: (() => void) | undefined;
 }
 
-function messageFor(activity: ToolActivity): string {
-  const { name, status, inputSummary } = activity;
+/** T-410 M4 (po-review ชุด B, US-2.2): `activity.summary` แบบมีโครงสร้าง (ชุด A) → map เข้า
+ * `chat.tool.<tool>.<status>` เป็นภาษาไทยล้วน (ไม่มีชื่อ tool ภาษาอังกฤษปน) เมื่อ placeholder ของ key
+ * นั้นมีค่าจริงครบ (เท่าที่ `ToolResultSummary` มี: `count`/`query`) — ไม่ครบ (เช่น key ต้องการ `{from}`/
+ * `{item}` ที่ยังไม่มีใน `ToolResultSummary` ปัจจุบัน) → คืน `null` ให้ผู้เรียก fallback ไปใช้ `inputSummary`
+ * เดิม (ai/agent.ts เตรียมมาให้แล้ว ซึ่งบาง tool มีค่าจริงครบกว่า) */
+function messageFromStructuredSummary(activity: ToolActivity): string | null {
+  const { name, summary } = activity;
+  if (!summary || !isKnownToolName(name) || name === 'web_search') {
+    return null;
+  }
+  const key = STATUS_KEY[name][summary.status];
+  if (!key) {
+    return null;
+  }
+  const params: Record<string, string | number> = {};
+  if (summary.count !== undefined) {
+    params['count'] = summary.count;
+  }
+  if (summary.query !== undefined) {
+    params['query'] = summary.query;
+  }
+  return renderToolTemplateIfComplete(key, params);
+}
 
-  // T-307: web_search ต้องแสดง query ทุกครั้ง — `inputSummary` ของ web_search คือ query ดิบ (ดู
-  // `ai/session/chatController.ts#handleAgentEvent` case 'server_tool') ไม่ใช่ประโยคสำเร็จรูปแบบ tool อื่น
+function messageFor(activity: ToolActivity): string {
+  const { name, status, inputSummary, summary } = activity;
+
+  // T-307: web_search ต้องแสดง query ทุกครั้ง (ไม่ว่าจะมี `summary` แบบมีโครงสร้างหรือไม่) —
+  // `inputSummary` ของ web_search คือ query ดิบ (ดู `ai/session/chatController.ts#handleAgentEvent`
+  // case 'server_tool') ไม่ใช่ประโยคสำเร็จรูปแบบ tool อื่น
   if (name === 'web_search') {
-    return renderToolTemplate('chat.tool.web_search.running', { query: inputSummary ?? '' });
+    return renderToolTemplate('chat.tool.web_search.running', { query: inputSummary ?? summary?.query ?? '' });
   }
 
   if (status === 'running') {
     const key = isKnownToolName(name) ? RUNNING_KEY[name] : undefined;
     return key ? renderToolTemplate(key) : t('chat.thinking');
+  }
+
+  const structured = messageFromStructuredSummary(activity);
+  if (structured !== null) {
+    return structured;
   }
 
   // done/error: `ai/agent.ts#summarizeToolResult` เตรียมประโยคไทยพร้อมใช้มาให้แล้วใน `inputSummary`
@@ -82,7 +112,12 @@ export function ToolActivityCard({ activity, onViewResults }: ToolActivityCardPr
   const reducedMotion = usePrefersReducedMotion();
 
   return (
-    <div className="flex flex-col gap-1 rounded-sm border border-line bg-surface-2 px-3 py-2 text-sm">
+    <div
+      className="flex flex-col gap-1 rounded-sm border border-line bg-surface-2 px-3 py-2 text-sm"
+      data-testid="tool-activity"
+      data-tool={activity.name}
+      data-status={activity.status}
+    >
       <div className="flex items-center gap-2">
         <span className="flex h-4 w-4 shrink-0 items-center justify-center">
           <StatusIcon status={activity.status} />

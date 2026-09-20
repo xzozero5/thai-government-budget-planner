@@ -15,9 +15,18 @@
  *
  * ห้าม import React/DOM API อื่นนอกจาก `window`/`AbortController`/`setTimeout` มาตรฐาน (module
  * boundary — docs/04-ARCHITECTURE.md §3)
+ *
+ * งานลดขนาด entry chunk (20 ก.ย. 2569, งานเร่ง): เดิมไฟล์นี้ `import Anthropic from '@anthropic-ai/sdk'`
+ * + `createClient` แบบ static แล้วสร้าง client เองใน `setKey(apiKey)` — เพราะไฟล์นี้ถูก import แบบ static
+ * จาก `stores/sessionStore.ts` (ใช้ตั้งแต่ KeyGate route "/") ทำให้ `@anthropic-ai/sdk` ทั้งก้อน (รวม
+ * resource namespace ของ beta ที่ไม่เกี่ยวกับแอปนี้เลย) ติดเข้า entry bundle เสมอแม้ผู้ใช้ยังไม่กด "ทดสอบ
+ * และเริ่ม" สักครั้ง → เปลี่ยนสัญญา: **ผู้เรียกเป็นคนสร้าง client เอง** (ผ่าน `await import('@/ai/client')`
+ * ที่จุดเดียวคือ `sessionStore.submitKey`) แล้วส่ง instance ที่สร้างแล้วเข้ามาให้ `setKey(client)` เก็บไว้
+ * เท่านั้น — โมดูลนี้ยังคงเป็นที่เดียวที่ถือ reference ต่อจากนั้น (module scope, N2/H1 ไม่เปลี่ยน) แค่ไม่ใช่
+ * คนสร้างเองอีกต่อไป — import ของ `Anthropic` ที่เหลือเป็น `import type` ล้วน ๆ (ลบทิ้งตอน compile ไม่มี
+ * โค้ด SDK จริงติดมาจากไฟล์นี้)
  */
-import Anthropic from '@anthropic-ai/sdk';
-import { createClient } from '../client';
+import type Anthropic from '@anthropic-ai/sdk';
 
 export type ClearKeyReason = 'manual' | 'idle' | 'pagehide' | 'budget_exceeded';
 
@@ -46,11 +55,12 @@ function scheduleIdleClear(): void {
   }, IDLE_TIMEOUT_MS);
 }
 
-/** สร้าง client ใหม่จาก `apiKey` แล้วเก็บไว้ในโมดูลนี้ — คืน instance ให้ผู้เรียกใช้ต่อทันที (เช่น
- * `verifyKey(client, model)`) แต่ผู้เรียกห้ามเก็บ reference นี้ไว้เอง (ใช้แล้วทิ้ง อ่านซ้ำผ่าน
- * `getClient()` เสมอ) */
-export function setKey(apiKey: string): Anthropic {
-  client = createClient(apiKey);
+/** เก็บ `Anthropic` instance ที่ผู้เรียกสร้างมาแล้ว (ผ่าน `createClient` ของ `ai/client.ts` — ปกติเรียก
+ * ผ่าน dynamic `import('@/ai/client')` ใน `sessionStore.submitKey` เพื่อไม่ให้ SDK ติด entry bundle)
+ * ไว้ในโมดูลนี้ — คืน instance เดิมกลับให้ผู้เรียกใช้ต่อทันที (เช่น `verifyKey(client, model)`) แต่ผู้เรียก
+ * ห้ามเก็บ reference นี้ไว้เอง (ใช้แล้วทิ้ง อ่านซ้ำผ่าน `getClient()` เสมอ) */
+export function setKey(newClient: Anthropic): Anthropic {
+  client = newClient;
   scheduleIdleClear();
   return client;
 }

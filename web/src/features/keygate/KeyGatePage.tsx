@@ -57,6 +57,38 @@ function EyeIcon({ open }: { open: boolean }): ReactElement {
   );
 }
 
+/**
+ * งานลดขนาด entry chunk (20 ก.ย. 2569, งานเร่ง): prefetch chunk ของ `@anthropic-ai/sdk` (ผ่าน
+ * `ai/client.ts`) อย่างสุภาพตอนหน้า KeyGate ว่าง (idle) เพื่อให้กดปุ่ม "ทดสอบและเริ่ม" แล้วไม่ต้องรอโหลด
+ * ไฟล์ JS เพิ่ม — เป็นแค่การโหลดไฟล์ static ของเว็บเราเอง (same-origin) ไม่มีการยิง network ออกไปนอก
+ * origin ใด ๆ (N5 ไม่กระทบ, ไม่ใช่การเรียก API จริง) ใช้ `requestIdleCallback` ถ้ามี ไม่งั้น fallback เป็น
+ * `setTimeout` — เงียบ ๆ ไม่บล็อก interaction ใด ๆ และไม่ throw ถ้า prefetch ล้มเหลว (เช่น offline)
+ */
+function prefetchAiClientChunk(): () => void {
+  let cancelled = false;
+  const run = (): void => {
+    if (cancelled) {
+      return;
+    }
+    void import('@/ai/client').catch(() => {
+      // เงียบ ๆ — ถ้าล้มเหลว `submitKey` จะ import ใหม่ตอนผู้ใช้กดจริงอยู่ดี
+    });
+  };
+
+  if (typeof window.requestIdleCallback === 'function') {
+    const handle = window.requestIdleCallback(run);
+    return () => {
+      cancelled = true;
+      window.cancelIdleCallback(handle);
+    };
+  }
+  const timer = window.setTimeout(run, 1500);
+  return () => {
+    cancelled = true;
+    window.clearTimeout(timer);
+  };
+}
+
 export function KeyGatePage(): ReactElement {
   const navigate = useNavigate();
   const hasKey = useSessionStore((s) => s.hasKey);
@@ -86,6 +118,9 @@ export function KeyGatePage(): ReactElement {
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  // prefetch chunk ของ SDK ตอนหน้าว่าง (ดู comment ของ `prefetchAiClientChunk` ด้านบน)
+  useEffect(() => prefetchAiClientChunk(), []);
 
   const modelCapability = getModelCapability(model);
   const modelOptions = MODEL_LIST.map((m) => ({ value: m.id, label: m.labelTh }));

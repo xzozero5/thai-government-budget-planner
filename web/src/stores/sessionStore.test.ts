@@ -40,6 +40,14 @@ describe('sessionStore', () => {
     expect(state.budgetWarningAt).toBeNull();
   });
 
+  it('ค่าเริ่มต้นเพดานงบใน sessionStore ต้องตรงกับ DEFAULT_MAX_COST_USD_PER_TURN/SESSION ของ ai/agent.ts เสมอ (กันค่าไหลออกจากกัน — sessionStore.ts จงใจไม่ import ai/agent แบบ static เพื่อลดขนาด entry chunk)', async () => {
+    const { useSessionStore } = await import('./sessionStore');
+    const { DEFAULT_MAX_COST_USD_PER_TURN, DEFAULT_MAX_COST_USD_PER_SESSION } = await import('@/ai/agent');
+    const state = useSessionStore.getState();
+    expect(state.maxCostUsdPerTurn).toBe(DEFAULT_MAX_COST_USD_PER_TURN);
+    expect(state.maxCostUsdPerSession).toBe(DEFAULT_MAX_COST_USD_PER_SESSION);
+  });
+
   it('submitKey สำเร็จ → hasKey=true, keyStatus=valid, ไม่มี error', async () => {
     verifyKeyMock.mockResolvedValue({ ok: true });
     const { useSessionStore } = await import('./sessionStore');

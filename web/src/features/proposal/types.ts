@@ -58,6 +58,9 @@ export interface ProposalPaneProps {
    * ของ `ToolLog` แล้ว (T-405/406 ต่อสาย) — คืน `undefined` = ใช้ label ย่อเดิม (`citationChipLabel`)
    * ไม่ส่ง prop นี้มาเลย = พฤติกรรมเดิมทุกกรณี (ไม่ทำลาย test เดิมของ T-406) */
   resolveCitationLabel?: (citation: Citation) => string | undefined;
+  /** M2 (po-review ชุด B): citation นี้ resolve กับ ToolLog/ข้อมูลปัจจุบันไม่ได้ → badge "อ้างอิงไม่พบ"
+   * ในตาราง BOQ — ไม่ส่ง prop นี้มาเลย (เช่นหน้า `/load` ที่ไม่มี ToolLog) = ไม่แสดง badge นี้เลยทุกกรณี */
+  isCitationUnresolved?: (citation: Citation) => boolean;
   /** ช่องสำหรับ component จาก `components/viz/**` (T-412, กำลังทำขนาน) — ยังไม่มีให้ = ไม่แสดงส่วนนี้ */
   renderStatCards?: (cards: StatCard[]) => ReactNode;
   renderTrend?: (trendRef: TrendRef) => ReactNode;

@@ -4,7 +4,7 @@ import type { BoqLine, Citation } from '@/ai/tools/proposal';
 import { sessionChatController } from '@/ai/session/chatController';
 import { Drawer, useToast } from '@/components/ui';
 import type { Dataset } from '@/data';
-import { CitationDrawer, datasetTypeLabel, getCitationChipLabel } from '@/features/citations';
+import { CitationDrawer, datasetTypeLabel, getCitationChipLabel, getWebDomain } from '@/features/citations';
 import { ExportDialog, saveSessionFile } from '@/features/export';
 import { ProposalPane } from '@/features/proposal/ProposalPane';
 import type { LineEditPatch, ProposalVersionInfo } from '@/features/proposal/types';
@@ -57,6 +57,10 @@ export function ProposalPaneContainer({ onOpenCitation }: ProposalPaneContainerP
   useToolLogStore((s) => s.version);
   const { push } = useToast();
   const [exportOpen, setExportOpen] = useState(false);
+  // S9 (po-review ชุด B, US-7.1): "ซ่อนภาพ" เป็น state ของ container นี้เท่านั้น (ไม่ persist ไม่มีผลต่อ
+  // proposal เอง) — ต่อ session ใหม่/เปลี่ยนเวอร์ชันแล้ว id เดิมอาจไม่มีอยู่แล้วก็ไม่เป็นไร (Set ที่ไม่มี
+  // id นั้นแค่ไม่ตรงเงื่อนไข ไม่ throw)
+  const [hiddenIllustrationIds, setHiddenIllustrationIds] = useState<Set<string>>(new Set());
 
   const currentVersion = currentIndex >= 0 ? versions[currentIndex] : undefined;
   const proposal = currentVersion?.proposal ?? null;
@@ -101,6 +105,25 @@ export function ProposalPaneContainer({ onOpenCitation }: ProposalPaneContainerP
     void sessionChatController.requestReview(lineId);
   }
 
+  // M2 (po-review ชุด B): "อ้างอิงไม่พบ" — ตรวจกับ `ToolLog` ของบทสนทนานี้ (API เดียวกับที่
+  // `ai/tools/proposal.ts#isCitationResolved` ใช้ตัดสิน) ไม่มี ToolLog เลย (เช่นยังไม่เคยเริ่มคุย) = ไม่มี
+  // ข้อมูลพอจะตัดสิน ปล่อยผ่านทุก citation (ไม่ตีตราว่า resolve ไม่ได้ทั้งที่ยังไม่รู้)
+  function isCitationUnresolved(citation: Citation): boolean {
+    if (!toolLog) {
+      return false;
+    }
+    switch (citation.kind) {
+      case 'budget_line':
+        return !toolLog.hasSourceId(citation.source_id);
+      case 'document':
+        return !toolLog.hasDocId(citation.doc_id);
+      case 'econ':
+        return !toolLog.hasEconValue(citation.indicator, citation.year_be);
+      case 'web':
+        return !toolLog.hasWebUrl(citation.url);
+    }
+  }
+
   function resolveCitationLabel(citation: Citation): string | undefined {
     if (citation.kind !== 'budget_line' || !toolLog?.getSourceFingerprint) {
       return undefined;
@@ -117,6 +140,27 @@ export function ProposalPaneContainer({ onOpenCitation }: ProposalPaneContainerP
         ministry: fingerprint.ministry,
       },
     });
+  }
+
+  // S9: "ซ่อนภาพ"/"แสดงภาพ" สลับ state ของ container — "สร้างภาพใหม่" ส่งข้อความขอภาพใหม่ไปให้ผู้ช่วยจริง
+  // ผ่าน `sessionChatController.sendMessage` (ข้อความจาก copy `proposal.illustration.regenerateRequest`)
+  function handleHideIllustration(illustrationId: string): void {
+    setHiddenIllustrationIds((prev) => new Set(prev).add(illustrationId));
+  }
+
+  function handleShowIllustration(illustrationId: string): void {
+    setHiddenIllustrationIds((prev) => {
+      if (!prev.has(illustrationId)) {
+        return prev;
+      }
+      const next = new Set(prev);
+      next.delete(illustrationId);
+      return next;
+    });
+  }
+
+  function handleRegenerateIllustration(title: string): void {
+    void sessionChatController.sendMessage(t('proposal.illustration.regenerateRequest', { title }));
   }
 
   async function handleSave(): Promise<void> {
@@ -148,6 +192,7 @@ export function ProposalPaneContainer({ onOpenCitation }: ProposalPaneContainerP
         }}
         isAiRunning={isAiRunning}
         resolveCitationLabel={resolveCitationLabel}
+        isCitationUnresolved={isCitationUnresolved}
         renderStatCards={(cards) => (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {cards.map((card, index) => (
@@ -160,7 +205,26 @@ export function ProposalPaneContainer({ onOpenCitation }: ProposalPaneContainerP
         )}
         renderTrend={(trendRef) => <BoqTrendCell trendRef={trendRef} />}
         renderIllustration={(illustrationRef) => (
-          <ProposalIllustration illustrationRef={illustrationRef} illustrationSink={illustrationSink} />
+          <ProposalIllustration
+            illustrationRef={illustrationRef}
+            illustrationSink={illustrationSink}
+            hidden={hiddenIllustrationIds.has(illustrationRef.illustration_id)}
+            onHide={() => {
+              handleHideIllustration(illustrationRef.illustration_id);
+            }}
+            onShow={() => {
+              handleShowIllustration(illustrationRef.illustration_id);
+            }}
+            // S9: ระหว่าง AI กำลังรันเทิร์นอยู่ ไม่ส่ง `onRegenerate` มาเลย (แทนการ disable ปุ่มเอง เพราะ
+            // `IllustrationFrame` ไม่มี prop แยกสำหรับปิดปุ่มโดยไม่ซ่อนมันไปด้วย)
+            {...(!isAiRunning
+              ? {
+                  onRegenerate: () => {
+                    handleRegenerateIllustration(illustrationRef.title);
+                  },
+                }
+              : {})}
+          />
         )}
       />
       <ExportDialog
@@ -204,6 +268,18 @@ export function CitationDrawerContainer({ state, onClose }: CitationDrawerContai
   const toolLog = useToolLogStore((s) => s.toolLog);
   useToolLogStore((s) => s.version);
   const loaders = createCitationDrawerLoaders(toolLog);
+  const { push } = useToast();
+
+  // S10 (po-review ชุด B, US-4.3): "ไม่เอาราคานี้" ส่งข้อความขอผู้ช่วยเลิกใช้ราคานั้นจริง (ข้อความจาก copy
+  // `citation.web.rejectRequest`) + toast ยืนยันด้วยชื่อโดเมน — ไม่แก้ proposal/ToolLog เองที่นี่ (ให้ผู้ช่วย
+  // เป็นคนแก้ในรอบถัดไปตามปกติของ flow นี้ทั้งระบบ)
+  function handleRejectWeb(citation: Extract<Citation, { kind: 'web' }>): void {
+    void sessionChatController.sendMessage(t('citation.web.rejectRequest', { url: citation.url }));
+    push({
+      title: t('toast.citationRejected', { domain: getWebDomain(citation.url) ?? citation.url }),
+      variant: 'info',
+    });
+  }
 
   if (state?.kind === 'citation') {
     return (
@@ -212,6 +288,7 @@ export function CitationDrawerContainer({ state, onClose }: CitationDrawerContai
         onClose={onClose}
         citation={state.citation}
         loaders={loaders}
+        onRejectWeb={handleRejectWeb}
         {...(state.contextLine ? { contextLine: state.contextLine } : {})}
       />
     );

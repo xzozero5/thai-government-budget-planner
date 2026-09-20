@@ -70,4 +70,42 @@ describe('StatCard', () => {
       expect(screen.getAllByText('900').length).toBeGreaterThan(0);
     });
   });
+
+  describe('S8 (US-8.2, po-review ชุด B): deltaPct / sourceLabel / verified', () => {
+    it('deltaPct บวก → แสดง +% พร้อมสี "เพิ่มขึ้น"', () => {
+      render(<StatCard label="ดัชนีราคาเหล็ก" value={120} deltaPct={12.5} />);
+      expect(screen.getByText('+12.5%')).toBeInTheDocument();
+    });
+
+    it('deltaPct ลบ → แสดง -%', () => {
+      render(<StatCard label="ดัชนีราคาเหล็ก" value={100} deltaPct={-8} />);
+      expect(screen.getByText('-8.0%')).toBeInTheDocument();
+    });
+
+    it('ไม่ส่ง deltaPct มา → ไม่แสดง Δ%', () => {
+      render(<StatCard label="ดัชนีราคาเหล็ก" value={100} />);
+      expect(screen.queryByText(/%$/)).not.toBeInTheDocument();
+    });
+
+    it('sourceLabel → แสดงข้อความแหล่งที่มา', () => {
+      render(<StatCard label="CPI" value={100} sourceLabel="ที่มา สำนักงานสถิติแห่งชาติ" />);
+      expect(screen.getByText('ที่มา สำนักงานสถิติแห่งชาติ')).toBeInTheDocument();
+    });
+
+    it('verified=true → แสดงป้าย "ตรวจสอบแล้ว"', () => {
+      render(<StatCard label="CPI" value={100} verified />);
+      expect(screen.getByText('ตรวจสอบแล้ว')).toBeInTheDocument();
+    });
+
+    it('verified=false → แสดงป้าย "ยังไม่ตรวจสอบ"', () => {
+      render(<StatCard label="CPI" value={100} verified={false} />);
+      expect(screen.getByText('ยังไม่ตรวจสอบ')).toBeInTheDocument();
+    });
+
+    it('ไม่ส่ง verified มา → ไม่แสดง badge verified/unverified เลย', () => {
+      render(<StatCard label="CPI" value={100} />);
+      expect(screen.queryByText('ตรวจสอบแล้ว')).not.toBeInTheDocument();
+      expect(screen.queryByText('ยังไม่ตรวจสอบ')).not.toBeInTheDocument();
+    });
+  });
 });

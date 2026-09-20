@@ -10,13 +10,23 @@ import { useSessionStore } from '@/stores/sessionStore';
 // (ดู comment ใน dataHarness/DataHarnessRoute.tsx) — **ต้องคง import + `{dataHarnessRoute}` นี้ไว้ใน
 // <Routes> เหมือนเดิมทุกประการ** เพราะ e2e/eval ของ data harness พึ่งพา route นี้อยู่
 import { dataHarnessRoute } from '@/app/dataHarness/DataHarnessRoute';
-import { LoadPagePlaceholder } from './LoadPagePlaceholder';
 import { NotFoundPage } from './NotFoundPage';
 
 // T-405: หน้า workspace (chat/proposal/citation/ai) หนักที่สุดของแอป — lazy-load เพื่อไม่ให้ไป inline
 // อยู่ใน initial bundle ของ KeyGate/About (initial load ต้อง < 3 MB gz ตาม CLAUDE.md §3)
 const LazyWorkspaceRoute = lazy(() =>
   import('@/features/workspace').then((m) => ({ default: m.WorkspaceRoute })),
+);
+
+// งานลดขนาด entry chunk (20 ก.ย. 2569, งานเร่ง): `LoadPagePlaceholder` เดิม import `LoadPage` จาก
+// `@/features/export` แบบ static — `LoadPage` ลาก `ProposalPane`/`CitationDrawer`/`ExportDialog` (รวม
+// DOMPurify สำหรับ sanitize SVG ภาพประกอบ) เข้ามาด้วย ทำให้ route "/load" ที่ผู้ใช้ส่วนน้อยเท่านั้นที่กด
+// (เปิดไฟล์ .tgbp.json เก่า) ติดอยู่ใน entry bundle ที่ทุกคนต้องโหลดตั้งแต่หน้าแรกเสมอ — เปลี่ยนเป็น
+// `React.lazy` เหมือน `LazyWorkspaceRoute` ข้างบน (พฤติกรรม/ข้อความหน้า `/load` เดิมทุกประการ แค่โหลดช้า
+// ลง 1 request); คงชื่อไฟล์ `LoadPagePlaceholder.tsx`/export name เดิมไว้ (ตามคอมเมนต์ในไฟล์นั้น) — แค่
+// import แบบ lazy แทน static
+const LazyLoadPage = lazy(() =>
+  import('./LoadPagePlaceholder').then((m) => ({ default: m.LoadPagePlaceholder })),
 );
 
 /** T-405: สลับธีม light/dark เก็บใน `sessionStore` (ห้าม localStorage — N2/09 §1) แล้วสะท้อนเป็น
@@ -81,7 +91,14 @@ export function App(): ReactElement {
                 </Suspense>
               }
             />
-            <Route path="/load" element={<LoadPagePlaceholder />} />
+            <Route
+              path="/load"
+              element={
+                <Suspense fallback={<p className="p-6 text-fg-muted">{t('common.loading')}</p>}>
+                  <LazyLoadPage />
+                </Suspense>
+              }
+            />
             <Route path="/about" element={<AboutPage />} />
             {dataHarnessRoute}
             <Route path="*" element={<NotFoundPage />} />

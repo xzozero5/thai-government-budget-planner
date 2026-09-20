@@ -1,14 +1,11 @@
 /**
- * T-406 — สมมติฐาน + impact badge (06 §4.3: "สมมติฐาน (impact badge)")
- *
- * [MISSING COPY KEY] `docs/ui/copy.th.json` ไม่มี key สำหรับป้าย impact ของสมมติฐาน
- * (`proposal.assumptions.impactHigh/Medium/Low`) — ใช้ข้อความใกล้เคียงคงที่แทนชั่วคราวตามที่ brief
- * อนุญาต ("ใส่ข้อความใกล้เคียง แล้วระบุ key ที่ขาดในรายงาน")
+ * T-406/T-410 (po-review ชุด B) — สมมติฐาน + impact badge (06 §4.3: "สมมติฐาน (impact badge)")
+ * ป้าย impact ใช้ `proposal.assumptions.impactHigh/Medium/Low` (เพิ่มใน copy.th.json ชุด A แล้ว)
  */
 import type { ReactElement } from 'react';
 import { Badge } from '@/components/ui';
 import type { BadgeVariant } from '@/components/ui';
-import { t } from '@/i18n';
+import { t, type CopyKey } from '@/i18n';
 import type { Assumption } from '../types';
 
 const IMPACT_VARIANT: Record<Assumption['impact'], BadgeVariant> = {
@@ -17,10 +14,10 @@ const IMPACT_VARIANT: Record<Assumption['impact'], BadgeVariant> = {
   low: 'neutral',
 };
 
-const IMPACT_FALLBACK_LABEL: Record<Assumption['impact'], string> = {
-  high: 'ผลกระทบสูง',
-  medium: 'ผลกระทบปานกลาง',
-  low: 'ผลกระทบต่ำ',
+const IMPACT_LABEL_KEY: Record<Assumption['impact'], CopyKey> = {
+  high: 'proposal.assumptions.impactHigh',
+  medium: 'proposal.assumptions.impactMedium',
+  low: 'proposal.assumptions.impactLow',
 };
 
 export interface AssumptionsSectionProps {
@@ -39,7 +36,7 @@ export function AssumptionsSection({ assumptions }: AssumptionsSectionProps): Re
           className="flex items-start gap-2 text-sm text-fg"
         >
           <Badge variant={IMPACT_VARIANT[assumption.impact]}>
-            {IMPACT_FALLBACK_LABEL[assumption.impact]}
+            {t(IMPACT_LABEL_KEY[assumption.impact])}
           </Badge>
           <span>{assumption.text}</span>
         </li>

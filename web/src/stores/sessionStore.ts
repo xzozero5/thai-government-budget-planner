@@ -9,8 +9,7 @@
  * ไม่มี `persist`/`devtools` middleware ใด ๆ (09 §1) — ทุกอย่างหายเมื่อปิด/รีเฟรชแท็บ
  */
 import { create } from 'zustand';
-import { verifyKey, type VerifyKeyErrorKind, type VerifyKeyResult } from '@/ai/client';
-import { DEFAULT_MAX_COST_USD_PER_SESSION, DEFAULT_MAX_COST_USD_PER_TURN } from '@/ai/agent';
+import type { VerifyKeyErrorKind, VerifyKeyResult } from '@/ai/client';
 import { DEFAULT_EFFORT, DEFAULT_MODEL_ID, type EffortLevel, type ModelId } from '@/ai/models';
 import type { ChatMode } from '@/ai/systemPrompt';
 import * as keyHolder from '@/ai/session/keyHolder';
@@ -18,6 +17,18 @@ import { redactSecrets } from '@/ai/session/redactSecrets';
 
 export type KeyStatus = 'idle' | 'verifying' | 'valid' | 'error';
 export type ThemePreference = 'light' | 'dark';
+
+/**
+ * งานลดขนาด entry chunk (20 ก.ย. 2569, งานเร่ง): เดิม import `DEFAULT_MAX_COST_USD_PER_TURN`/
+ * `DEFAULT_MAX_COST_USD_PER_SESSION` แบบ static จาก `@/ai/agent` — ไฟล์นั้นลาก `ai/tools/**` (ทุก tool +
+ * zod schema, รวม DuckDB/MiniSearch repo ที่ tools อ้างถึง type) เข้ามาด้วยทั้งที่ store นี้ใช้แค่ตัวเลข
+ * 2 ตัว และ store นี้ต้องพร้อมใช้ตั้งแต่ KeyGate (route "/") ก่อนผู้ใช้กด "ทดสอบและเริ่ม" ด้วยซ้ำ — คัดลอก
+ * ค่ามาเป็น local constant แทน (ห้าม import `@/ai/agent` แบบ static จากไฟล์นี้อีก) ค่าต้องตรงกับ
+ * `ai/agent.ts` เสมอ — มี `sessionStore.test.ts` (`dynamic import('@/ai/agent')` เทียบค่า, test-only จึงไม่
+ * กระทบ production bundle) กันไม่ให้ค่าสองที่ไหลออกจากกัน
+ */
+const DEFAULT_MAX_COST_USD_PER_TURN = 0.5;
+const DEFAULT_MAX_COST_USD_PER_SESSION = 3.0;
 
 /** ค่าเริ่มต้นตามระบบของผู้ใช้ (06 §2: `prefers-color-scheme` + toggle) — ไม่อ่าน/เขียน storage ใด ๆ (N2) */
 function initialTheme(): ThemePreference {
@@ -94,7 +105,13 @@ export const useSessionStore = create<SessionStoreState>((set, get) => ({
 
   async submitKey(apiKey) {
     set({ keyStatus: 'verifying', keyErrorKind: null, keyErrorMessage: null });
-    const client = keyHolder.setKey(apiKey);
+    // งานลดขนาด entry chunk: โหลด `@anthropic-ai/sdk` (ผ่าน `ai/client.ts`) เฉพาะตอนผู้ใช้กด "ทดสอบและ
+    // เริ่ม" จริง ๆ — `client` ที่ได้ถูกส่งเข้า `keyHolder.setKey` ทันทีให้เก็บใน module scope ของ
+    // keyHolder เท่านั้น (N2/H1 เดิม) ตัวแปรนี้เป็นแค่ reference ชั่วคราวสำหรับเรียก `verifyKey` ต่อในรอบ
+    // เดียวกัน ไม่ถูกเก็บไว้ที่อื่น
+    const { createClient, verifyKey } = await import('@/ai/client');
+    const client = createClient(apiKey);
+    keyHolder.setKey(client);
     const result = await verifyKey(client, get().model);
     if (result.ok) {
       set({ hasKey: true, keyStatus: 'valid', keyErrorKind: null, keyErrorMessage: null });

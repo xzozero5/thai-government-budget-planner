@@ -69,7 +69,7 @@ test.describe('T-409 error paths', () => {
     const composer = page.getByLabel('ช่องพิมพ์ข้อความ');
     await composer.fill('ทดสอบโครงการหนึ่ง');
     await page.getByRole('button', { name: 'ส่ง' }).click();
-    await expect(chatLog(page).getByText(/search_catalog: /)).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('[data-testid="tool-activity"][data-tool="search_catalog"][data-status="done"]').first()).toBeVisible({ timeout: 20_000 });
 
     await expect(chatLog(page).getByText('เชื่อมต่อ api.anthropic.com ไม่สำเร็จ')).toBeVisible({ timeout: 20_000 });
 
@@ -126,7 +126,7 @@ test.describe('T-409 error paths', () => {
     const composer = page.getByLabel('ช่องพิมพ์ข้อความ');
     await composer.fill('ทดสอบยกเลิกกลางคัน');
     await page.getByRole('button', { name: 'ส่ง' }).click();
-    await expect(chatLog(page).getByText(/search_catalog: /)).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('[data-testid="tool-activity"][data-tool="search_catalog"][data-status="done"]').first()).toBeVisible({ timeout: 20_000 });
 
     await page.getByRole('button', { name: 'หยุด' }).click();
     await expect(chatLog(page).getByText('หยุดกลางคันแล้ว')).toBeVisible({ timeout: 10_000 });

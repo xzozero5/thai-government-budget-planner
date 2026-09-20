@@ -12,9 +12,15 @@ import type { Plugin } from 'vite';
  * T-307 M4: เพิ่ม `object-src 'none'` (ไม่มี plugin/embed), `base-uri 'self'` (กัน `<base>` ที่ถูกฉีดเปลี่ยน
  * ปลายทางของ URL สัมพัทธ์ทั้งหน้า — ทั้งสองตัวไม่ fallback ไป default-src), `form-action 'none'` (แอปไม่มี
  * form submit จริง) — ทั้งสามใช้ได้ใน <meta>
+ *
+ * B-001 (T-409): `connect-src` อนุญาต `data:` — yoga-layout ใน `@react-pdf/renderer` โหลด wasm ของตัวเองด้วย
+ * `fetch('data:application/octet-stream;base64,…')` ตอน export PDF; เดิมถูกบล็อกแล้ว fallback ได้ แต่ทำให้มี CSP
+ * violation ทุกครั้งที่ export (ขัดเกณฑ์ C3 "ไม่มี violation") `data:` URI เป็นข้อมูลฝังในตัว URL เอง ไม่มีปลายทาง
+ * เครือข่าย จึงใช้ส่งข้อมูลออกนอกเครื่องไม่ได้ (N5 ยังคงเดิม: ปลายทางเครือข่ายภายนอกมีแค่ api.anthropic.com)
+ * **ไม่เปิด `'unsafe-eval'`**: ส่วน `eval` ของ B-001 มาจาก probe ของ Zod → ปิดด้วย `lib/zodConfig.ts` (jitless) แทน
  */
 export const CSP_CONTENT =
-  "default-src 'self'; connect-src 'self' https://api.anthropic.com; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'";
+  "default-src 'self'; connect-src 'self' data: https://api.anthropic.com; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'";
 
 export const CSP_META_TAG = `<meta http-equiv="Content-Security-Policy" content="${CSP_CONTENT}" />`;
 

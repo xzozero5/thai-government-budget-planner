@@ -159,9 +159,9 @@ test.describe('T-409 happy path', () => {
     await page.getByRole('button', { name: 'ส่ง' }).click();
 
     // ----- 3) tool activity cards ตามลำดับ -----
-    await expect(page.getByText(/search_catalog: /)).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText(/query_budget_lines: /)).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText(/emit_proposal: /)).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-testid="tool-activity"][data-tool="search_catalog"][data-status="done"]').first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('[data-testid="tool-activity"][data-tool="query_budget_lines"][data-status="done"]').first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('[data-testid="tool-activity"][data-tool="emit_proposal"][data-status="done"]').first()).toBeVisible({ timeout: 15_000 });
 
     // ----- 4) proposal pane แสดง BOQ + ยอดรวม -----
     await expect(page.getByRole('heading', { name: 'ข้อเสนอทดสอบอัตโนมัติ (e2e T-409)' })).toBeVisible({
@@ -270,19 +270,9 @@ test.describe('T-409 happy path', () => {
       expect(call.headers['x-api-key']).toBeTruthy();
     }
 
-    // B-001 (docs/qa/bugs.md, severity: high) — พบจริงระหว่างเขียนเทสต์นี้: DuckDB-WASM (dependency
-    // `@duckdb/duckdb-wasm`, ไม่ใช่โค้ดใน `src/`) ยิง `script-src: eval` และพยายาม `fetch()` wasm binary
-    // ผ่าน `data:` URI ซึ่งชน CSP จริงของ production build (`connect-src`/`script-src` ไม่มี `data:`/
-    // plain `eval` — มีแค่ `wasm-unsafe-eval` ตาม 04-ARCHITECTURE.md §D8) ของหน้านี้ — flow ยังทำงานต่อได้
-    // (มีการ fallback ภายในของ dependency เอง) จึงไม่ทำให้ test นี้ fail ทั้งก้อน แต่ต้องรายงานให้
-    // security-reviewer/data-engineer ตรวจ ไม่ assert ว่าต้องว่างสนิทตรงนี้ (จะทำให้ suite แดงทั้งที่ไม่ใช่
-    // สิ่งที่ qa-engineer แก้ได้เอง) — บันทึกจำนวนที่พบไว้เป็นหลักฐานแทน
-    if (audit.cspViolations().length > 0) {
-      // eslint-disable-next-line no-console -- บันทึกหลักฐานลง test log โดยตั้งใจ (ไม่ใช่ debug log ที่หลงเหลือ)
-      console.warn(
-        `[B-001] พบ CSP violation ${String(audit.cspViolations().length)} ครั้งระหว่าง flow เต็ม — ดูรายละเอียดใน docs/qa/bugs.md:`,
-        audit.cspViolations(),
-      );
-    }
+    // B-001 (docs/qa/bugs.md): ต้นตอจริง = (ก) Zod 4 probe `new Function` → แก้แล้วด้วย `lib/zodConfig.ts` (jitless)
+    // (ข) yoga-layout ใน react-pdf `fetch(data:…wasm)` ตอน export → อนุญาต `data:` ใน connect-src แล้ว
+    // (data: URI ส่งข้อมูลออกนอกเครื่องไม่ได้ — ดู vite-plugins/cspMeta.ts) จากนี้ต้องไม่มี violation เลย
+    expect(audit.cspViolations(), JSON.stringify(audit.cspViolations())).toEqual([]);
   });
 });

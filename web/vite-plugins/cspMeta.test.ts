@@ -25,7 +25,7 @@ describe('injectCspMetaHtml', () => {
   });
 
   it('restricts connect-src to self and api.anthropic.com only (N5)', () => {
-    expect(CSP_CONTENT).toContain("connect-src 'self' https://api.anthropic.com");
+    expect(CSP_CONTENT).toContain("connect-src 'self' data: https://api.anthropic.com;");
     // T-307 M4: directive ที่ไม่ fallback ไป default-src ต้องประกาศเอง
     expect(CSP_CONTENT).toContain("object-src 'none'");
     expect(CSP_CONTENT).toContain("base-uri 'self'");

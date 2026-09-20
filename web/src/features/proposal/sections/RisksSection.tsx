@@ -1,14 +1,10 @@
 /**
- * T-406 — ความเสี่ยง + แนวทางลดความเสี่ยง (05 §5 `risks[].mitigation` optional)
- *
- * [MISSING COPY KEY] ไม่มี key สำหรับป้าย "แนวทางลดความเสี่ยง" ใน `docs/ui/copy.th.json`
- * (`proposal.risks.mitigationLabel`) — ใช้ข้อความคงที่ใกล้เคียงแทนชั่วคราว
+ * T-406/T-410 (po-review ชุด B) — ความเสี่ยง + แนวทางลดความเสี่ยง (05 §5 `risks[].mitigation` optional)
+ * ป้าย "แนวทางลดความเสี่ยง" ใช้ `proposal.risks.mitigationLabel` (เพิ่มใน copy.th.json ชุด A แล้ว)
  */
 import type { ReactElement } from 'react';
 import { t } from '@/i18n';
 import type { Risk } from '../types';
-
-const MITIGATION_LABEL_FALLBACK = 'แนวทางลดความเสี่ยง';
 
 export interface RisksSectionProps {
   risks: readonly Risk[];
@@ -25,7 +21,7 @@ export function RisksSection({ risks }: RisksSectionProps): ReactElement {
           <p>{risk.text}</p>
           {risk.mitigation !== undefined && (
             <p className="mt-1 text-fg-muted">
-              <span className="font-medium">{MITIGATION_LABEL_FALLBACK}: </span>
+              <span className="font-medium">{t('proposal.risks.mitigationLabel')}: </span>
               {risk.mitigation}
             </p>
           )}

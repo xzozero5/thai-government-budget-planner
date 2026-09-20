@@ -8,7 +8,7 @@
  * มีไว้เฉพาะ SVG ภาพประกอบผ่าน `renderIllustration` slot ซึ่งเป็นความรับผิดชอบของ component ที่ฉีดเข้ามา)
  */
 import type { ReactElement } from 'react';
-import { Accordion, Button } from '@/components/ui';
+import { Accordion, Button, CopyButton } from '@/components/ui';
 import { t } from '@/i18n';
 import { BoqTable } from './BoqTable';
 import { ProposalEmptyState } from './ProposalEmptyState';
@@ -20,8 +20,10 @@ import { ComparablesSection } from './sections/ComparablesSection';
 import { ListSection } from './sections/ListSection';
 import { RisksSection } from './sections/RisksSection';
 import { ScopeSection } from './sections/ScopeSection';
+import { TotalsSection } from './sections/TotalsSection';
 import { WarningsPanel } from './sections/WarningsPanel';
 import { WebCitationsSection } from './sections/WebCitationsSection';
+import { buildSummaryMarkdown } from './summaryMarkdown';
 import type { ProposalPaneProps } from './types';
 
 export function ProposalPane({
@@ -41,6 +43,7 @@ export function ProposalPane({
   renderTrend,
   renderIllustration,
   resolveCitationLabel,
+  isCitationUnresolved,
 }: ProposalPaneProps): ReactElement {
   if (proposal === null) {
     if (isAiRunning) {
@@ -80,6 +83,7 @@ export function ProposalPane({
           onOpenCitation={onOpenCitation}
           renderTrend={renderTrend}
           resolveCitationLabel={resolveCitationLabel}
+          isCitationUnresolved={isCitationUnresolved}
         />
       ),
     },
@@ -96,7 +100,9 @@ export function ProposalPane({
     {
       id: 'comparison',
       title: t('proposal.sections.comparison'),
-      content: <ComparablesSection comparables={proposal.comparables} />,
+      content: (
+        <ComparablesSection comparables={proposal.comparables} onOpenCitation={onOpenCitation} />
+      ),
     },
     ...(proposal.mode === 'audit'
       ? [
@@ -141,6 +147,8 @@ export function ProposalPane({
         <div>{renderStatCards(proposal.stat_cards)}</div>
       )}
 
+      <TotalsSection totals={proposal.totals} />
+
       {renderIllustration && proposal.illustrations.length > 0 && (
         <div className="space-y-3">
           {proposal.illustrations.map((illustration) => (
@@ -160,6 +168,12 @@ export function ProposalPane({
         <Button variant="secondary" onClick={onSave}>
           {t('proposal.actions.saveJson')}
         </Button>
+        <CopyButton
+          value={buildSummaryMarkdown(proposal)}
+          copiedLabel={t('proposal.actions.copySummaryDone')}
+        >
+          {t('proposal.actions.copySummary')}
+        </CopyButton>
       </footer>
     </section>
   );

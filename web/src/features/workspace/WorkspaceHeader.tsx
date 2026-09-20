@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Dialog, IconButton, Meter } from '@/components/ui';
+import { Button, Dialog, IconButton, Meter, Tooltip, useToast } from '@/components/ui';
 import { getModelCapability } from '@/ai/models';
 import { sessionChatController } from '@/ai/session/chatController';
 import { t } from '@/i18n';
@@ -17,12 +17,28 @@ export function WorkspaceHeader(): ReactElement {
   const model = useSessionStore((s) => s.model);
   const spentUsd = useSessionStore((s) => s.spentUsd);
   const maxCostUsdPerSession = useSessionStore((s) => s.maxCostUsdPerSession);
+  const budgetWarningAt = useSessionStore((s) => s.budgetWarningAt);
   const theme = useSessionStore((s) => s.theme);
   const setTheme = useSessionStore((s) => s.setTheme);
+  const { push } = useToast();
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  // M3 (po-review ชุด B, US-1.1): `budgetWarningAt` เปลี่ยนค่า (จาก `null` เป็น timestamp ใหม่) = ระบบ
+  // เพิ่งข้าม 80% ของเพดาน session ครั้งแรก (store เป็นคน idempotent เรื่อง "ครั้งแรก" ให้แล้ว —
+  // `markBudgetWarningShown`) — toast ที่นี่แค่ต้องกันแสดงซ้ำเมื่อ effect นี้ re-run ด้วย timestamp เดิม
+  const shownWarningAtRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (budgetWarningAt === null || shownWarningAtRef.current === budgetWarningAt) {
+      return;
+    }
+    shownWarningAtRef.current = budgetWarningAt;
+    const percent =
+      maxCostUsdPerSession > 0 ? Math.round((spentUsd / maxCostUsdPerSession) * 100) : 0;
+    push({ title: t('toast.budgetWarning', { percent }), variant: 'warn' });
+  }, [budgetWarningAt, maxCostUsdPerSession, push, spentUsd]);
 
   // 06 §4.6: `?` เปิดแผ่นคีย์ลัด (นอกช่องพิมพ์เท่านั้น — เช็คแบบเดียวกับ `ChatPane` ที่กัน `/`)
   useEffect(() => {
@@ -57,15 +73,19 @@ export function WorkspaceHeader(): ReactElement {
       </span>
 
       <div className="min-w-[160px] flex-1">
-        <Meter
-          value={spentUsd}
-          max={maxCostUsdPerSession}
-          label={t('workspace.costMeterLabel')}
-          valueText={t('workspace.costMeterValue', {
-            used: formatUsd(spentUsd, { fractionDigits: 2 }),
-            limit: formatUsd(maxCostUsdPerSession, { fractionDigits: 2 }),
-          })}
-        />
+        <Tooltip content={t('workspace.costMeterTooltip')}>
+          <span tabIndex={0} className="block">
+            <Meter
+              value={spentUsd}
+              max={maxCostUsdPerSession}
+              label={t('workspace.costMeterLabel')}
+              valueText={t('workspace.costMeterValue', {
+                used: formatUsd(spentUsd, { fractionDigits: 2 }),
+                limit: formatUsd(maxCostUsdPerSession, { fractionDigits: 2 }),
+              })}
+            />
+          </span>
+        </Tooltip>
       </div>
 
       <IconButton

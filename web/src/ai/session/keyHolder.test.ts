@@ -1,8 +1,18 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createClient } from '../client';
 import * as keyHolder from './keyHolder';
 
 const FAKE_KEY = 'fake-key-for-unit-test';
+
+/**
+ * งานลดขนาด entry chunk (20 ก.ย. 2569): `keyHolder.setKey` เปลี่ยนสัญญาจากรับ `apiKey: string` (สร้าง
+ * client เอง) เป็นรับ `Anthropic` instance ที่ผู้เรียกสร้างไว้แล้ว (ผู้เรียกจริงคือ `sessionStore.submitKey`
+ * ที่ dynamic-import `ai/client.ts`) — helper นี้จำลองสิ่งที่ผู้เรียกทำก่อนหน้า `setKey`
+ */
+function setKeyFromApiKey(apiKey: string): Anthropic {
+  return keyHolder.setKey(createClient(apiKey));
+}
 
 afterEach(() => {
   keyHolder.__resetForTests();
@@ -10,15 +20,15 @@ afterEach(() => {
 });
 
 describe('keyHolder — module scope เท่านั้น (T-307 H1 / N2)', () => {
-  it('setKey สร้าง Anthropic client จริงและเก็บไว้ใน closure — getClient คืน instance เดิม', () => {
-    const client = keyHolder.setKey(FAKE_KEY);
+  it('setKey เก็บ Anthropic client ที่ได้รับมาไว้ใน closure — getClient คืน instance เดิม', () => {
+    const client = setKeyFromApiKey(FAKE_KEY);
     expect(client).toBeInstanceOf(Anthropic);
     expect(keyHolder.getClient()).toBe(client);
     expect(keyHolder.hasKey()).toBe(true);
   });
 
   it('clearKey ล้าง client และแจ้ง listener ด้วยเหตุผลที่ระบุ', () => {
-    keyHolder.setKey(FAKE_KEY);
+    setKeyFromApiKey(FAKE_KEY);
     const reasons: keyHolder.ClearKeyReason[] = [];
     keyHolder.onClear((reason) => reasons.push(reason));
 
@@ -30,7 +40,7 @@ describe('keyHolder — module scope เท่านั้น (T-307 H1 / N2)', 
   });
 
   it('clearKey abort ทุก AbortController ที่ลงทะเบียนไว้', () => {
-    keyHolder.setKey(FAKE_KEY);
+    setKeyFromApiKey(FAKE_KEY);
     const ac1 = new AbortController();
     const ac2 = new AbortController();
     keyHolder.registerAbortController(ac1);
@@ -43,7 +53,7 @@ describe('keyHolder — module scope เท่านั้น (T-307 H1 / N2)', 
   });
 
   it('unregister (คืนค่าจาก registerAbortController) กันไม่ให้ controller ที่งานเสร็จแล้วถูก abort ซ้ำ', () => {
-    keyHolder.setKey(FAKE_KEY);
+    setKeyFromApiKey(FAKE_KEY);
     const ac = new AbortController();
     const unregister = keyHolder.registerAbortController(ac);
     unregister();
@@ -55,7 +65,7 @@ describe('keyHolder — module scope เท่านั้น (T-307 H1 / N2)', 
 
   it('idle เกิน 60 นาทีโดยไม่มีกิจกรรม → clearKey อัตโนมัติด้วยเหตุผล idle', () => {
     vi.useFakeTimers();
-    keyHolder.setKey(FAKE_KEY);
+    setKeyFromApiKey(FAKE_KEY);
     const reasons: keyHolder.ClearKeyReason[] = [];
     keyHolder.onClear((reason) => reasons.push(reason));
 
@@ -69,7 +79,7 @@ describe('keyHolder — module scope เท่านั้น (T-307 H1 / N2)', 
 
   it('touchActivity รีเซ็ต idle timer — กิจกรรมต่อเนื่องกันไม่ให้ถูกล้าง', () => {
     vi.useFakeTimers();
-    keyHolder.setKey(FAKE_KEY);
+    setKeyFromApiKey(FAKE_KEY);
 
     // จำลองกิจกรรมทุก ๆ 50 นาที เป็นเวลา 3 รอบ (รวม 150 นาที > เพดาน 60 นาทีถ้าไม่รีเซ็ต)
     vi.advanceTimersByTime(50 * 60 * 1000);
@@ -89,7 +99,7 @@ describe('keyHolder — module scope เท่านั้น (T-307 H1 / N2)', 
   });
 
   it('pagehide → clearKey อัตโนมัติด้วยเหตุผล pagehide', () => {
-    keyHolder.setKey(FAKE_KEY);
+    setKeyFromApiKey(FAKE_KEY);
     const reasons: keyHolder.ClearKeyReason[] = [];
     keyHolder.onClear((reason) => reasons.push(reason));
 
@@ -100,7 +110,7 @@ describe('keyHolder — module scope เท่านั้น (T-307 H1 / N2)', 
   });
 
   it('onClear คืนฟังก์ชัน unsubscribe ที่ใช้งานได้จริง', () => {
-    keyHolder.setKey(FAKE_KEY);
+    setKeyFromApiKey(FAKE_KEY);
     const reasons: keyHolder.ClearKeyReason[] = [];
     const unsubscribe = keyHolder.onClear((reason) => reasons.push(reason));
     unsubscribe();
@@ -116,7 +126,7 @@ describe('keyHolder — ไม่มีการเรียก Storage API ใ�
     const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
     const getItemSpy = vi.spyOn(Storage.prototype, 'getItem');
 
-    keyHolder.setKey(FAKE_KEY);
+    setKeyFromApiKey(FAKE_KEY);
     keyHolder.clearKey('manual');
 
     expect(setItemSpy).not.toHaveBeenCalled();

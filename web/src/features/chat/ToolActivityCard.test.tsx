@@ -47,4 +47,73 @@ describe('ToolActivityCard (06 §7 #25)', () => {
     expect(screen.getByText(t('chat.tool.web_search.notice'))).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: t('chat.tool.viewResults') })).not.toBeInTheDocument();
   });
+
+  describe('M4 (po-review ชุด B, US-2.2): ข้อความผล tool จาก `summary` แบบมีโครงสร้าง', () => {
+    it('มี summary ครบ (count+query) → แสดงข้อความไทยล้วนจาก chat.tool.<tool>.<status> แทน inputSummary', () => {
+      render(
+        <ToolActivityCard
+          activity={activity({
+            status: 'done',
+            inputSummary: 'search_catalog: พบ 5 รายการ',
+            summary: { tool: 'search_catalog', status: 'done', count: 5, query: 'เครื่องปรับอากาศ' },
+          })}
+        />,
+      );
+      expect(
+        screen.getByText(t('chat.tool.search_catalog.done', { count: 5, query: 'เครื่องปรับอากาศ' })),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('search_catalog: พบ 5 รายการ')).not.toBeInTheDocument();
+    });
+
+    it('summary ว่าง (count=0) → ใช้ข้อความ empty ไทยล้วน', () => {
+      render(
+        <ToolActivityCard
+          activity={activity({
+            status: 'done',
+            inputSummary: 'search_catalog: พบ 0 รายการ',
+            summary: { tool: 'search_catalog', status: 'empty', count: 0, query: 'ของหายาก' },
+          })}
+        />,
+      );
+      expect(
+        screen.getByText(t('chat.tool.search_catalog.empty', { query: 'ของหายาก' })),
+      ).toBeInTheDocument();
+    });
+
+    it('มี summary แต่ placeholder ที่ template ต้องการไม่ครบ (เช่น {from}/{to}) → fallback ไปใช้ inputSummary เดิม', () => {
+      render(
+        <ToolActivityCard
+          activity={activity({
+            name: 'query_budget_lines',
+            status: 'done',
+            inputSummary: 'query_budget_lines: ได้ 12 แถว',
+            summary: { tool: 'query_budget_lines', status: 'done', count: 12 },
+          })}
+        />,
+      );
+      expect(screen.getByText('query_budget_lines: ได้ 12 แถว')).toBeInTheDocument();
+    });
+
+    it('ไม่มี summary เลย → พฤติกรรมเดิม (ใช้ inputSummary ตรง ๆ)', () => {
+      render(
+        <ToolActivityCard
+          activity={activity({ status: 'done', inputSummary: 'search_catalog: พบ 5 รายการ' })}
+        />,
+      );
+      expect(screen.getByText('search_catalog: พบ 5 รายการ')).toBeInTheDocument();
+    });
+
+    it('web_search ยังต้องแสดง query เสมอแม้มี summary (ไม่ใช้ chat.tool.web_search.done)', () => {
+      render(
+        <ToolActivityCard
+          activity={activity({
+            name: 'web_search',
+            status: 'done',
+            summary: { tool: 'web_search', status: 'done', count: 3, query: 'แอร์ 18000 บีทียู' },
+          })}
+        />,
+      );
+      expect(screen.getByText(/แอร์ 18000 บีทียู/)).toBeInTheDocument();
+    });
+  });
 });

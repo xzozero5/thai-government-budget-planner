@@ -12,7 +12,7 @@ import { expect, test } from '@playwright/test';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chatLog, submitFakeKeyAndEnterWorkspace } from './helpers/appFlows';
+import { submitFakeKeyAndEnterWorkspace } from './helpers/appFlows';
 import {
   createAnthropicMock,
   EVIL_ORIGIN,
@@ -126,7 +126,7 @@ async function runIllustrationCase(
   const composer = page.getByLabel('ช่องพิมพ์ข้อความ');
   await composer.fill('ขอภาพประกอบโครงการหน่อยครับ');
   await page.getByRole('button', { name: 'ส่ง' }).click();
-  await expect(chatLog(page).getByText(/emit_illustration: /)).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('[data-testid="tool-activity"][data-tool="emit_illustration"]:not([data-status="running"])').first()).toBeVisible({ timeout: 20_000 });
   // จบ turn แล้ว (ปุ่ม "หยุด" หาย กลับเป็นปุ่ม "ส่ง") — ใช้สัญญาณนี้แทนข้อความสุดท้ายตรง ๆ เพราะ path ที่
   // sanitizer ปฏิเสธภาพ (DOCTYPE ฯลฯ) จบด้วยข้อความคนละประโยคกับ path ที่สร้างภาพสำเร็จ (2 รอบ vs 3 รอบ)
   await expect(page.getByRole('button', { name: 'ส่ง', exact: true })).toBeVisible({ timeout: 20_000 });
