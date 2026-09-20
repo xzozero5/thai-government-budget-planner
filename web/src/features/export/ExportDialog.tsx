@@ -232,6 +232,9 @@ export function ExportDialog({ open, onClose, source, loadTrend }: ExportDialogP
         dataUrl,
         ...(trend.basis !== 'econ' ? { basisLabel: t(BASIS_LABEL_KEY[trend.basis]) } : {}),
         ...(nTotal !== undefined ? { nTotal } : {}),
+        // T-602 (เก็บตก PDF, N3) — เฉพาะตัวชี้วัดเศรษฐกิจที่ยังไม่ได้ตรวจทาน (`verified === false` ตรง ๆ,
+        // ต่างจาก `undefined` ของ unit_price/amount_per_line ที่ไม่มีแนวคิดนี้)
+        ...(trend.basis === 'econ' && trend.verified === false ? { unverified: true } : {}),
       });
     }
     return images;

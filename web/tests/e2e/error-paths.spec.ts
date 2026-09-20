@@ -1,10 +1,77 @@
 /**
  * T-409 — Error paths (07 §3.3 ข้อ 4 / 05-FEATURES US-1.1, US-2.3)
  * key ผิด (401) / 429 / network fail กลางสตรีม / ยกเลิกกลางสตรีม
+ *
+ * T-602 (NEW-H1 ส่วนที่เหลือ) — เพิ่มเคส `.tgbp.json` ที่ schema ผ่านทุกอย่างยกเว้น `createdAt` เกินขอบเขต
+ * ที่ `new Date()` รับได้อย่างปลอดภัย (`1e16`) — หลังแก้ (ก) จำกัดขอบเขต `createdAt` ใน `tgbpFile.ts`
+ * และ (ข) การ์ด `formatThaiBuddhistDate` ไม่ให้ throw แล้ว ไม่มีเคสที่ schema ผ่านแต่ยังทำให้ render พังอีก
+ * (ตามที่บรีฟยอมรับให้ทดสอบ fallback นี้แทน) — ยืนยันว่าไฟล์ถูกปฏิเสธพร้อมข้อความไทยที่เข้าใจได้ และหน้า
+ * `/load` ยังใช้งานได้ปกติ (ไม่ขาว) หลังจากนั้น
  */
 import { expect, test } from '@playwright/test';
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import { chatLog, FAKE_API_KEY, submitFakeKeyAndEnterWorkspace } from './helpers/appFlows';
 import { createAnthropicMock, makeMessage, textBlock, toolUseBlock } from './helpers/mockAnthropic';
+
+/** BOQ line ขั้นต่ำที่ผ่าน `BoqLineSchema` (`@/ai/tools/proposal.ts`) */
+function minimalBoqLine(): Record<string, unknown> {
+  return {
+    id: 'line1',
+    category: 'ครุภัณฑ์',
+    item: 'เครื่องปรับอากาศ',
+    qty: 1,
+    unit: 'เครื่อง',
+    unit_price_thb: 20000,
+    total_thb: 20000,
+    basis: 'estimate',
+    confidence: 'low',
+    rationale: 'ทดสอบ',
+    citations: [],
+  };
+}
+
+/** `.tgbp.json` ที่ผ่าน `TgbpFileSchema` ทุกอย่าง ยกเว้น `createdAt` ของเวอร์ชันเดียวที่เกินขอบเขต
+ * (`1e16`) — ใช้ทดสอบว่า `parseTgbpFile` ปฏิเสธไฟล์นี้ด้วยข้อความไทยที่เข้าใจได้ (ไม่ผ่านเข้าไป render
+ * แล้วพังกลางทาง) */
+function buildTgbpFileWithHugeCreatedAt(): string {
+  return JSON.stringify({
+    format: 'tgbp',
+    version: 1,
+    savedAt: new Date().toISOString(),
+    app_data_version: 'e2e-test',
+    currentProposalIndex: 0,
+    proposalVersions: [
+      {
+        id: 'propver_1',
+        createdAt: 1e16,
+        source: 'ai',
+        warnings: [],
+        userEditedLineIds: [],
+        proposal: {
+          version: 1,
+          title: 'ไฟล์ทดสอบ createdAt ผิดปกติ',
+          summary: 'สรุปทดสอบ',
+          mode: 'draft',
+          requester_context: { fiscal_year_be: 2569 },
+          objectives: [],
+          scope_and_specs: [],
+          assumptions: [],
+          boq: [minimalBoqLine()],
+          totals: { subtotal_thb: 20000, vat_included: false, grand_total_thb: 20000 },
+          comparables: [],
+          risks: [],
+          open_questions: [],
+          citations_web: [],
+          illustrations: [],
+          stat_cards: [],
+        },
+      },
+    ],
+    chat: [],
+  });
+}
 
 test.describe('T-409 error paths', () => {
   test('key ผิด (401) → ข้อความไทยชัดเจน + ช่อง key ถูกล้าง', async ({ page }) => {
@@ -152,6 +219,31 @@ test.describe('T-409 error paths', () => {
           expect(hasResult).toBe(true);
         }
       }
+    }
+  });
+
+  test('T-602 (NEW-H1): เปิดไฟล์ .tgbp.json ที่ createdAt ผิดปกติ (1e16) → ถูกปฏิเสธด้วยข้อความไทย + หน้าไม่ขาว', async ({
+    page,
+  }) => {
+    const tmpPath = path.join(os.tmpdir(), `tgbp-huge-createdat-${String(Date.now())}.tgbp.json`);
+    await fs.writeFile(tmpPath, buildTgbpFileWithHugeCreatedAt(), 'utf8');
+
+    try {
+      await page.goto('/#/load');
+      await page.locator('input[type="file"]').setInputFiles(tmpPath);
+
+      // ปฏิเสธด้วยข้อความไทยที่เข้าใจได้ (ไม่ใช่ error ดิบของ React/RangeError)
+      await expect(page.getByRole('alert')).toContainText('ไม่ใช่ไฟล์ของ TGBP หรือเสียหาย', {
+        timeout: 10_000,
+      });
+
+      // หน้าไม่ขาว — dropzone ยังใช้งานได้ปกติหลังจากนั้น (ไม่มี error boundary ขึ้นแทนทั้งหน้า) — ใช้ข้อความ
+      // ของ dropzone แทน role="button" ตรง ๆ เพราะ `<input type="file" aria-label="เลือกไฟล์">` ที่ซ่อนอยู่
+      // ก็ map เป็น role="button" เหมือนกัน (strict mode ของ Playwright จะเจอ 2 ตัว)
+      await expect(page.getByText('ลากไฟล์ .tgbp.json มาวางที่นี่')).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'เปิดไฟล์ข้อเสนอ' })).toBeVisible();
+    } finally {
+      await fs.rm(tmpPath, { force: true });
     }
   });
 });

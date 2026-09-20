@@ -72,5 +72,7 @@ export function toExportTrendData(result: TrendResult): ExportTrendData {
     };
   }
   const points: ExportTrendPoint[] = result.points.map((p) => ({ yearBe: p.yearBe, median: p.value }));
-  return { title: result.label_th, basis: 'econ', points };
+  // T-602 (เก็บตก PDF, N3) — ส่ง `EconTrend.verified` จริงต่อไปให้ `ExportDialog` ตัดสินใจแสดงคำบรรยาย
+  // "ยังไม่ตรวจสอบ" (แทนที่จะเดาว่า econ = unverified เสมอไว้ที่ชั้นนี้ เผื่ออนาคตมีตัวชี้วัดที่ verified แล้ว)
+  return { title: result.label_th, basis: 'econ', points, verified: result.verified };
 }

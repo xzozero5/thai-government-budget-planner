@@ -5,6 +5,7 @@ import type { ProposalVersion } from '@/stores/proposalStore';
 import {
   parseTgbpFile,
   serializeSession,
+  serializeTgbpFile,
   TGBP_FILE_MAX_BYTES,
   TgbpFileSchema,
   getProposalAt,
@@ -171,5 +172,158 @@ describe('serializeSession / parseTgbpFile — round-trip', () => {
       appDataVersion: '2026-09-01',
     });
     expect(TgbpFileSchema.safeParse(JSON.parse(json)).success).toBe(true);
+  });
+});
+
+describe('T-602 (NEW-H1 ส่วนที่เหลือ) — ขอบเขต createdAt', () => {
+  it('createdAt เกินขอบเขตที่ new Date() รับได้อย่างปลอดภัย (เช่น 1e16) ถูกปฏิเสธด้วยข้อความไทยที่เข้าใจได้', () => {
+    const json = serializeSession({
+      proposalVersions: [makeVersion({ createdAt: 1e16 })],
+      currentProposalIndex: 0,
+      chatMessages: [],
+      appDataVersion: '2026-09-01',
+    });
+
+    const result = parseTgbpFile(json);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      // 1e16 เกิน Number.MAX_SAFE_INTEGER อยู่แล้ว จึงชน `.int()` ก่อนถึง `.max()` ของเรา — ข้อความยังเป็น
+      // ไทยที่เข้าใจได้และระบุ field ที่ผิดชัดเจนอยู่ดี
+      expect(result.error).toContain('createdAt');
+      expect(result.error).toContain('จำนวนเต็ม');
+      // ต้องไม่ใช่ error ดิบภาษาอังกฤษของ RangeError จาก `new Date()` (ยืนยันว่า zod ปฏิเสธไว้ก่อนถึง render)
+      expect(result.error).not.toContain('RangeError');
+    }
+  });
+
+  it('createdAt ที่เป็นจำนวนเต็มปลอดภัยแต่เกินเพดานปี ค.ศ. 2100 (ไม่ชน .int() ก่อน) → ข้อความระบุ "เกินขอบเขต"', () => {
+    const json = serializeSession({
+      // safe integer แต่เกิน MAX_CREATED_AT_MS (4102444800000 = ปี ค.ศ. 2100) — ทดสอบข้อความของ `.max()` โดยตรง
+      proposalVersions: [makeVersion({ createdAt: 5_000_000_000_000 })],
+      currentProposalIndex: 0,
+      chatMessages: [],
+      appDataVersion: '2026-09-01',
+    });
+
+    const result = parseTgbpFile(json);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain('createdAt');
+      expect(result.error).toContain('เกินขอบเขต');
+    }
+  });
+
+  it('createdAt ติดลบก็ถูกปฏิเสธเช่นกัน', () => {
+    const json = serializeSession({
+      proposalVersions: [makeVersion({ createdAt: -1 })],
+      currentProposalIndex: 0,
+      chatMessages: [],
+      appDataVersion: '2026-09-01',
+    });
+    expect(parseTgbpFile(json).ok).toBe(false);
+  });
+
+  it('createdAt ปกติยังผ่านตามเดิม', () => {
+    const json = serializeSession({
+      proposalVersions: [makeVersion({ createdAt: 1_700_000_000_000 })],
+      currentProposalIndex: 0,
+      chatMessages: [],
+      appDataVersion: '2026-09-01',
+    });
+    expect(parseTgbpFile(json).ok).toBe(true);
+  });
+});
+
+describe('T-602 (NEW-M5) — loadWarnings ของ URL web citation ที่ไม่ปลอดภัยในไฟล์ที่โหลด', () => {
+  it('URL ที่ไม่ใช่ https ปลอดภัยใน citations_web ถูกเก็บเป็น loadWarnings แต่ไม่ถูกลบออกจากไฟล์', () => {
+    const json = serializeSession({
+      proposalVersions: [
+        makeVersion({
+          proposal: makeProposal({
+            citations_web: [{ url: 'http://insecure.example.com', retrieved_at: '2569-09-20' }],
+          }),
+        }),
+      ],
+      currentProposalIndex: 0,
+      chatMessages: [],
+      appDataVersion: '2026-09-01',
+    });
+
+    const result = parseTgbpFile(json);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.loadWarnings.length).toBeGreaterThan(0);
+      expect(result.loadWarnings[0]).toContain('http://insecure.example.com');
+      // citation ยังอยู่ครบ — ไม่ถูกตัดทิ้ง
+      expect(getProposalAt(result.file, 0)?.citations_web).toHaveLength(1);
+    }
+  });
+
+  it('URL ปลอดภัยทั้งหมด → loadWarnings ว่าง', () => {
+    const json = serializeSession({
+      proposalVersions: [makeVersion()],
+      currentProposalIndex: 0,
+      chatMessages: [],
+      appDataVersion: '2026-09-01',
+    });
+    const result = parseTgbpFile(json);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.loadWarnings).toEqual([]);
+    }
+  });
+});
+
+describe('T-602 (NEW-L8) — serializeTgbpFile', () => {
+  it('re-serialize จาก TgbpFile ที่ parse แล้ว — field แปลกปลอมของไฟล์ต้นทางไม่หลุดเข้าไฟล์ที่บันทึกใหม่', () => {
+    const json = serializeSession({
+      proposalVersions: [makeVersion()],
+      currentProposalIndex: 0,
+      chatMessages: [makeChatMessage()],
+      appDataVersion: '2026-09-01',
+    });
+    const withExtra = JSON.stringify({
+      ...(JSON.parse(json) as Record<string, unknown>),
+    });
+    const parsed = parseTgbpFile(withExtra);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    // จำลอง field แปลกปลอมที่อาจติดมากับ `TgbpFile` ที่ type ไว้ (เช่นถ้ามีคนแก้ type ในอนาคตให้กว้างขึ้น) —
+    // ยืนยันว่า `serializeTgbpFile` ประกอบใหม่ทีละ field เสมอ ไม่ spread ทั้ง object
+    const polluted = {
+      ...parsed.file,
+      apiKey: ['sk', 'ant', 'should-not-leak-XXXXXXXX'].join('-'),
+    } as typeof parsed.file;
+    const resavedJson = serializeTgbpFile(polluted);
+    expect(resavedJson).not.toContain('apiKey');
+    expect(resavedJson).not.toContain('should-not-leak');
+
+    const reparsed = parseTgbpFile(resavedJson);
+    expect(reparsed.ok).toBe(true);
+    if (reparsed.ok) {
+      expect(getProposalAt(reparsed.file, 0)?.title).toBe('ทดสอบ');
+      expect(reparsed.file.chat[0]?.text).toBe('สวัสดี');
+    }
+  });
+
+  it('ตั้ง savedAt ใหม่เป็นเวลาที่บันทึกจริง (ไม่ใช่เวลาของไฟล์ต้นทาง)', () => {
+    const json = serializeSession({
+      proposalVersions: [],
+      currentProposalIndex: -1,
+      chatMessages: [],
+      appDataVersion: '2026-09-01',
+      now: new Date('2020-01-01T00:00:00.000Z'),
+    });
+    const parsed = parseTgbpFile(json);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    const resaved = serializeTgbpFile(parsed.file, new Date('2026-09-20T10:00:00.000Z'));
+    const reparsed = parseTgbpFile(resaved);
+    expect(reparsed.ok).toBe(true);
+    if (reparsed.ok) {
+      expect(reparsed.file.savedAt).toBe('2026-09-20T10:00:00.000Z');
+    }
   });
 });

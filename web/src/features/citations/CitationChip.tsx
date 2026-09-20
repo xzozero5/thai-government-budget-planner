@@ -13,7 +13,8 @@ import type { Citation } from '@/ai/tools/proposal';
 import { IconButton } from '@/components/ui';
 import { cn, FOCUS_RING, PRESS_TRANSITION } from '@/components/ui/utils';
 import { t } from '@/i18n';
-import { type CitationChipLabelOptions, getCitationChipLabel, isHttpsUrl } from './citationLabel';
+import { parseSafeHttpsUrl } from '@/lib/safeUrl';
+import { type CitationChipLabelOptions, getCitationChipLabel } from './citationLabel';
 
 export interface CitationChipProps {
   citation: Citation;
@@ -73,12 +74,14 @@ export function CitationChip({
   const mark = KIND_MARK[citation.kind];
 
   if (citation.kind === 'web') {
-    const https = isHttpsUrl(citation.url);
+    // T-602 (NEW-M5) — ตัวตรวจเดียวกับ `ExternalLink`/PDF (`@/lib/safeUrl`) แทน `isHttpsUrl` เดิม
+    // (ไม่ปฏิเสธ userinfo) + ใช้ `safeUrl.href` ที่ parse แล้วแทน `citation.url` ดิบ
+    const safeUrl = parseSafeHttpsUrl(citation.url);
     return (
       <span className={cn('inline-flex items-center gap-1', className)}>
-        {https ? (
+        {safeUrl ? (
           <a
-            href={citation.url}
+            href={safeUrl.href}
             target="_blank"
             rel="noopener noreferrer"
             referrerPolicy="no-referrer"

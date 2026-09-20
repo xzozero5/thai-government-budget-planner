@@ -294,6 +294,7 @@ export function KeyGatePage(): ReactElement {
             <li>{t('keygate.privacyBullet1')}</li>
             <li>{t('keygate.privacyBullet2')}</li>
             <li>{t('keygate.privacyBullet3')}</li>
+            <li>{t('keygate.privacyBullet4')}</li>
           </ul>
           <Link
             to="/about"

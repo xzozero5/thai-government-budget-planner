@@ -53,6 +53,10 @@ export interface ExportTrendData {
   title: string;
   basis: ExportTrendBasisKind;
   points: ExportTrendPoint[];
+  /** T-602 (เก็บตก PDF, N3) — เฉพาะ `basis:'econ'`: `EconTrend.verified` จริง (docs/econ-sources.md:
+   * ตัวชี้วัดเศรษฐกิจทุกตัว `verified:false` เสมอ ณ วันนี้) — `undefined` เมื่อไม่มีแนวคิดนี้ (`unit_price`/
+   * `amount_per_line` ไม่มี field ตรวจสอบแล้ว/ยัง ในความหมายเดียวกัน) */
+  verified?: boolean;
 }
 
 export const DEFAULT_EXPORT_SECTIONS: ExportSections = {

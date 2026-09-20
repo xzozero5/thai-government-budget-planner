@@ -90,6 +90,14 @@ function escapeToolResultJson(json: string): string {
   return json.replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
 }
 
+// T-602 (NEW-L2) — nonce (ถ้ามี) **ไม่ได้ถูกประกาศ/อธิบายใน system prompt** โดยตั้งใจ ไม่ใช่ช่องโหว่ที่
+// ตกหล่น: system prompt ของแอปนี้เป็นบล็อกแรกที่ Anthropic prompt caching เก็บไว้ (ราคาต่อ token ถูกกว่า
+// มาก เมื่อ cache hit) — ถ้าประกาศ nonce ที่สุ่มใหม่ทุก session ไว้ใน system prompt บล็อกนั้นจะเปลี่ยน
+// เนื้อหาทุก session แล้วเสีย cache hit ทันที (ต้นทุนเพิ่มทุกครั้ง ไม่ใช่แค่ session แรก) ตัวที่ปิดช่องโหว่
+// "เนื้อหาปลอมตัวปิด delimiter" จริง ๆ คือการ escape `<`/`>`/`&` ใน `escapeToolResultJson` ด้านบน (ทำให้
+// เนื้อหาที่ผู้โจมตีคุมไม่มีทางพิมพ์ token โครงสร้าง `<tool_result_data ...>`/`</tool_result_data ...>`
+// ออกมาได้อีกเลยไม่ว่าจะรู้ nonce หรือไม่) — nonce เป็นแค่ defense-in-depth ชั้นเสริมเท่านั้น พฤติกรรมนี้
+// ยอมรับได้และไม่ต้องแก้ (ดู `docs/decisions/T-602-security-review.md` NEW-L2)
 export function wrapToolResultData(output: unknown, nonce?: string): string {
   const open = nonce !== undefined ? `<tool_result_data nonce="${nonce}">` : TOOL_DATA_OPEN;
   const close = nonce !== undefined ? `</tool_result_data nonce="${nonce}">` : TOOL_DATA_CLOSE;

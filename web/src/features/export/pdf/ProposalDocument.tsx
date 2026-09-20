@@ -32,6 +32,7 @@ import {
 import type { AuditFinding, BoqLine, Citation, Comparable } from '@/ai/tools/proposal';
 import { t as translate } from '@/i18n';
 import { formatFiscalYearBe, formatNumber, formatThb } from '@/lib/format';
+import { parseSafeHttpsUrl } from '@/lib/safeUrl';
 import {
   buildCitationRegistry,
   citationIndexesFor,
@@ -470,11 +471,15 @@ function CitationDetailText({
       const meta =
         translate('citation.retrievedAt', { date: citation.retrieved_at }) +
         (citation.price_note !== undefined ? ` — ${citation.price_note}` : '');
-      if (citation.url.startsWith('https://')) {
+      // T-602 (NEW-M5) — ตัวตรวจเดียวกับ ExternalLink/CitationChip (`@/lib/safeUrl`) แทน
+      // `startsWith('https://')` ดิบ ๆ เดิม (ปฏิเสธ userinfo/อักขระควบคุมด้วย) — `src` ของ `<Link>` ใช้
+      // `safeUrl.href` ที่ parse แล้ว ไม่ใช่ `citation.url` ดิบ (label ยังผ่าน `t()`/`toPdfText` ตามปกติ)
+      const safeUrl = parseSafeHttpsUrl(citation.url);
+      if (safeUrl !== null) {
         return (
           <Text style={S.citationText}>
             <Text>{t(`${translate('citation.types.web')} — `)}</Text>
-            <Link src={citation.url} style={S.link}>
+            <Link src={safeUrl.href} style={S.link}>
               {t(label)}
             </Link>
             <Text>{t(` (${meta})`)}</Text>
@@ -658,12 +663,15 @@ export function ProposalDocument(props: ProposalDocumentProps) {
             <View>
               <SectionHeading>{pdfCopy.section.trendImages}</SectionHeading>
               {props.images.trends.map((trend, i) => {
-                // US-8.3 — คำบรรยายใต้กราฟ: ชื่อรายการ (SubHeading ด้านบน) + ป้าย basis (N3: ต้องแยก
-                // "ราคาต่อหน่วย" ออกจาก "ยอดต่อรายการงบ" ชัดเจน) + n รวม — ไม่มีทั้งคู่เมื่อเป็นตัวชี้วัด
-                // เศรษฐกิจ (ดูหมายเหตุหัวไฟล์ `pdf/types.ts`)
+                // US-8.3 — คำบรรยายใต้กราฟ: ชื่อรายการ (SubHeading ด้านบน — จุดเดียวที่แสดงชื่อกราฟ ตัด
+                // ความซ้ำซ้อนกับ title ที่เคย raster ซ้ำในรูปเองออกแล้ว ดู `pdf/trendSvg.ts`) + ป้าย basis
+                // (N3: ต้องแยก "ราคาต่อหน่วย" ออกจาก "ยอดต่อรายการงบ" ชัดเจน) + n รวม — ไม่มีทั้งคู่เมื่อ
+                // เป็นตัวชี้วัดเศรษฐกิจ (ดูหมายเหตุหัวไฟล์ `pdf/types.ts`) แต่มีคำบรรยาย "ยังไม่ตรวจสอบ"
+                // แทนเมื่อ series นั้น verified:false (T-602 เก็บตก PDF, N3)
                 const captionParts: string[] = [];
                 if (trend.basisLabel !== undefined) captionParts.push(trend.basisLabel);
                 if (trend.nTotal !== undefined) captionParts.push(pdfCopy.trend.nTotal(trend.nTotal));
+                if (trend.unverified === true) captionParts.push(translate('proposal.stat.unverified'));
                 return (
                   <View key={i} wrap={false}>
                     <SubHeading>{trend.title}</SubHeading>

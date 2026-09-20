@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createInMemoryIllustrationSink } from '@/ai/illustrationSink';
 import { sessionChatController } from '@/ai/session/chatController';
+import { sanitizeInjectedText } from '@/ai/session/userMessageParts';
 import { createToolLog } from '@/ai/toolLog';
 import { ToastProvider } from '@/components/ui';
 import type { BudgetLine } from '@/data';
@@ -401,9 +402,10 @@ describe('ProposalPaneContainer — renderIllustration ผ่าน sanitizer', 
       render(<Harness />);
 
       await user.click(screen.getByRole('button', { name: t('proposal.illustration.regenerate') }));
+      // T-602 (NEW-M4) — title ของภาพ (มาจากโมเดล) ต้องผ่าน sanitizeInjectedText ก่อนฉีดเข้า user role
       expect(sessionChatController.sendMessage).toHaveBeenCalledWith(
         t('proposal.illustration.regenerateRequest', {
-          title: richProposalFixture.illustrations[0]?.title ?? '',
+          title: sanitizeInjectedText(richProposalFixture.illustrations[0]?.title ?? ''),
         }),
       );
     });
@@ -461,8 +463,10 @@ describe('S10 (po-review ชุด B, US-4.3): "ไม่เอาราคา�
 
     await user.click(await screen.findByRole('button', { name: t('citation.web.reject') }));
 
+    // T-602 (NEW-M4/NEW-M5) — ส่งเฉพาะ host (ไม่ใช่ URL เต็ม) ผ่าน sanitizeInjectedText เข้า placeholder
+    // {url} เดิมของ copy
     expect(sessionChatController.sendMessage).toHaveBeenCalledWith(
-      t('citation.web.rejectRequest', { url: 'https://shopee.co.th/เหล็กเส้น-DB12-SD40' }),
+      t('citation.web.rejectRequest', { url: sanitizeInjectedText('shopee.co.th') }),
     );
     expect(await screen.findByText(t('toast.citationRejected', { domain: 'shopee.co.th' }))).toBeInTheDocument();
   });

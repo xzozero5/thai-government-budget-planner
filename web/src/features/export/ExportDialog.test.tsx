@@ -246,6 +246,34 @@ describe('ExportDialog', () => {
     expect(input.images?.trends?.[0]?.dataUrl).toBe('data:image/png;base64,trend');
   });
 
+  it('T-602 (เก็บตก PDF, N3): ตัวชี้วัดเศรษฐกิจที่ verified:false → images.trends[].unverified = true', async () => {
+    pushLiveProposal({ stat_cards: [{ trend_ref: { kind: 'indicator', key: 'cpi' }, headline_th: 'CPI' }] });
+    renderProposalPdfMock.mockResolvedValue(new Blob(['x']));
+    const user = userEvent.setup();
+
+    render(
+      <ExportDialog
+        open
+        onClose={vi.fn()}
+        loadTrend={fakeLoadTrend({
+          title: 'ดัชนีราคาผู้บริโภค',
+          basis: 'econ',
+          points: [{ yearBe: 2567, median: 100 }],
+          verified: false,
+        })}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: t('export.download') }));
+
+    await waitFor(() => {
+      expect(renderProposalPdfMock).toHaveBeenCalledTimes(1);
+    });
+    const input = renderProposalPdfMock.mock.calls[0]?.[0] as {
+      images?: { trends?: { unverified?: boolean }[] };
+    };
+    expect(input.images?.trends?.[0]?.unverified).toBe(true);
+  });
+
   it('T-504: ปิดสวิตช์กราฟแนวโน้ม → ไม่เรียก loadTrend เลยและไม่ส่ง images.trends', async () => {
     pushLiveProposal({ boq: [makeLine({ trend_ref: { kind: 'item', key: 'เครื่องปรับอากาศ' } })] });
     renderProposalPdfMock.mockResolvedValue(new Blob(['x']));

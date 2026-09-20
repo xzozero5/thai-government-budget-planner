@@ -6,6 +6,12 @@ describe('formatThaiBuddhistDate', () => {
     const date = new Date(2026, 8, 20); // 20 กันยายน 2026
     expect(formatThaiBuddhistDate(date)).toBe('20 กันยายน 2569');
   });
+
+  it('T-602 (NEW-H1): Invalid Date (เช่น new Date(1e16)) ไม่ throw — คืน "ไม่ระบุวันที่"', () => {
+    expect(() => formatThaiBuddhistDate(new Date(1e16))).not.toThrow();
+    expect(formatThaiBuddhistDate(new Date(1e16))).toBe('ไม่ระบุวันที่');
+    expect(formatThaiBuddhistDate(new Date(NaN))).toBe('ไม่ระบุวันที่');
+  });
 });
 
 describe('formatThaiBuddhistDateTime', () => {
@@ -15,5 +21,10 @@ describe('formatThaiBuddhistDateTime', () => {
     expect(out).toContain('2569');
     expect(out).toContain('14:05');
     expect(out.endsWith('น.')).toBe(true);
+  });
+
+  it('T-602 (NEW-H1): Invalid Date ไม่ throw — คืน "ไม่ระบุวันที่"', () => {
+    expect(() => formatThaiBuddhistDateTime(new Date(1e16))).not.toThrow();
+    expect(formatThaiBuddhistDateTime(new Date(1e16))).toBe('ไม่ระบุวันที่');
   });
 });

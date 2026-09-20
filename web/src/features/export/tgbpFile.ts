@@ -18,6 +18,7 @@
  */
 import { z } from 'zod';
 import { ProposalSchema, type Proposal } from '@/ai/tools/proposal';
+import { isSafeHttpsUrl } from '@/lib/safeUrl';
 import type { ChatMessage, ToolActivity } from '@/stores/chatStore';
 import type { ProposalVersion } from '@/stores/proposalStore';
 
@@ -56,11 +57,23 @@ const ChatMessageSchema = z.object({
 
 const ProposalVersionSourceSchema = z.enum(['ai', 'user_edit']);
 
+/** T-602 (NEW-H1 ส่วนที่เหลือ) — เดิม `z.number()` ไม่มีขอบเขต ทำให้ไฟล์ `.tgbp.json` ที่แก้เอง (หรือ
+ * เสียหาย) ใส่ `createdAt` เกินช่วงที่ `new Date()` รับได้อย่างปลอดภัยได้ (เช่น `1e16`) แล้วไปทำให้
+ * `formatThaiBuddhistDate`/`Intl.DateTimeFormat` โยน `RangeError` ตอน render (ดู `docs/decisions/
+ * T-602-security-review.md` NEW-H1 repro) — จำกัดเป็นจำนวนเต็มไม่ติดลบ ไม่เกินปี ค.ศ. 2100
+ * (4102444800000 ms) ซึ่งกว้างพอสำหรับการใช้งานจริงทุกกรณี พร้อมข้อความไทยที่บอกได้ว่าปัญหาคืออะไร */
+const MAX_CREATED_AT_MS = 4102444800000; // 2100-01-01T00:00:00.000Z
+const CreatedAtSchema = z
+  .number()
+  .int('createdAt ต้องเป็นจำนวนเต็ม (มิลลิวินาทีนับจาก 1 มกราคม 2513)')
+  .min(0, 'createdAt ต้องไม่ติดลบ')
+  .max(MAX_CREATED_AT_MS, 'createdAt เกินขอบเขตวันที่ที่รองรับ (ต้องไม่เกินปี ค.ศ. 2100)');
+
 const ProposalVersionFileSchema = z.object({
   id: z.string(),
   proposal: ProposalSchema,
   warnings: z.array(z.string()),
-  createdAt: z.number(),
+  createdAt: CreatedAtSchema,
   source: ProposalVersionSourceSchema,
   userEditedLineIds: z.array(z.string()),
 });
@@ -141,11 +154,109 @@ export function serializeSession(input: SerializeSessionInput): string {
   return JSON.stringify(file);
 }
 
+/** T-602 (NEW-L8) — re-serialize `TgbpFile` ที่ **ผ่าน `parseTgbpFile` แล้วเท่านั้น** กลับเป็นสตริง JSON —
+ * ใช้ตอนปุ่ม "บันทึก" ของหน้า `/load` แทนการเขียน `rawText` ดิบของไฟล์ต้นทางกลับออกไป (rawText อาจมี field
+ * แปลกปลอมที่ผ่านมาจากนอกระบบนี้ปนอยู่ก่อนที่ `.strict()` จะตัดทิ้งตอน parse) — ประกอบ object ใหม่ทีละ
+ * field จาก `TgbpFile` ที่ type แล้วเท่านั้น (หลักการเดียวกับ `serializeSession`) `savedAt` ถูกตั้งใหม่เป็น
+ * เวลาที่บันทึกจริง (ไม่ใช่เวลาที่ไฟล์ต้นทางถูกบันทึกครั้งก่อน) */
+export function serializeTgbpFile(file: TgbpFile, now: Date = new Date()): string {
+  const rebuilt: TgbpFile = {
+    format: TGBP_FILE_FORMAT,
+    version: TGBP_FILE_VERSION,
+    savedAt: now.toISOString(),
+    app_data_version: file.app_data_version,
+    proposalVersions: file.proposalVersions.map((version) => ({
+      id: version.id,
+      proposal: version.proposal,
+      warnings: [...version.warnings],
+      createdAt: version.createdAt,
+      source: version.source,
+      userEditedLineIds: [...version.userEditedLineIds],
+    })),
+    currentProposalIndex: file.currentProposalIndex,
+    chat: file.chat.map((message) => ({
+      id: message.id,
+      role: message.role,
+      text: message.text,
+      status: message.status,
+      toolActivities: message.toolActivities.map((activity) => ({
+        id: activity.id,
+        name: activity.name,
+        status: activity.status,
+        ...(activity.inputSummary !== undefined ? { inputSummary: activity.inputSummary } : {}),
+      })),
+      warnings: [...message.warnings],
+    })),
+  };
+  return JSON.stringify(rebuilt);
+}
+
 // ---------------------------------------------------------------------------
 // parseTgbpFile — ตรวจขนาดก่อนแตะ JSON.parse เสมอ (กัน parse ไฟล์ยักษ์ก่อนรู้ว่าเกินเพดาน)
 // ---------------------------------------------------------------------------
 
-export type ParseTgbpFileResult = { ok: true; file: TgbpFile } | { ok: false; error: string };
+export type ParseTgbpFileResult =
+  | { ok: true; file: TgbpFile; loadWarnings: string[] }
+  | { ok: false; error: string };
+
+/** ข้อความ error หลักคงเดิมเสมอ (ไม่ทำลาย test/ผู้ใช้ที่คุ้นกับข้อความนี้) — ต่อท้ายด้วยตำแหน่ง/เหตุผลของ
+ * ปัญหาแรกที่ zod เจอ (เช่น `proposalVersions.0.createdAt: createdAt เกินขอบเขตวันที่ที่รองรับ...`) เมื่อมี
+ * เพื่อให้ผู้ใช้ที่เปิดไฟล์เสียหายรู้ว่าช่องไหนผิดจริง ๆ แทนข้อความกว้าง ๆ เพียงอย่างเดียว */
+function describeSchemaError(error: z.ZodError): string {
+  const base = 'โครงสร้างไฟล์ไม่ตรงกับรูปแบบ .tgbp.json ที่รองรับ (format/version ไม่ตรง หรือฟิลด์ไม่ครบ)';
+  const first = error.issues[0];
+  if (first === undefined) {
+    return base;
+  }
+  const path = first.path.length > 0 ? first.path.join('.') : '(บนสุด)';
+  return `${base} — ช่อง "${path}": ${first.message}`;
+}
+
+/** T-602 (NEW-M5) — URL ของ web citation ที่ไม่ผ่าน `isSafeHttpsUrl` **ไม่ถูกลบ** (schema ยังยอมรับ
+ * string ทั่วไป — ดูคอมเมนต์หัวไฟล์ `ai/tools/proposal.ts` ว่า integrity ของ citation ตรวจตอน
+ * `emit_proposal` เท่านั้น ไม่ใช่ตอนโหลดไฟล์กลับมาอ่าน) UI/PDF จะ render เป็น text เฉย ๆ อยู่แล้วเพราะใช้
+ * ตัวตรวจเดียวกัน (`@/lib/safeUrl`) — ฟังก์ชันนี้แค่รวบรวมเป็นคำเตือนให้ `LoadPage` แสดงแถบเตือนก่อน */
+function collectUnsafeWebCitationWarnings(file: TgbpFile): string[] {
+  const warnings: string[] = [];
+  const seen = new Set<string>();
+
+  function warnIfUnsafe(url: string, context: string): void {
+    if (isSafeHttpsUrl(url)) {
+      return;
+    }
+    const key = `${context}::${url}`;
+    if (seen.has(key)) {
+      return;
+    }
+    seen.add(key);
+    warnings.push(
+      `${context}: URL "${url}" ไม่ใช่ https ที่ปลอดภัย — แสดงเป็นข้อความเท่านั้น ไม่ใช่ลิงก์ที่กดได้`,
+    );
+  }
+
+  file.proposalVersions.forEach((version, versionIndex) => {
+    const versionLabel = `เวอร์ชัน ${String(versionIndex + 1)}`;
+    for (const line of version.proposal.boq) {
+      for (const citation of line.citations) {
+        if (citation.kind === 'web') {
+          warnIfUnsafe(citation.url, `${versionLabel} · BOQ "${line.item}"`);
+        }
+      }
+    }
+    for (const finding of version.proposal.audit_findings ?? []) {
+      for (const citation of finding.citations) {
+        if (citation.kind === 'web') {
+          warnIfUnsafe(citation.url, `${versionLabel} · ข้อสังเกตจากการตรวจสอบ`);
+        }
+      }
+    }
+    for (const webCitation of version.proposal.citations_web) {
+      warnIfUnsafe(webCitation.url, `${versionLabel} · แหล่งอ้างอิงจากเว็บ`);
+    }
+  });
+
+  return warnings;
+}
 
 export function parseTgbpFile(text: string): ParseTgbpFileResult {
   const byteLength = new TextEncoder().encode(text).length;
@@ -165,9 +276,9 @@ export function parseTgbpFile(text: string): ParseTgbpFileResult {
 
   const result = TgbpFileSchema.safeParse(parsedJson);
   if (!result.success) {
-    return { ok: false, error: 'โครงสร้างไฟล์ไม่ตรงกับรูปแบบ .tgbp.json ที่รองรับ (format/version ไม่ตรง หรือฟิลด์ไม่ครบ)' };
+    return { ok: false, error: describeSchemaError(result.error) };
   }
-  return { ok: true, file: result.data };
+  return { ok: true, file: result.data, loadWarnings: collectUnsafeWebCitationWarnings(result.data) };
 }
 
 /** เพื่อความสะดวกของผู้เรียก (T-502 UI) — คืน `Proposal` ที่ index ที่ระบุ (หรือ `undefined`) */

@@ -1,28 +1,16 @@
 import type { ReactElement, ReactNode } from 'react';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { cn, FOCUS_RING } from '@/components/ui/utils';
+import { parseSafeHttpsUrl } from '@/lib/safeUrl';
 
 /**
- * T-402/T-307 — ลิงก์ภายนอกเดียวที่อนุญาตให้ใช้ในระบบ (citation เว็บ, drawer, แชท — 06 §4.4)
- * https เท่านั้น: URL ที่ไม่ใช่ https (http/javascript:/data:/relative ฯลฯ) จะ **ไม่ใช่ลิงก์** —
- * render เป็น text node ธรรมดา (ไม่มี href ให้กด) กัน scheme อันตรายและ mixed content
+ * T-402/T-307/T-602 (NEW-M5) — ลิงก์ภายนอกเดียวที่อนุญาตให้ใช้ในระบบ (citation เว็บ, drawer, แชท —
+ * 06 §4.4) https เท่านั้น: URL ที่ไม่ใช่ https ปลอดภัย (ดู `@/lib/safeUrl#parseSafeHttpsUrl` — https
+ * เท่านั้น, ไม่มี userinfo, ไม่มีอักขระควบคุม) จะ **ไม่ใช่ลิงก์** — render เป็น text node ธรรมดา (ไม่มี
+ * href ให้กด) กัน scheme อันตรายและ mixed content
  * ไม่ prefetch, ไม่โหลด favicon/รูป preview จากโดเมนนั้น (ไม่มี request ใด ๆ ออกจาก component นี้ นอกจาก
  * การเปิดแท็บใหม่โดยผู้ใช้เอง)
  */
-
-function parseHttpsUrl(href: string): URL | null {
-  try {
-    const url = new URL(href);
-    // main thread review: ปฏิเสธ URL ที่มี userinfo (`https://bank.example@evil.example/`) — รูปแบบหลอกตา
-    // ให้ดูเหมือนโดเมนที่น่าเชื่อถือ; URL จากโมเดล/ผลค้นเว็บไม่มีเหตุให้ต้องมี user:pass
-    if (url.protocol !== 'https:' || url.username !== '' || url.password !== '') {
-      return null;
-    }
-    return url;
-  } catch {
-    return null;
-  }
-}
 
 export interface ExternalLinkProps {
   href: string;
@@ -42,7 +30,7 @@ export function ExternalLink({
   hideCopyButton = false,
   className,
 }: ExternalLinkProps): ReactElement {
-  const url = parseHttpsUrl(href);
+  const url = parseSafeHttpsUrl(href);
 
   if (!url) {
     // ไม่ใช่ https ที่ถูกต้อง — แสดงเป็นข้อความล้วน (ไม่มี href ให้กด, ไม่มี request ใด ๆ)

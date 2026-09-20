@@ -21,6 +21,7 @@
  * ห้าม import React/DOM API (module boundary — docs/04-ARCHITECTURE.md §3)
  */
 import Anthropic from '@anthropic-ai/sdk';
+import { isSafeHttpsUrl } from '@/lib/safeUrl';
 import { costFromUsage } from './pricing';
 import type { EffortLevel, ModelId } from './models';
 import { buildRequestParams, type SystemPromptInput } from './requestBuilder';
@@ -301,7 +302,7 @@ function processServerToolBlocks(
     if (block.type === 'web_search_tool_result') {
       if (Array.isArray(block.content)) {
         for (const result of block.content) {
-          if (result.url.startsWith('https://')) {
+          if (isSafeHttpsUrl(result.url)) {
             toolContext.toolLog.recordWebUrl(result.url);
           }
         }

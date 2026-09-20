@@ -28,6 +28,7 @@
  * `ai/**`) จะ "ปล่อยผ่านเหมือนพฤติกรรมเดิม" (ตรวจไม่ได้ ≠ ปฏิเสธ) ไม่ใช่ throw
  */
 import { z } from 'zod';
+import { isSafeHttpsUrl } from '@/lib/safeUrl';
 import type { SourceFingerprint } from '../toolLog';
 import { createTool, type ToolContext } from './toolKit';
 
@@ -583,7 +584,7 @@ function isCitationResolved(c: Citation, ctx: ToolContext): boolean {
     case 'econ':
       return ctx.toolLog.hasEconValue(c.indicator, c.year_be);
     case 'web':
-      return c.url.startsWith('https://') && ctx.toolLog.hasWebUrl(c.url);
+      return isSafeHttpsUrl(c.url) && ctx.toolLog.hasWebUrl(c.url);
   }
 }
 
@@ -631,7 +632,7 @@ function filterCitations(
     } else {
       warnings.push(
         `${label}: ตัด citation ที่อ้างอิงไม่พบใน ToolLog ของบทสนทนานี้ (${describeCitation(c)}) — ` +
-          (c.kind === 'web' && !c.url.startsWith('https://')
+          (c.kind === 'web' && !isSafeHttpsUrl(c.url)
             ? 'URL ต้องเป็น https:// เท่านั้น'
             : 'ไม่เคยปรากฏจากผลลัพธ์ tool ในบทสนทนานี้'),
       );
@@ -937,7 +938,7 @@ function processWebCitation(
   ctx: ToolContext,
   warnings: string[],
 ): WebCitation | null {
-  if (!w.url.startsWith('https://')) {
+  if (!isSafeHttpsUrl(w.url)) {
     warnings.push(`citations_web: URL ต้องเป็น https:// เท่านั้น (${w.url}) — ตัดออก`);
     return null;
   }

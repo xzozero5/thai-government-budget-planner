@@ -21,6 +21,10 @@ export interface ProposalPdfTrendImage {
   basisLabel?: string;
   /** ผลรวม n ของทุกจุดที่มีข้อมูล — ไม่มีเมื่อเป็นตัวชี้วัดเศรษฐกิจ (จุดละ 1 ค่า ไม่มีแนวคิดขนาดตัวอย่าง) */
   nTotal?: number;
+  /** T-602 (เก็บตก PDF, N3) — `true` เมื่อ series นี้เป็นตัวชี้วัดเศรษฐกิจที่ยังไม่ได้ตรวจทาน
+   * (`EconTrend.verified === false`) — `ProposalDocument.tsx` แสดงคำบรรยาย `proposal.stat.unverified`
+   * ต่อท้าย caption เมื่อเป็น `true`; ไม่มีค่า/`false` = ไม่แสดง */
+  unverified?: boolean;
 }
 
 export interface ProposalPdfImages {

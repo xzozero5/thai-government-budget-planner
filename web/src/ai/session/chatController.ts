@@ -30,6 +30,7 @@ import { hasCrossedBudgetWarningThreshold } from './budgetWarning';
 import * as keyHolder from './keyHolder';
 import { redactSecrets } from './redactSecrets';
 import { buildProductionSystemBlocks } from './systemPrompt';
+import { sanitizeInjectedText } from './userMessageParts';
 
 export interface ChatControllerDeps {
   dataFacade?: DataFacade;
@@ -55,9 +56,12 @@ export interface ChatController {
   reset: () => void;
 }
 
+// T-602 (NEW-M4) — `boqLineId` มาจาก `BoqLine.id` ซึ่งเป็นสตริงที่โมเดลกำหนดเอง (schema อนุญาตถึง 200
+// ตัวอักษร ไม่ได้บังคับรูปแบบ) ต้องผ่าน `sanitizeInjectedText` ก่อนฉีดกลับเข้าข้อความ user role เสมอ
+// (กันคำสั่งแฝงข้ามบรรทัด/backtick/วงเล็บมุมที่ปนมากับ id)
 function buildReviewPrompt(boqLineId: string | undefined): string {
   if (boqLineId !== undefined) {
-    return `ผู้ใช้แก้ไขบรรทัด BOQ (id=${boqLineId}) ในตารางด้วยตนเองแล้ว กรุณาทบทวนข้อเสนอทั้งฉบับอีกครั้งโดยเฉพาะบรรทัดนี้ และปรับ rationale/สมมติฐานที่เกี่ยวข้องให้สอดคล้องกัน`;
+    return `ผู้ใช้แก้ไขบรรทัด BOQ (id=${sanitizeInjectedText(boqLineId)}) ในตารางด้วยตนเองแล้ว กรุณาทบทวนข้อเสนอทั้งฉบับอีกครั้งโดยเฉพาะบรรทัดนี้ และปรับ rationale/สมมติฐานที่เกี่ยวข้องให้สอดคล้องกัน`;
   }
   return 'ผู้ใช้แก้ไขตาราง BOQ ด้วยตนเองแล้ว กรุณาทบทวนข้อเสนอทั้งฉบับอีกครั้งให้สอดคล้องกับค่าที่แก้';
 }

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import type { ReactElement } from 'react';
 import type { BoqLine, Citation } from '@/ai/tools/proposal';
 import { sessionChatController } from '@/ai/session/chatController';
-import { Drawer, useToast } from '@/components/ui';
+import { sanitizeInjectedText } from '@/ai/session/userMessageParts';
+import { Drawer, ErrorBoundary, useToast } from '@/components/ui';
 import type { Dataset } from '@/data';
 import { CitationDrawer, datasetTypeLabel, getCitationChipLabel, getWebDomain } from '@/features/citations';
 import { ExportDialog, saveSessionFile } from '@/features/export';
@@ -160,8 +161,12 @@ export function ProposalPaneContainer({ onOpenCitation }: ProposalPaneContainerP
     });
   }
 
+  // T-602 (NEW-M4) — `title` มาจาก `IllustrationRef.title` ที่โมเดลตั้งเอง (สตริงอิสระ ≤ 300 ตัวอักษร)
+  // ต้องผ่าน `sanitizeInjectedText` ก่อนฉีดกลับเข้าข้อความ user role
   function handleRegenerateIllustration(title: string): void {
-    void sessionChatController.sendMessage(t('proposal.illustration.regenerateRequest', { title }));
+    void sessionChatController.sendMessage(
+      t('proposal.illustration.regenerateRequest', { title: sanitizeInjectedText(title) }),
+    );
   }
 
   async function handleSave(): Promise<void> {
@@ -175,59 +180,64 @@ export function ProposalPaneContainer({ onOpenCitation }: ProposalPaneContainerP
 
   return (
     <>
-      <ProposalPane
-        proposal={proposal}
-        warnings={warnings}
-        versions={versionInfos}
-        currentVersionIndex={currentIndex}
-        onSelectVersion={handleSelectVersion}
-        editedLineIds={editedLineIds}
-        onEditLine={handleEditLine}
-        onRequestReview={handleRequestReview}
-        onOpenCitation={onOpenCitation}
-        onExport={() => {
-          setExportOpen(true);
-        }}
-        onSave={() => {
-          void handleSave();
-        }}
-        isAiRunning={isAiRunning}
-        resolveCitationLabel={resolveCitationLabel}
-        isCitationUnresolved={isCitationUnresolved}
-        renderStatCards={(cards) => (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {cards.map((card, index) => (
-              <ProposalStatCard
-                key={`${card.trend_ref.kind}-${card.trend_ref.key}-${String(index)}`}
-                card={card}
-              />
-            ))}
-          </div>
-        )}
-        renderTrend={(trendRef) => <BoqTrendCell trendRef={trendRef} />}
-        renderIllustration={(illustrationRef) => (
-          <ProposalIllustration
-            illustrationRef={illustrationRef}
-            illustrationSink={illustrationSink}
-            hidden={hiddenIllustrationIds.has(illustrationRef.illustration_id)}
-            onHide={() => {
-              handleHideIllustration(illustrationRef.illustration_id);
-            }}
-            onShow={() => {
-              handleShowIllustration(illustrationRef.illustration_id);
-            }}
-            // S9: ระหว่าง AI กำลังรันเทิร์นอยู่ ไม่ส่ง `onRegenerate` มาเลย (แทนการ disable ปุ่มเอง เพราะ
-            // `IllustrationFrame` ไม่มี prop แยกสำหรับปิดปุ่มโดยไม่ซ่อนมันไปด้วย)
-            {...(!isAiRunning
-              ? {
-                  onRegenerate: () => {
-                    handleRegenerateIllustration(illustrationRef.title);
-                  },
-                }
-              : {})}
-          />
-        )}
-      />
+      {/* T-602 (NEW-H1 ส่วนที่เหลือ) — error ระหว่าง render ที่มาจากข้อมูลของ session นี้ (proposal ของ
+          AI/ค่าที่ผู้ใช้แก้เอง) ต้องไม่ทำให้ทั้งหน้าขาว — `resetKey` ผูกกับ id ของเวอร์ชันที่กำลังแสดง
+          เปลี่ยนเวอร์ชัน/มีเวอร์ชันใหม่แล้ว error เดิมต้องหายไปเอง */}
+      <ErrorBoundary variant="section" resetKey={currentVersion?.id ?? currentIndex}>
+        <ProposalPane
+          proposal={proposal}
+          warnings={warnings}
+          versions={versionInfos}
+          currentVersionIndex={currentIndex}
+          onSelectVersion={handleSelectVersion}
+          editedLineIds={editedLineIds}
+          onEditLine={handleEditLine}
+          onRequestReview={handleRequestReview}
+          onOpenCitation={onOpenCitation}
+          onExport={() => {
+            setExportOpen(true);
+          }}
+          onSave={() => {
+            void handleSave();
+          }}
+          isAiRunning={isAiRunning}
+          resolveCitationLabel={resolveCitationLabel}
+          isCitationUnresolved={isCitationUnresolved}
+          renderStatCards={(cards) => (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {cards.map((card, index) => (
+                <ProposalStatCard
+                  key={`${card.trend_ref.kind}-${card.trend_ref.key}-${String(index)}`}
+                  card={card}
+                />
+              ))}
+            </div>
+          )}
+          renderTrend={(trendRef) => <BoqTrendCell trendRef={trendRef} />}
+          renderIllustration={(illustrationRef) => (
+            <ProposalIllustration
+              illustrationRef={illustrationRef}
+              illustrationSink={illustrationSink}
+              hidden={hiddenIllustrationIds.has(illustrationRef.illustration_id)}
+              onHide={() => {
+                handleHideIllustration(illustrationRef.illustration_id);
+              }}
+              onShow={() => {
+                handleShowIllustration(illustrationRef.illustration_id);
+              }}
+              // S9: ระหว่าง AI กำลังรันเทิร์นอยู่ ไม่ส่ง `onRegenerate` มาเลย (แทนการ disable ปุ่มเอง เพราะ
+              // `IllustrationFrame` ไม่มี prop แยกสำหรับปิดปุ่มโดยไม่ซ่อนมันไปด้วย)
+              {...(!isAiRunning
+                ? {
+                    onRegenerate: () => {
+                      handleRegenerateIllustration(illustrationRef.title);
+                    },
+                  }
+                : {})}
+            />
+          )}
+        />
+      </ErrorBoundary>
       <ExportDialog
         open={exportOpen}
         onClose={() => {
@@ -274,36 +284,51 @@ export function CitationDrawerContainer({ state, onClose }: CitationDrawerContai
   useToolLogStore((s) => s.version);
   const loaders = createCitationDrawerLoaders(toolLog);
   const { push } = useToast();
+  // T-602 (NEW-H1 ส่วนที่เหลือ) — resetKey ของ boundary ด้านล่างผูกกับ id ของเวอร์ชันที่กำลังแสดงอยู่
+  // (เดียวกับ `ProposalPaneContainer`) เผื่อ citation detail ที่โหลดมาจาก `ToolLog`/fingerprint ของ
+  // เวอร์ชันเก่าทำให้ render พัง — เปลี่ยนเวอร์ชันแล้ว error เดิมต้องหายไปเอง
+  const currentVersion = useProposalStore(getCurrentProposalVersion);
 
   // S10 (po-review ชุด B, US-4.3): "ไม่เอาราคานี้" ส่งข้อความขอผู้ช่วยเลิกใช้ราคานั้นจริง (ข้อความจาก copy
   // `citation.web.rejectRequest`) + toast ยืนยันด้วยชื่อโดเมน — ไม่แก้ proposal/ToolLog เองที่นี่ (ให้ผู้ช่วย
   // เป็นคนแก้ในรอบถัดไปตามปกติของ flow นี้ทั้งระบบ)
+  //
+  // T-602 (NEW-M4) — เดิมส่ง URL เต็มจากผลค้นเว็บ (โมเดล/เว็บอื่นคุมได้) เข้า user role ตรง ๆ เปลี่ยนเป็น
+  // ส่งเฉพาะ host (`getWebDomain`) ผ่าน `sanitizeInjectedText` แทน — ลดพื้นที่ query string/path ที่อาจ
+  // ใช้ฝังคำสั่งแฝง ยังคงใช้ placeholder `{url}` เดิมของ copy (ห้ามแก้ข้อความ key เดิม)
   function handleRejectWeb(citation: Extract<Citation, { kind: 'web' }>): void {
-    void sessionChatController.sendMessage(t('citation.web.rejectRequest', { url: citation.url }));
+    const host = getWebDomain(citation.url) ?? citation.url;
+    void sessionChatController.sendMessage(
+      t('citation.web.rejectRequest', { url: sanitizeInjectedText(host) }),
+    );
     push({
-      title: t('toast.citationRejected', { domain: getWebDomain(citation.url) ?? citation.url }),
+      title: t('toast.citationRejected', { domain: host }),
       variant: 'info',
     });
   }
 
   if (state?.kind === 'citation') {
     return (
-      <CitationDrawer
-        open
-        onClose={onClose}
-        citation={state.citation}
-        loaders={loaders}
-        onRejectWeb={handleRejectWeb}
-        {...(state.contextLine ? { contextLine: state.contextLine } : {})}
-      />
+      <ErrorBoundary variant="section" {...(currentVersion ? { resetKey: currentVersion.id } : {})}>
+        <CitationDrawer
+          open
+          onClose={onClose}
+          citation={state.citation}
+          loaders={loaders}
+          onRejectWeb={handleRejectWeb}
+          {...(state.contextLine ? { contextLine: state.contextLine } : {})}
+        />
+      </ErrorBoundary>
     );
   }
 
   return (
-    <Drawer open={state?.kind === 'toolActivity'} onClose={onClose} title={t('citation.drawerTitle')}>
-      <p className="text-sm text-fg-muted">
-        {state?.kind === 'toolActivity' ? state.context.label : t('common.none')}
-      </p>
-    </Drawer>
+    <ErrorBoundary variant="section" {...(currentVersion ? { resetKey: currentVersion.id } : {})}>
+      <Drawer open={state?.kind === 'toolActivity'} onClose={onClose} title={t('citation.drawerTitle')}>
+        <p className="text-sm text-fg-muted">
+          {state?.kind === 'toolActivity' ? state.context.label : t('common.none')}
+        </p>
+      </Drawer>
+    </ErrorBoundary>
   );
 }

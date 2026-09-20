@@ -24,10 +24,22 @@ describe('buildTrendSvg', () => {
     expect(svg).toContain('viewBox=');
   });
 
-  it('escape อักขระพิเศษในชื่อรายการ (กัน XML แตก และกัน XSS หากมีคนพยายามยัด "<")', () => {
+  it('T-602 (เก็บตก PDF, N3) — มีจุดข้อมูลจริง: title ไม่ถูกวาดซ้ำในรูปอีกต่อไป (ซ้ำกับ SubHeading เหนือรูปใน ProposalDocument.tsx) แต่ escape ป้ายค่าต่ำสุด/สูงสุด (ตัวเลขล้วน) อยู่แล้วโดยไม่ต้องพึ่ง title', () => {
     const svg = buildTrendSvg({
       title: '<script>alert(1)</script> & "ทดสอบ"',
       points: [{ yearBe: 2567, median: 10, n: 5 }],
+    });
+    expect(svg).not.toContain('<script>');
+    // title ไม่ปรากฏในรูปเลยไม่ว่า escape แล้วหรือดิบ — ตัดความซ้ำซ้อนกับหัวข้อที่แสดงนอกรูป
+    expect(svg).not.toContain('ทดสอบ');
+    expect(svg).not.toContain('&lt;script&gt;');
+    expect(sanitizeSvg(svg).ok).toBe(true);
+  });
+
+  it('escape อักขระพิเศษในชื่อรายการของ placeholder "ไม่มีข้อมูล" (กัน XML แตก และกัน XSS หากมีคนพยายามยัด "<")', () => {
+    const svg = buildTrendSvg({
+      title: '<script>alert(1)</script> & "ทดสอบ"',
+      points: [],
     });
     expect(svg).not.toContain('<script>');
     expect(svg).toContain('&lt;script&gt;');

@@ -26,7 +26,44 @@ const DEFAULT_SCALE = 2;
 const DEFAULT_FALLBACK_WIDTH = 800;
 const DEFAULT_FALLBACK_HEIGHT = 450;
 
-/** อ่านขนาดจริงของ SVG จาก `viewBox` ก่อน (แม่นยำสุด) แล้วค่อย fallback ไป `width`/`height` attribute */
+/** T-602 (NEW-L7) — เพดานขนาด canvas ต่อด้าน (px) หลังคูณ `scale` แล้ว: `viewBox` ของ SVG (มาจากตัวระบบ
+ * สร้างเอง `trendSvg.ts` ก็จริง แต่ผ่าน sanitizer/serializer มาก่อน — กันไว้เป็น defense-in-depth เผื่อ
+ * ค่าที่ผิดปกติ/ใหญ่ผิดธรรมชาติหลุดมาถึงจุดนี้) ไม่ควรทำให้เบราว์เซอร์พยายามจอง canvas ขนาดมหาศาลจนค้าง/
+ * ล่ม (DoS ฝั่ง client) */
+export const MAX_CANVAS_DIMENSION_PX = 4000;
+
+/** จำกัดขนาด canvas เป้าหมายไม่ให้เกิน `maxPx` ต่อด้าน โดยคงอัตราส่วนกว้าง/ยาวเดิมไว้เสมอ — ค่าที่ไม่ใช่
+ * ตัวเลขจำกัด (`NaN`/`Infinity`) ถือว่าใช้ไม่ได้ ปัดกลับเป็นขนาดขั้นต่ำ 1×1 อย่างปลอดภัย (ไม่ throw) */
+export function clampCanvasSize(
+  widthPx: number,
+  heightPx: number,
+  maxPx: number = MAX_CANVAS_DIMENSION_PX,
+): { width: number; height: number } {
+  if (!Number.isFinite(widthPx) || !Number.isFinite(heightPx) || widthPx <= 0 || heightPx <= 0) {
+    return { width: 1, height: 1 };
+  }
+  const width = Math.max(1, Math.round(widthPx));
+  const height = Math.max(1, Math.round(heightPx));
+  const largest = Math.max(width, height);
+  if (largest <= maxPx) {
+    return { width, height };
+  }
+  const ratio = maxPx / largest;
+  return {
+    width: Math.max(1, Math.round(width * ratio)),
+    height: Math.max(1, Math.round(height * ratio)),
+  };
+}
+
+/** true เฉพาะตัวเลขบวกที่ finite (ปฏิเสธ `NaN`/`Infinity`/0/ติดลบ) — ค่าจาก `viewBox`/`width`/`height`
+ * ของ SVG ที่ผิดปกติ (เช่นสตริงตัวเลขยาวผิดธรรมชาติจน overflow เป็น `Infinity`) ต้องไม่ถูกใช้ตรง ๆ */
+function isFinitePositive(value: number): boolean {
+  return Number.isFinite(value) && value > 0;
+}
+
+/** อ่านขนาดจริงของ SVG จาก `viewBox` ก่อน (แม่นยำสุด) แล้วค่อย fallback ไป `width`/`height` attribute —
+ * ค่าที่ parse ได้แต่ไม่ใช่ตัวเลขบวกจำกัด (0/ติดลบ/`Infinity` จากสตริงยาวผิดปกติ) ถือว่าใช้ไม่ได้ ปัดกลับไป
+ * ใช้ `fallback` เสมอแทนการปล่อยค่าที่ผิดปกติออกไป (T-602 NEW-L7) */
 export function resolveSvgDimensions(
   svgString: string,
   fallback: { width: number; height: number },
@@ -36,15 +73,15 @@ export function resolveSvgDimensions(
   if (viewBoxMatch?.[1] !== undefined && viewBoxMatch[2] !== undefined) {
     const width = Number(viewBoxMatch[1]);
     const height = Number(viewBoxMatch[2]);
-    if (width > 0 && height > 0) return { width, height };
+    if (isFinitePositive(width) && isFinitePositive(height)) return { width, height };
   }
   const widthMatch = /\bwidth\s*=\s*["']?([\d.]+)/i.exec(svgString);
   const heightMatch = /\bheight\s*=\s*["']?([\d.]+)/i.exec(svgString);
   const width = widthMatch?.[1] !== undefined ? Number(widthMatch[1]) : fallback.width;
   const height = heightMatch?.[1] !== undefined ? Number(heightMatch[1]) : fallback.height;
   return {
-    width: width > 0 ? width : fallback.width,
-    height: height > 0 ? height : fallback.height,
+    width: isFinitePositive(width) ? width : fallback.width,
+    height: isFinitePositive(height) ? height : fallback.height,
   };
 }
 
@@ -94,8 +131,9 @@ export async function svgToPngDataUrl(
   if (img === null) return null;
 
   const canvas = document.createElement('canvas');
-  canvas.width = Math.max(1, Math.round(width * scale));
-  canvas.height = Math.max(1, Math.round(height * scale));
+  const clamped = clampCanvasSize(width * scale, height * scale);
+  canvas.width = clamped.width;
+  canvas.height = clamped.height;
   const ctx = canvas.getContext('2d');
   if (ctx === null) return null;
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);

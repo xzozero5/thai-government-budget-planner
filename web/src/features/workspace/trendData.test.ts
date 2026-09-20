@@ -67,4 +67,14 @@ describe('toExportTrendData (T-504)', () => {
       { yearBe: 2567, median: 109.5 },
     ]);
   });
+
+  it('T-602 (เก็บตก PDF, N3): ส่งต่อ EconTrend.verified จริง (docs/econ-sources.md — ทุกตัว verified:false เสมอ)', () => {
+    const exported = toExportTrendData(makeEconTrend());
+    expect(exported.verified).toBe(false);
+  });
+
+  it('PriceTrend ไม่มีแนวคิด verified — ไม่ตั้งค่า field นี้เลย', () => {
+    const exported = toExportTrendData(makePriceTrend());
+    expect(exported.verified).toBeUndefined();
+  });
 });

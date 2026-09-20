@@ -41,7 +41,10 @@ export const TREND_SVG_MIN_SOLID_N = 3;
 
 const WIDTH = 640;
 const HEIGHT = 360;
-const MARGIN = { top: 44, right: 28, bottom: 44, left: 60 } as const;
+// T-602 (เก็บตก PDF, N3) — เดิม `top: 44` เผื่อพื้นที่ให้ title ที่วาดในรูปเอง ตอนนี้ชื่อกราฟแสดงเป็น
+// `SubHeading` จริง (PDF text ที่ค้นหา/คัดลอกได้) เหนือรูปใน `ProposalDocument.tsx` แล้วเพียงจุดเดียว —
+// ตัด title ออกจากในรูป (กัน "ชื่อกราฟซ้ำ 2 ที่") จึงลดระยะขอบบนลง เหลือพอสำหรับป้ายค่าสูงสุดที่ลอยเหนือจุด
+const MARGIN = { top: 24, right: 28, bottom: 44, left: 60 } as const;
 const PLOT_LEFT = MARGIN.left;
 const PLOT_RIGHT = WIDTH - MARGIN.right;
 const PLOT_TOP = MARGIN.top;
@@ -245,6 +248,12 @@ function buildExtremeLabels(sorted: readonly TrendSvgPoint[], scales: Scales): s
 /**
  * สร้าง SVG string ของกราฟแนวโน้มราคา — ผลลัพธ์ต้องผ่าน `sanitizeSvg` (`@/lib/svgSanitizer`) เสมอก่อนแปลง
  * เป็น PNG จริง (ดูหัวไฟล์) แม้จะสร้างจากในระบบเอง ไม่ใช่จาก AI ก็ตาม (N9 defense-in-depth)
+ *
+ * T-602 (เก็บตก PDF, N3) — `title` **ไม่ถูกวาดซ้ำในรูป** อีกต่อไปเมื่อมีจุดข้อมูล (เดิมซ้ำกับ `SubHeading`
+ * ที่ `ProposalDocument.tsx` วาดไว้เหนือรูปแล้ว — เก็บชื่อไว้จุดเดียวที่เป็น PDF text จริง ค้นหา/คัดลอกได้
+ * ต่างจากตัวหนังสือที่ raster เป็นพิกเซลในรูป) กรณี "ไม่มีข้อมูล" (`emptyStateSvg`) ยังคงแสดง title ในรูป
+ * เหมือนเดิม เพราะเป็น placeholder ที่ไม่ถูกใช้ในเส้นทางจริงของแอป (จุดที่ไม่มีข้อมูลถูกกรองออกไปก่อนแล้ว
+ * ใน `ExportDialog.tsx#buildTrendImages`) — เก็บไว้เพื่อ debug/ทดสอบเท่านั้น
  */
 export function buildTrendSvg({ title, points }: BuildTrendSvgInput): string {
   const sorted = [...points].sort((a, b) => a.yearBe - b.yearBe);
@@ -253,11 +262,9 @@ export function buildTrendSvg({ title, points }: BuildTrendSvgInput): string {
   }
 
   const scales = buildScales(sorted);
-  const titleText = `<text x="${px(WIDTH / 2)}" y="22" text-anchor="middle" font-family="${FONT_FAMILY}" font-size="15" font-weight="bold" fill="${COLOR_TEXT}">${escapeXml(title)}</text>`;
 
   const parts = [
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${String(WIDTH)} ${String(HEIGHT)}" width="100%" height="100%">`,
-    titleText,
     ...buildAxis(sorted, scales),
     ...buildBandShapes(sorted, scales),
     ...buildMedianLines(sorted, scales),

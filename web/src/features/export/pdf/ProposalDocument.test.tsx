@@ -61,6 +61,10 @@ function normalizedNoSpace(s: string): string {
   return normalizeToUnicodeArtifacts(stripAllWhitespace(s));
 }
 
+function countOccurrences(haystack: string, needle: string): number {
+  return needle === '' ? 0 : haystack.split(needle).length - 1;
+}
+
 function stripAllWhitespace(s: string): string {
   return s.replace(/\s+/g, '');
 }
@@ -300,6 +304,29 @@ describe('T-504 (US-8.3) — กราฟแนวโน้มราคาที
     expect(noSpace).toContain(normalizedNoSpace('อิงยอดต่อรายการงบ'));
     // การ์ดตัวชี้วัดเศรษฐกิจ (ไม่มี basisLabel/nTotal) ไม่ต้องมีคำบรรยายเพิ่ม แต่ต้องไม่ทำให้ทั้งไฟล์พัง
     expect(noSpace).toContain(normalizedNoSpace('ดัชนีราคาผู้บริโภค'));
+  }, 20_000);
+
+  it('T-602 (เก็บตก PDF, N3): กราฟตัวชี้วัดเศรษฐกิจที่ unverified:true → มีคำบรรยาย "ยังไม่ตรวจสอบ"; ชื่อกราฟปรากฏเป็น text จริงครั้งเดียว (ไม่ซ้ำ)', async () => {
+    const blob = await renderProposalPdf({
+      proposal: equipAircon,
+      images: {
+        trends: [
+          {
+            title: 'ดัชนีราคาผู้บริโภค (ทดสอบ unverified)',
+            dataUrl: buildCheckerboardPngDataUrl(8),
+            unverified: true,
+          },
+        ],
+      },
+      fontSource: TEST_FONT_SOURCE,
+    });
+    const buf = await toBuffer(blob);
+    const allText = decodeAllPagesNormalized(buf);
+    const noSpace = normalizedNoSpace(allText);
+    expect(noSpace).toContain(normalizedNoSpace(translate('proposal.stat.unverified')));
+    // ชื่อกราฟปรากฏเป็น PDF text จริงเพียงครั้งเดียว (SubHeading เหนือรูป) — ไม่ซ้ำสองครั้งเหมือนเดิม
+    // (เดิมซ้ำกับ title ที่ raster เป็นพิกเซลในรูปเอง ซึ่งไม่นับเป็น PDF text อยู่แล้ว จึงนับจาก text ล้วน ๆ)
+    expect(countOccurrences(noSpace, normalizedNoSpace('ดัชนีราคาผู้บริโภค(ทดสอบunverified)'))).toBe(1);
   }, 20_000);
 
   it('sections.trends=false → ไม่มีหัวข้อ/รูปกราฟแม้ส่ง images.trends มา (ปิดที่ระดับ ProposalDocument เอง)', async () => {

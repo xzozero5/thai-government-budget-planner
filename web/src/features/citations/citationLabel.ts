@@ -12,18 +12,17 @@
 import type { Citation } from '@/ai/tools/proposal';
 import type { Dataset } from '@/data';
 import { t, type CopyKey } from '@/i18n';
+import { isSafeHttpsUrl } from '@/lib/safeUrl';
 
 // ---------------------------------------------------------------------------
 // URL helpers (web citation) — ไม่ fetch ปลายทางใด ๆ (N5), แค่ parse ด้วย `URL` ในตัวเบราว์เซอร์
 // ---------------------------------------------------------------------------
 
-/** true เฉพาะ `https://` เท่านั้น (T-307/N5) — ใช้ตัดสินว่าจะ render เป็นลิงก์ได้หรือต้องเป็น text */
+/** true เฉพาะ https ที่ปลอดภัยเท่านั้น (T-307/N5/T-602 NEW-M5) — wrapper บาง ๆ รอบตัวตรวจกลาง
+ * `@/lib/safeUrl#isSafeHttpsUrl` (คงชื่อ export เดิมไว้เพราะมีที่อื่นอ้างถึงอยู่แล้ว) ใช้ตัดสินว่าจะ
+ * render เป็นลิงก์ได้หรือต้องเป็น text */
 export function isHttpsUrl(url: string): boolean {
-  try {
-    return new URL(url).protocol === 'https:';
-  } catch {
-    return false;
-  }
+  return isSafeHttpsUrl(url);
 }
 
 /** โดเมนของ URL (ตัด `www.` นำหน้า) สำหรับแสดงเป็น text — คืน `null` ถ้า parse ไม่ได้ */

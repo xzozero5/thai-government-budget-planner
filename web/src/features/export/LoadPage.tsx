@@ -17,7 +17,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent, ReactElement } from 'react';
 import { Link } from 'react-router-dom';
 import type { Citation } from '@/ai/tools/proposal';
-import { Button, Card, Spinner } from '@/components/ui';
+import { Button, Card, ErrorBoundary, Spinner } from '@/components/ui';
 import { CitationDrawer, type CitationDrawerLoaders } from '@/features/citations';
 import { ProposalPane } from '@/features/proposal/ProposalPane';
 import { ProposalReadOnlyContext } from '@/features/proposal/readOnlyContext';
@@ -27,7 +27,7 @@ import { downloadBlob } from './downloadBlob';
 import { ExportDialog, type ExportSource } from './ExportDialog';
 import { buildTgbpFileName } from './fileNames';
 import { formatThaiBuddhistDate } from './pdf/thaiDate';
-import { parseTgbpFile, TGBP_FILE_MAX_BYTES, type TgbpFile } from './tgbpFile';
+import { parseTgbpFile, serializeTgbpFile, TGBP_FILE_MAX_BYTES, type TgbpFile } from './tgbpFile';
 
 type LoadStatus = 'idle' | 'loading' | 'error' | 'loaded';
 
@@ -63,7 +63,9 @@ export function LoadPage(): ReactElement {
   const [status, setStatus] = useState<LoadStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [file, setFile] = useState<TgbpFile | null>(null);
-  const [rawText, setRawText] = useState<string | null>(null);
+  // T-602 (NEW-M5) — URL ที่ไม่ผ่าน `isSafeHttpsUrl` ในไฟล์ที่โหลดมา (ยังคง citation ไว้ ไม่ลบ — UI/PDF
+  // render เป็น text อยู่แล้วเพราะใช้ตัวตรวจเดียวกัน) แสดงเป็นแถบเตือนให้ผู้ใช้เห็น
+  const [loadWarnings, setLoadWarnings] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [selectedCitation, setSelectedCitation] = useState<Citation | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
@@ -87,7 +89,7 @@ export function LoadPage(): ReactElement {
         return;
       }
       setFile(result.file);
-      setRawText(text);
+      setLoadWarnings(result.loadWarnings);
       setSelectedIndex(Math.max(0, result.file.currentProposalIndex));
       setStatus('loaded');
     } catch {
@@ -241,33 +243,45 @@ export function LoadPage(): ReactElement {
       </div>
 
       <div className="flex-1 overflow-y-auto">
+        {loadWarnings.length > 0 && (
+          <div role="alert" className="m-4 flex flex-col gap-1 rounded-md border border-warn bg-surface-2 p-3 text-sm text-fg">
+            {loadWarnings.map((warning, index) => (
+              <p key={index}>{warning}</p>
+            ))}
+          </div>
+        )}
         <ProposalReadOnlyContext.Provider value={true}>
-          <ProposalPane
-            proposal={selectedVersion.proposal}
-            warnings={selectedVersion.warnings}
-            versions={versionInfosFrom(file)}
-            currentVersionIndex={selectedIndex}
-            onSelectVersion={setSelectedIndex}
-            editedLineIds={selectedVersion.userEditedLineIds}
-            onEditLine={() => undefined}
-            onRequestReview={() => undefined}
-            onOpenCitation={(citation) => {
-              setSelectedCitation(citation);
-            }}
-            onExport={() => {
-              setExportOpen(true);
-            }}
-            onSave={() => {
-              if (rawText === null) {
-                return;
-              }
-              downloadBlob(
-                new Blob([rawText], { type: 'application/json' }),
-                buildTgbpFileName(selectedVersion.proposal.title),
-              );
-            }}
-            isAiRunning={false}
-          />
+          {/* T-602 (NEW-H1 ส่วนที่เหลือ) — ครอบ ProposalPane ด้วย boundary ย่อย: error จากข้อมูลในไฟล์ที่
+              ผู้ใช้เปิดเอง (ไม่ผ่านการตรวจโดยเราเอง) ต้องไม่ทำให้ทั้งหน้าขาว — `resetKey` ผูกกับ id ของ
+              เวอร์ชันที่กำลังแสดง เปลี่ยนเวอร์ชัน/เปิดไฟล์ใหม่แล้ว error เดิมต้องหายไปเอง */}
+          <ErrorBoundary variant="section" resetKey={selectedVersion.id}>
+            <ProposalPane
+              proposal={selectedVersion.proposal}
+              warnings={selectedVersion.warnings}
+              versions={versionInfosFrom(file)}
+              currentVersionIndex={selectedIndex}
+              onSelectVersion={setSelectedIndex}
+              editedLineIds={selectedVersion.userEditedLineIds}
+              onEditLine={() => undefined}
+              onRequestReview={() => undefined}
+              onOpenCitation={(citation) => {
+                setSelectedCitation(citation);
+              }}
+              onExport={() => {
+                setExportOpen(true);
+              }}
+              onSave={() => {
+                // T-602 (NEW-L8) — re-serialize จาก `TgbpFile` ที่ parse แล้ว (whitelist ทีละ field เหมือน
+                // `serializeSession`) แทนการเขียน `rawText` ดิบของไฟล์ต้นทางกลับออกไป (กัน field แปลกปลอม
+                // ที่หลุดมาจากนอกระบบก่อน `.strict()` ตัดทิ้งตอน parse ไม่ให้ย้อนกลับเข้ามาอีกรอบตอนบันทึกซ้ำ)
+                downloadBlob(
+                  new Blob([serializeTgbpFile(file)], { type: 'application/json' }),
+                  buildTgbpFileName(selectedVersion.proposal.title),
+                );
+              }}
+              isAiRunning={false}
+            />
+          </ErrorBoundary>
         </ProposalReadOnlyContext.Provider>
       </div>
 
