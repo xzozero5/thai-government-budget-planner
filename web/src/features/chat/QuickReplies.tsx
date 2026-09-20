@@ -7,6 +7,8 @@ export interface QuickRepliesProps {
 }
 
 const QUICK_REPLY_KEYS: CopyKey[] = [
+  // "ทำต่อ" มาก่อนเสมอ: ข้อความเตือนเพดานรอบ tool บอกให้ผู้ใช้กด "ทำต่อ" แต่เดิมไม่มีปุ่มนี้ (พบจาก demo จริง)
+  'chat.quickReplyContinue',
   'chat.quickReplySkip',
   'chat.quickReplyNotSure',
   'chat.quickReplyUseDefault',

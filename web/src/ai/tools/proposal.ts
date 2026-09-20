@@ -364,7 +364,13 @@ function priceTraceableViaInflation(
     const price = referencePriceOf(fp);
     return price !== null && Math.abs(price - pd.from_amount_thb) <= 1;
   });
-  if (!matchesCitedRow) return false;
+  // main thread (หลัง demo จริง 2569-09-20): โมเดลมักใช้ "ค่าเฉลี่ย/มัธยฐานของแถวที่อ้าง" เป็นราคาฐานก่อนปรับ
+  // เงินเฟ้อ ซึ่งไม่ตรงกับแถวใดแถวหนึ่งเป๊ะ ๆ → เดิมตกเป็น not traceable ทั้งที่มีหลักฐานครบ ยอมรับราคาฐานที่
+  // อยู่ "ภายในช่วง min–max ของแถวที่อ้าง" (เกณฑ์เดียวกับ `traceableByRange`) — ยังแต่งเลขนอกช่วงไม่ได้
+  const range = collectTraceRange(citations, ctx);
+  const withinCitedRange =
+    range !== null && isWithinTolerance(pd.from_amount_thb, range, HISTORICAL_PRICE_TOLERANCE_PCT);
+  if (!matchesCitedRow && !withinCitedRange) return false;
 
   return Math.abs(line.unit_price_thb - found.adjustedThb) <= 1;
 }
@@ -497,7 +503,13 @@ function processBoqLine(line: BoqLine, ctx: ToolContext, warnings: string[]): Bo
     if (fp === undefined) continue;
     if (fp.unitPriceThb !== null || fp.itemQty !== null) continue;
     if (fp.amountThb === null || fp.amountThb === 0) continue;
-    if (isWithinTolerance(line.unit_price_thb, { min: fp.amountThb, max: fp.amountThb }, HISTORICAL_PRICE_TOLERANCE_PCT)) {
+    if (
+      isWithinTolerance(
+        line.unit_price_thb,
+        { min: fp.amountThb, max: fp.amountThb },
+        HISTORICAL_PRICE_TOLERANCE_PCT,
+      )
+    ) {
       warnings.push(
         `${label}: unit_price_thb (${String(line.unit_price_thb)}) ตรงกับ amount_thb ของแถวที่อ้าง ` +
           `(source_id=${c.source_id}) ซึ่งไม่ทราบจำนวนหน่วย (amount_per_line_as_unit_price) — อาจเป็นยอดรวม` +

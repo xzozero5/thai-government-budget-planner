@@ -11,7 +11,12 @@
  *   (intersection กับ filter ปี/กระทรวง/จังหวัด) — ลดการสแกนและโอกาสชน `QueryTooBroadError`
  */
 import { z } from 'zod';
-import type { Dataset, QueryLinesParams } from '@/data';
+import {
+  QueryTooBroadError,
+  type Dataset,
+  type QueryLinesParams,
+  type QueryLinesResult,
+} from '@/data';
 import { computeImpliedUnitPriceHint } from './impliedUnitPrice';
 import {
   clampRows,
@@ -29,6 +34,55 @@ const ORDER_BY_VALUES = [
   'unit_price_asc',
   'source_id',
 ] as const;
+
+/** จำนวนปีล่าสุดที่ลองค้นให้อัตโนมัติเมื่อคำค้นกว้างเกินเพดานสแกน (ลองจากมากไปน้อย) */
+const AUTO_NARROW_YEAR_COUNTS = [3, 2, 1] as const;
+
+/**
+ * main thread (หลัง demo จริงครั้งแรก 2569-09-20): โมเดลมักส่ง `fiscal_years` กว้าง (5–11 ปี) แล้วชน
+ * `QueryTooBroadError` ซ้ำ ๆ — เสียรอบ tool + เงินของผู้ใช้โดยไม่ได้ข้อมูล (3 ใน 4 ครั้งล้มใน session จริง)
+ * ⇒ เมื่อกว้างเกิน ให้ค้น "ปีล่าสุดที่มีข้อมูล" ให้เองแล้วบอกตรง ๆ ใน warnings ว่าจำกัดปีไว้เท่าไร (ไม่เงียบ — N3)
+ * ถ้าจำกัดเหลือ 1 ปีแล้วยังกว้างเกิน จึงค่อยคืน error เดิมให้โมเดลระบุกระทรวง/หน่วยงานเพิ่ม
+ */
+async function queryWithAutoNarrow(
+  params: QueryLinesParams,
+  ctx: ToolContext,
+  warnings: string[],
+): Promise<QueryLinesResult> {
+  try {
+    return await ctx.data.queryLines(params);
+  } catch (err) {
+    if (!(err instanceof QueryTooBroadError) || err.availableYears.length === 0) {
+      throw err;
+    }
+    const requested = params.fiscalYears;
+    const candidateYears = [...err.availableYears]
+      .filter((year) => requested === undefined || requested.includes(year))
+      .sort((a, b) => b - a);
+    for (const count of AUTO_NARROW_YEAR_COUNTS) {
+      const years = candidateYears.slice(0, count);
+      if (years.length === 0 || years.length === requested?.length) {
+        continue;
+      }
+      try {
+        const narrowed = await ctx.data.queryLines({ ...params, fiscalYears: years });
+        const otherYears = err.availableYears.filter((year) => !years.includes(year));
+        warnings.push(
+          `คำค้นกว้างเกินเพดานสแกน ระบบจึงค้นเฉพาะปีงบประมาณ ${years.join(', ')} ให้อัตโนมัติ` +
+            (otherYears.length > 0
+              ? ` — ปีอื่นที่มีข้อมูล: ${otherYears.join(', ')} (เรียกซ้ำโดยระบุ fiscal_years ครั้งละไม่เกิน 3 ปีถ้าต้องการ)`
+              : ''),
+        );
+        return narrowed;
+      } catch (retryErr) {
+        if (!(retryErr instanceof QueryTooBroadError)) {
+          throw retryErr;
+        }
+      }
+    }
+    throw err;
+  }
+}
 
 export const QueryBudgetLinesInputSchema = z.object({
   item_key: z
@@ -197,7 +251,7 @@ async function handler(
     ...(input.limit !== undefined ? { limit: input.limit } : {}),
   };
 
-  const result = await ctx.data.queryLines(params);
+  const result = await queryWithAutoNarrow(params, ctx, warnings);
 
   const rows = clampRows(result.rows).map((line) => {
     const priceBasis: 'unit_price' | 'amount_per_line' =

@@ -31,6 +31,9 @@ import {
   type ExportSections,
 } from './pdfInputs';
 
+/** ค่า sentinel ภายในไฟล์นี้: error จาก chunk ที่หายหลัง deploy ใหม่ → แสดง `export.staleVersion` แทน */
+const STALE_VERSION_MARKER = '__stale_version__';
+
 export interface ExportSource {
   proposal: Proposal;
   warnings: string[];
@@ -46,7 +49,11 @@ export interface ExportDialogProps {
 
 type ExportPhase = 'idle' | 'preparingImages' | 'renderingPdf' | 'downloading' | 'done' | 'error';
 
-const BUSY_PHASES: ReadonlySet<ExportPhase> = new Set(['preparingImages', 'renderingPdf', 'downloading']);
+const BUSY_PHASES: ReadonlySet<ExportPhase> = new Set([
+  'preparingImages',
+  'renderingPdf',
+  'downloading',
+]);
 
 export function ExportDialog({ open, onClose, source }: ExportDialogProps): ReactElement {
   const liveVersion = useProposalStore(getCurrentProposalVersion);
@@ -59,7 +66,11 @@ export function ExportDialog({ open, onClose, source }: ExportDialogProps): Reac
   const effectiveSource: ExportSource | null =
     source ??
     (liveVersion
-      ? { proposal: liveVersion.proposal, warnings: liveVersion.warnings, editedLineIds: liveVersion.userEditedLineIds }
+      ? {
+          proposal: liveVersion.proposal,
+          warnings: liveVersion.warnings,
+          editedLineIds: liveVersion.userEditedLineIds,
+        }
       : null);
 
   const [sections, setSections] = useState<ExportSections>(DEFAULT_EXPORT_SECTIONS);
@@ -83,10 +94,23 @@ export function ExportDialog({ open, onClose, source }: ExportDialogProps): Reac
   }, [open]);
 
   const proposal = effectiveSource?.proposal ?? null;
+  const hasProposal = proposal !== null;
+
+  // โหลด chunk ของตัวสร้าง PDF ล่วงหน้าทันทีที่มีข้อเสนอ (พบจาก demo จริง: ถ้าเว็บถูก deploy เวอร์ชันใหม่ระหว่างที่
+  // ผู้ใช้เปิดแท็บค้างไว้ chunk ชื่อเดิมจะหายจาก server → กดส่งออกแล้วพัง และรีเฟรชไม่ได้เพราะ key/แชทอยู่ใน
+  // หน่วยความจำ) — โหลดไว้ก่อนตั้งแต่ยังมีไฟล์อยู่ ลดโอกาสเจอกรณีนี้ (เป็นไฟล์ JS ของเราเอง ไม่ออกนอก origin)
+  useEffect(() => {
+    if (hasProposal) {
+      void import('./pdf/renderProposalPdf').catch(() => undefined);
+    }
+  }, [hasProposal]);
+
   const hasIllustrationSource =
     !isLoadedFileMode && illustrationSink !== null && (proposal?.illustrations.length ?? 0) > 0;
 
-  const warningsInfo = proposal ? computeExportWarningsInfo(proposal, effectiveSource?.warnings ?? []) : null;
+  const warningsInfo = proposal
+    ? computeExportWarningsInfo(proposal, effectiveSource?.warnings ?? [])
+    : null;
   const isBusy = BUSY_PHASES.has(phase);
 
   function toggleSection(key: keyof ExportSections): (checked: boolean) => void {
@@ -186,7 +210,13 @@ export function ExportDialog({ open, onClose, source }: ExportDialogProps): Reac
       if (isCancelled()) {
         return;
       }
-      setErrorMessage(err instanceof Error ? err.message : String(err));
+      const rawMessage = err instanceof Error ? err.message : String(err);
+      // chunk ของเวอร์ชันเดิมหายจาก server หลัง deploy ใหม่ (ข้อความต่างกันตามเบราว์เซอร์) → บอกทางออกที่ไม่เสียงาน
+      const isStaleChunk =
+        /dynamically imported module|Importing a module script failed|error loading dynamically/i.test(
+          rawMessage,
+        );
+      setErrorMessage(isStaleChunk ? STALE_VERSION_MARKER : rawMessage);
       setPhase('error');
     }
   }
@@ -208,7 +238,9 @@ export function ExportDialog({ open, onClose, source }: ExportDialogProps): Reac
             />
 
             <fieldset className="flex flex-col gap-3" disabled={isBusy}>
-              <legend className="mb-1 text-sm font-medium text-fg">{t('export.sectionsLabel')}</legend>
+              <legend className="mb-1 text-sm font-medium text-fg">
+                {t('export.sectionsLabel')}
+              </legend>
 
               <SectionRow label={t('export.includeIllustrations')}>
                 <Switch
@@ -218,18 +250,35 @@ export function ExportDialog({ open, onClose, source }: ExportDialogProps): Reac
                   label={t('export.includeIllustrations')}
                 />
               </SectionRow>
-              {!hasIllustrationSource && <p className="text-xs text-fg-muted">{t('proposal.illustration.empty')}</p>}
+              {!hasIllustrationSource && (
+                <p className="text-xs text-fg-muted">{t('proposal.illustration.empty')}</p>
+              )}
 
               <SectionRow label={t('export.includeStats')}>
-                <Switch checked disabled onChange={() => undefined} label={t('export.includeStats')} />
+                <Switch
+                  checked
+                  disabled
+                  onChange={() => undefined}
+                  label={t('export.includeStats')}
+                />
               </SectionRow>
 
               <SectionRow label={t('export.includeBoq')}>
-                <Switch checked disabled onChange={() => undefined} label={t('export.includeBoq')} />
+                <Switch
+                  checked
+                  disabled
+                  onChange={() => undefined}
+                  label={t('export.includeBoq')}
+                />
               </SectionRow>
 
               <SectionRow label={t('export.includeCitations')}>
-                <Switch checked disabled onChange={() => undefined} label={t('export.includeCitations')} />
+                <Switch
+                  checked
+                  disabled
+                  onChange={() => undefined}
+                  label={t('export.includeCitations')}
+                />
               </SectionRow>
 
               <SectionRow label={t('export.includeWarnings')}>
@@ -297,18 +346,25 @@ function ExportWarnings({
     return null;
   }
   return (
-    <div role="alert" className="flex flex-col gap-1.5 rounded-sm border border-warn bg-surface-2 p-3 text-sm">
+    <div
+      role="alert"
+      className="flex flex-col gap-1.5 rounded-sm border border-warn bg-surface-2 p-3 text-sm"
+    >
       <h3 className="flex items-center gap-1.5 font-semibold text-fg">
         <span aria-hidden="true">!</span>
         {t('proposal.warnings.title')}
       </h3>
       {isEstimateHeavy && (
         <p className="text-fg">
-          {t('proposal.warnings.estimateHeavy', { percent: formatPercent(estimatePercent, { alreadyPercent: true }) })}
+          {t('proposal.warnings.estimateHeavy', {
+            percent: formatPercent(estimatePercent, { alreadyPercent: true }),
+          })}
         </p>
       )}
       {missingCitationCount > 0 && (
-        <p className="text-fg">{t('proposal.warnings.noCitation', { count: missingCitationCount })}</p>
+        <p className="text-fg">
+          {t('proposal.warnings.noCitation', { count: missingCitationCount })}
+        </p>
       )}
       {validatorWarnings.map((warning, index) => (
         <p key={index} className="text-fg">
@@ -338,7 +394,11 @@ function ExportProgress({
   if (phase === 'error') {
     return (
       <div role="alert" className="flex flex-col gap-2">
-        <p className="text-sm text-danger">{t('export.failed', { reason: errorMessage ?? '' })}</p>
+        <p className="text-sm text-danger">
+          {errorMessage === STALE_VERSION_MARKER
+            ? t('export.staleVersion')
+            : t('export.failed', { reason: errorMessage ?? '' })}
+        </p>
         <Button variant="secondary" size="sm" onClick={onRetry}>
           {t('common.retry')}
         </Button>
