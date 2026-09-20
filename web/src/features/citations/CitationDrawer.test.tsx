@@ -300,6 +300,20 @@ describe('CitationDrawer', () => {
       expect(screen.getByText(t('citation.notFoundBody', { id: 'bl_missing' }))).toBeInTheDocument();
     });
 
+    it('hasBudgetLineHint คืน false → ข้อความ "เปิดดูแถวต้นทางไม่ได้" (ไม่ใช่ "อ้างอิงไม่พบ")', async () => {
+      const loaders = makeLoaders({
+        loadBudgetLine: vi.fn().mockResolvedValue(null),
+        hasBudgetLineHint: vi.fn().mockReturnValue(false),
+      });
+      const citation: Citation = { kind: 'budget_line', source_id: 'bl_old_file' };
+      render(<CitationDrawer open citation={citation} onClose={vi.fn()} loaders={loaders} />);
+      await screen.findByText(t('citation.lookupUnavailableTitle'));
+      expect(
+        screen.getByText(t('citation.lookupUnavailableBody', { id: 'bl_old_file' })),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(t('citation.notFoundTitle'))).not.toBeInTheDocument();
+    });
+
     it('loader throw → error + ปุ่มลองใหม่ ที่เรียก loader ซ้ำได้', async () => {
       const user = userEvent.setup();
       const line = makeLine();

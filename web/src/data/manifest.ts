@@ -6,6 +6,7 @@
  * `import.meta.env.BASE_URL` (same-origin เสมอ ไม่ hard-code '/data/')
  */
 import type { z } from 'zod';
+import { findUnsafeDataPathReason } from '@/lib/safeDataPath';
 import { type CoverageNote, type Dataset, type Manifest, ManifestSchema } from './types';
 
 // ---------------------------------------------------------------------------
@@ -31,37 +32,30 @@ export class DataLoadError extends Error {
 // dataUrl — สร้าง URL ของไฟล์ข้อมูลจาก BASE_URL เท่านั้น (ห้าม hard-code '/data/', N5)
 // ---------------------------------------------------------------------------
 
-/** backslash (92) หรืออักขระควบคุม (0–31, 127) — ใช้ char code แทน regex เพื่อเลี่ยง no-control-regex */
-function hasForbiddenPathChar(path: string): boolean {
-  for (let i = 0; i < path.length; i += 1) {
-    const code = path.charCodeAt(i);
-    if (code === 92 || code < 32 || code === 127) return true;
-  }
-  return false;
-}
-
 /**
  * ตรวจว่า `path` เป็น relative path ที่ปลอดภัย: ห้ามว่าง, ห้ามขึ้นต้นด้วย '/', ห้ามมี URI scheme
- * (เช่น 'http:', 'https:') หรือขึ้นต้นด้วย '//' (protocol-relative), ห้ามมี segment '..'
+ * (เช่น 'http:', 'https:') หรือขึ้นต้นด้วย '//' (protocol-relative), ห้ามมี segment '..', ห้ามมี
+ * backslash/อักขระควบคุม (T-307 M3: browser บางตัว normalize "\" เป็น "/" และตัดอักขระควบคุมใน URL —
+ * ปฏิเสธตั้งแต่ต้นทาง) — กฎเดียวกับ `sourceShards` ของไฟล์ `.tgbp.json` (`@/lib/safeDataPath`)
  */
 function assertSafeRelativePath(path: string): void {
-  if (path.length === 0) {
-    throw new Error('เส้นทางไฟล์ข้อมูลว่างเปล่า');
+  const reason = findUnsafeDataPathReason(path);
+  if (reason === null) {
+    return;
   }
-  if (path.startsWith('/')) {
-    throw new Error(`เส้นทางไฟล์ข้อมูลห้ามขึ้นต้นด้วย "/": ${path}`);
-  }
-  if (path.startsWith('//') || /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(path)) {
-    throw new Error(`เส้นทางไฟล์ข้อมูลห้ามมี scheme หรือ origin อื่น (N5): ${path}`);
-  }
-  if (path.split('/').includes('..')) {
-    throw new Error(`เส้นทางไฟล์ข้อมูลห้ามมี ".." : ${path}`);
-  }
-  // T-307 M3: browser บางตัว normalize "\" เป็น "/" และตัดอักขระควบคุมใน URL — ปฏิเสธตั้งแต่ต้นทาง
-  if (hasForbiddenPathChar(path)) {
-    throw new Error(
-      `เส้นทางไฟล์ข้อมูลมีอักขระต้องห้าม (backslash/อักขระควบคุม): ${JSON.stringify(path)}`,
-    );
+  switch (reason) {
+    case 'empty':
+      throw new Error('เส้นทางไฟล์ข้อมูลว่างเปล่า');
+    case 'leadingSlash':
+      throw new Error(`เส้นทางไฟล์ข้อมูลห้ามขึ้นต้นด้วย "/": ${path}`);
+    case 'schemeOrProtocolRelative':
+      throw new Error(`เส้นทางไฟล์ข้อมูลห้ามมี scheme หรือ origin อื่น (N5): ${path}`);
+    case 'dotdot':
+      throw new Error(`เส้นทางไฟล์ข้อมูลห้ามมี ".." : ${path}`);
+    case 'forbiddenChar':
+      throw new Error(
+        `เส้นทางไฟล์ข้อมูลมีอักขระต้องห้าม (backslash/อักขระควบคุม): ${JSON.stringify(path)}`,
+      );
   }
 }
 

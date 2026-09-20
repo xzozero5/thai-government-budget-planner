@@ -6,7 +6,12 @@
  * — `features/citations/**`, กำลังทำขนานและห้าม import) ป้ายที่นี่จึงเป็นเวอร์ชัน "ดีที่สุดเท่าที่มีตาม
  * props" เท่านั้น ไม่ใช่ label เต็มแบบ "PBO 2566 · กรมพลังงาน" ตามตัวอย่างใน 06 §4.3 — เมื่อ container
  * ต่อกับ citation drawer/ToolLog จริงในภายหลัง ควรพิจารณาส่ง label ที่ resolve แล้วมาแทนผ่าน props ใหม่
+ *
+ * econ: ใช้ `econIndicatorLabelTh` ของ `features/citations` (ชุดเดียวกับที่ citation drawer ใช้ — แก้บั๊ก
+ * chip แสดงโค้ดดิบ เช่น "construction_material_index" แทนชื่อไทย) fallback เป็นโค้ดดิบเมื่อไม่รู้จัก
+ * indicator นั้น (ไม่เดาชื่อ)
  */
+import { econIndicatorLabelTh } from '@/features/citations';
 import { formatFiscalYearBe } from '@/lib/format';
 import { t } from '@/i18n';
 import type { Citation } from './types';
@@ -17,8 +22,10 @@ export function citationChipLabel(citation: Citation): string {
       return citation.note ?? `${t('citation.types.budget_line_short')} · ${citation.source_id}`;
     case 'document':
       return citation.doc_id;
-    case 'econ':
-      return `${citation.indicator} · ${formatFiscalYearBe(citation.year_be, { withEra: true })}`;
+    case 'econ': {
+      const label = econIndicatorLabelTh(citation.indicator) ?? citation.indicator;
+      return `${label} · ${formatFiscalYearBe(citation.year_be, { withEra: true })}`;
+    }
     case 'web':
       return citation.title ?? citation.url;
   }

@@ -31,6 +31,12 @@ export interface EconPointView {
 
 export interface CitationDrawerLoaders {
   loadBudgetLine(sourceId: string): Promise<BudgetLine | null>;
+  /** มีค่า (แม้เป็น optional) — ตรวจว่ามี "hint" (เช่น shard path) ให้ค้นหา `sourceId` นี้ก่อนหรือไม่
+   * โดยไม่ต้องเรียก `loadBudgetLine` จริง คืน `false` = ข้าม `loadBudgetLine` ไปเลย แล้วแสดงสถานะ
+   * `not-found` พร้อม `reason: 'noHint'` (ข้อความแยกจาก "มี hint แต่หาไม่พบจริง" — ดู
+   * `CitationDrawer.tsx#NotFoundState`) ไม่ implement เมธอดนี้ = พฤติกรรมเดิมทุกประการ (ถือว่ามี hint
+   * เสมอ แล้วให้ `loadBudgetLine` ตัดสินเอง) */
+  hasBudgetLineHint?(sourceId: string): boolean;
   loadNeighbors?(line: BudgetLine): Promise<BudgetLine[]>;
   loadDocumentChunk?(docId: string, page?: number): Promise<DocumentChunkView | null>;
   loadEconPoint?(indicator: string, yearBe: number): Promise<EconPointView | null>;
@@ -42,10 +48,12 @@ export type CitationDetailData =
   | { kind: 'econ'; point: EconPointView }
   | { kind: 'web' };
 
+/** `reason: 'noHint'` เฉพาะ budget_line ที่ `hasBudgetLineHint` ตอบ `false` — ไม่มี reason (`undefined`)
+ * = "มี hint แต่หาไม่พบจริง" (หรือ kind อื่นที่ไม่มีแนวคิด hint) ใช้ข้อความ not-found ทั่วไป */
 export type CitationDetailState<T = CitationDetailData> =
   | { status: 'loading' }
   | { status: 'loaded'; data: T }
-  | { status: 'not-found' }
+  | { status: 'not-found'; reason?: 'noHint' }
   | { status: 'error'; message: string };
 
 export interface UseCitationDetailResult {
@@ -90,6 +98,11 @@ export function useCitationDetail(
       }
       try {
         if (citation.kind === 'budget_line') {
+          const hasHint = loadersRef.current.hasBudgetLineHint?.(citation.source_id) ?? true;
+          if (!hasHint) {
+            setState({ status: 'not-found', reason: 'noHint' });
+            return;
+          }
           const line = await loadersRef.current.loadBudgetLine(citation.source_id);
           if (requestIdRef.current !== requestId) return;
           setState(

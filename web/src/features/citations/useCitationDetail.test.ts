@@ -84,13 +84,40 @@ describe('useCitationDetail', () => {
     expect(result.current.state).toEqual({ status: 'loaded', data: { kind: 'budget_line', line } });
   });
 
-  it('budget_line: loader คืน null → not-found', async () => {
+  it('budget_line: loader คืน null → not-found (ไม่มี reason)', async () => {
     const loaders = makeLoaders({ loadBudgetLine: vi.fn().mockResolvedValue(null) });
     const citation: Citation = { kind: 'budget_line', source_id: 'missing' };
     const { result } = renderHook(() => useCitationDetail(citation, loaders));
 
     await waitFor(() => {
-      expect(result.current.state.status).toBe('not-found');
+      expect(result.current.state).toEqual({ status: 'not-found' });
+    });
+  });
+
+  it('budget_line: hasBudgetLineHint คืน false → not-found reason "noHint" โดยไม่เรียก loadBudgetLine เลย', async () => {
+    const loadBudgetLine = vi.fn().mockResolvedValue(makeLine());
+    const hasBudgetLineHint = vi.fn().mockReturnValue(false);
+    const loaders = makeLoaders({ loadBudgetLine, hasBudgetLineHint });
+    const citation: Citation = { kind: 'budget_line', source_id: 'no-hint' };
+    const { result } = renderHook(() => useCitationDetail(citation, loaders));
+
+    await waitFor(() => {
+      expect(result.current.state).toEqual({ status: 'not-found', reason: 'noHint' });
+    });
+    expect(hasBudgetLineHint).toHaveBeenCalledWith('no-hint');
+    expect(loadBudgetLine).not.toHaveBeenCalled();
+  });
+
+  it('budget_line: hasBudgetLineHint คืน true → ทำงานตามปกติ (ไม่มี reason)', async () => {
+    const line = makeLine();
+    const loadBudgetLine = vi.fn().mockResolvedValue(line);
+    const hasBudgetLineHint = vi.fn().mockReturnValue(true);
+    const loaders = makeLoaders({ loadBudgetLine, hasBudgetLineHint });
+    const citation: Citation = { kind: 'budget_line', source_id: 'src-1' };
+    const { result } = renderHook(() => useCitationDetail(citation, loaders));
+
+    await waitFor(() => {
+      expect(result.current.state).toEqual({ status: 'loaded', data: { kind: 'budget_line', line } });
     });
   });
 

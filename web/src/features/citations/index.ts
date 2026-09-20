@@ -14,6 +14,7 @@ export type {
 export {
   datasetTypeLabel,
   describeQualityFlag,
+  econIndicatorLabelTh,
   formatCitationDate,
   getCitationChipLabel,
   getWebDomain,
@@ -24,3 +25,10 @@ export type {
   CitationChipLabelOptions,
   QualityFlagDisplay,
 } from '@/features/citations/citationLabel';
+
+export {
+  createBudgetLineLoaders,
+  loadDocumentChunkFromData,
+  loadEconPointFromData,
+} from '@/features/citations/dataCitationLoaders';
+export type { BudgetLineCitationLoaders } from '@/features/citations/dataCitationLoaders';

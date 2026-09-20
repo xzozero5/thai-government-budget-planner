@@ -4,6 +4,7 @@ import { t } from '@/i18n';
 import {
   datasetTypeLabel,
   describeQualityFlag,
+  econIndicatorLabelTh,
   formatCitationDate,
   getCitationChipLabel,
   getWebDomain,
@@ -99,6 +100,21 @@ describe('describeQualityFlag', () => {
   });
 });
 
+describe('econIndicatorLabelTh', () => {
+  it('indicator ที่มีข้อมูลจริงใน production → ป้ายไทยสั้น', () => {
+    expect(econIndicatorLabelTh('cpi_headline_index')).toBe(t('citation.econIndicators.cpi_headline_index'));
+    expect(econIndicatorLabelTh('construction_material_index')).toBe(
+      t('citation.econIndicators.construction_material_index'),
+    );
+    expect(econIndicatorLabelTh('cmi_steel')).toBe(t('citation.econIndicators.cmi_steel'));
+  });
+  it('indicator ที่ยังไม่มีข้อมูลจริง (null ทั้งชุด) หรือไม่รู้จัก → undefined (ไม่เดาชื่อ)', () => {
+    expect(econIndicatorLabelTh('min_wage_bangkok_thb')).toBeUndefined();
+    expect(econIndicatorLabelTh('diesel_avg_thb_per_l')).toBeUndefined();
+    expect(econIndicatorLabelTh('ไม่มีจริง')).toBeUndefined();
+  });
+});
+
 describe('getCitationChipLabel', () => {
   it('budget_line ไม่มี hint → fallback source_id ย่อ', () => {
     const citation: Citation = { kind: 'budget_line', source_id: 'bl_abcdef1234567890' };
@@ -142,6 +158,12 @@ describe('getCitationChipLabel', () => {
     const citation: Citation = { kind: 'econ', indicator: 'cpi', year_be: 2567 };
     expect(getCitationChipLabel(citation, { econLabel: 'ดัชนีราคาผู้บริโภค' })).toBe(
       'ดัชนีราคาผู้บริโภค 2567',
+    );
+  });
+  it('econ ไม่มี econLabel แต่ indicator รู้จัก → ใช้ป้ายไทยสั้นแทนโค้ดดิบ', () => {
+    const citation: Citation = { kind: 'econ', indicator: 'construction_material_index', year_be: 2566 };
+    expect(getCitationChipLabel(citation)).toBe(
+      `${t('citation.econIndicators.construction_material_index')} 2566`,
     );
   });
   it('web → โดเมนของ url', () => {

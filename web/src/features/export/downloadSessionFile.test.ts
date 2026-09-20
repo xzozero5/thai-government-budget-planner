@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createInMemoryIllustrationSink } from '@/ai/illustrationSink';
+import { createToolLog } from '@/ai/toolLog';
 import type { BoqLine, Proposal } from '@/ai/tools/proposal';
 import { useChatStore } from '@/stores/chatStore';
 import { useProposalStore } from '@/stores/proposalStore';
+import { useToolLogStore } from '@/stores/toolLogStore';
 import { buildSessionFile, downloadSessionFile, saveSessionFile } from './downloadSessionFile';
 import { parseTgbpFile } from './tgbpFile';
 
@@ -12,7 +15,7 @@ const downloadBlobMock = vi.hoisted(() => vi.fn());
 vi.mock('@/data', () => ({ data: { dataVersion: dataVersionMock } }));
 vi.mock('./downloadBlob', () => ({ downloadBlob: downloadBlobMock }));
 
-function makeLine(): BoqLine {
+function makeLine(overrides: Partial<BoqLine> = {}): BoqLine {
   return {
     id: 'line1',
     category: 'ครุภัณฑ์',
@@ -25,10 +28,11 @@ function makeLine(): BoqLine {
     confidence: 'high',
     rationale: 'อ้างอิงราคาจากงบปี 2567',
     citations: [{ kind: 'budget_line', source_id: 'src_1' }],
+    ...overrides,
   };
 }
 
-function makeProposal(title: string): Proposal {
+function makeProposal(title: string, overrides: Partial<Proposal> = {}): Proposal {
   return {
     version: 1,
     title,
@@ -46,6 +50,7 @@ function makeProposal(title: string): Proposal {
     citations_web: [],
     illustrations: [],
     stat_cards: [],
+    ...overrides,
   };
 }
 
@@ -53,6 +58,7 @@ describe('buildSessionFile / saveSessionFile / downloadSessionFile', () => {
   beforeEach(() => {
     useProposalStore.getState().reset();
     useChatStore.getState().reset();
+    useToolLogStore.getState().reset();
     dataVersionMock.mockClear();
     dataVersionMock.mockResolvedValue('2026-09-01');
     downloadBlobMock.mockClear();
@@ -109,5 +115,87 @@ describe('buildSessionFile / saveSessionFile / downloadSessionFile', () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(downloadBlobMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('buildSessionFile — sourceShards (แก้บั๊ก citation ที่ถูกต้องจริงแสดง "อ้างอิงไม่พบ" บน /load)', () => {
+  beforeEach(() => {
+    useProposalStore.getState().reset();
+    useChatStore.getState().reset();
+    useToolLogStore.getState().reset();
+    dataVersionMock.mockClear();
+    dataVersionMock.mockResolvedValue('2026-09-01');
+  });
+
+  it('ไม่มี ToolLog เลย (ไม่เคยคุยกับ AI) → sourceShards ไม่ถูกเขียนลงไฟล์', async () => {
+    useProposalStore.getState().pushVersion(makeProposal('โครงการไม่มี ToolLog'), [], 'ai');
+    const { json } = await buildSessionFile();
+    expect(json).not.toContain('sourceShards');
+  });
+
+  it('มี ToolLog ที่เคยเห็น shard ของ source ที่ถูกอ้างจริง → sourceShards มี id นั้น', async () => {
+    const toolLog = createToolLog();
+    toolLog.recordSourceShard('src_1', 'budget_lines/pbo/2568/1.parquet');
+    useToolLogStore.getState().attach(toolLog, createInMemoryIllustrationSink());
+    useProposalStore.getState().pushVersion(makeProposal('โครงการมี ToolLog'), [], 'ai');
+
+    const { json } = await buildSessionFile();
+    const result = parseTgbpFile(json);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.file.sourceShards).toEqual({ src_1: 'budget_lines/pbo/2568/1.parquet' });
+    }
+  });
+
+  it('เก็บเฉพาะ source ที่ถูกอ้างจริงในบทเสนอ (ไม่รวม source อื่นที่ ToolLog เคยเห็นแต่ไม่ได้ถูกอ้าง)', async () => {
+    const toolLog = createToolLog();
+    toolLog.recordSourceShard('src_1', 'budget_lines/pbo/2568/1.parquet');
+    toolLog.recordSourceShard('src_unused', 'budget_lines/pbo/2568/9.parquet');
+    useToolLogStore.getState().attach(toolLog, createInMemoryIllustrationSink());
+    useProposalStore.getState().pushVersion(makeProposal('โครงการ'), [], 'ai');
+
+    const { json } = await buildSessionFile();
+    const result = parseTgbpFile(json);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.file.sourceShards).toEqual({ src_1: 'budget_lines/pbo/2568/1.parquet' });
+    }
+  });
+
+  it('รวม source ที่ถูกอ้างจากทุกเวอร์ชัน ไม่ใช่แค่เวอร์ชันปัจจุบัน', async () => {
+    const toolLog = createToolLog();
+    toolLog.recordSourceShard('src_1', 'budget_lines/pbo/2568/1.parquet');
+    toolLog.recordSourceShard('src_2', 'budget_lines/pbo/2566/2.parquet');
+    useToolLogStore.getState().attach(toolLog, createInMemoryIllustrationSink());
+
+    useProposalStore.getState().pushVersion(makeProposal('เวอร์ชัน 1', { boq: [makeLine()] }), [], 'ai');
+    useProposalStore
+      .getState()
+      .pushVersion(
+        makeProposal('เวอร์ชัน 2', {
+          boq: [makeLine({ id: 'line2', citations: [{ kind: 'budget_line', source_id: 'src_2' }] })],
+        }),
+        [],
+        'ai',
+      );
+
+    const { json } = await buildSessionFile();
+    const result = parseTgbpFile(json);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.file.sourceShards).toEqual({
+        src_1: 'budget_lines/pbo/2568/1.parquet',
+        src_2: 'budget_lines/pbo/2566/2.parquet',
+      });
+    }
+  });
+
+  it('มี ToolLog แต่ source ที่ถูกอ้างไม่เคยถูกบันทึก shard เลย → sourceShards ว่าง (ไม่เขียนลงไฟล์)', async () => {
+    const toolLog = createToolLog();
+    useToolLogStore.getState().attach(toolLog, createInMemoryIllustrationSink());
+    useProposalStore.getState().pushVersion(makeProposal('โครงการ'), [], 'ai');
+
+    const { json } = await buildSessionFile();
+    expect(json).not.toContain('sourceShards');
   });
 });

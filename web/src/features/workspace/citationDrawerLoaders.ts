@@ -1,78 +1,35 @@
 /**
- * T-405 (ต่อสาย) — สร้าง `CitationDrawerLoaders` (`@/features/citations`) จริง ผูกกับ facade `@/data`
- * โดยใช้ shard hint จาก `ToolLog.getSourceShard`/`getSourceFingerprint` ของ session ปัจจุบัน
- * (`CitationDrawer` เอง**ไม่**เรียก `@/data`/`ToolLog` ตรง ๆ — ดูคอมเมนต์หัวไฟล์ `CitationDrawer.tsx`)
+ * T-405 (ต่อสาย) — สร้าง `CitationDrawerLoaders` (`@/features/citations`) จริง ผูกกับ `ToolLog` ของ
+ * session ปัจจุบัน (`CitationDrawer` เอง**ไม่**เรียก `@/data`/`ToolLog` ตรง ๆ — ดูคอมเมนต์หัวไฟล์
+ * `CitationDrawer.tsx`)
  *
- * กติกาการแปลง null/throw (ตรงกับสัญญาของ `useCitationDetail.ts`):
- * - budget_line: ไม่มี shard hint ใน `ToolLog` (เช่น citation มาจากไฟล์ `.tgbp.json` เก่าที่โหลดกลับมา
- *   โดยไม่มี ToolLog ของ session เดิมแล้ว) → คืน `null` (not-found) ทันที ไม่เรียก `data.getLines`
- *   (ซึ่ง throw เมื่อ `shardHints` ว่างอยู่แล้ว — ดู `data/repo.ts#getLines`)
- * - document: `DocNotFoundError` → `null` (not-found); error อื่น (เช่น shard/network) ปล่อย throw ต่อ
- * - econ: ไม่มี record ของ (indicator, yearBe) เลย → `null`; label ใช้ `EconIndicatorSeries.label_th`
- *   ถ้ามี series ของ indicator นั้น มิฉะนั้น fallback เป็นรหัส indicator ตัวพิมพ์ใหญ่ (เหมือน
- *   `getCitationChipLabel` ใน `features/citations/citationLabel.ts`)
+ * โค้ดจริงของ loader ทั้งหมด (ผูกกับ facade `@/data`) อยู่ที่ `features/citations/dataCitationLoaders.ts`
+ * — ไฟล์นี้เป็นแค่ตัวประกอบ "หา shard hint จาก `ToolLog.getSourceShard`" ให้ `createBudgetLineLoaders`
+ * (ไฟล์เดียวกับที่หน้า `/load` ใช้ ต่างกันแค่แหล่งของ hint — `TgbpFile.sourceShards` แทน `ToolLog` — ดู
+ * `features/export/LoadPage.tsx`) ไม่ copy โค้ดค้นหา/แปลงผล budget_line/document/econ ซ้ำอีกชุด
+ *
+ * **ไม่ส่งต่อ `hasBudgetLineHint`**: ใน session ที่มี ToolLog จริง การไม่มี shard hint ของ source_id หนึ่ง
+ * ๆ ยังคงถือเป็น "อ้างอิงไม่พบ" ทั่วไป (`citation.notFoundTitle`) เหมือนพฤติกรรมเดิมของ T-405/T-407 (มี
+ * test ยืนยันไว้แล้วใน `slots.test.tsx`) — ข้อความ "เปิดดูแถวต้นทางไม่ได้" (`citation.lookupUnavailable*`)
+ * มีไว้เฉพาะกรณีไฟล์ `.tgbp.json` เก่าที่หน้า `/load` เปิด ซึ่งเป็นกรณีที่ทราบชัดว่าไม่ใช่อ้างอิงปลอม (ดู
+ * `LoadPage.tsx`)
  */
-import { DocNotFoundError, data, type BudgetLine } from '@/data';
 import type { ToolLog } from '@/ai/toolLog';
-import type { CitationDrawerLoaders } from '@/features/citations';
-
-const NEIGHBOR_ROW_COUNT = 10;
+import {
+  createBudgetLineLoaders,
+  loadDocumentChunkFromData,
+  loadEconPointFromData,
+  type CitationDrawerLoaders,
+} from '@/features/citations';
 
 export function createCitationDrawerLoaders(toolLog: ToolLog | null): CitationDrawerLoaders {
+  const { loadBudgetLine, loadNeighbors } = createBudgetLineLoaders((sourceId) =>
+    toolLog?.getSourceShard(sourceId),
+  );
   return {
-    async loadBudgetLine(sourceId: string): Promise<BudgetLine | null> {
-      const shardHint = toolLog?.getSourceShard(sourceId);
-      if (shardHint === undefined) {
-        return null;
-      }
-      const result = await data.getLines([sourceId], [shardHint]);
-      return result.rows[0] ?? null;
-    },
-
-    async loadNeighbors(line: BudgetLine): Promise<BudgetLine[]> {
-      const shardHint = toolLog?.getSourceShard(line.source_id);
-      if (shardHint === undefined) {
-        return [];
-      }
-      const result = await data.getNeighborLines(line.source_id, NEIGHBOR_ROW_COUNT, shardHint);
-      return result.rows;
-    },
-
-    async loadDocumentChunk(docId, page) {
-      try {
-        const result = await data.getDoc(docId, page !== undefined ? { page } : {});
-        const chunks = result.chunks;
-        const resolvedPage = page ?? chunks?.[0]?.page ?? null;
-        return {
-          title: result.doc.title_guess ?? docId,
-          page: resolvedPage,
-          text: chunks ? chunks.map((c) => c.text).join('\n\n') : '',
-          isScanned: result.doc.has_text_layer === false,
-        };
-      } catch (err) {
-        if (err instanceof DocNotFoundError) {
-          return null;
-        }
-        throw err;
-      }
-    },
-
-    async loadEconPoint(indicator, yearBe) {
-      const [value, series] = await Promise.all([
-        data.getEconValue(indicator, yearBe),
-        data.getEconSeries(indicator),
-      ]);
-      if (value === null) {
-        return null;
-      }
-      return {
-        label: series?.label_th ?? indicator.toUpperCase(),
-        value: value.value,
-        unit: value.unit,
-        verified: value.verified,
-        sourceName: value.source_name,
-        sourceUrl: value.source_url,
-      };
-    },
+    loadBudgetLine,
+    loadNeighbors,
+    loadDocumentChunk: loadDocumentChunkFromData,
+    loadEconPoint: loadEconPointFromData,
   };
 }

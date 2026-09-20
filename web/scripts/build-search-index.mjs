@@ -10,7 +10,10 @@
  * ทางที่เลือก (ประเมินแล้วว่าเสถียรสุดในบรรดาตัวเลือกที่มี โดยไม่เพิ่ม dependency ใหม่):
  *   ใช้ `esbuild` (มีอยู่แล้วเป็น dependency ของ `vite` ใน devDependencies — resolve ได้จาก
  *   `web/node_modules/esbuild` โดยไม่ต้องเพิ่มลง package.json) **bundle** `src/data/search.ts`
- *   (`packages: 'external'` กัน `zod`/`minisearch` ถูก inline — ให้ Node resolve เองตามปกติ) แล้ว
+ *   (`packages: 'external'` กัน `zod`/`minisearch` ถูก inline — ให้ Node resolve เองตามปกติ,
+ *   `alias: { '@': <web>/src }` ให้ตรงกับ `vite.config.ts` — โมดูลที่ `search.ts` พึ่งพา (เช่น
+ *   `./manifest`) อาจ import ผ่าน alias `@/lib/...` ได้เหมือนโค้ด production ทั่วไป ไม่ต้องจำกัดตัวเองให้
+ *   ใช้ relative import เท่านั้น) แล้ว
  *   เขียนผลลัพธ์เป็นไฟล์ `.mjs` ชั่วคราว **ไว้ใต้ `web/` เอง** (ไม่ใช่ os temp dir) เพราะ Node ESM
  *   resolve bare specifier (`zod`, `minisearch`) โดยไล่หา `node_modules` จากตำแหน่งไฟล์ที่ import
  *   ขึ้นไป — ถ้าไฟล์ชั่วคราวอยู่นอก `web/` จะหา `web/node_modules` ไม่เจอ แล้ว `import()` ไฟล์นั้น
@@ -95,6 +98,7 @@ async function loadSearchModule() {
     format: 'esm',
     target: 'node22',
     packages: 'external', // 'zod'/'minisearch' ให้ Node resolve เองจาก web/node_modules
+    alias: { '@': path.join(WEB_DIR, 'src') }, // ตรงกับ resolve.alias ของ vite.config.ts
     write: false,
     logLevel: 'silent',
   });

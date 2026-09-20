@@ -1,14 +1,20 @@
 /**
  * T-502 — หน้า `/load` (06-UI-SPEC §3/§4.5): เปิดไฟล์ `.tgbp.json` ที่เคยบันทึกไว้ แล้วแสดง**อ่านอย่าง
- * เดียว** โดยไม่ต้องใส่ API key และไม่โหลด data layer (DuckDB/manifest) เลย
+ * เดียว** โดยไม่ต้องใส่ API key — ตัวหน้าเองไม่โหลด data layer (DuckDB/manifest) ตอน mount แต่การกด
+ * citation chip อาจโหลด (lazy, ผ่าน facade `@/data`) เพื่อแสดงรายละเอียดจริงของ citation นั้น — ดู
+ * คอมเมนต์เหนือ `citationLoaders` ด้านล่าง
  *
  * "อ่านอย่างเดียว": `ProposalPane` (T-406) ไม่มี prop `readOnly` ของตัวเอง (บันทึกไว้ท้ายไฟล์นี้/รายงาน
  * ท้ายงาน — ไม่ได้รับอนุญาตให้แก้ `features/proposal/**` เอง) จึงส่ง `onEditLine`/`onRequestReview` แบบ
  * no-op + แสดงแบนเนอร์ "อ่านอย่างเดียว" กำกับไว้ชัดเจนแทน — ข้อจำกัดที่ทราบ: ช่อง qty/ราคาต่อหน่วยในตาราง
  * BOQ ยังคลิกเข้าโหมดพิมพ์ได้ (แค่กด "ยืนยัน" แล้วไม่มีผลอะไรเพราะ onEditLine เป็น no-op)
  *
- * citation ที่คลิกแสดงได้แค่เท่าที่ `Citation` schema เก็บไว้ในไฟล์ (source_id/doc_id+quote/indicator
- * ฯลฯ — ดูคอมเมนต์หัวไฟล์ `pdf/types.ts`) ไม่มีการเรียก `@/data`/DuckDB ใด ๆ ในหน้านี้เลย
+ * citation ที่คลิกแสดงได้ตามลำดับความสำคัญ: (1) ข้อมูลจริงจาก facade `@/data` ถ้าเปิดหาได้ (budget_line
+ * ใช้ shard hint จาก `file.sourceShards[source_id]` — ดูคอมเมนต์เหนือ `citationLoaders` ด้านล่าง) (2)
+ * เท่าที่ `Citation` schema เก็บไว้ในไฟล์เอง (source_id/doc_id+quote/indicator ฯลฯ — ดูคอมเมนต์หัวไฟล์
+ * `pdf/types.ts`) เป็น fallback เมื่อ (1) หาไม่ได้/พลาด — `@/data`/DuckDB โหลดแบบ **lazy** เสมอ (เรียก
+ * เฉพาะตอนผู้ใช้กด citation chip จริง ไม่ใช่ตอนเปิดหน้า — เหมือน `useDataStoreInit.ts` ของ workspace ที่
+ * ไม่ prefetch ที่นี่เลย)
  *
  * ไฟล์ที่โหลด **ไม่ถูกเขียนลง storage ใด ๆ** — เก็บใน React state (`useState`) ของ component นี้เท่านั้น
  * หายเมื่อออกจากหน้า/รีเฟรช (เหมือนพฤติกรรม N2 ของ store อื่น ๆ ในแอป)
@@ -18,7 +24,15 @@ import type { ChangeEvent, DragEvent, ReactElement } from 'react';
 import { Link } from 'react-router-dom';
 import type { Citation } from '@/ai/tools/proposal';
 import { Button, Card, ErrorBoundary, Spinner } from '@/components/ui';
-import { CitationDrawer, type CitationDrawerLoaders } from '@/features/citations';
+import {
+  CitationDrawer,
+  createBudgetLineLoaders,
+  loadDocumentChunkFromData,
+  loadEconPointFromData,
+  type CitationDrawerLoaders,
+  type DocumentChunkView,
+  type EconPointView,
+} from '@/features/citations';
 import { ProposalPane } from '@/features/proposal/ProposalPane';
 import { ProposalReadOnlyContext } from '@/features/proposal/readOnlyContext';
 import type { ProposalVersionInfo } from '@/features/proposal/types';
@@ -126,35 +140,69 @@ export function LoadPage(): ReactElement {
 
   const selectedVersion = file?.proposalVersions[selectedIndex];
 
-  const citationLoaders: CitationDrawerLoaders = useMemo(
-    () => ({
-      // ไฟล์ `.tgbp.json` ไม่เก็บ `BudgetLine` เต็ม (แค่ `source_id`) — "ไม่พบ" ตรงนี้แปลว่า "ไม่มีในไฟล์
-      // นี้" จริง ๆ ไม่ใช่ error (ดูหมายเหตุหัวไฟล์)
-      loadBudgetLine: () => Promise.resolve(null),
-      loadDocumentChunk: (docId, page) => {
-        if (selectedCitation?.kind === 'document' && selectedCitation.doc_id === docId) {
-          return Promise.resolve({
-            title: docId,
-            page: page ?? selectedCitation.page ?? null,
-            text: selectedCitation.quote ?? '',
-            isScanned: selectedCitation.quote === undefined,
-          });
+  /** budget_line: hint ของ shard มาจาก `file.sourceShards` (ถ้าไฟล์นี้มี — ไฟล์เก่าไม่มี field นี้เลย =
+   * ไม่มี hint สักตัว) ผ่าน `createBudgetLineLoaders` ตัวเดียวกับที่ workspace ใช้ (ต่างกันแค่แหล่งของ
+   * hint — ดูคอมเมนต์หัวไฟล์ `features/workspace/citationDrawerLoaders.ts`) — ไม่มี hint สำหรับ
+   * source_id หนึ่ง ๆ จะไม่เรียก `data.getLines` เลย (ไม่มี hint ≠ "อ้างอิงปลอม" — ดู
+   * `citation.lookupUnavailableTitle`/`Body` ใน `CitationDrawer.tsx#NotFoundState`)
+   *
+   * document/econ: ไม่มีแนวคิด shard hint — ลองข้อมูลจริงจาก `@/data` ก่อนเสมอ (ดีกว่าเพราะมีรายละเอียด
+   * ครบกว่า: เนื้อหาเอกสารทั้ง chunk / ค่า+แหล่งที่มา+`verified` ของตัวชี้วัด) เมื่อ data layer โหลด
+   * ไม่ได้หรือหาไม่พบ ค่อย fallback ไปใช้เท่าที่ `Citation` ที่ผู้ใช้เปิด drawer อยู่เก็บไว้ในไฟล์เอง
+   * (พฤติกรรมเดิมของหน้านี้ก่อนต่อ data layer จริง) */
+  const citationLoaders: CitationDrawerLoaders = useMemo(() => {
+    const sourceShards = file?.sourceShards ?? {};
+    // main thread: ใช้ `Object.hasOwn` — source_id ในไฟล์มาจากผู้ใช้ (อาจเป็น "constructor"/"__proto__") ห้ามให้
+    // ค่าที่สืบทอดจาก Object.prototype หลุดไปเป็น shard hint
+    const budgetLineLoaders = createBudgetLineLoaders((sourceId) =>
+      Object.hasOwn(sourceShards, sourceId) ? sourceShards[sourceId] : undefined,
+    );
+
+    async function loadDocumentChunk(docId: string, page?: number): Promise<DocumentChunkView | null> {
+      try {
+        const fromData = await loadDocumentChunkFromData(docId, page);
+        if (fromData !== null) {
+          return fromData;
         }
-        return Promise.resolve(null);
-      },
-      loadEconPoint: (indicator, yearBe) => {
-        if (
-          selectedCitation?.kind === 'econ' &&
-          selectedCitation.indicator === indicator &&
-          selectedCitation.year_be === yearBe
-        ) {
-          return Promise.resolve({ label: indicator, value: null, unit: '', verified: false });
+      } catch {
+        // data layer โหลดไม่ได้ (manifest/DuckDB/เครือข่าย) — fallback ไปใช้ quote ที่ฝังในไฟล์ด้านล่าง
+      }
+      if (selectedCitation?.kind === 'document' && selectedCitation.doc_id === docId) {
+        return {
+          title: docId,
+          page: page ?? selectedCitation.page ?? null,
+          text: selectedCitation.quote ?? '',
+          isScanned: selectedCitation.quote === undefined,
+        };
+      }
+      return null;
+    }
+
+    async function loadEconPoint(indicator: string, yearBe: number): Promise<EconPointView | null> {
+      try {
+        const fromData = await loadEconPointFromData(indicator, yearBe);
+        if (fromData !== null) {
+          return fromData;
         }
-        return Promise.resolve(null);
-      },
-    }),
-    [selectedCitation],
-  );
+      } catch {
+        // เหมือนด้านบน
+      }
+      if (
+        selectedCitation?.kind === 'econ' &&
+        selectedCitation.indicator === indicator &&
+        selectedCitation.year_be === yearBe
+      ) {
+        return { label: indicator, value: null, unit: '', verified: false };
+      }
+      return null;
+    }
+
+    return {
+      ...budgetLineLoaders,
+      loadDocumentChunk,
+      loadEconPoint,
+    };
+  }, [file, selectedCitation]);
 
   if (status !== 'loaded' || !file || !selectedVersion) {
     return (

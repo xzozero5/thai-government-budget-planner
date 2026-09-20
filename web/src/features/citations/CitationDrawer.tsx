@@ -140,7 +140,7 @@ function renderBody(props: {
     return <ErrorState message={state.message} onRetry={retry} />;
   }
   if (state.status === 'not-found') {
-    return <NotFoundState id={citationIdentifier(citation)} />;
+    return <NotFoundState id={citationIdentifier(citation)} reason={state.reason} />;
   }
 
   switch (citation.kind) {
@@ -199,11 +199,16 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
   );
 }
 
-function NotFoundState({ id }: { id: string }): ReactElement {
+/** `reason: 'noHint'` = ไฟล์/session นี้ไม่เคยเก็บตำแหน่งข้อมูลต้นทางของ citation นี้ไว้เลย (เช่นไฟล์
+ * `.tgbp.json` เก่าก่อนมี `sourceShards` — ดู `LoadPage.tsx`) ต่างจาก "อ้างอิงไม่พบ" ทั่วไปซึ่งหมายถึงมี
+ * hint แล้วแต่ค้นหาจริงไม่เจอ (อาจเป็นอ้างอิงปลอม) — ข้อความต้องไม่ทำให้เข้าใจผิดว่าอ้างอิงนี้ไม่จริง */
+function NotFoundState({ id, reason }: { id: string; reason: 'noHint' | undefined }): ReactElement {
+  const titleKey = reason === 'noHint' ? 'citation.lookupUnavailableTitle' : 'citation.notFoundTitle';
+  const bodyKey = reason === 'noHint' ? 'citation.lookupUnavailableBody' : 'citation.notFoundBody';
   return (
     <div role="alert" className="flex flex-col gap-2">
-      <p className="font-medium text-fg">{t('citation.notFoundTitle')}</p>
-      <p className="text-fg-muted">{t('citation.notFoundBody', { id })}</p>
+      <p className="font-medium text-fg">{t(titleKey)}</p>
+      <p className="text-fg-muted">{t(bodyKey, { id })}</p>
     </div>
   );
 }

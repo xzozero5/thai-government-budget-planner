@@ -18,6 +18,7 @@
  */
 import { z } from 'zod';
 import { ProposalSchema, type Proposal } from '@/ai/tools/proposal';
+import { isSafeRelativeDataPath } from '@/lib/safeDataPath';
 import { isSafeHttpsUrl } from '@/lib/safeUrl';
 import type { ChatMessage, ToolActivity } from '@/stores/chatStore';
 import type { ProposalVersion } from '@/stores/proposalStore';
@@ -78,6 +79,40 @@ const ProposalVersionFileSchema = z.object({
   userEditedLineIds: z.array(z.string()),
 });
 
+// ---------------------------------------------------------------------------
+// sourceShards — hint ของ shard path ต่อ `source_id` (แก้บั๊ก: citation ที่ถูกต้องจริงในไฟล์ `.tgbp.json`
+// เคยขึ้นคำเตือน "อ้างอิงไม่พบ ... อย่าเพิ่งเชื่อตัวเลข" เสมอ เพราะไฟล์ไม่เคยเก็บว่า budget_line แต่ละอันมา
+// จาก shard ไหน — ดู `LoadPage.tsx`) เป็น field **optional** ระดับบนสุด: ไฟล์เก่า (ก่อนมี field นี้) ต้อง
+// ยังเปิดได้เหมือนเดิม (`version` คงที่ 1) โดยถือว่า "ไม่มี hint เลย" ไม่ใช่ error
+//
+// จำกัดขนาด/รูปแบบอย่างปลอดภัย (ไฟล์นี้มาจากผู้ใช้ อาจถูกแก้เองหรือเสียหาย):
+// - จำนวน entry ≤ `MAX_SOURCE_SHARDS_ENTRIES` (กันไฟล์ยักษ์ที่ตั้งใจทำให้ parse/แสดงผลช้า)
+// - key (`source_id`) และ value (shard path) จำกัดความยาว
+// - value ต้องผ่านกฎเดียวกับ path ของ manifest (`@/lib/safeDataPath` — ห้าม `..`, ห้าม scheme, ห้าม
+//   backslash/อักขระควบคุม, ห้ามขึ้นต้นด้วย "/") เพราะสุดท้ายถูกส่งเข้า `data.getLines`/`dataUrl()`
+//   เหมือน shard path อื่น ๆ ทุกประการ — shard ที่ไม่รู้จักในตัว manifest ปัจจุบัน (เช่น republish ข้อมูล
+//   ไปแล้ว) ยังคง "ไม่พบ" ตามปกติที่ `data.getLines#validateKnownShards` ตรวจอยู่แล้ว ไม่ต้องตรวจซ้ำที่นี่
+// ---------------------------------------------------------------------------
+
+export const MAX_SOURCE_SHARDS_ENTRIES = 2000;
+const SOURCE_SHARD_KEY_MAX_LEN = 128;
+const SOURCE_SHARD_VALUE_MAX_LEN = 512;
+
+const SourceShardKeySchema = z.string().min(1).max(SOURCE_SHARD_KEY_MAX_LEN);
+const SourceShardValueSchema = z
+  .string()
+  .min(1)
+  .max(SOURCE_SHARD_VALUE_MAX_LEN)
+  .refine(isSafeRelativeDataPath, {
+    message: 'เส้นทาง shard ไม่ปลอดภัย (ต้องเป็น relative path ภายในชุดข้อมูลของเว็บนี้เท่านั้น)',
+  });
+
+const SourceShardsSchema = z
+  .record(SourceShardKeySchema, SourceShardValueSchema)
+  .refine((obj) => Object.keys(obj).length <= MAX_SOURCE_SHARDS_ENTRIES, {
+    message: `sourceShards มีจำนวนรายการเกิน ${String(MAX_SOURCE_SHARDS_ENTRIES)} รายการ`,
+  });
+
 export const TgbpFileSchema = z
   .object({
     format: z.literal(TGBP_FILE_FORMAT),
@@ -90,6 +125,9 @@ export const TgbpFileSchema = z
     currentProposalIndex: z.number().int(),
     /** ข้อความ UI เท่านั้น (ไม่มีประวัติ `Anthropic.MessageParam[]` ที่ใช้เรียก API จริง) */
     chat: z.array(ChatMessageSchema),
+    /** optional — ไฟล์ที่บันทึกก่อนมี field นี้ (หรือไฟล์ที่ agent/ผู้ใช้แก้เองจนหาย) ต้องยังเปิดได้
+     * ปกติ (ดูคอมเมนต์เหนือ `SourceShardsSchema`) */
+    sourceShards: SourceShardsSchema.optional(),
   })
   .strict();
 
@@ -104,6 +142,9 @@ export interface SerializeSessionInput {
   currentProposalIndex: number;
   chatMessages: ChatMessage[];
   appDataVersion: string;
+  /** hint ของ shard path ต่อ `source_id` (เฉพาะ source ที่ถูกอ้างจริงใน `proposalVersions` — ผู้เรียก
+   * กรองมาก่อนแล้ว ดู `downloadSessionFile.ts`) ไม่ส่งมา/ว่าง = ไฟล์นี้ไม่มี hint เลย (เหมือนไฟล์เก่า) */
+  sourceShards?: Record<string, string>;
   /** override เวลาปัจจุบัน (ทดสอบ deterministic) — default `new Date()` */
   now?: Date;
 }
@@ -150,6 +191,9 @@ export function serializeSession(input: SerializeSessionInput): string {
     proposalVersions: input.proposalVersions.map(proposalVersionToFile),
     currentProposalIndex: input.currentProposalIndex,
     chat: input.chatMessages.map(chatMessageToFile),
+    ...(input.sourceShards !== undefined && Object.keys(input.sourceShards).length > 0
+      ? { sourceShards: { ...input.sourceShards } }
+      : {}),
   };
   return JSON.stringify(file);
 }
@@ -187,6 +231,7 @@ export function serializeTgbpFile(file: TgbpFile, now: Date = new Date()): strin
       })),
       warnings: [...message.warnings],
     })),
+    ...(file.sourceShards !== undefined ? { sourceShards: { ...file.sourceShards } } : {}),
   };
   return JSON.stringify(rebuilt);
 }

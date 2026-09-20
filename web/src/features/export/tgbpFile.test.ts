@@ -3,6 +3,7 @@ import type { BoqLine, Proposal } from '@/ai/tools/proposal';
 import type { ChatMessage } from '@/stores/chatStore';
 import type { ProposalVersion } from '@/stores/proposalStore';
 import {
+  MAX_SOURCE_SHARDS_ENTRIES,
   parseTgbpFile,
   serializeSession,
   serializeTgbpFile,
@@ -325,5 +326,162 @@ describe('T-602 (NEW-L8) — serializeTgbpFile', () => {
     if (reparsed.ok) {
       expect(reparsed.file.savedAt).toBe('2026-09-20T10:00:00.000Z');
     }
+  });
+});
+
+describe('sourceShards — hint ของ shard path ต่อ source_id (แก้บั๊ก citation ที่ถูกอ้างจริงแสดง "อ้างอิงไม่พบ")', () => {
+  it('ไฟล์เก่าที่ไม่มี field นี้เลยยังเปิดได้ปกติ (version คงที่ 1, sourceShards เป็น undefined)', () => {
+    const json = serializeSession({
+      proposalVersions: [makeVersion()],
+      currentProposalIndex: 0,
+      chatMessages: [],
+      appDataVersion: '2026-09-01',
+    });
+    expect(json).not.toContain('sourceShards');
+
+    const result = parseTgbpFile(json);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.file.version).toBe(1);
+      expect(result.file.sourceShards).toBeUndefined();
+    }
+  });
+
+  it('round-trip: serialize แล้ว parse กลับได้ sourceShards เดิม', () => {
+    const json = serializeSession({
+      proposalVersions: [makeVersion()],
+      currentProposalIndex: 0,
+      chatMessages: [],
+      appDataVersion: '2026-09-01',
+      sourceShards: { src_1: 'budget_lines/pbo/2568/1.parquet', src_2: 'budget_lines/pbo/2566/2.parquet' },
+    });
+    const result = parseTgbpFile(json);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.file.sourceShards).toEqual({
+        src_1: 'budget_lines/pbo/2568/1.parquet',
+        src_2: 'budget_lines/pbo/2566/2.parquet',
+      });
+    }
+  });
+
+  it('sourceShards ว่าง ({}) ไม่ถูกเขียนลงไฟล์เลย (เหมือนไม่ส่งมา)', () => {
+    const json = serializeSession({
+      proposalVersions: [makeVersion()],
+      currentProposalIndex: 0,
+      chatMessages: [],
+      appDataVersion: '2026-09-01',
+      sourceShards: {},
+    });
+    expect(json).not.toContain('sourceShards');
+  });
+
+  it('serializeTgbpFile คง sourceShards ของไฟล์ต้นทางไว้ (re-serialize ตอนกด "บันทึก" บน /load)', () => {
+    const json = serializeSession({
+      proposalVersions: [makeVersion()],
+      currentProposalIndex: 0,
+      chatMessages: [],
+      appDataVersion: '2026-09-01',
+      sourceShards: { src_1: 'budget_lines/pbo/2568/1.parquet' },
+    });
+    const parsed = parseTgbpFile(json);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    const resaved = serializeTgbpFile(parsed.file);
+    const reparsed = parseTgbpFile(resaved);
+    expect(reparsed.ok).toBe(true);
+    if (reparsed.ok) {
+      expect(reparsed.file.sourceShards).toEqual({ src_1: 'budget_lines/pbo/2568/1.parquet' });
+    }
+  });
+
+  it('ปฏิเสธ value ที่มี ".." (path traversal)', () => {
+    const raw = JSON.parse(
+      serializeSession({
+        proposalVersions: [],
+        currentProposalIndex: -1,
+        chatMessages: [],
+        appDataVersion: '2026-09-01',
+      }),
+    ) as Record<string, unknown>;
+    const withBadShard = { ...raw, sourceShards: { src_1: '../../secret.parquet' } };
+    expect(TgbpFileSchema.safeParse(withBadShard).success).toBe(false);
+  });
+
+  it('ปฏิเสธ value ที่มี scheme อื่น (N5)', () => {
+    const raw = JSON.parse(
+      serializeSession({
+        proposalVersions: [],
+        currentProposalIndex: -1,
+        chatMessages: [],
+        appDataVersion: '2026-09-01',
+      }),
+    ) as Record<string, unknown>;
+    const withBadShard = { ...raw, sourceShards: { src_1: 'https://evil.example/x.parquet' } };
+    expect(TgbpFileSchema.safeParse(withBadShard).success).toBe(false);
+  });
+
+  it('ปฏิเสธ value ที่ขึ้นต้นด้วย "/" หรือมี backslash', () => {
+    const raw = JSON.parse(
+      serializeSession({
+        proposalVersions: [],
+        currentProposalIndex: -1,
+        chatMessages: [],
+        appDataVersion: '2026-09-01',
+      }),
+    ) as Record<string, unknown>;
+    expect(
+      TgbpFileSchema.safeParse({ ...raw, sourceShards: { src_1: '/absolute/path.parquet' } }).success,
+    ).toBe(false);
+    expect(
+      TgbpFileSchema.safeParse({ ...raw, sourceShards: { src_1: 'catalog\\..\\secret.parquet' } }).success,
+    ).toBe(false);
+  });
+
+  it('ปฏิเสธจำนวน entry ที่เกินเพดาน', () => {
+    const raw = JSON.parse(
+      serializeSession({
+        proposalVersions: [],
+        currentProposalIndex: -1,
+        chatMessages: [],
+        appDataVersion: '2026-09-01',
+      }),
+    ) as Record<string, unknown>;
+    const tooMany: Record<string, string> = {};
+    for (let i = 0; i <= MAX_SOURCE_SHARDS_ENTRIES; i += 1) {
+      tooMany[`src_${String(i)}`] = `budget_lines/pbo/2568/${String(i)}.parquet`;
+    }
+    expect(TgbpFileSchema.safeParse({ ...raw, sourceShards: tooMany }).success).toBe(false);
+
+    // เท่ากับเพดานพอดี (ไม่เกิน) ยังผ่าน
+    const exactlyAtLimit: Record<string, string> = {};
+    for (let i = 0; i < MAX_SOURCE_SHARDS_ENTRIES; i += 1) {
+      exactlyAtLimit[`src_${String(i)}`] = `budget_lines/pbo/2568/${String(i)}.parquet`;
+    }
+    expect(TgbpFileSchema.safeParse({ ...raw, sourceShards: exactlyAtLimit }).success).toBe(true);
+  });
+
+  it('ปฏิเสธ key/value ที่ยาวเกินเพดาน', () => {
+    const raw = JSON.parse(
+      serializeSession({
+        proposalVersions: [],
+        currentProposalIndex: -1,
+        chatMessages: [],
+        appDataVersion: '2026-09-01',
+      }),
+    ) as Record<string, unknown>;
+    expect(
+      TgbpFileSchema.safeParse({
+        ...raw,
+        sourceShards: { [`src_${'x'.repeat(200)}`]: 'budget_lines/pbo/2568/1.parquet' },
+      }).success,
+    ).toBe(false);
+    expect(
+      TgbpFileSchema.safeParse({
+        ...raw,
+        sourceShards: { src_1: `budget_lines/pbo/2568/${'x'.repeat(600)}.parquet` },
+      }).success,
+    ).toBe(false);
   });
 });

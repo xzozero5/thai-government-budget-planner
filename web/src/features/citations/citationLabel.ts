@@ -44,6 +44,45 @@ export function formatCitationDate(iso: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// econIndicatorLabelTh — ป้ายไทยสั้นของตัวชี้วัดเศรษฐกิจ (แก้บั๊ก: chip แสดงโค้ดดิบ เช่น
+// "construction_material_index · พ.ศ. 2566" ทั้งในหน้า /load และ workspace เพราะไม่มีที่ไหน map โค้ด
+// เป็นชื่อไทยเลยก่อนหน้านี้ — ดูรายงาน task ที่พบบั๊กนี้)
+//
+// รายชื่อ indicator ที่แม็พด้านล่างคือ**ชุดที่มีข้อมูลจริงใน production เท่านั้น** (ตรงกับ
+// `KNOWN_ECON_INDICATORS` ใน `ai/session/systemPrompt.ts` และ `docs/econ-sources.md`) — ไม่เดาชื่อของ
+// indicator ที่ยังเป็น `null` ทั้งชุด (`min_wage_bangkok_thb`, `min_wage_avg_thb`,
+// `diesel_avg_thb_per_l`, `gasoline95_avg_thb_per_l`, `cmi_electrical`, `cmi_plumbing`,
+// `cmi_asphalt_petroleum`) โค้ดที่ไม่อยู่ในนี้ fallback เป็นโค้ดดิบตัวพิมพ์ใหญ่เหมือนเดิม (ปลอดภัยกว่า
+// การเดา — ตรงกับหลักการเดียวกับ `describeQualityFlag`/`SHORT_ONLY_FLAG_KEYS` ด้านล่าง)
+// ---------------------------------------------------------------------------
+
+const ECON_INDICATOR_LABEL_KEYS: Partial<Record<string, CopyKey>> = {
+  cpi_headline_index: 'citation.econIndicators.cpi_headline_index',
+  inflation_pct: 'citation.econIndicators.inflation_pct',
+  gdp_growth_pct: 'citation.econIndicators.gdp_growth_pct',
+  usd_thb_avg: 'citation.econIndicators.usd_thb_avg',
+  government_budget_total_mthb: 'citation.econIndicators.government_budget_total_mthb',
+  construction_material_index: 'citation.econIndicators.construction_material_index',
+  cmi_steel: 'citation.econIndicators.cmi_steel',
+  cmi_cement: 'citation.econIndicators.cmi_cement',
+  cmi_concrete: 'citation.econIndicators.cmi_concrete',
+  cmi_wood: 'citation.econIndicators.cmi_wood',
+  cmi_tiles: 'citation.econIndicators.cmi_tiles',
+  cmi_paint: 'citation.econIndicators.cmi_paint',
+  cmi_sanitary: 'citation.econIndicators.cmi_sanitary',
+  cmi_electrical_plumbing: 'citation.econIndicators.cmi_electrical_plumbing',
+  cmi_other: 'citation.econIndicators.cmi_other',
+};
+
+/** ป้ายไทยสั้นของตัวชี้วัดเศรษฐกิจ ใช้เป็นทั้ง default ของ `getCitationChipLabel`'s `econLabel` และของ
+ * `features/proposal/citationLabel.ts#citationChipLabel` (fallback ของ chip ในตาราง BOQ) — คืน
+ * `undefined` เมื่อไม่รู้จัก indicator นี้ (ผู้เรียก fallback เป็นโค้ดดิบเอง ไม่ใช่หน้าที่ของฟังก์ชันนี้) */
+export function econIndicatorLabelTh(indicator: string): string | undefined {
+  const key = ECON_INDICATOR_LABEL_KEYS[indicator];
+  return key ? t(key) : undefined;
+}
+
+// ---------------------------------------------------------------------------
 // CitationChip label ต่อประเภท (06 §4.3 / T-407 ข้อ 3)
 // ---------------------------------------------------------------------------
 
@@ -87,7 +126,8 @@ export function getCitationChipLabel(
       return `${t('citation.types.document')} · ${pageText}`;
     }
     case 'econ': {
-      const label = options.econLabel ?? citation.indicator.toUpperCase();
+      const label =
+        options.econLabel ?? econIndicatorLabelTh(citation.indicator) ?? citation.indicator.toUpperCase();
       return `${label} ${String(citation.year_be)}`;
     }
     case 'web': {
