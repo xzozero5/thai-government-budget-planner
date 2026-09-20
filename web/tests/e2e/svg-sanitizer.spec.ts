@@ -63,12 +63,25 @@ function minimalProposalWithIllustration(illustrationId: string): Record<string,
         citations: [],
       },
     ],
-    totals: { subtotal_thb: 1, contingency_pct: 0, contingency_thb: 0, vat_included: true, grand_total_thb: 1 },
+    totals: {
+      subtotal_thb: 1,
+      contingency_pct: 0,
+      contingency_thb: 0,
+      vat_included: true,
+      grand_total_thb: 1,
+    },
     comparables: [],
     risks: [],
     open_questions: [],
     citations_web: [],
-    illustrations: [{ illustration_id: illustrationId, title: 'ภาพทดสอบ', caption: 'ภาพเชิงแผนผังทดสอบ ไม่ใช่แบบก่อสร้างจริง', kind: 'diagram' }],
+    illustrations: [
+      {
+        illustration_id: illustrationId,
+        title: 'ภาพทดสอบ',
+        caption: 'ภาพเชิงแผนผังทดสอบ ไม่ใช่แบบก่อสร้างจริง',
+        kind: 'diagram',
+      },
+    ],
     stat_cards: [],
   };
 }
@@ -126,10 +139,18 @@ async function runIllustrationCase(
   const composer = page.getByLabel('ช่องพิมพ์ข้อความ');
   await composer.fill('ขอภาพประกอบโครงการหน่อยครับ');
   await page.getByRole('button', { name: 'ส่ง' }).click();
-  await expect(page.locator('[data-testid="tool-activity"][data-tool="emit_illustration"]:not([data-status="running"])').first()).toBeVisible({ timeout: 20_000 });
+  await expect(
+    page
+      .locator(
+        '[data-testid="tool-activity"][data-tool="emit_illustration"]:not([data-status="running"])',
+      )
+      .first(),
+  ).toBeVisible({ timeout: 20_000 });
   // จบ turn แล้ว (ปุ่ม "หยุด" หาย กลับเป็นปุ่ม "ส่ง") — ใช้สัญญาณนี้แทนข้อความสุดท้ายตรง ๆ เพราะ path ที่
   // sanitizer ปฏิเสธภาพ (DOCTYPE ฯลฯ) จบด้วยข้อความคนละประโยคกับ path ที่สร้างภาพสำเร็จ (2 รอบ vs 3 รอบ)
-  await expect(page.getByRole('button', { name: 'ส่ง', exact: true })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole('button', { name: 'ส่ง', exact: true })).toBeVisible({
+    timeout: 20_000,
+  });
   return { accepted };
 }
 
@@ -164,7 +185,9 @@ async function assertMountIsSafe(page: import('@playwright/test').Page): Promise
 }
 
 test.describe('T-409/T-412 SVG sanitizer — Chromium จริง', () => {
-  test('CSS escape (\\000075rl() ใน fill) → attribute ถูกตัด, ภาพยังแสดงได้ปลอดภัย', async ({ page }) => {
+  test('CSS escape (\\000075rl() ใน fill) → attribute ถูกตัด, ภาพยังแสดงได้ปลอดภัย', async ({
+    page,
+  }) => {
     const mock = createAnthropicMock(page);
     await mock.install();
     await submitFakeKeyAndEnterWorkspace(page);
@@ -175,7 +198,9 @@ test.describe('T-409/T-412 SVG sanitizer — Chromium จริง', () => {
     expect(mock.getEvilOriginHitCount()).toBe(0);
   });
 
-  test('image-set() ใน attribute อ้างสี (fill) → ค่าไม่อยู่ใน allowlist ถูกตัดทิ้ง', async ({ page }) => {
+  test('image-set() ใน attribute อ้างสี (fill) → ค่าไม่อยู่ใน allowlist ถูกตัดทิ้ง', async ({
+    page,
+  }) => {
     const mock = createAnthropicMock(page);
     await mock.install();
     await submitFakeKeyAndEnterWorkspace(page);
@@ -215,7 +240,14 @@ test.describe('T-409/T-412 SVG sanitizer — Chromium จริง', () => {
     const svg = `<!DOCTYPE svg [<!ENTITY xxe "${EVIL_ORIGIN}/x">]><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><title>&xxe;</title></svg>`;
     const { accepted } = await runIllustrationCase(page, mock, svg);
     expect(accepted).toBe(false);
-    await expect(page.getByText('emit_illustration: เรียกใช้ไม่สำเร็จ')).toBeVisible();
+    // อ้างสถานะของการ์ด ไม่ใช่ข้อความ (การ์ด error แสดง "เหตุผลจริง" ของ tool แล้ว — ข้อความเปลี่ยนได้)
+    await expect(
+      page
+        .locator(
+          '[data-testid="tool-activity"][data-tool="emit_illustration"][data-status="error"]',
+        )
+        .first(),
+    ).toBeVisible();
     expect(mock.getEvilOriginHitCount()).toBe(0);
   });
 
