@@ -8,6 +8,7 @@
 - Phase 0, 1: เสร็จ · ข้อมูล production: `data_version cd15fb2dd39b…` 796 ไฟล์ (เพิ่ม `catalog/items-slim` + `catalog/search-index`), อยู่บน Pages แล้ว
 - Test ล่าสุด (main thread รันเองทั้งหมด, 2569-09-21): **web** eslint 0 error · typecheck ✅ · vitest **1153/1153** · build ✅ (entry JS 227.9 kB gz รวม Anthropic SDK; react-pdf 458 kB gz / recharts / workspace เป็น lazy chunk; ไม่มี harness ใน `dist/`) · Playwright e2e **7/7** (data harness 6 + smoke 1; T-409 กำลังเพิ่ม) · **pipeline** pytest **451** · ruff ✅ · CI ล่าสุดที่ยืนยันเขียว: `62cadeb`
 - API ที่ `ai/` ต้องใช้: **`web/src/data/index.ts` (facade) เท่านั้น** — ESLint `no-restricted-imports` บังคับ
+- **Demo พร้อม**: https://xzozero5.github.io/thai-government-budget-planner/ (`715f520`)
 - Blockers: ไม่มี · `[ASK-HUMAN]` ค้าง: ไม่มี · **งบ API: ใช้ไป 0.3939 / 5.00 USD** (`docs/api-budget.md`)
 - งานที่เลื่อน (มี interface รองรับแล้ว): **T-209** sort shard ตาม `item_key` + row group 16k, **T-210** catalog detail blocks (เลิกโหลด catalog เต็ม ~40 MB heap) — ทำพร้อมกันใน republish ครั้งถัดไป
 - แจ้งคุณนิว (ไม่บล็อก): ADR-004 (PBO 2562 ไม่ครบ 79 %), ADR-005 (ราชาเทวะ OCR ต้นทาง), econ ขาดน้ำมัน/ค่าแรง + `verified:false` ทั้งหมด, ราคาต่อหน่วยมี ~3 % ของแถว, DuckDB-WASM จริง ~8.6 MB gz (lazy), react-pdf มี 3 บั๊กภาษาไทยที่ต้องแก้ใน Phase 5
@@ -26,6 +27,13 @@
 - GitHub Pages: **live แล้ว** — ยืนยัน 19 ก.ย.: หน้า placeholder ขึ้น, CSP meta อยู่ใน HTML ที่ serve, `Accept-Ranges: bytes`, `Range: bytes=0-99` กับ `data/sources.json` → **206 / 100 bytes**; ยังต้องวัดกับไฟล์ parquet + DuckDB-WASM จริงใน S1 (T-201) และ `Cache-Control: max-age=600` (ข้อมูลใหม่อาจช้า ≤ 10 นาที)
 
 ## Log
+
+## 2569-09-21 13:30 (Asia/Bangkok) — Claude Code main thread — DEMO READY + หยุดประหยัดโควตา (คุณนิวสั่ง)
+- **Demo**: https://xzozero5.github.io/thai-government-budget-planner/ — deploy จาก `715f520`; chromium e2e 17/17 (happy path ถึง export PDF/save/load, error paths, sanitizer 10 เคส, mobile) + บังคับ "ไม่มี CSP violation เลย"; ตรวจเว็บจริงด้วย Chromium: ไม่มี console error/request ออกนอก origin/storage
+- ลงแล้ว: T-409 e2e, T-411 motion, PO must ชุด A+B (ต้นทุนต่อข้อเสนอ, เตือนงบ 80 %, ผล tool ภาษาไทย, ป้ายอ้างอิงไม่พบ, ยอดรวมย่อย, เทียบเคียงคลิกได้ ฯลฯ), entry chunk 229 → **86.5 kB gz** (SDK/agent/`/load` เป็น lazy), **B-001 ปิด** (ต้นตอจริง: Zod probe `new Function` → jitless; yoga wasm ของ react-pdf `fetch(data:)` → `connect-src data:`; ไม่เปิด unsafe-eval)
+- หยุดกลางทาง (resume ได้ด้วย SendMessage หรือสั่งใหม่): **T-504 กราฟแนวโน้มใน PDF + export dialog S13** (ยังไม่ได้เขียนไฟล์), **T-602 security review** (ยังไม่เริ่มจริง) — ต้องทำก่อนปิด Phase 6; ขอให้ security-reviewer ทบทวนการตัดสินใจ `connect-src data:` ด้วย
+- ยังไม่ได้ทำ: ชุดตรวจเต็ม (vitest ทั้ง repo รอบสุดท้าย = 1153 ก่อนชุด B; หลังชุด B รันเฉพาะ UI/stores/session 638 + e2e), T-503 (PDF ใน viewer จริง), should ที่เหลือ (S12, S13, S15–S17), Phase 6 ทั้งหมด (T-601–T-606), eval จริง core8 ที่ T-604 (ต้องขออนุมัติ)
+- `[UNVERIFIED]`: flow บนหน้าจอจริงกับ **API จริง** ยังไม่เคยรัน (มีแต่ mock ระดับ HTTP + eval harness กับ API จริง) — demo ครั้งแรกด้วย key จริงคือการทดสอบครั้งแรก แนะนำ Haiku (≈ 0.13 USD/ข้อเสนอ)
 
 ## 2569-09-20 23:45 (Asia/Bangkok) — frontend-dev — T-411 Motion layer + T-408 ที่เหลือ
 - **T-411**: `web/src/components/motion/` ใหม่ — `usePrefersReducedMotion` (ย้าย implementation จาก `components/viz/utils.ts` มาไว้จุดเดียว, `viz/utils.ts` re-export เพื่อไม่กระทบ import เดิม), `useCountUp` (ย้าย logic จาก `StatCard` มาเป็น hook กลาง, `StatCard` ใช้ร่วม พฤติกรรม/ค่า default เดิมทุกประการ), `FadeSlideIn` (ข้อความแชทใหม่ — ต่อเข้า `MessageBubble`), `Collapse` (CSS grid-rows ล้วน ไม่ผ่าน `motion/react` — ต่อเข้า `Accordion`/`WarningsPanel` แบบ entrance-only), `DrawerSlide` (มี test แต่**ไม่ได้ต่อเข้า `Drawer`/`Dialog` จริง** — ดูข้อค้นพบสำคัญด้านล่าง), `MotionProvider` (`LazyMotion`+`domAnimation`, ครอบเฉพาะ `WorkspacePage`)
