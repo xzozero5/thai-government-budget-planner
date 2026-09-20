@@ -10,6 +10,7 @@ import type { ChangeEvent, FormEvent, ReactElement } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Card, ExternalLink, IconButton, Input, Select } from '@/components/ui';
 import { t } from '@/i18n';
+import { prefetchWhenIdle } from '@/lib/chunkLoad';
 import { formatNumber } from '@/lib/format';
 import { useSessionStore } from '@/stores/sessionStore';
 import { MODEL_LIST, getModelCapability, isModelId } from '@/ai/models';
@@ -65,28 +66,7 @@ function EyeIcon({ open }: { open: boolean }): ReactElement {
  * `setTimeout` — เงียบ ๆ ไม่บล็อก interaction ใด ๆ และไม่ throw ถ้า prefetch ล้มเหลว (เช่น offline)
  */
 function prefetchAiClientChunk(): () => void {
-  let cancelled = false;
-  const run = (): void => {
-    if (cancelled) {
-      return;
-    }
-    void import('@/ai/client').catch(() => {
-      // เงียบ ๆ — ถ้าล้มเหลว `submitKey` จะ import ใหม่ตอนผู้ใช้กดจริงอยู่ดี
-    });
-  };
-
-  if (typeof window.requestIdleCallback === 'function') {
-    const handle = window.requestIdleCallback(run);
-    return () => {
-      cancelled = true;
-      window.cancelIdleCallback(handle);
-    };
-  }
-  const timer = window.setTimeout(run, 1500);
-  return () => {
-    cancelled = true;
-    window.clearTimeout(timer);
-  };
+  return prefetchWhenIdle([() => import('@/ai/client')]);
 }
 
 export function KeyGatePage(): ReactElement {

@@ -1,12 +1,13 @@
 import { touchActivity } from '@/ai/session/keyHolder';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { lazy, Suspense, useEffect, useRef } from 'react';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { HashRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { ToastProvider } from '@/components/ui';
 import { AboutPage } from '@/features/about';
 import { KeyGatePage } from '@/features/keygate';
 import { t } from '@/i18n';
+import { prefetchWhenIdle } from '@/lib/chunkLoad';
 import { useSessionStore } from '@/stores/sessionStore';
 // T-203 §4: route ของ harness ทดสอบ data layer เท่านั้น — ตัดออกจาก production bundle ปกติเสมอ
 // (ดู comment ใน dataHarness/DataHarnessRoute.tsx) — **ต้องคง import + `{dataHarnessRoute}` นี้ไว้ใน
@@ -30,6 +31,27 @@ const LazyWorkspaceRoute = lazy(() =>
 const LazyLoadPage = lazy(() =>
   import('./LoadPagePlaceholder').then((m) => ({ default: m.LoadPagePlaceholder })),
 );
+
+/** ErrorBoundary ระดับหน้า ที่ล้างสถานะ error เมื่อเปลี่ยน route — เดิมลิงก์ "ย้อนกลับ" ในหน้า error เปลี่ยน hash ได้แต่
+ * boundary ยังค้างหน้า error เดิม (พบตอนไล่แก้ปัญหา chunk หลัง deploy) */
+function RoutedErrorBoundary({ children }: { children: ReactNode }): ReactElement {
+  const { pathname } = useLocation();
+  return (
+    <ErrorBoundary variant="page" resetKey={pathname}>
+      {children}
+    </ErrorBoundary>
+  );
+}
+
+/** กันแท็บที่เปิดค้างข้าม deploy (ดู `lib/chunkLoad.ts`): โหลด chunk ของ route ที่ lazy ไว้ล่วงหน้าตอนหน้าเว็บว่าง —
+ * specifier ต้องตรงกับ `lazy(() => import(...))` ข้างบนเป๊ะ ๆ เพื่อให้เป็น chunk เดียวกัน (โหลดครั้งเดียว) */
+function RouteChunkPrefetcher(): null {
+  useEffect(
+    () => prefetchWhenIdle([() => import('@/features/workspace'), () => import('./LoadPagePlaceholder')]),
+    [],
+  );
+  return null;
+}
 
 /** T-602 NEW-L6: เดิม idle timer ของ key ถูกต่ออายุเฉพาะตอน "ส่งข้อความ" — ผู้ใช้ที่นั่งแก้ BOQ/อ่านหลักฐาน
  * ต่อเนื่อง 60 นาทีโดยไม่ส่งข้อความจะถูกล้าง key ทั้งที่ยังใช้งานอยู่ → นับการกด/พิมพ์ในหน้าเป็นกิจกรรมด้วย
@@ -99,6 +121,7 @@ export function App(): ReactElement {
       <ToastProvider>
         <ThemeSync />
         <ActivityTracker />
+        <RouteChunkPrefetcher />
         <RouteFocusManager />
         <a
           href="#main-content"
@@ -108,7 +131,7 @@ export function App(): ReactElement {
         </a>
         <div id="main-content">
           {/* T-602 NEW-H1: error ระหว่าง render (ไฟล์ .tgbp.json เสีย/ค่าจากโมเดลผิดรูป) ต้องไม่ทำให้ทั้งแท็บขาว */}
-          <ErrorBoundary variant="page">
+          <RoutedErrorBoundary>
             <Routes>
               <Route path="/" element={<KeyGatePage />} />
               <Route
@@ -131,7 +154,7 @@ export function App(): ReactElement {
               {dataHarnessRoute}
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
-          </ErrorBoundary>
+          </RoutedErrorBoundary>
         </div>
       </ToastProvider>
     </HashRouter>

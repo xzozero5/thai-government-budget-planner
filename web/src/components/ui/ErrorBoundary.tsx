@@ -10,6 +10,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { redactSecrets } from '@/ai/session/redactSecrets';
 import { t } from '@/i18n';
+import { isChunkLoadError } from '@/lib/chunkLoad';
 
 export interface ErrorBoundaryProps {
   children: ReactNode;
@@ -57,12 +58,19 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     this.setState({ message: null });
   };
 
+  private readonly handleReload = (): void => {
+    window.location.reload();
+  };
+
   override render(): ReactNode {
     const { message } = this.state;
     if (message === null) {
       return this.props.children;
     }
     const isPage = (this.props.variant ?? 'section') === 'page';
+    // ไฟล์ JS ของเวอร์ชันที่เปิดค้างถูกแทนที่หลัง deploy — "ลองใหม่" ไม่มีทางสำเร็จ (ดู `lib/chunkLoad.ts`) ทางออกจริงคือ
+    // รีเฟรช; งานที่ค้างยังอยู่ในหน่วยความจำของแท็บจนกว่าจะรีเฟรช จึงบอกให้กลับไปบันทึกไฟล์ก่อน
+    const isStaleVersion = isChunkLoadError(message);
     return (
       <div
         role="alert"
@@ -72,17 +80,19 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             : 'flex flex-col gap-2 rounded-md border border-line bg-surface-2 p-4'
         }
       >
-        <h2 className="text-base font-semibold text-danger">{t('errors.title')}</h2>
+        <h2 className="text-base font-semibold text-danger">
+          {isStaleVersion ? t('errors.staleVersionTitle') : t('errors.title')}
+        </h2>
         <p className="whitespace-pre-wrap break-words text-sm text-fg">
-          {t('errors.unknown', { detail: message })}
+          {isStaleVersion ? t('errors.staleVersionBody') : t('errors.unknown', { detail: message })}
         </p>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={this.handleRetry}
+            onClick={isStaleVersion ? this.handleReload : this.handleRetry}
             className="inline-flex min-h-9 items-center rounded-sm bg-primary px-3 text-sm font-medium text-primary-contrast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
-            {t('common.retry')}
+            {isStaleVersion ? t('errors.staleVersionReload') : t('common.retry')}
           </button>
           {isPage ? (
             <a

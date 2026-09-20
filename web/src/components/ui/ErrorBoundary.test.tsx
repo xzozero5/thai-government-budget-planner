@@ -85,3 +85,25 @@ describe('ErrorBoundary (T-602 NEW-H1)', () => {
     expect(screen.getByText('ไฟล์ใหม่')).toBeInTheDocument();
   });
 });
+
+describe('ErrorBoundary — ไฟล์ JS ของเวอร์ชันเก่าถูกแทนที่หลัง deploy', () => {
+  function StaleChunk(): never {
+    throw new Error(
+      'Failed to fetch dynamically imported module: https://example.github.io/app/assets/index-C8wFBVW8.js',
+    );
+  }
+
+  it('แสดงข้อความ "เว็บเพิ่งอัปเดต" + ปุ่มรีเฟรช แทน "ลองใหม่" ที่ไม่มีทางสำเร็จ', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    render(
+      <ErrorBoundary variant="page">
+        <StaleChunk />
+      </ErrorBoundary>,
+    );
+    expect(screen.getByRole('heading', { name: 'เว็บเพิ่งอัปเดตเป็นเวอร์ชันใหม่' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'รีเฟรชหน้าเว็บ' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'ลองใหม่' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'ย้อนกลับ' })).toBeInTheDocument();
+    spy.mockRestore();
+  });
+});

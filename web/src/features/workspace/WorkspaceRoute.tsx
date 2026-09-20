@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useToast } from '@/components/ui';
 import { t } from '@/i18n';
+import { prefetchWhenIdle } from '@/lib/chunkLoad';
 import { useSessionStore } from '@/stores/sessionStore';
 import { consumeManualClear } from './manualClearFlag';
 import { WorkspacePage } from './WorkspacePage';
@@ -24,6 +25,16 @@ export function WorkspaceRoute(): ReactElement {
     }
     wasKeyRef.current = hasKey;
   }, [hasKey, push]);
+
+  // กันแท็บที่เปิดค้างข้าม deploy (ดู `lib/chunkLoad.ts`): กราฟแนวโน้ม + ตัวแปลงภาพของ PDF เป็น lazy chunk ที่จะถูกเรียก
+  // ทีหลังในบทสนทนา (ตัวสร้าง PDF ก้อนใหญ่ถูก prefetch แยกใน `ExportDialog` เมื่อมีข้อเสนอแล้ว)
+  useEffect(() => {
+    if (!hasKey) return undefined;
+    return prefetchWhenIdle([
+      () => import('@/components/viz/TrendChart'),
+      () => import('@/features/export/pdf/svgToPng'),
+    ]);
+  }, [hasKey]);
 
   if (!hasKey) {
     return <Navigate to="/" replace />;
