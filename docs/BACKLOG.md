@@ -47,7 +47,7 @@
 - [x] T-304 `ai-engineer` `ai/agent.ts` loop (streaming, tool rounds, ToolLog, budget stop, cancel, error/retry) ; test
 - [x] T-309 `ai-engineer` tools `get_price_trend` + `emit_illustration` (ใช้ `data/trends.ts`, `lib/svgSanitizer.ts`; จำกัด 3 ภาพ/proposal) + proposal validator รองรับ `illustrations`/`stat_cards`/`trend_ref` ; tests — **จาก S5**: `max_tokens ≥ 8000`, ทิ้งผลเมื่อ `stop_reason==='max_tokens'` (ห้ามซ่อม SVG ที่ขาด), prompt สั่งใช้ presentation attributes (ห้าม `<style>`)
 - [x] T-305 `ai-engineer` `ai/systemPrompt.ts` (cached blocks: กฎ + facets + dataset notes + 3 few-shot tool traces + `<palette>` และ illustration style จาก `docs/ui/illustration-style.md` + few-shot SVG 1 ชิ้น) + mode variants — system prompt ต้องระบุ: "ไม่พบในปี 2562 ≠ ไม่มีงบ (ADR-004)", "ไม่พบใน catalog ≠ ไม่เคยตั้งงบ — ต้องลอง `query_budget_lines` ด้วย keyword ก่อนสรุป", ตัวเลขราชาเทวะมาจาก OCR ต้นทาง (ADR-005)
-- [~] T-306 `ai-engineer` `web/tests/eval/` cases.yaml 20 โจทย์ + runner `npm run eval` (+ judge) ; รันจริง 1 รอบ → `docs/eval-report.md`; **guard N2**: test ที่ build แล้ว grep `dist/assets/*.js` ต้องไม่พบ `sk-ant-` / ค่า `VITE_EVAL_ANTHROPIC_API_KEY` (ตัวแปร `VITE_*` ถูก inline เข้า bundle ถ้ามีค่าตอน build — runner ต้องอ่าน key ฝั่ง Node ไม่ใช่ผ่าน `import.meta.env`); **เคสบังคับจาก T-113**: ฝายของ อบต. (ต้องไม่หยิบ median 25 ล้านของ key `ฝาย`), รายการหางยาวที่ไม่อยู่ใน catalog, รายการปี 2562, รายการที่ unit_price n=1
+- [x] T-306 (runner + cases + guard เสร็จ; การรันจริงชุด core8 ย้ายไป T-604) `ai-engineer` `web/tests/eval/` cases.yaml 20 โจทย์ + runner `npm run eval` (+ judge) ; รันจริง 1 รอบ → `docs/eval-report.md`; **guard N2**: test ที่ build แล้ว grep `dist/assets/*.js` ต้องไม่พบ `sk-ant-` / ค่า `VITE_EVAL_ANTHROPIC_API_KEY` (ตัวแปร `VITE_*` ถูก inline เข้า bundle ถ้ามีค่าตอน build — runner ต้องอ่าน key ฝั่ง Node ไม่ใช่ผ่าน `import.meta.env`); **เคสบังคับจาก T-113**: ฝายของ อบต. (ต้องไม่หยิบ median 25 ล้านของ key `ฝาย`), รายการหางยาวที่ไม่อยู่ใน catalog, รายการปี 2562, รายการที่ unit_price n=1
 - [x] T-307 `security-reviewer` review key handling/egress/prompt-injection ใน ai/ + data/; รายการแก้ → ai-engineer แก้
 - [ ] T-308 `po` review eval report เทียบเกณฑ์ 07 §4; ปรับ prompt/tool ถ้าไม่ผ่าน (วนได้ 2 รอบ) ; STATUS
 
@@ -75,7 +75,7 @@
 - [~] T-601 `qa-engineer` รัน `08-QA-CHECKLIST.md` ทั้งหมด → `docs/qa/run-<date>.md` + `bugs.md`
 - [x] T-602 `security-reviewer` รัน 09 §5 C1–C9 ; แก้
 - [ ] T-603 `frontend-dev` แก้ bug severity high/medium ทั้งหมด; a11y fixes จาก axe
-- [ ] T-604 `ai-engineer` รัน eval รอบสุดท้าย → eval-report
+- [~] T-604 `ai-engineer` รัน eval รอบสุดท้าย → eval-report
 - [~] T-605 `frontend-dev` ตรวจ production deploy บน GitHub Pages: CSP meta ทำงาน, range request/latency บน URL จริง (บันทึกลง SPIKES.md), Lighthouse, README deploy section; ยืนยันว่า CSP meta ไม่ถูก strip และบันทึกผลกระทบที่ไม่มี `frame-ancestors` (ADR-003 ข้อ 1); custom domain (ถ้ามี) เป็น post-MVP; workflow ต้อง deploy `web/public/duckdb-ext/**` + smoke ว่า `.wasm` ถูก serve และถูกบีบอัดหรือไม่
 - [~] T-606 `po` release notes `docs/RELEASE-0.1.md`, STATUS = "MVP done", รายการ post-MVP (F6 data browser, OCR, share link ฯลฯ)
 

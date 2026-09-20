@@ -3,16 +3,25 @@
 รูปแบบ entry: `## YYYY-MM-DD HH:MM (Asia/Bangkok) — <ใคร/agent> — <phase/task>` แล้วตามด้วย ทำอะไร / ไฟล์ที่แตะ / test / ค้าง / ไม่ยืนยัน
 
 ## สถานะปัจจุบัน
+| Phase | สถานะ (2569-09-21) | ค้าง |
+|---|---|---|
+| 0 Bootstrap | ✅ เสร็จ | — |
+| 1 Data pipeline | ✅ เสร็จ (T-101–T-115) | — |
+| 2 Architecture & data access | ✅ เสร็จตามขอบเขต MVP (T-201–T-208) | T-209, T-210 เลื่อนไปทำพร้อม republish ข้อมูลครั้งถัดไป (ไม่บล็อก) |
+| 3 AI layer | 🔶 โค้ดเสร็จ (T-301–T-305, T-307, T-309); T-306 runner เสร็จ + รันจริง 2 ครั้ง | **eval จริง core8 ย้ายไปเป็น T-604 (กำลังรัน)** → T-308 po review ผล |
+| 4 UI | ✅ เสร็จ (T-401–T-412) | should/could จาก PO review ที่เหลือ → post-MVP (ดู `docs/qa/po-review-phase4-5.md`) |
+| 5 Export | 🔶 T-501, T-502, T-504 เสร็จ | **T-503** ตรวจ PDF ใน viewer จริง 4 ตัว (ต้องใช้คน) |
+| 6 QA & hardening | 🔶 T-602 เสร็จ + แก้ครบ; T-601/T-605/T-606 บางส่วน | **T-604 กำลังรัน** (คุณนิวอนุมัติ 1.89 USD), T-603, T-601 ส่วนที่ต้องใช้คน/เบราว์เซอร์อื่น |
+
 - Phase: **4 และ 5 ปิดแล้ว (2569-09-21)** · **Phase 6 กำลังทำ** — เสร็จ: T-602 security review + แก้ finding ครบ 16 ข้อ, QA ข้อมูล B1/B5, T-605 ตรวจเว็บจริงเบื้องต้น, ร่าง T-606 · เหลือ: **T-604 eval จริง core8 (รอคุณนิวอนุมัติคำสั่ง — ใช้เงิน API)** → T-308 po review ผล eval, T-601 ส่วนที่ต้องใช้คน/เบราว์เซอร์อื่น (A8/T-503 PDF ใน viewer จริง 4 ตัว, E1 Firefox/Safari/มือถือ, E2 axe, D1 Lighthouse), T-603 แก้บั๊กที่พบเพิ่ม · Phase 3: โค้ดเสร็จ; eval จริงเลื่อนมา T-604 ตามคำสั่งคุณนิว
 - Demo/production: https://xzozero5.github.io/thai-government-budget-planner/ — deploy อัตโนมัติจาก `main` เมื่อ CI เขียว
 - ของที่ลงหลัง demo จริงครั้งแรก (key ของคุณนิว, Haiku, 0.52 USD/ข้อเสนอ): query_budget_lines auto-narrow, emit_proposal ซ่อมอัตโนมัติก่อน Zod, เหตุผลของ tool error บนการ์ด, ปุ่ม "ทำต่อ", กฎเลือก basis=historical, prefetch chunk PDF + ข้อความ stale version, ประมาณการต้นทุนเป็นช่วง 0.15–0.55 USD, T-504 กราฟแนวโน้มใน PDF + switch ใน export dialog
 - Phase 0, 1: เสร็จ · ข้อมูล production: `data_version cd15fb2dd39b…` 796 ไฟล์ (เพิ่ม `catalog/items-slim` + `catalog/search-index`), อยู่บน Pages แล้ว
 - Test ล่าสุด (main thread รันเองทั้งหมด, 2569-09-21 ที่ `cf4caff`): **web** eslint 0 error · typecheck ✅ · vitest **1360+ ผ่านทั้ง repo** · build ✅ (entry ≈ 90 kB gz; SDK/agent, workspace, `/load`, recharts, react-pdf 458 kB gz เป็น lazy chunk) · Playwright e2e **24/24** (รันใน worktree แยกที่ commit เดียวกันก่อน push: happy path ถึง export/load + storage/egress/CSP audit, error paths 5, sanitizer 10, mobile, data harness 6, smoke) · **pipeline** pytest **451** · ruff ✅ · CI ล่าสุดที่ยืนยันเขียว: `5f555b0` (รอผลของ `cf4caff`)
 - API ที่ `ai/` ต้องใช้: **`web/src/data/index.ts` (facade) เท่านั้น** — ESLint `no-restricted-imports` บังคับ
-- **Demo พร้อม**: https://xzozero5.github.io/thai-government-budget-planner/ (`715f520`)
-- Blockers: ไม่มี · `[ASK-HUMAN]` ค้าง: ไม่มี · **งบ API: ใช้ไป 0.3939 / 5.00 USD** (`docs/api-budget.md`)
+- Blockers: ไม่มี · `[ASK-HUMAN]` ค้าง: T-503/E1 (ต้องใช้คนเปิด PDF ใน viewer จริง + ลองบน Firefox/Safari/มือถือ) · **งบ API: ledger ของโปรเจกต์ 0.3939 USD ก่อน T-604; ยอดคงเหลือจริงของ key ตามที่คุณนิวแจ้ง = 2.89 USD (demo บนเว็บจริงใช้ key เดียวกัน) — อนุมัติ 1.89 สำหรับ T-604** (`docs/api-budget.md`)
 - งานที่เลื่อน (มี interface รองรับแล้ว): **T-209** sort shard ตาม `item_key` + row group 16k, **T-210** catalog detail blocks (เลิกโหลด catalog เต็ม ~40 MB heap) — ทำพร้อมกันใน republish ครั้งถัดไป
-- แจ้งคุณนิว (ไม่บล็อก): ADR-004 (PBO 2562 ไม่ครบ 79 %), ADR-005 (ราชาเทวะ OCR ต้นทาง), econ ขาดน้ำมัน/ค่าแรง + `verified:false` ทั้งหมด, ราคาต่อหน่วยมี ~3 % ของแถว, DuckDB-WASM จริง ~8.6 MB gz (lazy), react-pdf มี 3 บั๊กภาษาไทยที่ต้องแก้ใน Phase 5
+- แจ้งคุณนิว (ไม่บล็อก): ADR-004 (PBO 2562 ไม่ครบ 79 %), ADR-005 (ราชาเทวะ OCR ต้นทาง), econ ขาดน้ำมัน/ค่าแรง + `verified:false` ทั้งหมด, ราคาต่อหน่วยมี ~3 % ของแถว, DuckDB-WASM จริง ~8.6 MB gz (lazy), ต้นทุน API ต่อข้อเสนอ Haiku 0.15–0.55 USD (วัดจริง)
 - กติกาจากบทเรียน: (1) ตรวจซ้ำรายงาน agent ทุกครั้งก่อน commit — รวม**ตรวจกับข้อมูล production ไม่ใช่แค่ fixture** และ**โจมตี security code เอง** (2) ห้าม `git stash/checkout` ขณะมี agent แก้ไฟล์เดียวกัน (3) test ห้ามเขียนลง `.cache`/`web/public/data` จริง (4) commit data หลัง review ผ่าน (5) **ห้ามแก้ไฟล์ที่มี backslash ผ่าน Python heredoc** — ใช้ Edit tool
 
 ## Open questions / `[UNVERIFIED]` ที่ยังค้าง
@@ -21,8 +30,7 @@
 - `item_parser` ข้อจำกัดที่รู้: ชื่อจังหวัดฝังในชื่อหน่วยงานโดยไม่มี marker, `บ้าน` กำกวม, chainage ติดอักษรไทย (`0+000-1+700`), เกณฑ์ qty ≥ 20 over-flag เมื่อเลขติดคำไทย (`…กรุงเทพมหานคร100 ชุด`) — ผลคือ unit_price หายบางแถว (ปลอดภัยกว่าผิด); ยังเหลือ 305 กลุ่มใน catalog ที่ `unit_price × 20 < amount` `[UNVERIFIED]` → AC ใน T-302 (n < 3 ห้าม confidence สูง)
 - catalog หลัง decompress 40.5 MB (45,193 entries) — ความเสี่ยง memory/TTI บนมือถือ → S2 ต้องวัดกับไฟล์จริง; ทางออกสำรอง T-208
 - `act_2570_province` format A (575 แถว เชียงใหม่) ไม่มีรหัสกระทรวง/หน่วยงาน (org mapped 21 %) ทั้งที่ match กลับ A2 ได้ 100 % → copy code จาก A2 ได้ในอนาคต (ผลกระทบต่ำ: เป็น subset ที่ไม่นับใน catalog)
-- ราคา API ต่อ token ของแต่ละ model (T-301) — ต้องเช็คจาก docs.claude.com ตอน implement
-- DuckDB-WASM range request บน host เป้าหมาย — S1 ใน T-201
+- ราคา API ต่อ token ใน `ai/models.ts` มาจาก docs ที่ agent ตรวจ 2026-09-20; ledger ของเราคำนวณตรงกับสูตรนี้ แต่ **ยอดจริงให้ยึด Console** `[UNVERIFIED]`
 - Push: **ใช้ SSH แล้ว** (คุณนิวสั่ง 2569-09-20) — host key ของ github.com ตรวจกับ `api.github.com/meta` แล้วเก็บใน `.git/github_known_hosts` (repo-local, ไม่แตะ `~/.ssh/known_hosts`) — ADR-003 ข้อ 3ก
 - advisory ของ react-router-dom 6.x ที่เป็นเหตุให้ใช้ 7.x — มาจาก `npm audit` ของ agent ยังไม่ได้ตรวจเลข advisory เอง `[UNVERIFIED]` (ADR-003 ข้อ 6)
 - GitHub Pages: **live แล้ว** — ยืนยัน 19 ก.ย.: หน้า placeholder ขึ้น, CSP meta อยู่ใน HTML ที่ serve, `Accept-Ranges: bytes`, `Range: bytes=0-99` กับ `data/sources.json` → **206 / 100 bytes**; ยังต้องวัดกับไฟล์ parquet + DuckDB-WASM จริงใน S1 (T-201) และ `Cache-Control: max-age=600` (ข้อมูลใหม่อาจช้า ≤ 10 นาที)
