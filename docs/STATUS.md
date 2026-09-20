@@ -37,6 +37,12 @@
 
 ## Log
 
+## 2569-09-21 ดึก (2) (Asia/Bangkok) — Claude Code main thread — ลอง flow เต็มบนเว็บจริงด้วย key ของคุณนิว (คุณนิวพิมพ์ key เอง)
+- โจทย์: จัดซื้อรถบรรทุกดีเซล 1 ตัน ดับเบิ้ลแค็บ 2 คัน ปี 2569 + ปรับเงินเฟ้อ + กราฟ (Sonnet 5, ค่าเริ่มต้นของเว็บ) → **ได้ข้อเสนอ 1,700,000 บาท, tool error 0 จาก 12 tool call, 0.54 USD** (จ่ายด้วย key ของคุณนิว ไม่อยู่ใน ledger ของโปรเจกต์); drawer ของชิปอ้างอิงเปิดแถวจริง (PBO/2567.xlsx แถว 142990), หน้าต่างส่งออกแสดงตัวเลือกครบ (คำเตือนยุบ), localStorage/sessionStorage ว่าง, URL ไม่มี key
+- พบ+แก้ `b1179a7`: (1) "เบิกจ่าย 98.6%%" — `%` ซ้ำใน drawer และคำเตือนของหน้าต่างส่งออก (2) การ์ด web_search ที่เสร็จแล้วยังขึ้น "กำลังค้น…" (3) โมเดลค้นเว็บต่อ 2 ครั้ง "หลัง" emit_proposal จนชนเพดานรอบ ไม่มีข้อความสรุป → กติกา FINISH ใน system prompt `[UNVERIFIED กับ API จริง]` (4) validator ตัด price_derivation ทิ้งเมื่อโมเดลปัดเศษ factor → ยอมรับการปัดเศษ ≤0.5 % โดยเขียนทับ factor ด้วยค่าจริง (โมเดลคิดเงินเฟ้อเองยังถูกตัด — test adversarial เดิมยังผ่าน)
+- ข้อสังเกตที่ยังไม่ได้แก้: `emit_proposal` ของ Sonnet ใช้เวลา ~3 นาทีโดยการ์ดขึ้นแค่ "กำลังประกอบร่างข้อเสนอ…" (ไม่มีความคืบหน้า) → post-MVP: แสดงจำนวนบรรทัด/ตัวอักษรที่สตรีมมาแล้ว; คลิกชิปผ่าน ref ของ extension บางครั้งไม่ติด (JS click/Playwright ติดปกติ — น่าจะเป็นข้อจำกัดของ extension `[UNVERIFIED]`)
+- gate ที่ `b1179a7` ใน worktree สะอาด: unit 1447/1447, e2e 25/25
+
 ## 2569-09-21 ดึก (Asia/Bangkok) — Claude Code main thread (+ ai-engineer) — T-603 บั๊กจาก eval, T-604b รันซ้ำ 1 เคส
 - **ai-engineer** (หยุดกลางคันเพราะ usage limit ตอนกำลังรัน test รอบสุดท้าย → main thread ตรวจต่อเอง: tsc/eslint สะอาด, vitest 1444/1444): (ค) `query_budget_lines` ที่กว้างเกินเพดาน 12 ไฟล์และมี keywords/item_key → เลือก shard จาก `search_catalog` + `CatalogItem.shards` แล้วค้นเฉพาะไฟล์ที่ตรงที่สุด + warning "ไม่ครบทุกไฟล์" (ไม่ยกเพดาน) (ง) item_key ไม่ตรง catalog → warning + เสนอ key ใกล้เคียง (ใช้ร่วมกับ get_price_trend) (จ) ToolLog จำ candidate shards ของ `sample_source_ids`; `get_budget_line` ไล่หาเป็นชุด ≤12 ไฟล์ (สูงสุด 5 ชุด) · main thread ต่อสายฝั่ง drawer ของหน้าทำงาน (`features/workspace/citationDrawerLoaders.ts` + test) `2b15364`
 - **ยืนยันกับข้อมูล production** (PO P0-3): e2e ใหม่ `web/tests/e2e/tool-regressions.spec.ts` ยิง input คำต่อคำจาก transcript จริงที่เคยล้มทั้ง 3 แบบ — ผ่าน; gate ใน worktree สะอาดที่ `2b15364`: unit 1444/1444, e2e 25/25
