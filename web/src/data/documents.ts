@@ -186,6 +186,9 @@ export function clampFindDocumentsLimit(limit: number | undefined): number {
 }
 
 function matchesDocFilters(doc: SourceDoc, params: FindDocumentsParams): boolean {
+  // QA B5/B-002: inventory ตั้งใจลงทะเบียน "ทุกไฟล์" รวมไฟล์ระบบ (`.DS_Store` → kind "other") เพื่อให้นับครบ
+  // แต่ไฟล์พวกนี้ไม่ใช่เอกสาร — ไม่คืนให้ผู้ใช้/โมเดล เว้นแต่ขอ kind "other" ตรง ๆ
+  if (params.kind === undefined && doc.kind === 'other') return false;
   if (params.collection !== undefined && doc.collection !== params.collection) return false;
   if (params.agency !== undefined && !(doc.agency_guess?.includes(params.agency) ?? false)) {
     return false;

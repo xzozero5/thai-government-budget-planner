@@ -75,10 +75,9 @@ dependency นี้อาจไม่มี fallback เดียวกัน, 
 
 ---
 
-## B-002 — `sources.json` นับ `.DS_Store` เป็นไฟล์ต้นทาง 1 รายการ
+## B-002 — ค้นเอกสารคืนไฟล์ระบบ (`.DS_Store`, kind "other") ปนกับเอกสารจริง
 
-- **สถานะ**: พบจริง (main thread, QA B5 2569-09-21) · **Severity**: low · **ประเภท**: data
-- **Reproduce**: เทียบ `web/public/data/sources.json` กับไฟล์จริงใน `เพราะ AI ไม่ใช่แค่ CHATBOT/` (ไม่นับ `.DS_Store`, `~$*`) → ไฟล์บนดิสก์ครบทุกไฟล์ใน json แต่ json มีเกิน 1 รายการ: `งบประมาณ สมุทรปราการ/1 - …/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/.DS_Store`
-- **คาดหวัง**: inventory ข้าม `.DS_Store` ทุกระดับ (08 §B5) · **จริง**: หลุด 1 ไฟล์ (โฟลเดอร์ย่อยลึก)
-- **ผลกระทบ**: `find_documents` อาจคืน "เอกสาร" ที่ไม่ใช่เอกสาร 1 รายการ; ไม่กระทบตัวเลขงบ
-- **ไฟล์ที่เกี่ยว**: `pipeline/tgbp_pipeline/inventory.py` — แก้พร้อม republish รอบถัดไป (T-209/T-210) เพราะ `data_version` จะเปลี่ยน
+- **สถานะ**: **ปิดแล้ว (2569-09-21)** · **Severity**: low · **ประเภท**: data/UX · พบโดย main thread ระหว่าง QA B5
+- **ข้อเท็จจริง**: `sources.json` มี 1 รายการที่เป็น `.DS_Store` (โฟลเดอร์ย่อยของ "งบประมาณ สมุทรปราการ") — **เป็นไปตามที่ออกแบบ** (`pipeline/tgbp_pipeline/inventory.py` ลงทะเบียนทุกไฟล์ + มี test `test_detect_kind_ds_store_is_other`) ไฟล์จริงบนดิสก์ครบทุกไฟล์ใน json (B5 ผ่านเมื่อไม่นับ `.DS_Store` ตามที่ 08 §B5 ระบุ)
+- **บั๊กจริง**: `web/src/data/documents.ts#matchesDocFilters` ไม่กรอง kind "other" → `find_documents` อาจคืนไฟล์ระบบให้โมเดล/ผู้ใช้
+- **แก้**: ไม่คืน kind "other" เว้นแต่ขอ kind นั้นตรง ๆ (ไม่ต้อง republish ข้อมูล; `data_version` ไม่เปลี่ยน)
