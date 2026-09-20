@@ -75,3 +75,5 @@ export type { ToastInput, ToastProviderProps, ToastVariant } from '@/components/
 
 export { Tooltip } from '@/components/ui/Tooltip';
 export type { TooltipProps } from '@/components/ui/Tooltip';
+export { ErrorBoundary } from './ErrorBoundary';
+export type { ErrorBoundaryProps } from './ErrorBoundary';

@@ -86,6 +86,9 @@ export interface SessionStoreState {
   resetBudgetWarning: () => void;
 }
 
+let submitGeneration = 0;
+const SUPERSEDED_MESSAGE_TH = 'การตรวจสอบ key ถูกยกเลิกเพราะมีการล้าง key ระหว่างทาง';
+
 export const useSessionStore = create<SessionStoreState>((set, get) => ({
   hasKey: keyHolder.hasKey(),
   keyStatus: 'idle',
@@ -109,22 +112,44 @@ export const useSessionStore = create<SessionStoreState>((set, get) => ({
     // เริ่ม" จริง ๆ — `client` ที่ได้ถูกส่งเข้า `keyHolder.setKey` ทันทีให้เก็บใน module scope ของ
     // keyHolder เท่านั้น (N2/H1 เดิม) ตัวแปรนี้เป็นแค่ reference ชั่วคราวสำหรับเรียก `verifyKey` ต่อในรอบ
     // เดียวกัน ไม่ถูกเก็บไว้ที่อื่น
-    const { createClient, verifyKey } = await import('@/ai/client');
-    const client = createClient(apiKey);
-    keyHolder.setKey(client);
-    const result = await verifyKey(client, get().model);
-    if (result.ok) {
-      set({ hasKey: true, keyStatus: 'valid', keyErrorKind: null, keyErrorMessage: null });
-    } else {
+    // T-602 NEW-L1: (ก) `clearKey()`/pagehide ที่เกิดระหว่างรอ dynamic import/verify ต้อง "ชนะ" — ห้ามให้ key ที่
+    // ผู้ใช้เพิ่งสั่งล้างกลับมาถูกตั้งอีกครั้ง → จับ generation ไว้แล้วเช็คก่อน setKey/ก่อนประกาศ valid
+    // (ข) import ล้ม (chunk 404 หลัง deploy ใหม่) ต้องคืน error ให้ผู้ใช้เห็น ไม่ค้างที่ 'verifying'
+    submitGeneration += 1;
+    const generation = submitGeneration;
+    const superseded = (): boolean => generation !== submitGeneration;
+    const fail = (kind: VerifyKeyErrorKind, messageTh: string): VerifyKeyResult => {
       keyHolder.clearKey('manual');
       set({
         hasKey: false,
         keyStatus: 'error',
-        keyErrorKind: result.kind,
-        keyErrorMessage: redactSecrets(result.messageTh),
+        keyErrorKind: kind,
+        keyErrorMessage: redactSecrets(messageTh),
       });
+      return { ok: false, kind, messageTh };
+    };
+    try {
+      const { createClient, verifyKey } = await import('@/ai/client');
+      if (superseded()) {
+        return { ok: false, kind: 'unknown', messageTh: SUPERSEDED_MESSAGE_TH };
+      }
+      const client = createClient(apiKey);
+      keyHolder.setKey(client);
+      const result = await verifyKey(client, get().model);
+      if (superseded()) {
+        return { ok: false, kind: 'unknown', messageTh: SUPERSEDED_MESSAGE_TH };
+      }
+      if (result.ok) {
+        set({ hasKey: true, keyStatus: 'valid', keyErrorKind: null, keyErrorMessage: null });
+        return result;
+      }
+      return fail(result.kind, result.messageTh);
+    } catch (err) {
+      if (superseded()) {
+        return { ok: false, kind: 'unknown', messageTh: SUPERSEDED_MESSAGE_TH };
+      }
+      return fail('network', err instanceof Error ? err.message : String(err));
     }
-    return result;
   },
 
   clearKey(reason = 'manual') {
@@ -174,6 +199,8 @@ export const useSessionStore = create<SessionStoreState>((set, get) => ({
 // เมื่อ `keyHolder` ล้าง client เอง (idle 60 นาที/pagehide/budget เกิน) ต้องสะท้อนกลับมาที่ store เสมอ
 // (ผู้เรียก UI ไม่ควร import `ai/session/keyHolder` ตรง ๆ — อ่านผ่าน `useSessionStore` เท่านั้น)
 keyHolder.onClear(() => {
+  // การล้าง key ทุกกรณีทำให้ submitKey ที่ค้างอยู่ (รอ import/verify) หมดสิทธิ์ตั้ง key กลับ — NEW-L1
+  submitGeneration += 1;
   useSessionStore.setState({
     hasKey: false,
     keyStatus: 'idle',

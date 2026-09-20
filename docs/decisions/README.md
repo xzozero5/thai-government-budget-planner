@@ -7,3 +7,5 @@
 - ADR-006 = `ADR-006-claude-api-current-surface.md` — model/พารามิเตอร์/tool version ตาม Claude API ปัจจุบัน + loop ของเราเอง + งบ
 - ADR ใหม่: `ADR-00x-<slug>.md` โครง: Status / Context / Options considered / Decision / Consequences / Links
 - `SPIKES.md` — ผลวัดจริงจาก spike S1–S4 (Phase 2)
+- [ADR-007](ADR-007-csp-connect-src-data-and-zod-jitless.md) — CSP: `connect-src data:` (wasm ของ react-pdf) + Zod jitless; ปิด B-001 โดยไม่เปิด unsafe-eval
+- [T-602](T-602-security-review.md) — security review รอบ Phase 6 (C1–C10) + สถานะการแก้

@@ -1,3 +1,5 @@
+import { touchActivity } from '@/ai/session/keyHolder';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { lazy, Suspense, useEffect, useRef } from 'react';
 import type { ReactElement } from 'react';
 import { HashRouter, Route, Routes, useLocation } from 'react-router-dom';
@@ -28,6 +30,29 @@ const LazyWorkspaceRoute = lazy(() =>
 const LazyLoadPage = lazy(() =>
   import('./LoadPagePlaceholder').then((m) => ({ default: m.LoadPagePlaceholder })),
 );
+
+/** T-602 NEW-L6: เดิม idle timer ของ key ถูกต่ออายุเฉพาะตอน "ส่งข้อความ" — ผู้ใช้ที่นั่งแก้ BOQ/อ่านหลักฐาน
+ * ต่อเนื่อง 60 นาทีโดยไม่ส่งข้อความจะถูกล้าง key ทั้งที่ยังใช้งานอยู่ → นับการกด/พิมพ์ในหน้าเป็นกิจกรรมด้วย
+ * (throttle 30 วินาที; `touchActivity` ไม่ทำอะไรถ้ายังไม่มี key) — แท็บที่ถูกทิ้งไว้เฉย ๆ ยังถูกล้างตามเดิม */
+const ACTIVITY_THROTTLE_MS = 30_000;
+function ActivityTracker(): null {
+  useEffect(() => {
+    let last = 0;
+    const onActivity = (): void => {
+      const now = Date.now();
+      if (now - last < ACTIVITY_THROTTLE_MS) return;
+      last = now;
+      touchActivity();
+    };
+    window.addEventListener('pointerdown', onActivity, { passive: true });
+    window.addEventListener('keydown', onActivity, { passive: true });
+    return () => {
+      window.removeEventListener('pointerdown', onActivity);
+      window.removeEventListener('keydown', onActivity);
+    };
+  }, []);
+  return null;
+}
 
 /** T-405: สลับธีม light/dark เก็บใน `sessionStore` (ห้าม localStorage — N2/09 §1) แล้วสะท้อนเป็น
  * `data-theme` บน `<html>` ให้ `tokens.css` เลือกชุดสีที่ถูกต้อง */
@@ -73,6 +98,7 @@ export function App(): ReactElement {
     <HashRouter>
       <ToastProvider>
         <ThemeSync />
+        <ActivityTracker />
         <RouteFocusManager />
         <a
           href="#main-content"
@@ -81,28 +107,31 @@ export function App(): ReactElement {
           {t('a11y.skipToContent')}
         </a>
         <div id="main-content">
-          <Routes>
-            <Route path="/" element={<KeyGatePage />} />
-            <Route
-              path="/workspace"
-              element={
-                <Suspense fallback={<p className="p-6 text-fg-muted">{t('common.loading')}</p>}>
-                  <LazyWorkspaceRoute />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/load"
-              element={
-                <Suspense fallback={<p className="p-6 text-fg-muted">{t('common.loading')}</p>}>
-                  <LazyLoadPage />
-                </Suspense>
-              }
-            />
-            <Route path="/about" element={<AboutPage />} />
-            {dataHarnessRoute}
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+          {/* T-602 NEW-H1: error ระหว่าง render (ไฟล์ .tgbp.json เสีย/ค่าจากโมเดลผิดรูป) ต้องไม่ทำให้ทั้งแท็บขาว */}
+          <ErrorBoundary variant="page">
+            <Routes>
+              <Route path="/" element={<KeyGatePage />} />
+              <Route
+                path="/workspace"
+                element={
+                  <Suspense fallback={<p className="p-6 text-fg-muted">{t('common.loading')}</p>}>
+                    <LazyWorkspaceRoute />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/load"
+                element={
+                  <Suspense fallback={<p className="p-6 text-fg-muted">{t('common.loading')}</p>}>
+                    <LazyLoadPage />
+                  </Suspense>
+                }
+              />
+              <Route path="/about" element={<AboutPage />} />
+              {dataHarnessRoute}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </ErrorBoundary>
         </div>
       </ToastProvider>
     </HashRouter>

@@ -11,7 +11,7 @@ Threat model สั้น ๆ: สินทรัพย์ที่ต้อง�
 - Save JSON (`.tgbp.json`) ต้องไม่รวม key/headers/raw request; ToolLog ที่บันทึกตัดฟิลด์ที่ไม่จำเป็น
 
 ## 2. Network egress
-- CSP `connect-src 'self' https://api.anthropic.com` (ดู 04 §D8) — บังคับระดับ browser ผ่าน `<meta http-equiv="Content-Security-Policy">` (GitHub Pages ตั้ง header ไม่ได้; `frame-ancestors` จึงใช้ไม่ได้ — ยอมรับ เพราะไม่มี state ให้ clickjack)
+- CSP `connect-src 'self' data: https://api.anthropic.com` (ดู 04 §D8; `data:` ไม่ใช่ปลายทางเครือข่าย — เหตุผล/เงื่อนไขถอดออกใน ADR-007) — บังคับระดับ browser ผ่าน `<meta http-equiv="Content-Security-Policy">` (GitHub Pages ตั้ง header ไม่ได้; `frame-ancestors` จึงใช้ไม่ได้ — ยอมรับ เพราะไม่มี state ให้ clickjack)
 - ไม่มี third-party script/CDN/fonts/analytics; ทุกอย่าง bundle
 - ลิงก์ภายนอกใน citation web: `target=_blank rel="noopener noreferrer"`; ไม่ prefetch
 - ห้ามใช้ `SOURCE_BASE_URL` ที่ไม่ใช่ https หรือ same-origin (validate ตอน build)

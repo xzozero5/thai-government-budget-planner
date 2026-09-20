@@ -42,7 +42,8 @@ describe('sessionStore', () => {
 
   it('ค่าเริ่มต้นเพดานงบใน sessionStore ต้องตรงกับ DEFAULT_MAX_COST_USD_PER_TURN/SESSION ของ ai/agent.ts เสมอ (กันค่าไหลออกจากกัน — sessionStore.ts จงใจไม่ import ai/agent แบบ static เพื่อลดขนาด entry chunk)', async () => {
     const { useSessionStore } = await import('./sessionStore');
-    const { DEFAULT_MAX_COST_USD_PER_TURN, DEFAULT_MAX_COST_USD_PER_SESSION } = await import('@/ai/agent');
+    const { DEFAULT_MAX_COST_USD_PER_TURN, DEFAULT_MAX_COST_USD_PER_SESSION } =
+      await import('@/ai/agent');
     const state = useSessionStore.getState();
     expect(state.maxCostUsdPerTurn).toBe(DEFAULT_MAX_COST_USD_PER_TURN);
     expect(state.maxCostUsdPerSession).toBe(DEFAULT_MAX_COST_USD_PER_SESSION);
@@ -133,6 +134,46 @@ describe('sessionStore', () => {
     const serialized = JSON.stringify(useSessionStore.getState());
     expect(serialized).not.toContain(FAKE_KEY);
     expect(serialized).not.toMatch(/"apiKey"|"_options"|"client"/);
+  });
+});
+
+describe('sessionStore.submitKey — T-602 NEW-L1 (race กับ clearKey / import-verify ล้ม)', () => {
+  it('ล้าง key ระหว่างรอ verify → ผลสำเร็จที่ตามมาต้องไม่ตั้ง key กลับ (hasKey=false, holder ว่าง)', async () => {
+    let resolveVerify: (value: { ok: true }) => void = () => undefined;
+    verifyKeyMock.mockReturnValue(
+      new Promise<{ ok: true }>((resolve) => {
+        resolveVerify = resolve;
+      }),
+    );
+    const { useSessionStore } = await import('./sessionStore');
+
+    const pending = useSessionStore.getState().submitKey(FAKE_KEY);
+    await vi.waitFor(() => {
+      expect(verifyKeyMock).toHaveBeenCalled();
+    });
+    keyHolder.clearKey('pagehide');
+    resolveVerify({ ok: true });
+    const result = await pending;
+
+    expect(result.ok).toBe(false);
+    expect(useSessionStore.getState().hasKey).toBe(false);
+    expect(useSessionStore.getState().keyStatus).not.toBe('valid');
+    expect(keyHolder.hasKey()).toBe(false);
+  });
+
+  it('verify โยน exception (เช่น chunk/เครือข่ายล้ม) → คืน error ให้ผู้ใช้เห็น ไม่ค้างที่ verifying และ holder ว่าง', async () => {
+    // สตริงรูป key (ประกอบจากชิ้นส่วน — pre-commit hook บล็อกรูปเต็มในซอร์ส) เพื่อพิสูจน์ว่าข้อความถูก redact
+    const keyShaped = ['sk', 'ant', 'fake-key-for-unit-test-000'].join('-');
+    verifyKeyMock.mockRejectedValue(new Error(`boom ${keyShaped}`));
+    const { useSessionStore } = await import('./sessionStore');
+
+    const result = await useSessionStore.getState().submitKey(FAKE_KEY);
+
+    expect(result.ok).toBe(false);
+    const state = useSessionStore.getState();
+    expect(state.keyStatus).toBe('error');
+    expect(state.keyErrorMessage ?? '').not.toContain(keyShaped);
+    expect(keyHolder.hasKey()).toBe(false);
   });
 });
 

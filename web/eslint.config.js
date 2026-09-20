@@ -57,7 +57,33 @@ export default tseslint.config(
             "AssignmentExpression[left.type='MemberExpression'][left.property.name=/^(innerHTML|outerHTML)$/]",
           message: 'ห้าม assign innerHTML/outerHTML (T-307)',
         },
+        // T-602 NEW-M2: ช่องทาง inject HTML/โค้ดอื่นที่กฎเดิมไม่จับ (วันนี้ไม่มีการใช้ — กันการถดถอย)
+        {
+          selector: "CallExpression[callee.property.name='insertAdjacentHTML']",
+          message: 'ห้ามใช้ insertAdjacentHTML (T-602) — สร้าง DOM node/text node แทน',
+        },
+        {
+          selector: "MemberExpression[object.name='document'][property.name=/^write(ln)?$/]",
+          message: 'ห้ามใช้ document.write/writeln (T-602)',
+        },
+        {
+          selector: "CallExpression[callee.property.name='createContextualFragment']",
+          message: 'ห้ามใช้ createContextualFragment (T-602) — parse HTML จากสตริงได้',
+        },
+        {
+          selector: 'JSXAttribute[name.name=/^srcdoc$/i]',
+          message: 'ห้ามใช้ srcdoc (T-602)',
+        },
+        {
+          selector: "Property[key.name='dangerouslySetInnerHTML']",
+          message: 'ห้ามส่ง dangerouslySetInnerHTML ผ่าน object/props spread (T-602)',
+        },
+        {
+          selector: "NewExpression[callee.name='Function']",
+          message: "ห้ามใช้ new Function (T-602) — CSP ของเราไม่มี 'unsafe-eval' โดยตั้งใจ",
+        },
       ],
+      'no-eval': 'error',
     },
   },
   // T-206 item 9: `ai/tools/*`/`features/*` ต้อง import ผ่าน facade `@/data` เท่านั้น — ห้าม import
@@ -76,7 +102,26 @@ export default tseslint.config(
               message:
                 'ห้าม import ลึกเข้า @/data/<file> ตรง ๆ — ให้ import จาก "@/data" (facade เดียว, T-206) เท่านั้น',
             },
+            {
+              // T-307 L6 / T-602 NEW-L10: fake client + tool capture ห้ามเข้าโค้ด production
+              group: ['@/ai/testing/*', '**/ai/testing/*'],
+              message: 'ห้าม import @/ai/testing/* จากโค้ด production (ใช้ได้เฉพาะ test และ app/dataHarness)',
+            },
           ],
+        },
+      ],
+    },
+  },
+  // T-602 NEW-M2: parse HTML/SVG จากสตริงได้ที่เดียวคือ sanitizer (มี allowlist + test ชุดโจมตี)
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/lib/svgSanitizer.ts', '**/*.test.{ts,tsx}'],
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        {
+          name: 'DOMParser',
+          message: 'ใช้ DOMParser ได้เฉพาะใน src/lib/svgSanitizer.ts (T-602) — ที่อื่นให้เรียก sanitizeSvg()',
         },
       ],
     },
