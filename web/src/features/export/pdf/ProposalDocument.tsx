@@ -43,11 +43,18 @@ import { pdfCopy } from './copy';
 import { SARABUN_FONT_FAMILY } from './fonts';
 import { formatThaiBuddhistDate } from './thaiDate';
 import { toPdfText } from './thaiText';
-import type { ProposalDocumentProps } from './types';
+import type { ProposalDocumentProps, ProposalPdfSections } from './types';
 
 /** ตัวช่วยหลัก: ทุกสตริงที่ส่งเข้า `<Text>` ต้องผ่านนี่เสมอ (แก้บั๊กไทยของ S4 — ดู thaiText.ts) */
 function t(text: string): string {
   return toPdfText(text);
+}
+
+/** T-504/S13 — key ที่ไม่ระบุหรือทั้งก้อน `sections` เป็น `undefined` = เปิด (ค่าเริ่มต้น `true`) ปิดได้
+ * เฉพาะตอนระบุ `false` ชัดเจนเท่านั้น (ดูหมายเหตุหัวไฟล์ `pdfInputs.ts` ว่าส่วนไหน "ปิดไม่ได้" ตาม N3 —
+ * ส่วนเหล่านั้นไม่มี key ในนี้เลยจึงไม่ถูกเรียกฟังก์ชันนี้เช็ค) */
+function sectionEnabled(sections: ProposalPdfSections | undefined, key: keyof ProposalPdfSections): boolean {
+  return sections?.[key] !== false;
 }
 
 const MODE_LABEL_KEY = {
@@ -497,6 +504,15 @@ export function ProposalDocument(props: ProposalDocumentProps) {
   const warnings = props.warnings ?? [];
   const estimateLineCount = proposal.boq.filter((l) => l.basis === 'estimate').length;
 
+  // T-504/S13 — ส่วนที่ปิด/เปิดได้ตาม `props.sections` (ค่าเริ่มต้นทั้งหมด `true`) ดูหมายเหตุหัวไฟล์
+  // `pdfInputs.ts` ว่าส่วนไหน "ปิดไม่ได้" ตาม N3 (ไม่มีตัวแปรกั้นด้านล่างสำหรับส่วนนั้น ๆ)
+  const showStats = sectionEnabled(props.sections, 'stats');
+  const showIllustrations = sectionEnabled(props.sections, 'illustrations');
+  const showTrends = sectionEnabled(props.sections, 'trends');
+  const showAssumptionsRisks = sectionEnabled(props.sections, 'assumptionsRisks');
+  const showComparables = sectionEnabled(props.sections, 'comparables');
+  const authorName = props.author?.trim() ?? '';
+
   function Footer() {
     return (
       <Text
@@ -512,11 +528,13 @@ export function ProposalDocument(props: ProposalDocumentProps) {
     );
   }
 
-  const hasOverviewImage = props.images?.overview !== undefined;
-  const hasTrendImages = props.images?.trends !== undefined && props.images.trends.length > 0;
+  const hasOverviewImage = showIllustrations && props.images?.overview !== undefined;
+  const hasIllustrationCaptions = showIllustrations && proposal.illustrations.length > 0;
+  const hasTrendImages =
+    showTrends && props.images?.trends !== undefined && props.images.trends.length > 0;
   const hasBeforeBoqContent =
     hasOverviewImage ||
-    proposal.illustrations.length > 0 ||
+    hasIllustrationCaptions ||
     proposal.objectives.length > 0 ||
     proposal.scope_and_specs.length > 0 ||
     hasTrendImages;
@@ -558,6 +576,12 @@ export function ProposalDocument(props: ProposalDocumentProps) {
           <Text style={S.coverMetaLabel}>{t(pdfCopy.cover.generatedAtLabel)}</Text>
           <Text style={S.coverMetaValue}>{t(formatThaiBuddhistDate(generatedAt))}</Text>
         </View>
+        {authorName.length > 0 ? (
+          <View style={S.coverMetaRow}>
+            <Text style={S.coverMetaLabel}>{t(translate('export.authorLabel'))}</Text>
+            <Text style={S.coverMetaValue}>{t(authorName)}</Text>
+          </View>
+        ) : null}
 
         <SectionHeading>{translate('proposal.sections.summary')}</SectionHeading>
         <Text style={S.p}>{t(proposal.summary)}</Text>
@@ -574,11 +598,13 @@ export function ProposalDocument(props: ProposalDocumentProps) {
               )}
             </Text>
           ) : null}
-          {proposal.stat_cards.map((card, i) => (
-            <Text key={i} style={S.highlightStatItem}>
-              {t(`• ${card.headline_th}`)}
-            </Text>
-          ))}
+          {showStats
+            ? proposal.stat_cards.map((card, i) => (
+                <Text key={i} style={S.highlightStatItem}>
+                  {t(`• ${card.headline_th}`)}
+                </Text>
+              ))
+            : null}
         </View>
 
         <Footer />
@@ -595,7 +621,7 @@ export function ProposalDocument(props: ProposalDocumentProps) {
             </View>
           ) : null}
 
-          {proposal.illustrations.length > 0 ? (
+          {hasIllustrationCaptions ? (
             <View>
               {proposal.illustrations.map((illustration) => (
                 <Text key={illustration.illustration_id} style={S.imageCaption}>
@@ -631,12 +657,23 @@ export function ProposalDocument(props: ProposalDocumentProps) {
           {hasTrendImages && props.images?.trends !== undefined ? (
             <View>
               <SectionHeading>{pdfCopy.section.trendImages}</SectionHeading>
-              {props.images.trends.map((trend, i) => (
-                <View key={i} wrap={false}>
-                  <SubHeading>{trend.title}</SubHeading>
-                  <PdfImage src={trend.dataUrl} style={S.image} />
-                </View>
-              ))}
+              {props.images.trends.map((trend, i) => {
+                // US-8.3 — คำบรรยายใต้กราฟ: ชื่อรายการ (SubHeading ด้านบน) + ป้าย basis (N3: ต้องแยก
+                // "ราคาต่อหน่วย" ออกจาก "ยอดต่อรายการงบ" ชัดเจน) + n รวม — ไม่มีทั้งคู่เมื่อเป็นตัวชี้วัด
+                // เศรษฐกิจ (ดูหมายเหตุหัวไฟล์ `pdf/types.ts`)
+                const captionParts: string[] = [];
+                if (trend.basisLabel !== undefined) captionParts.push(trend.basisLabel);
+                if (trend.nTotal !== undefined) captionParts.push(pdfCopy.trend.nTotal(trend.nTotal));
+                return (
+                  <View key={i} wrap={false}>
+                    <SubHeading>{trend.title}</SubHeading>
+                    <PdfImage src={trend.dataUrl} style={S.image} />
+                    {captionParts.length > 0 ? (
+                      <Text style={S.imageCaption}>{t(captionParts.join(' · '))}</Text>
+                    ) : null}
+                  </View>
+                );
+              })}
             </View>
           ) : null}
 
@@ -699,7 +736,7 @@ export function ProposalDocument(props: ProposalDocumentProps) {
           </View>
         </View>
 
-        {proposal.assumptions.length > 0 ? (
+        {showAssumptionsRisks && proposal.assumptions.length > 0 ? (
           <View>
             <SectionHeading>{translate('proposal.sections.assumptions')}</SectionHeading>
             {proposal.assumptions.map((a, i) => (
@@ -708,7 +745,7 @@ export function ProposalDocument(props: ProposalDocumentProps) {
           </View>
         ) : null}
 
-        {proposal.risks.length > 0 ? (
+        {showAssumptionsRisks && proposal.risks.length > 0 ? (
           <View>
             <SectionHeading>{translate('proposal.sections.risks')}</SectionHeading>
             {proposal.risks.map((r, i) => (
@@ -720,7 +757,7 @@ export function ProposalDocument(props: ProposalDocumentProps) {
           </View>
         ) : null}
 
-        {proposal.comparables.length > 0 ? (
+        {showComparables && proposal.comparables.length > 0 ? (
           <View>
             {/* main thread (QA รอบภาพ): `minPresenceAhead` ของหัวข้อไม่ช่วยเมื่อสิ่งที่ตามมาเป็นการ์ด
                 `wrap={false}` ทั้งก้อน (หัวข้อค้างท้ายหน้า การ์ดไปหน้าถัดไป) → มัดหัวข้อกับการ์ดใบแรกไว้ด้วยกัน */}

@@ -1,12 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { BoqLine, Proposal } from '@/ai/tools/proposal';
 import type { ToolLog } from '@/ai/toolLog';
+import type { ProposalPdfTrendImage } from './pdf/types';
 import {
   buildBudgetLineDetailsFromToolLog,
   buildRenderInput,
+  collectTrendRefs,
   computeExportWarningsInfo,
   DEFAULT_EXPORT_SECTIONS,
   ESTIMATE_HEAVY_THRESHOLD_PERCENT,
+  EXPORT_AUTHOR_MAX_LENGTH,
+  MAX_TREND_IMAGES,
+  sanitizeExportAuthorName,
 } from './pdfInputs';
 
 function makeLine(overrides: Partial<BoqLine> = {}): BoqLine {
@@ -80,35 +85,81 @@ describe('computeExportWarningsInfo', () => {
   });
 });
 
+describe('sanitizeExportAuthorName (S13)', () => {
+  it('ตัดช่องว่างหัวท้าย', () => {
+    expect(sanitizeExportAuthorName('  กองบรรณาธิการ  ')).toBe('กองบรรณาธิการ');
+  });
+
+  it('ตัดความยาวไม่เกิน EXPORT_AUTHOR_MAX_LENGTH', () => {
+    const long = 'ก'.repeat(200);
+    const result = sanitizeExportAuthorName(long);
+    expect(result.length).toBe(EXPORT_AUTHOR_MAX_LENGTH);
+  });
+
+  it('ค่าว่าง/เว้นวรรคล้วน → คืนสตริงว่าง', () => {
+    expect(sanitizeExportAuthorName('   ')).toBe('');
+  });
+});
+
+describe('collectTrendRefs (T-504)', () => {
+  it('รวบจาก boq[].trend_ref + stat_cards[].trend_ref เรียงตามลำดับที่พบ', () => {
+    const proposal = makeProposal({
+      boq: [
+        makeLine({ id: 'l1', trend_ref: { kind: 'item', key: 'เครื่องปรับอากาศ' } }),
+        makeLine({ id: 'l2' }), // ไม่มี trend_ref
+      ],
+      stat_cards: [{ trend_ref: { kind: 'indicator', key: 'cpi' }, headline_th: 'CPI' }],
+    });
+    const refs = collectTrendRefs(proposal);
+    expect(refs).toEqual([
+      { kind: 'item', key: 'เครื่องปรับอากาศ' },
+      { kind: 'indicator', key: 'cpi' },
+    ]);
+  });
+
+  it('ตัดรายการซ้ำ (kind+key เดียวกัน)', () => {
+    const proposal = makeProposal({
+      boq: [
+        makeLine({ id: 'l1', trend_ref: { kind: 'item', key: 'x' } }),
+        makeLine({ id: 'l2', trend_ref: { kind: 'item', key: 'x' } }),
+      ],
+    });
+    expect(collectTrendRefs(proposal)).toHaveLength(1);
+  });
+
+  it('ไม่เกิน MAX_TREND_IMAGES (default) หรือ max ที่ระบุ', () => {
+    const boq = Array.from({ length: 10 }, (_unused, i) =>
+      makeLine({ id: `l${String(i)}`, trend_ref: { kind: 'item', key: `k${String(i)}` } }),
+    );
+    const proposal = makeProposal({ boq });
+    expect(collectTrendRefs(proposal)).toHaveLength(MAX_TREND_IMAGES);
+    expect(collectTrendRefs(proposal, 2)).toHaveLength(2);
+  });
+
+  it('ไม่มี trend_ref เลย → คืน []', () => {
+    expect(collectTrendRefs(makeProposal())).toEqual([]);
+  });
+});
+
 describe('buildRenderInput', () => {
   const proposal = makeProposal();
 
-  it('sections.warnings=false → ส่ง warnings เป็น [] แม้ของจริงมีอยู่', () => {
+  it('ส่ง warnings ตรง ๆ เสมอ (N3: ปิดไม่ได้ ต่างจาก T-502 เดิม)', () => {
     const input = buildRenderInput({
       proposal,
       warnings: ['เตือนจริง'],
       editedLineIds: [],
-      sections: { ...DEFAULT_EXPORT_SECTIONS, warnings: false },
-    });
-    expect(input.warnings).toEqual([]);
-  });
-
-  it('sections.warnings=true → ส่ง warnings ของจริง', () => {
-    const input = buildRenderInput({
-      proposal,
-      warnings: ['เตือนจริง'],
-      editedLineIds: [],
-      sections: { ...DEFAULT_EXPORT_SECTIONS, warnings: true },
+      sections: DEFAULT_EXPORT_SECTIONS,
     });
     expect(input.warnings).toEqual(['เตือนจริง']);
   });
 
-  it('sections.illustrations=false → ไม่ส่ง images แม้มี overviewImageDataUrl', () => {
+  it('sections.illustrations=false → ไม่ส่ง images.overview แม้มี overviewImageDataUrl', () => {
     const input = buildRenderInput({
       proposal,
       warnings: [],
       editedLineIds: [],
-      sections: { illustrations: false, warnings: true },
+      sections: { ...DEFAULT_EXPORT_SECTIONS, illustrations: false },
       overviewImageDataUrl: 'data:image/png;base64,xxx',
     });
     expect(input.images).toBeUndefined();
@@ -119,7 +170,7 @@ describe('buildRenderInput', () => {
       proposal,
       warnings: [],
       editedLineIds: [],
-      sections: { illustrations: true, warnings: true },
+      sections: DEFAULT_EXPORT_SECTIONS,
       overviewImageDataUrl: 'data:image/png;base64,xxx',
     });
     expect(input.images?.overview).toBe('data:image/png;base64,xxx');
@@ -130,10 +181,50 @@ describe('buildRenderInput', () => {
       proposal,
       warnings: [],
       editedLineIds: [],
-      sections: { illustrations: true, warnings: true },
+      sections: DEFAULT_EXPORT_SECTIONS,
       overviewImageDataUrl: null,
     });
     expect(input.images).toBeUndefined();
+  });
+
+  it('sections.trends=false → ไม่ส่ง images.trends แม้มี trendImages', () => {
+    const trendImages: ProposalPdfTrendImage[] = [{ title: 'ทดสอบ', dataUrl: 'data:image/png;base64,x' }];
+    const input = buildRenderInput({
+      proposal,
+      warnings: [],
+      editedLineIds: [],
+      sections: { ...DEFAULT_EXPORT_SECTIONS, trends: false },
+      trendImages,
+    });
+    expect(input.images?.trends).toBeUndefined();
+  });
+
+  it('sections.trends=true + มีกราฟ → ส่ง images.trends ครบ', () => {
+    const trendImages: ProposalPdfTrendImage[] = [{ title: 'ทดสอบ', dataUrl: 'data:image/png;base64,x' }];
+    const input = buildRenderInput({
+      proposal,
+      warnings: [],
+      editedLineIds: [],
+      sections: DEFAULT_EXPORT_SECTIONS,
+      trendImages,
+    });
+    expect(input.images?.trends).toEqual(trendImages);
+  });
+
+  it('images.overview และ images.trends อยู่ในก้อนเดียวกันเมื่อเปิดทั้งคู่', () => {
+    const trendImages: ProposalPdfTrendImage[] = [{ title: 'ทดสอบ', dataUrl: 'data:image/png;base64,x' }];
+    const input = buildRenderInput({
+      proposal,
+      warnings: [],
+      editedLineIds: [],
+      sections: DEFAULT_EXPORT_SECTIONS,
+      overviewImageDataUrl: 'data:image/png;base64,overview',
+      trendImages,
+    });
+    expect(input.images).toEqual({
+      overview: 'data:image/png;base64,overview',
+      trends: trendImages,
+    });
   });
 
   it('ไม่ส่ง dataVersion → ไม่มี key นี้ใน input', () => {
@@ -144,6 +235,50 @@ describe('buildRenderInput', () => {
       sections: DEFAULT_EXPORT_SECTIONS,
     });
     expect(input.dataVersion).toBeUndefined();
+  });
+
+  it('ส่ง sections ทุกครั้งตรงกับที่รับมา', () => {
+    const input = buildRenderInput({
+      proposal,
+      warnings: [],
+      editedLineIds: [],
+      sections: { ...DEFAULT_EXPORT_SECTIONS, stats: false, comparables: false },
+    });
+    expect(input.sections).toEqual({
+      stats: false,
+      assumptionsRisks: true,
+      comparables: false,
+      illustrations: true,
+      trends: true,
+    });
+  });
+
+  it('author (S13): trim/ตัดความยาวก่อนส่ง และไม่ส่งเมื่อว่างเปล่า', () => {
+    const withAuthor = buildRenderInput({
+      proposal,
+      warnings: [],
+      editedLineIds: [],
+      sections: DEFAULT_EXPORT_SECTIONS,
+      author: '  กองบรรณาธิการข่าว ก  ',
+    });
+    expect(withAuthor.author).toBe('กองบรรณาธิการข่าว ก');
+
+    const emptyAuthor = buildRenderInput({
+      proposal,
+      warnings: [],
+      editedLineIds: [],
+      sections: DEFAULT_EXPORT_SECTIONS,
+      author: '   ',
+    });
+    expect(emptyAuthor.author).toBeUndefined();
+
+    const noAuthor = buildRenderInput({
+      proposal,
+      warnings: [],
+      editedLineIds: [],
+      sections: DEFAULT_EXPORT_SECTIONS,
+    });
+    expect(noAuthor.author).toBeUndefined();
   });
 });
 

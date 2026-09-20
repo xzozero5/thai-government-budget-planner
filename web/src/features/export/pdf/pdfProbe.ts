@@ -272,12 +272,19 @@ export function pdfLinkUris(buf: Buffer): string[] {
 
 /** มี image XObject อย่างน้อยหนึ่งชิ้นหรือไม่ (`/Subtype /Image`) */
 export function pdfHasImageObject(buf: Buffer): boolean {
+  return pdfImageObjectCount(buf) > 0;
+}
+
+/** T-504 — จำนวน image XObject ทั้งหมดในเอกสาร (`/Subtype /Image`) ใช้ยืนยันว่าจำนวนกราฟแนวโน้ม/ภาพประกอบ
+ * ที่ฝังจริงตรงกับจำนวนที่ส่งเข้า `images.trends`/`images.overview` (ไม่ใช่แค่ "มีอย่างน้อยหนึ่งรูป") */
+export function pdfImageObjectCount(buf: Buffer): number {
   const objects = parsePdfObjects(buf);
+  let count = 0;
   for (const obj of objects.values()) {
     const entries = scanDictEntries(obj.dict);
-    if (parseNameValue(entries.get('Subtype') ?? '') === 'Image') return true;
+    if (parseNameValue(entries.get('Subtype') ?? '') === 'Image') count += 1;
   }
-  return false;
+  return count;
 }
 
 // ---------------------------------------------------------------------------

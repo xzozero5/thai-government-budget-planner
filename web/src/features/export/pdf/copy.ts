@@ -55,6 +55,11 @@ export const pdfCopy = {
   citations: {
     amountPrefix: 'จำนวนเงิน',
   },
+  // T-504 (US-8.3) — คำบรรยายใต้กราฟแนวโน้ม: ป้าย basis มาจาก `proposal.trend.*` (copy.th.json, มีอยู่แล้ว)
+  // ส่วน "n รวม" ไม่มี key เฉพาะใน copy.th.json (มีแต่ `proposal.boq.trendTooltip` ที่ผูกกับปีเดียว)
+  trend: {
+    nTotal: (n: number) => `รวมตัวอย่างที่พบทั้งหมด ${String(n)} รายการ`,
+  },
   noData: 'ไม่มีข้อมูล',
   footer: {
     pageOf: (pageNumber: number, totalPages: number) => `หน้า ${String(pageNumber)} / ${String(totalPages)}`,

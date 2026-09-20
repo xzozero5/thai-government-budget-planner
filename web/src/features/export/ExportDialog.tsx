@@ -1,9 +1,11 @@
 /**
- * T-502 — Export dialog (06-UI-SPEC §4.5): เลือกส่วนที่จะใส่ → ส่งออก PDF พร้อม progress/ยกเลิก/error+retry
+ * T-502/T-504/S13 — Export dialog (06-UI-SPEC §4.5): เลือกส่วนที่จะใส่ → ส่งออก PDF พร้อม progress/ยกเลิก/
+ * error+retry
  *
  * `@react-pdf/renderer` (~458 kB gz) ต้องไม่เข้า initial/workspace bundle (04-ARCHITECTURE §5) — โมดูล
  * `./pdf/renderProposalPdf`/`./pdf/svgToPng` จึงถูก `await import(...)` เฉพาะตอนกดส่งออกจริงเท่านั้น
- * ไฟล์นี้ **ห้าม** static import โมดูลทั้งสอง
+ * ไฟล์นี้ **ห้าม** static import โมดูลทั้งสอง (`./pdf/trendSvg` เป็น pure string builder ล้วน ๆ ไม่มี
+ * dependency หนัก — import แบบ static ได้ตามปกติ)
  *
  * โหมดใช้งาน 2 แบบ (ผ่าน prop `source`):
  * - ไม่ส่ง `source` (ปุ่ม "ส่งออก PDF" ใน workspace): อ่าน proposal ปัจจุบันจาก `proposalStore` และเสริม
@@ -11,24 +13,34 @@
  * - ส่ง `source` (หน้า `/load` อ่านไฟล์ `.tgbp.json`): ใช้ proposal จากไฟล์ตรง ๆ — ไม่มี ToolLog/
  *   IllustrationSink ของ session นั้นแล้ว (session เก่าจบไปแล้ว) จึงข้ามการเสริมภาพประกอบ/รายละเอียด
  *   citation เสมอ (คืนที่มีอยู่ในไฟล์ก็เพียงพอสำหรับ "อ่านและส่งออกได้" ตาม 06 §3)
+ *
+ * T-504 (US-8.3) — prop `loadTrend` optional: container ของหน้าเว็บ (`features/workspace/slots.tsx`)
+ * ส่งมาเฉพาะตอนมี session จริง (ไม่ส่งใน `/load` — "หน้า /load ไม่มี loader = ไม่มี section" ตาม brief);
+ * ไม่ได้รับมา = ไม่พยายามสร้างกราฟแนวโน้มเลย (ไม่ error, สวิตช์ปิดใช้งานเอง)
  */
 import { useEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
-import type { Proposal } from '@/ai/tools/proposal';
+import type { Proposal, TrendRef } from '@/ai/tools/proposal';
 import { getSvgElementForExport } from '@/components/viz';
-import { Button, Dialog, Spinner, Switch } from '@/components/ui';
+import { Button, Dialog, Input, Spinner, Switch } from '@/components/ui';
 import { data } from '@/data';
 import { t } from '@/i18n';
 import { formatPercent } from '@/lib/format';
+import { sanitizeSvg } from '@/lib/svgSanitizer';
 import { getCurrentProposalVersion, useProposalStore } from '@/stores/proposalStore';
 import { useToolLogStore } from '@/stores/toolLogStore';
 import { downloadBlob } from './downloadBlob';
+import type { ProposalPdfTrendImage } from './pdf/types';
+import { buildTrendSvg } from './pdf/trendSvg';
 import {
   buildBudgetLineDetailsFromToolLog,
   buildRenderInput,
+  collectTrendRefs,
   computeExportWarningsInfo,
   DEFAULT_EXPORT_SECTIONS,
+  EXPORT_AUTHOR_MAX_LENGTH,
   type ExportSections,
+  type ExportTrendData,
 } from './pdfInputs';
 
 /** ค่า sentinel ภายในไฟล์นี้: error จาก chunk ที่หายหลัง deploy ใหม่ → แสดง `export.staleVersion` แทน */
@@ -45,6 +57,9 @@ export interface ExportDialogProps {
   onClose: () => void;
   /** ไม่ส่ง = ใช้ proposal ปัจจุบันจาก `proposalStore` (โหมด workspace ปกติ) */
   source?: ExportSource;
+  /** T-504 — โหลด series แนวโน้มของ `TrendRef` หนึ่งตัว คืน `null` เมื่อไม่มีข้อมูล; ไม่ส่ง prop นี้มาเลย =
+   * ไม่มีส่วน "แนวโน้มราคาที่เกี่ยวข้อง" ในไฟล์ (ดูหัวไฟล์) */
+  loadTrend?: (ref: TrendRef) => Promise<ExportTrendData | null>;
 }
 
 type ExportPhase = 'idle' | 'preparingImages' | 'renderingPdf' | 'downloading' | 'done' | 'error';
@@ -55,7 +70,25 @@ const BUSY_PHASES: ReadonlySet<ExportPhase> = new Set([
   'downloading',
 ]);
 
-export function ExportDialog({ open, onClose, source }: ExportDialogProps): ReactElement {
+const BASIS_LABEL_KEY = {
+  unit_price: 'proposal.trend.basisUnitPrice',
+  amount_per_line: 'proposal.trend.basisAmountPerLine',
+} as const;
+
+/** ผลรวม `n` ของทุกจุด — `undefined` เมื่อไม่มีจุดไหนมีแนวคิด n เลย (ตัวชี้วัดเศรษฐกิจ) */
+function sumSampleSize(points: ExportTrendData['points']): number | undefined {
+  let total = 0;
+  let any = false;
+  for (const p of points) {
+    if (p.n !== undefined) {
+      total += p.n;
+      any = true;
+    }
+  }
+  return any ? total : undefined;
+}
+
+export function ExportDialog({ open, onClose, source, loadTrend }: ExportDialogProps): ReactElement {
   const liveVersion = useProposalStore(getCurrentProposalVersion);
   const toolLog = useToolLogStore((s) => s.toolLog);
   const illustrationSink = useToolLogStore((s) => s.illustrationSink);
@@ -74,6 +107,7 @@ export function ExportDialog({ open, onClose, source }: ExportDialogProps): Reac
       : null);
 
   const [sections, setSections] = useState<ExportSections>(DEFAULT_EXPORT_SECTIONS);
+  const [authorName, setAuthorName] = useState('');
   const [phase, setPhase] = useState<ExportPhase>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [downloadedFileName, setDownloadedFileName] = useState<string | null>(null);
@@ -84,12 +118,14 @@ export function ExportDialog({ open, onClose, source }: ExportDialogProps): Reac
   // ฟ้อง แม้ค่าจริงจะเปลี่ยนได้จาก event handler อื่น (ปุ่มยกเลิก/ปิดไดอะล็อก) ระหว่างที่ await ค้างอยู่จริง
   const cancelTokenRef = useRef(0);
 
-  // เปิดไดอะล็อกใหม่ทุกครั้ง = ล้างสถานะรอบก่อนหน้าทิ้ง (ไม่ค้าง error/done ของครั้งก่อน)
+  // เปิดไดอะล็อกใหม่ทุกครั้ง = ล้างสถานะรอบก่อนหน้าทิ้ง (ไม่ค้าง error/done/ชื่อผู้จัดทำของครั้งก่อน — S13:
+  // ชื่อผู้จัดทำเก็บใน state ของ dialog เท่านั้น ไม่ persist ข้าม session ตาม N2)
   useEffect(() => {
     if (open) {
       setPhase('idle');
       setErrorMessage(null);
       setDownloadedFileName(null);
+      setAuthorName('');
     }
   }, [open]);
 
@@ -107,6 +143,9 @@ export function ExportDialog({ open, onClose, source }: ExportDialogProps): Reac
 
   const hasIllustrationSource =
     !isLoadedFileMode && illustrationSink !== null && (proposal?.illustrations.length ?? 0) > 0;
+
+  const trendRefs = proposal ? collectTrendRefs(proposal) : [];
+  const hasTrendSource = loadTrend !== undefined && trendRefs.length > 0;
 
   const warningsInfo = proposal
     ? computeExportWarningsInfo(proposal, effectiveSource?.warnings ?? [])
@@ -154,6 +193,50 @@ export function ExportDialog({ open, onClose, source }: ExportDialogProps): Reac
     return svgToPngDataUrl(svgNode);
   }
 
+  /** T-504 — สร้างกราฟแนวโน้ม ≤ 6 รูปจาก `trend_ref` ที่ไม่ซ้ำของ BOQ/stat cards: โหลด series (loader
+   * ของ container) → วาด SVG เอง (`buildTrendSvg`) → sanitize (N9 defense-in-depth แม้สร้างเอง) →
+   * แปลงเป็น PNG (`svgToPngDataUrl`) จุดไหนพลาด (ไม่มีข้อมูล/sanitize ไม่ผ่าน/แปลง PNG ไม่สำเร็จ) ข้ามเงียบ ๆ
+   * ไม่ทำให้การส่งออกทั้งไฟล์ล้ม */
+  async function buildTrendImages(current: ExportSource): Promise<ProposalPdfTrendImage[]> {
+    if (!sections.trends || loadTrend === undefined) {
+      return [];
+    }
+    const refs = collectTrendRefs(current.proposal);
+    if (refs.length === 0) {
+      return [];
+    }
+    const { svgToPngDataUrl } = await import('./pdf/svgToPng');
+    const images: ProposalPdfTrendImage[] = [];
+    for (const ref of refs) {
+      let trend: ExportTrendData | null;
+      try {
+        trend = await loadTrend(ref);
+      } catch {
+        trend = null;
+      }
+      if (!trend || trend.points.length === 0) {
+        continue;
+      }
+      const svgString = buildTrendSvg({ title: trend.title, points: trend.points });
+      const sanitized = sanitizeSvg(svgString);
+      if (!sanitized.ok) {
+        continue;
+      }
+      const dataUrl = await svgToPngDataUrl(sanitized.node());
+      if (!dataUrl) {
+        continue;
+      }
+      const nTotal = trend.basis === 'econ' ? undefined : sumSampleSize(trend.points);
+      images.push({
+        title: trend.title,
+        dataUrl,
+        ...(trend.basis !== 'econ' ? { basisLabel: t(BASIS_LABEL_KEY[trend.basis]) } : {}),
+        ...(nTotal !== undefined ? { nTotal } : {}),
+      });
+    }
+    return images;
+  }
+
   async function handleExport(): Promise<void> {
     if (!effectiveSource) {
       return;
@@ -168,6 +251,11 @@ export function ExportDialog({ open, onClose, source }: ExportDialogProps): Reac
 
     try {
       const overviewImageDataUrl = await buildOverviewImage(effectiveSource);
+      if (isCancelled()) {
+        return;
+      }
+
+      const trendImages = await buildTrendImages(effectiveSource);
       if (isCancelled()) {
         return;
       }
@@ -188,7 +276,9 @@ export function ExportDialog({ open, onClose, source }: ExportDialogProps): Reac
         sections,
         dataVersion,
         overviewImageDataUrl,
+        trendImages,
         budgetLineDetails,
+        author: authorName,
       });
 
       setPhase('renderingPdf');
@@ -254,41 +344,61 @@ export function ExportDialog({ open, onClose, source }: ExportDialogProps): Reac
                 <p className="text-xs text-fg-muted">{t('proposal.illustration.empty')}</p>
               )}
 
+              <SectionRow label={t('export.includeTrends')}>
+                <Switch
+                  checked={sections.trends}
+                  onChange={toggleSection('trends')}
+                  disabled={!hasTrendSource}
+                  label={t('export.includeTrends')}
+                />
+              </SectionRow>
+              {!hasTrendSource && <p className="text-xs text-fg-muted">{t('export.trendsEmpty')}</p>}
+
               <SectionRow label={t('export.includeStats')}>
                 <Switch
-                  checked
-                  disabled
-                  onChange={() => undefined}
+                  checked={sections.stats}
+                  onChange={toggleSection('stats')}
                   label={t('export.includeStats')}
                 />
               </SectionRow>
 
-              <SectionRow label={t('export.includeBoq')}>
+              <SectionRow label={t('export.includeAssumptionsRisks')}>
                 <Switch
-                  checked
-                  disabled
-                  onChange={() => undefined}
-                  label={t('export.includeBoq')}
+                  checked={sections.assumptionsRisks}
+                  onChange={toggleSection('assumptionsRisks')}
+                  label={t('export.includeAssumptionsRisks')}
                 />
               </SectionRow>
 
-              <SectionRow label={t('export.includeCitations')}>
+              <SectionRow label={t('export.includeComparables')}>
                 <Switch
-                  checked
-                  disabled
-                  onChange={() => undefined}
-                  label={t('export.includeCitations')}
+                  checked={sections.comparables}
+                  onChange={toggleSection('comparables')}
+                  label={t('export.includeComparables')}
                 />
               </SectionRow>
 
-              <SectionRow label={t('export.includeWarnings')}>
-                <Switch
-                  checked={sections.warnings}
-                  onChange={toggleSection('warnings')}
-                  label={t('export.includeWarnings')}
-                />
-              </SectionRow>
+              <AlwaysIncludedRow label={t('export.includeBoq')} />
+              <AlwaysIncludedRow label={t('export.includeCitations')} />
+              <AlwaysIncludedRow label={t('export.includeWarnings')} />
+              <p className="text-xs text-fg-muted">{t('export.alwaysIncludedHint')}</p>
             </fieldset>
+
+            <Input
+              label={t('export.authorLabel')}
+              placeholder={t('export.authorPlaceholder')}
+              helperText={t('export.authorHelp')}
+              value={authorName}
+              maxLength={EXPORT_AUTHOR_MAX_LENGTH}
+              disabled={isBusy}
+              onChange={(e) => {
+                // ตัดเฉพาะความยาวตอนพิมพ์ (กัน paste ข้อความยาวเกิน `maxLength` ซึ่งเป็นแค่ hint ของ
+                // เบราว์เซอร์ ไม่ใช่การบังคับจริงสำหรับทุก input method) — **ห้าม trim ที่นี่**: ผู้ใช้ต้อง
+                // พิมพ์ช่องว่างกลางชื่อได้ตามปกติระหว่างพิมพ์ ตัด/trim ค่าสุดท้ายจริงตอนส่งออกที่
+                // `buildRenderInput` (`pdfInputs.ts#sanitizeExportAuthorName`) เท่านั้น
+                setAuthorName(e.target.value.slice(0, EXPORT_AUTHOR_MAX_LENGTH));
+              }}
+            />
 
             <ExportProgress
               phase={phase}
@@ -327,6 +437,20 @@ function SectionRow({ label, children }: { label: string; children: ReactElement
     <div className="flex items-center justify-between gap-3">
       <span className="text-sm text-fg">{label}</span>
       {children}
+    </div>
+  );
+}
+
+/** ส่วนที่ปิดไม่ได้ (N3) — สวิตช์ติ๊กค้าง+disabled พร้อมป้าย "รวมเสมอ" (ดู `export.alwaysIncludedHint`
+ * ท้าย fieldset สำหรับเหตุผล) */
+function AlwaysIncludedRow({ label }: { label: string }): ReactElement {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm text-fg">{label}</span>
+      <span className="flex items-center gap-2">
+        <span className="text-xs font-medium text-fg-muted">{t('export.alwaysIncluded')}</span>
+        <Switch checked disabled onChange={() => undefined} label={label} />
+      </span>
     </div>
   );
 }

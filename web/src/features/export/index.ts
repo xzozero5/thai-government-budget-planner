@@ -9,6 +9,10 @@
 export { ExportDialog } from './ExportDialog';
 export type { ExportDialogProps, ExportSource } from './ExportDialog';
 
+// T-504 — type ที่ `features/workspace/trendData.ts` ต้องอ้างเพื่อประกอบ prop `loadTrend` ของ
+// `ExportDialog` (ดูหมายเหตุหัวไฟล์ `pdfInputs.ts`) — type-only, ไม่ผูก runtime dependency ข้าม feature
+export type { ExportTrendBasisKind, ExportTrendData, ExportTrendPoint } from './pdfInputs';
+
 export { downloadSessionFile, saveSessionFile } from './downloadSessionFile';
 
 export { LoadPage } from './LoadPage';

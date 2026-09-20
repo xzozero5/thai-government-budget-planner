@@ -14,6 +14,7 @@ import { useChatStore } from '@/stores/chatStore';
 import { getCurrentProposalVersion, useProposalStore, type ProposalVersion } from '@/stores/proposalStore';
 import { useToolLogStore } from '@/stores/toolLogStore';
 import { createCitationDrawerLoaders } from './citationDrawerLoaders';
+import { loadTrend, toExportTrendData } from './trendData';
 import { BoqTrendCell, ProposalIllustration, ProposalStatCard } from './vizRenderers';
 
 /**
@@ -232,6 +233,10 @@ export function ProposalPaneContainer({ onOpenCitation }: ProposalPaneContainerP
         onClose={() => {
           setExportOpen(false);
         }}
+        // T-504 (US-8.3) — ใช้ loader/cache เดิมของ `trendData.ts` (ตัวเดียวกับที่ `BoqTrendCell`/
+        // `ProposalStatCard` ข้างบนใช้) ต่อด้วย `toExportTrendData` แปลงรูปร่างให้ตรงกับที่ `ExportDialog`
+        // ต้องการ — ไม่ทำ loader ซ้ำอีกชุด
+        loadTrend={(ref) => loadTrend(ref).then((result) => (result ? toExportTrendData(result) : null))}
       />
     </>
   );

@@ -1,10 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { BoqLine, Proposal } from '@/ai/tools/proposal';
+import type { BoqLine, Proposal, TrendRef } from '@/ai/tools/proposal';
 import { t } from '@/i18n';
 import { useProposalStore } from '@/stores/proposalStore';
 import { useToolLogStore } from '@/stores/toolLogStore';
+import type { ProposalPdfSections } from './pdf/types';
+import type { ExportTrendData } from './pdfInputs';
 import { ExportDialog } from './ExportDialog';
 
 // `vi.hoisted` + plain `vi.fn()` (ไม่ผูก type ของ `DataFacade`/module จริง) กัน
@@ -16,6 +18,7 @@ const renderProposalPdfMock = vi.hoisted(() => vi.fn());
 const buildPdfFileNameMock = vi.hoisted(() =>
   vi.fn().mockReturnValue('ข้อเสนอโครงการ (ปีงบประมาณ 2569).pdf'),
 );
+const svgToPngDataUrlMock = vi.hoisted(() => vi.fn().mockResolvedValue('data:image/png;base64,trend'));
 
 vi.mock('@/data', () => ({ data: { dataVersion: dataVersionMock } }));
 vi.mock('./downloadBlob', () => ({ downloadBlob: downloadBlobMock }));
@@ -23,6 +26,7 @@ vi.mock('./pdf/renderProposalPdf', () => ({
   renderProposalPdf: renderProposalPdfMock,
   buildPdfFileName: buildPdfFileNameMock,
 }));
+vi.mock('./pdf/svgToPng', () => ({ svgToPngDataUrl: svgToPngDataUrlMock }));
 
 function makeLine(overrides: Partial<BoqLine> = {}): BoqLine {
   return {
@@ -67,6 +71,10 @@ function pushLiveProposal(overrides: Partial<Proposal> = {}, warnings: string[] 
   useProposalStore.getState().pushVersion(makeProposal(overrides), warnings, 'ai');
 }
 
+function fakeLoadTrend(data: ExportTrendData | null = { title: 'เครื่องปรับอากาศ', basis: 'unit_price', points: [{ yearBe: 2567, median: 100, n: 5 }] }): (ref: TrendRef) => Promise<ExportTrendData | null> {
+  return () => Promise.resolve(data);
+}
+
 describe('ExportDialog', () => {
   beforeEach(() => {
     useProposalStore.getState().reset();
@@ -75,6 +83,7 @@ describe('ExportDialog', () => {
     downloadBlobMock.mockClear();
     renderProposalPdfMock.mockReset();
     buildPdfFileNameMock.mockClear();
+    svgToPngDataUrlMock.mockClear();
   });
 
   it('ไม่มี proposal เลย (จาก store หรือ source) → ไม่มีปุ่มดาวน์โหลด', () => {
@@ -105,20 +114,19 @@ describe('ExportDialog', () => {
     expect(input.warnings).toEqual([]);
   });
 
-  it('sections.warnings ปิด → ไม่ส่ง warnings ของจริงเข้า renderProposalPdf', async () => {
+  it('N3: คำเตือนจากระบบตรวจสอบปิดไม่ได้ — ส่งเข้า renderProposalPdf เสมอ (ไม่มีสวิตช์ให้ปิด)', async () => {
     pushLiveProposal({}, ['คำเตือนจาก validator']);
     renderProposalPdfMock.mockResolvedValue(new Blob(['x']));
     const user = userEvent.setup();
 
     render(<ExportDialog open onClose={vi.fn()} />);
-    await user.click(screen.getByRole('switch', { name: t('export.includeWarnings') }));
     await user.click(screen.getByRole('button', { name: t('export.download') }));
 
     await waitFor(() => {
       expect(renderProposalPdfMock).toHaveBeenCalledTimes(1);
     });
     const input = renderProposalPdfMock.mock.calls[0]?.[0] as { warnings: string[] };
-    expect(input.warnings).toEqual([]);
+    expect(input.warnings).toEqual(['คำเตือนจาก validator']);
   });
 
   it('ส่งออกล้มเหลว: แสดง error + ปุ่มลองใหม่ ลองใหม่แล้วเรียกซ้ำ', async () => {
@@ -171,12 +179,122 @@ describe('ExportDialog', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(t('proposal.warnings.title'));
   });
 
-  it('ส่วนที่ PDF ไม่รองรับการปิด (BOQ/ภาคผนวก/ตัวชี้วัด) ถูก disable ไว้เสมอ', () => {
+  it('ส่วนที่ PDF ไม่รองรับการปิดเลย (N3: BOQ/ภาคผนวก/คำเตือน) ถูก disable ไว้เสมอ พร้อมป้าย "รวมเสมอ"', () => {
     pushLiveProposal();
     render(<ExportDialog open onClose={vi.fn()} />);
     expect(screen.getByRole('switch', { name: t('export.includeBoq') })).toBeDisabled();
     expect(screen.getByRole('switch', { name: t('export.includeCitations') })).toBeDisabled();
-    expect(screen.getByRole('switch', { name: t('export.includeStats') })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: t('export.includeWarnings') })).toBeDisabled();
+    expect(screen.getAllByText(t('export.alwaysIncluded'))).toHaveLength(3);
+    expect(screen.getByText(t('export.alwaysIncludedHint'))).toBeInTheDocument();
+  });
+
+  it('S13: สถิติ/สมมติฐาน-ความเสี่ยง/เทียบเคียง เป็นสวิตช์ที่ปิดได้จริง (ไม่ disabled)', () => {
+    pushLiveProposal();
+    render(<ExportDialog open onClose={vi.fn()} />);
+    expect(screen.getByRole('switch', { name: t('export.includeStats') })).toBeEnabled();
+    expect(screen.getByRole('switch', { name: t('export.includeAssumptionsRisks') })).toBeEnabled();
+    expect(screen.getByRole('switch', { name: t('export.includeComparables') })).toBeEnabled();
+  });
+
+  it('S13: ปิดสวิตช์สถิติ → ส่ง sections.stats=false เข้า renderProposalPdf', async () => {
+    pushLiveProposal();
+    renderProposalPdfMock.mockResolvedValue(new Blob(['x']));
+    const user = userEvent.setup();
+
+    render(<ExportDialog open onClose={vi.fn()} />);
+    await user.click(screen.getByRole('switch', { name: t('export.includeStats') }));
+    await user.click(screen.getByRole('button', { name: t('export.download') }));
+
+    await waitFor(() => {
+      expect(renderProposalPdfMock).toHaveBeenCalledTimes(1);
+    });
+    const input = renderProposalPdfMock.mock.calls[0]?.[0] as { sections: ProposalPdfSections };
+    expect(input.sections.stats).toBe(false);
+    expect(input.sections.assumptionsRisks).toBe(true);
+  });
+
+  it('T-504: ไม่ส่ง prop loadTrend มาเลย → สวิตช์กราฟแนวโน้ม disabled แม้ proposal มี trend_ref', () => {
+    pushLiveProposal({ boq: [makeLine({ trend_ref: { kind: 'item', key: 'เครื่องปรับอากาศ' } })] });
+    render(<ExportDialog open onClose={vi.fn()} />);
+    expect(screen.getByRole('switch', { name: t('export.includeTrends') })).toBeDisabled();
+    expect(screen.getByText(t('export.trendsEmpty'))).toBeInTheDocument();
+  });
+
+  it('T-504: มี loadTrend แต่ proposal ไม่มี trend_ref เลย → สวิตช์กราฟแนวโน้ม disabled', () => {
+    pushLiveProposal();
+    render(<ExportDialog open onClose={vi.fn()} loadTrend={fakeLoadTrend()} />);
+    expect(screen.getByRole('switch', { name: t('export.includeTrends') })).toBeDisabled();
+  });
+
+  it('T-504: มี loadTrend + trend_ref → เปิดสวิตช์ได้ (ค่าเริ่มต้นเปิดอยู่แล้ว) และ renderProposalPdf ได้ images.trends', async () => {
+    pushLiveProposal({ boq: [makeLine({ trend_ref: { kind: 'item', key: 'เครื่องปรับอากาศ' } })] });
+    renderProposalPdfMock.mockResolvedValue(new Blob(['x']));
+    const user = userEvent.setup();
+
+    render(<ExportDialog open onClose={vi.fn()} loadTrend={fakeLoadTrend()} />);
+    expect(screen.getByRole('switch', { name: t('export.includeTrends') })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: t('export.download') }));
+
+    await waitFor(() => {
+      expect(renderProposalPdfMock).toHaveBeenCalledTimes(1);
+    });
+    const input = renderProposalPdfMock.mock.calls[0]?.[0] as {
+      images?: { trends?: { title: string; dataUrl: string }[] };
+    };
+    expect(input.images?.trends).toHaveLength(1);
+    expect(input.images?.trends?.[0]?.dataUrl).toBe('data:image/png;base64,trend');
+  });
+
+  it('T-504: ปิดสวิตช์กราฟแนวโน้ม → ไม่เรียก loadTrend เลยและไม่ส่ง images.trends', async () => {
+    pushLiveProposal({ boq: [makeLine({ trend_ref: { kind: 'item', key: 'เครื่องปรับอากาศ' } })] });
+    renderProposalPdfMock.mockResolvedValue(new Blob(['x']));
+    const loadTrendSpy = vi.fn(fakeLoadTrend());
+    const user = userEvent.setup();
+
+    render(<ExportDialog open onClose={vi.fn()} loadTrend={loadTrendSpy} />);
+    await user.click(screen.getByRole('switch', { name: t('export.includeTrends') }));
+    await user.click(screen.getByRole('button', { name: t('export.download') }));
+
+    await waitFor(() => {
+      expect(renderProposalPdfMock).toHaveBeenCalledTimes(1);
+    });
+    expect(loadTrendSpy).not.toHaveBeenCalled();
+    const input = renderProposalPdfMock.mock.calls[0]?.[0] as {
+      images?: { trends?: unknown[] };
+    };
+    expect(input.images?.trends).toBeUndefined();
+  });
+
+  it('S13: พิมพ์ชื่อผู้จัดทำ → ส่ง author (trim แล้ว) เข้า renderProposalPdf', async () => {
+    pushLiveProposal();
+    renderProposalPdfMock.mockResolvedValue(new Blob(['x']));
+    const user = userEvent.setup();
+
+    render(<ExportDialog open onClose={vi.fn()} />);
+    await user.type(screen.getByLabelText(t('export.authorLabel')), '  กองบรรณาธิการข่าว ก  ');
+    await user.click(screen.getByRole('button', { name: t('export.download') }));
+
+    await waitFor(() => {
+      expect(renderProposalPdfMock).toHaveBeenCalledTimes(1);
+    });
+    const input = renderProposalPdfMock.mock.calls[0]?.[0] as { author?: string };
+    expect(input.author).toBe('กองบรรณาธิการข่าว ก');
+  });
+
+  it('S13: ไม่พิมพ์ชื่อผู้จัดทำเลย → ไม่ส่ง author เข้า renderProposalPdf', async () => {
+    pushLiveProposal();
+    renderProposalPdfMock.mockResolvedValue(new Blob(['x']));
+    const user = userEvent.setup();
+
+    render(<ExportDialog open onClose={vi.fn()} />);
+    await user.click(screen.getByRole('button', { name: t('export.download') }));
+
+    await waitFor(() => {
+      expect(renderProposalPdfMock).toHaveBeenCalledTimes(1);
+    });
+    const input = renderProposalPdfMock.mock.calls[0]?.[0] as { author?: string };
+    expect(input.author).toBeUndefined();
   });
 
   it('source prop ถูกส่งมา (โหมด /load) → ใช้ proposal จาก source แทน store และไม่เรียก dataVersion', async () => {

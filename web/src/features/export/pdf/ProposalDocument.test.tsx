@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import type { Proposal } from '@/ai/tools/proposal';
 import { t as translate } from '@/i18n';
 import equipAirconFixture from './__fixtures__/proposal.equip-aircon.json';
+import { buildCheckerboardPngDataUrl } from './__fixtures__/samplePng';
 import { buildSyntheticBoq } from './__fixtures__/syntheticBoq';
 import { pdfCopy } from './copy';
 import type { FontSource } from './fonts';
@@ -18,6 +19,7 @@ import {
   pdfEmbeddedFontNames,
   pdfHasImageObject,
   pdfHasValidHeader,
+  pdfImageObjectCount,
   pdfLinkUris,
   pdfPageCount,
 } from './pdfProbe';
@@ -247,6 +249,134 @@ describe('renderProposalPdf — render fixture จริงเป็น PDF buff
     const allText = decodeAllPagesNormalized(buf);
     expect(normalizedNoSpace(allText)).toContain(
       normalizedNoSpace('ราคาต่อหน่วยสูงกว่าค่ามัธยฐาน'.slice(0, 20)),
+    );
+  }, 20_000);
+});
+
+describe('T-504 (US-8.3) — กราฟแนวโน้มราคาที่เกี่ยวข้อง', () => {
+  const PNG_1X1 =
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+
+  it('ไม่มี images.trends → ไม่มีหัวข้อ "แนวโน้มราคาที่เกี่ยวข้อง" เลย', async () => {
+    const blob = await renderProposalPdf({ proposal: equipAircon, fontSource: TEST_FONT_SOURCE });
+    const buf = await toBuffer(blob);
+    const allText = decodeAllPagesNormalized(buf);
+    expect(normalizedNoSpace(allText)).not.toContain(normalizedNoSpace(pdfCopy.section.trendImages));
+  });
+
+  it('มี images.trends 3 รูป → มี image object 3 ชิ้น + หัวข้อ section + คำบรรยาย basis/n รวม', async () => {
+    // เนื้อภาพต้องต่างกันจริง (ไม่ใช่ data URL เดียวกันซ้ำ) — pdfkit cache/dedupe ภาพที่ src เหมือนกันเป๊ะ
+    // เป็น XObject เดียว ทำให้นับจำนวนไม่ตรงกับจำนวนกราฟถ้าใช้ PNG ตัวอย่างเดียวกันทั้ง 3 รูป
+    const blob = await renderProposalPdf({
+      proposal: equipAircon,
+      images: {
+        trends: [
+          {
+            title: 'เครื่องปรับอากาศ 18000 บีทียู',
+            dataUrl: buildCheckerboardPngDataUrl(8),
+            basisLabel: 'อิงราคาต่อหน่วย',
+            nTotal: 12,
+          },
+          { title: 'ดัชนีราคาผู้บริโภค', dataUrl: buildCheckerboardPngDataUrl(16) },
+          {
+            title: 'ปูนซีเมนต์ถุง',
+            dataUrl: buildCheckerboardPngDataUrl(24),
+            basisLabel: 'อิงยอดต่อรายการงบ',
+            nTotal: 4,
+          },
+        ],
+      },
+      fontSource: TEST_FONT_SOURCE,
+    });
+    const buf = await toBuffer(blob);
+    expect(pdfImageObjectCount(buf)).toBe(3);
+
+    const allText = decodeAllPagesNormalized(buf);
+    const noSpace = normalizedNoSpace(allText);
+    expect(noSpace).toContain(normalizedNoSpace(pdfCopy.section.trendImages));
+    expect(noSpace).toContain(normalizedNoSpace('เครื่องปรับอากาศ 18000 บีทียู'));
+    expect(noSpace).toContain(normalizedNoSpace('อิงราคาต่อหน่วย'));
+    expect(noSpace).toContain(normalizedNoSpace(pdfCopy.trend.nTotal(12)));
+    expect(noSpace).toContain(normalizedNoSpace('อิงยอดต่อรายการงบ'));
+    // การ์ดตัวชี้วัดเศรษฐกิจ (ไม่มี basisLabel/nTotal) ไม่ต้องมีคำบรรยายเพิ่ม แต่ต้องไม่ทำให้ทั้งไฟล์พัง
+    expect(noSpace).toContain(normalizedNoSpace('ดัชนีราคาผู้บริโภค'));
+  }, 20_000);
+
+  it('sections.trends=false → ไม่มีหัวข้อ/รูปกราฟแม้ส่ง images.trends มา (ปิดที่ระดับ ProposalDocument เอง)', async () => {
+    const blob = await renderProposalPdf({
+      proposal: equipAircon,
+      images: { trends: [{ title: 'ทดสอบ', dataUrl: PNG_1X1 }] },
+      sections: { trends: false },
+      fontSource: TEST_FONT_SOURCE,
+    });
+    const buf = await toBuffer(blob);
+    expect(pdfHasImageObject(buf)).toBe(false);
+    const allText = decodeAllPagesNormalized(buf);
+    expect(normalizedNoSpace(allText)).not.toContain(normalizedNoSpace(pdfCopy.section.trendImages));
+  });
+
+  it('sections.stats=false → ไม่มี headline ของ stat_cards บนหน้าปก', async () => {
+    const withStatCards: Proposal = {
+      ...equipAircon,
+      stat_cards: [{ trend_ref: { kind: 'indicator', key: 'cpi' }, headline_th: 'CPI ทดสอบพิเศษ 999' }],
+    };
+    const blob = await renderProposalPdf({
+      proposal: withStatCards,
+      sections: { stats: false },
+      fontSource: TEST_FONT_SOURCE,
+    });
+    const buf = await toBuffer(blob);
+    const allText = decodeAllPagesNormalized(buf);
+    expect(normalizedNoSpace(allText)).not.toContain(normalizedNoSpace('CPIทดสอบพิเศษ999'));
+  });
+
+  it('sections.assumptionsRisks=false → ไม่มีหัวข้อสมมติฐาน/ความเสี่ยง แม้ proposal มีข้อมูล', async () => {
+    const blob = await renderProposalPdf({
+      proposal: equipAircon, // fixture มี assumptions/risks จริง (ยืนยันใน describe แรกของไฟล์นี้)
+      sections: { assumptionsRisks: false },
+      fontSource: TEST_FONT_SOURCE,
+    });
+    const buf = await toBuffer(blob);
+    const allText = decodeAllPagesNormalized(buf);
+    expect(normalizedNoSpace(allText)).not.toContain(normalizedNoSpace(translate('proposal.sections.assumptions')));
+    expect(normalizedNoSpace(allText)).not.toContain(normalizedNoSpace(translate('proposal.sections.risks')));
+  });
+
+  it('sections.comparables=false → ไม่มีหัวข้อเทียบเคียง แม้ proposal มีข้อมูล', async () => {
+    const blob = await renderProposalPdf({
+      proposal: equipAircon,
+      sections: { comparables: false },
+      fontSource: TEST_FONT_SOURCE,
+    });
+    const buf = await toBuffer(blob);
+    const allText = decodeAllPagesNormalized(buf);
+    expect(normalizedNoSpace(allText)).not.toContain(normalizedNoSpace(translate('proposal.sections.comparison')));
+  });
+
+  it('sections.illustrations=false → ไม่มีรูปภาพรวมโครงการแม้ส่ง images.overview มา', async () => {
+    const blob = await renderProposalPdf({
+      proposal: equipAircon,
+      images: { overview: PNG_1X1 },
+      sections: { illustrations: false },
+      fontSource: TEST_FONT_SOURCE,
+    });
+    const buf = await toBuffer(blob);
+    expect(pdfHasImageObject(buf)).toBe(false);
+  });
+
+  it('S13: author (ผู้จัดทำ) แสดงบนหน้าปกเมื่อระบุ และไม่แสดงเมื่อไม่ระบุ', async () => {
+    const withAuthor = await toBuffer(
+      await renderProposalPdf({ proposal: equipAircon, author: 'กองบรรณาธิการข่าว ก', fontSource: TEST_FONT_SOURCE }),
+    );
+    expect(normalizedNoSpace(decodeAllPagesNormalized(withAuthor))).toContain(
+      normalizedNoSpace('กองบรรณาธิการข่าวก'),
+    );
+
+    const withoutAuthor = await toBuffer(
+      await renderProposalPdf({ proposal: equipAircon, fontSource: TEST_FONT_SOURCE }),
+    );
+    expect(normalizedNoSpace(decodeAllPagesNormalized(withoutAuthor))).not.toContain(
+      normalizedNoSpace('กองบรรณาธิการข่าวก'),
     );
   }, 20_000);
 });

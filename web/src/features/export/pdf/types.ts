@@ -16,12 +16,33 @@ export interface ProposalPdfTrendImage {
   title: string;
   /** PNG data URL (ไม่ใช่ blob: — ดู `svgToPng.ts`) */
   dataUrl: string;
+  /** ป้าย basis ใต้กราฟ (N3 — `proposal.trend.basisUnitPrice`/`basisAmountPerLine`) — ไม่มีเมื่อเป็น
+   * ตัวชี้วัดเศรษฐกิจ (`kind:'indicator'`) เพราะไม่มีแนวคิด "ราคาต่อหน่วย/รายการ" */
+  basisLabel?: string;
+  /** ผลรวม n ของทุกจุดที่มีข้อมูล — ไม่มีเมื่อเป็นตัวชี้วัดเศรษฐกิจ (จุดละ 1 ค่า ไม่มีแนวคิดขนาดตัวอย่าง) */
+  nTotal?: number;
 }
 
 export interface ProposalPdfImages {
   /** PNG data URL ของภาพรวมโครงการ (ภาพประกอบ/แผนผัง) */
   overview?: string;
   trends?: ProposalPdfTrendImage[];
+}
+
+/** T-504/S13 — ส่วนที่ผู้ใช้เลือกได้ใน export dialog (ค่าเริ่มต้นทุกตัว `true` เมื่อไม่ระบุ) ส่วนที่ "ปิดไม่ได้"
+ * ตาม N3 (BOQ, ยอดรวม, ภาคผนวกอ้างอิง, คำเตือนจากระบบตรวจสอบ, ป้ายร่างโดย AI, footer) ไม่มี key ในนี้ —
+ * ถูก render เสมอไม่ว่าอะไรก็ตาม ดูคอมเมนต์หัวไฟล์ `pdfInputs.ts` */
+export interface ProposalPdfSections {
+  /** การ์ดสถิติ/ตัวชี้วัด (highlight box บนหน้าปก) */
+  stats?: boolean;
+  /** สมมติฐาน + ความเสี่ยง (รวมเป็นสวิตช์เดียวตามสเปค T-504) */
+  assumptionsRisks?: boolean;
+  /** เทียบเคียงงบในอดีต */
+  comparables?: boolean;
+  /** ภาพประกอบ (ภาพรวมโครงการ + คำบรรยายของ `proposal.illustrations`) */
+  illustrations?: boolean;
+  /** กราฟแนวโน้มราคา (US-8.3) */
+  trends?: boolean;
 }
 
 /** รายละเอียดเสริมของ budget_line citation หนึ่งรายการ (key = `source_id`) — ดูหมายเหตุหัวไฟล์ */
@@ -62,6 +83,11 @@ export interface ProposalDocumentProps {
   budgetLineDetails?: Record<string, BudgetLineCitationDetail>;
   documentDetails?: Record<string, DocumentCitationDetail>;
   econValues?: Record<string, EconCitationDetail>;
+  /** T-504/S13 — ส่วนที่เลือกได้ (undefined ทั้งก้อน หรือ key ไหนไม่ระบุ = แสดงเสมอ ค่าเริ่มต้น `true`) */
+  sections?: ProposalPdfSections;
+  /** S13 — ชื่อผู้จัดทำ (optional, ≤ 80 ตัวอักษร ตรวจ/ตัดที่ `pdfInputs.ts#sanitizeExportAuthorName`)
+   * แสดงบนหน้าปกเท่านั้น ไม่ถูกเก็บที่ไหนนอกจาก state ของ dialog ตอนกำลังส่งออก (N2 เดียวกับ key) */
+  author?: string;
 }
 
 export interface RenderProposalPdfInput extends ProposalDocumentProps {
