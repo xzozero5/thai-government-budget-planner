@@ -22,7 +22,7 @@ export function Badge({ variant = 'neutral', children, className }: BadgeProps):
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-medium',
+        'inline-flex items-center gap-1 whitespace-nowrap rounded-sm px-2 py-0.5 text-xs font-medium',
         VARIANT_CLASSES[variant],
         className,
       )}
@@ -60,7 +60,7 @@ export function BasisBadge({ basis, label, className }: BasisBadgeProps): ReactE
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-medium',
+        'inline-flex items-center gap-1 whitespace-nowrap rounded-sm px-2 py-0.5 text-xs font-medium',
         BASIS_CLASSES[basis],
         className,
       )}
