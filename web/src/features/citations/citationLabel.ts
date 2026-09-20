@@ -11,7 +11,7 @@
  */
 import type { Citation } from '@/ai/tools/proposal';
 import type { Dataset } from '@/data';
-import { t } from '@/i18n';
+import { t, type CopyKey } from '@/i18n';
 
 // ---------------------------------------------------------------------------
 // URL helpers (web citation) — ไม่ fetch ปลายทางใด ๆ (N5), แค่ parse ด้วย `URL` ในตัวเบราว์เซอร์
@@ -174,7 +174,28 @@ export function describeQualityFlag(
         short: t('citation.flags.group_total_mismatchShort'),
         full: t('citation.flags.group_total_mismatchShort'),
       };
-    default:
+    default: {
+      const short = SHORT_ONLY_FLAG_KEYS[flag];
+      if (short !== undefined) {
+        return { code: flag, short: t(short), full: t(short) };
+      }
       return { code: flag, short: flag, full: flag };
+    }
   }
 }
+
+/** flag ที่มีเฉพาะข้อความสั้นใน copy (main thread เติมหลัง T-407) — flag ที่ไม่รู้จักยังแสดงโค้ดดิบ */
+const SHORT_ONLY_FLAG_KEYS: Partial<Record<string, CopyKey>> = {
+  ministry_unmapped: 'citation.flags.ministry_unmappedShort',
+  org_unmapped: 'citation.flags.org_unmappedShort',
+  org_tail_uncertain: 'citation.flags.org_tail_uncertainShort',
+  lump_sum_category: 'citation.flags.lump_sum_categoryShort',
+  qty_is_measure: 'citation.flags.qty_is_measureShort',
+  qty_parsed_low_conf: 'citation.flags.qty_parsed_low_confShort',
+  subset_of_act_2570_draft: 'citation.flags.subset_of_act_2570_draftShort',
+  ocr_suspect: 'citation.flags.ocr_suspectShort',
+  amount_outlier: 'citation.flags.amount_outlierShort',
+  unit_price_outlier: 'citation.flags.unit_price_outlierShort',
+  negative_amount: 'citation.flags.negative_amountShort',
+  corrupt_row: 'citation.flags.corrupt_rowShort',
+};

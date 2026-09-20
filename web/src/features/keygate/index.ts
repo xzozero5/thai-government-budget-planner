@@ -1,0 +1,1 @@
+export { KeyGatePage } from './KeyGatePage';

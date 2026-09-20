@@ -25,6 +25,9 @@ Key อยู่ที่ `web/.env.local` (`VITE_EVAL_ANTHROPIC_API_KEY`; gitig
 | 2569-09-20 | T-306 eval จริง case แรก `equip-aircon-18000btu` (Haiku 4.5, 5 requests, ชนเพดาน case 0.12) — ledger `web/tests/eval/api-spend.json` | **0.1202** (เพดาน T-306 1.80) | **0.2655** |
 | 2569-09-20 | T-308 รอบ 1 — รัน case เดิมซ้ำหลังลด token (Haiku 4.5, 7 requests, 2 turns เพราะโมเดลถามกลับก่อน) — **proposal ไม่ถูกบันทึกเพราะบั๊ก harness** (แก้แล้ว `97fa99e`) | **0.1283** | **0.3939** |
 
+### คำตัดสินของคุณนิว (2569-09-20)
+**eval จริงชุด core8 เลื่อนไปรันครั้งเดียวตอน Phase 6 (T-604)** — ตั้งแต่นี้จนถึง T-604 **ห้ามเรียก API จริง** (Phase 4/5 ใช้ mock ทั้งหมด). T-306 ปิดในสถานะ "runner พร้อม + รันจริง 2 ครั้งกับ 1 โจทย์"; T-308 (po review) ทำกับผลของ T-604. เพดานของรอบ T-604: ledger ของ eval ≤ 2.10 USD (รวมที่ใช้ไปแล้ว 0.2486), ต่อข้อ Haiku 0.15 / Sonnet 0.40 — ต้องให้คุณนิวอนุมัติคำสั่งก่อนรัน (ระบบ permission บล็อกการใช้เงินจริงโดยอัตโนมัติ)
+
 ### ข้อค้นพบรอบ 2 (หลังลด token)
 - prefix cache write 28.4k → **22.8k tokens** (−20 %); ต้นทุนต่อข้อบน Haiku ยัง ≈ **0.13 USD** เพราะ (ก) โมเดลถามกลับ 1 turn ทั้งที่โจทย์บอกให้ตั้งสมมติฐาน (ข) `emit_proposal` ≈ 7.5k output tokens (0.037 USD — ก้อนใหญ่สุด) (ค) ผล `query_budget_lines` ≈ 10k tokens
 - เพดานต่อ case 0.12 ตึงเกินสำหรับ flow ครบ → ใช้ `--max-usd-per-case-haiku 0.15` ในรอบ core8 (Sonnet คง 0.35–0.40; ยอดรวมยังถูกบังคับด้วย ledger ≤ 1.80)

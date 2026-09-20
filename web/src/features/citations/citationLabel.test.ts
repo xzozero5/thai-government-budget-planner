@@ -86,9 +86,16 @@ describe('describeQualityFlag', () => {
     );
   });
   it('flag ที่ไม่มีคำแปล → fallback เป็นโค้ดดิบ', () => {
+    const display = describeQualityFlag('flag_from_future_pipeline');
+    expect(display.short).toBe('flag_from_future_pipeline');
+    expect(display.full).toBe('flag_from_future_pipeline');
+  });
+
+  it('flag ที่มีเฉพาะข้อความสั้น (เช่น ministry_unmapped) → ข้อความไทย ไม่ใช่โค้ดดิบ', () => {
     const display = describeQualityFlag('ministry_unmapped');
-    expect(display.short).toBe('ministry_unmapped');
-    expect(display.full).toBe('ministry_unmapped');
+    expect(display.code).toBe('ministry_unmapped');
+    expect(display.short).not.toBe('ministry_unmapped');
+    expect(display.short.length).toBeGreaterThan(5);
   });
 });
 

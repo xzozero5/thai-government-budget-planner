@@ -100,7 +100,7 @@ export function CitationDrawer({
   citation,
   contextLine,
   loaders,
-  amountAsUnitPriceLabel = 'ยอดต่อรายการงบ — ไม่ใช่ราคาต่อหน่วย',
+  amountAsUnitPriceLabel = t('citation.flags.amountPerLineNotUnitPrice'),
   onRejectWeb,
 }: CitationDrawerProps): ReactElement {
   const { state, retry } = useCitationDetail(citation, loaders);

@@ -87,7 +87,7 @@ describe('CitationDrawer', () => {
       render(<CitationDrawer open citation={citation} onClose={vi.fn()} loaders={loaders} />);
 
       await screen.findByText(line.item_name_raw);
-      expect(screen.getByText('ยอดต่อรายการงบ — ไม่ใช่ราคาต่อหน่วย')).toBeInTheDocument();
+      expect(screen.getByText(/ยอดต่อรายการงบ — ไม่ใช่ราคาต่อหน่วย/)).toBeInTheDocument();
       expect(screen.getByText(line.source_path)).toBeInTheDocument();
       expect(screen.getByText(line.source_sheet, { exact: false })).toBeInTheDocument();
     });
@@ -99,7 +99,7 @@ describe('CitationDrawer', () => {
       render(<CitationDrawer open citation={citation} onClose={vi.fn()} loaders={loaders} />);
 
       await screen.findByText(line.item_name_raw);
-      expect(screen.queryByText('ยอดต่อรายการงบ — ไม่ใช่ราคาต่อหน่วย')).not.toBeInTheDocument();
+      expect(screen.queryByText(/ยอดต่อรายการงบ — ไม่ใช่ราคาต่อหน่วย/)).not.toBeInTheDocument();
     });
 
     it('แสดง quality flag badge (upstream_ocr) พร้อมเลขหน้าใน tooltip', async () => {
