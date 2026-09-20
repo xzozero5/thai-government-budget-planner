@@ -3,15 +3,15 @@
 รูปแบบ entry: `## YYYY-MM-DD HH:MM (Asia/Bangkok) — <ใคร/agent> — <phase/task>` แล้วตามด้วย ทำอะไร / ไฟล์ที่แตะ / test / ค้าง / ไม่ยืนยัน
 
 ## สถานะปัจจุบัน
-| Phase | สถานะ (2569-09-21) | ค้าง |
+| Phase | สถานะ (2569-09-21 ค่ำ) | ค้าง |
 |---|---|---|
 | 0 Bootstrap | ✅ เสร็จ | — |
 | 1 Data pipeline | ✅ เสร็จ (T-101–T-115) | — |
 | 2 Architecture & data access | ✅ เสร็จตามขอบเขต MVP (T-201–T-208) | T-209, T-210 เลื่อนไปทำพร้อม republish ข้อมูลครั้งถัดไป (ไม่บล็อก) |
-| 3 AI layer | 🔶 โค้ดเสร็จ (T-301–T-305, T-307, T-309); T-306 runner เสร็จ + รันจริง 2 ครั้ง | **eval จริง core8 ย้ายไปเป็น T-604 (กำลังรัน)** → T-308 po review ผล |
+| 3 AI layer | ✅ โค้ดเสร็จ (T-301–T-307, T-309); **T-308 รอบ 1 เสร็จ** (PO review ผล eval จริง → แก้เกณฑ์ + แก้บั๊ก 4 จุด) | ผล eval "ผ่านบางส่วน จำกัดด้วยงบ" (2/7 ตามเกณฑ์เข้ม) — การแก้หลัง eval ยังไม่ได้วัดซ้ำกับ API จริง (งบที่อนุมัติเหลือ ~0.54 USD) |
 | 4 UI | ✅ เสร็จ (T-401–T-412) | should/could จาก PO review ที่เหลือ → post-MVP (ดู `docs/qa/po-review-phase4-5.md`) |
 | 5 Export | 🔶 T-501, T-502, T-504 เสร็จ | **T-503** ตรวจ PDF ใน viewer จริง 4 ตัว (ต้องใช้คน) |
-| 6 QA & hardening | 🔶 T-602 เสร็จ + แก้ครบ; T-601/T-605/T-606 บางส่วน | **T-604 กำลังรัน** (คุณนิวอนุมัติ 1.89 USD), T-603, T-601 ส่วนที่ต้องใช้คน/เบราว์เซอร์อื่น |
+| 6 QA & hardening | 🔶 T-602 เสร็จ + แก้ครบ; **T-604 รันแล้ว** (7/20 เคส, 1.35 USD); T-601/T-605/T-606 บางส่วน; ลองเว็บจริงผ่าน Chrome → แก้บั๊ก UI 4 จุด | T-603 (บั๊กจาก eval: query กว้างเกิน / item_key เฉียด / shard ของ sample id — ai-engineer กำลังแก้), T-601 ส่วนที่ต้องใช้คน/เบราว์เซอร์อื่น, T-503 |
 
 - Phase: **4 และ 5 ปิดแล้ว (2569-09-21)** · **Phase 6 กำลังทำ** — เสร็จ: T-602 security review + แก้ finding ครบ 16 ข้อ, QA ข้อมูล B1/B5, T-605 ตรวจเว็บจริงเบื้องต้น, ร่าง T-606 · เหลือ: **T-604 eval จริง core8 (รอคุณนิวอนุมัติคำสั่ง — ใช้เงิน API)** → T-308 po review ผล eval, T-601 ส่วนที่ต้องใช้คน/เบราว์เซอร์อื่น (A8/T-503 PDF ใน viewer จริง 4 ตัว, E1 Firefox/Safari/มือถือ, E2 axe, D1 Lighthouse), T-603 แก้บั๊กที่พบเพิ่ม · Phase 3: โค้ดเสร็จ; eval จริงเลื่อนมา T-604 ตามคำสั่งคุณนิว
 - Demo/production: https://xzozero5.github.io/thai-government-budget-planner/ — deploy อัตโนมัติจาก `main` เมื่อ CI เขียว
@@ -36,6 +36,15 @@
 - GitHub Pages: **live แล้ว** — ยืนยัน 19 ก.ย.: หน้า placeholder ขึ้น, CSP meta อยู่ใน HTML ที่ serve, `Accept-Ranges: bytes`, `Range: bytes=0-99` กับ `data/sources.json` → **206 / 100 bytes**; ยังต้องวัดกับไฟล์ parquet + DuckDB-WASM จริงใน S1 (T-201) และ `Cache-Control: max-age=600` (ข้อมูลใหม่อาจช้า ≤ 10 นาที)
 
 ## Log
+
+## 2569-09-21 ค่ำ (Asia/Bangkok) — Claude Code main thread (+ frontend-dev, ai-engineer, po) — T-604 eval จริง, T-308 รอบ 1, ลองเว็บจริงผ่าน Chrome, README ใหม่
+- **ลองเว็บจริงผ่าน Claude in Chrome** (ไม่ใส่ key — main thread พิมพ์ key เองไม่ได้ตามกฎความปลอดภัย; ใช้ `/load` + ไฟล์ที่สร้างจากข้อเสนอจริงของ eval): พบ+แก้ (1) `Collapse` ค้างครึ่งเดียวเมื่อแท็บถูก throttle (rAF ไม่ยิง) `e287afe` (2) **หน้า `/load` ขึ้น "อ้างอิงไม่พบ — อย่าเชื่อตัวเลข" กับ citation ที่ถูกต้องทุกตัว** เพราะ `.tgbp.json` ไม่เก็บ shard → เพิ่ม `sourceShards` (optional, ตรวจ path ด้วย `lib/safeDataPath`), data layer โหลด lazy เมื่อกดชิป, ข้อความใหม่สำหรับไฟล์เก่า `6925373` (3) ป้ายที่มาตัดบรรทัดกลางคำ `6246da1` (4) หน้าต่างส่งออกถูกกล่องคำเตือนยาวดันตัวเลือกตกขอบ → ยุบเป็น details; รวม warning แก้ชื่อ comparables เป็นข้อเดียว `e69eb6d`
+- **README ใหม่ + ภาพจริง 6 ภาพ** (`docs/screenshots/`, `web/tests/screenshots/readme.spec.ts`, `playwright.screenshots.config.ts`): เล่นซ้ำลำดับ tool call ของการรันจริง (เคสฝายน้ำล้น, Sonnet 5) ผ่าน mock HTTP — tool ทุกตัวรันกับข้อมูลจริง ไม่เสียเงิน ไม่ใช้ key `c9b4bc9`
+- **T-604 eval จริง core8** ที่ `e287afe`: รัน 7 เคส (hallucination-lure = not_run เพราะงบ), ใช้ **1.3473 USD** (ledger eval สะสม 1.5959; อนุมัติ 1.89 → เหลือ ~0.54), cache hit 100 %, ไม่พบ key ในไฟล์ผล · เคสแอร์ยอดรวม 237,300 (เดิมเพี้ยนเพราะใช้ยอดต่อบรรทัดเป็นราคาต่อหน่วย)
+- **T-308 รอบ 1 (po)**: เกณฑ์ 07 §4 (18/20) **ไม่ผ่าน** — รันได้ 7/20; พบว่า runner ไม่เคยบังคับ "citation resolve 100 %" → เพิ่ม check + โหมด `--rescore` (ไม่เสียเงิน) → **ผ่าน 2/7** (เดิมรายงาน 4/7); เกณฑ์เคส audit ที่บังคับ basis=historical ผิด (ขัด N3) → เปลี่ยนเป็นตรวจ audit_findings/comparables `1bcffcf` · known issues ลง `docs/RELEASE-0.1.md` `588b335`
+- **บั๊กฝั่งเราที่ eval เผย**: (ก) emit_proposal ถูก reject ทั้งก้อนเพราะ `open_questions=[{text}]` / `assumptions=["…"]` → repair layer `07cd3fb` (ยืนยันกับ input จริง 2 ก้อน) (ข) `adjust_for_inflation` ไม่บันทึกค่า econ ที่อ่านจริง → citation econ ที่ถูกต้องถูกตัด `1bcffcf` (ค) `QueryTooBroadError` เสีย 1–6 รอบ/บทสนทนา (ง) `item_key` ที่มีวงเล็บไม่ตรง catalog → 0 แถวเงียบ ๆ (จ) `sample_source_ids` ของ search_catalog อ้างได้แต่เปิดแถวไม่ได้ (ไม่มี shard) — (ค)(ง)(จ) **ai-engineer กำลังแก้**
+- ความผิดพลาดของ main thread: push `81125c9` โดยรัน e2e แต่ไม่ได้รัน vitest เต็ม → CI แดง (vitest เก็บ Playwright spec ของสคริปต์ถ่ายภาพ) → แก้ `04f6999` + **กติกา: ก่อน push รันทั้ง tsc + eslint + vitest เต็ม + e2e ใน worktree สะอาดที่ commit เดียวกัน** (รอบนี้: unit 1378/1378, e2e 24/24)
+- `[UNVERIFIED]`: ผลของการแก้ทั้งหมดหลัง eval ยังไม่ได้วัดกับ API จริง; drawer ของ `/load` ยังไม่ได้ดูบนเว็บจริงหลัง deploy
 
 ## 2569-09-21 (Asia/Bangkok) — Claude Code main thread (+ frontend-dev ×3, ai-engineer, security-reviewer) — ปิด Phase 4/5, เริ่ม Phase 6
 - **Demo จริงครั้งแรกของคุณนิว** (หน้าจอจริง + API จริง) เผยปัญหาที่ mock จับไม่ได้: query_budget_lines ล้ม 3/4 (กว้างเกินเพดาน), emit_proposal ล้มรอบแรก, ไม่มีปุ่ม "ทำต่อ", export PDF พังเพราะ **main thread deploy เวอร์ชันใหม่ระหว่างที่แท็บเปิดค้าง** (chunk เดิมหาย), ข้อเสนอเป็นประมาณการ 100 % → แก้ครบ (`2092521`, `69bec71`); สาเหตุ emit_proposal ล้มเป็นการประเมินจากโค้ด `[UNVERIFIED]` (ไม่มี log ของ session นั้น)
