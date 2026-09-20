@@ -19,6 +19,14 @@ import { redactSecrets } from '@/ai/session/redactSecrets';
 export type KeyStatus = 'idle' | 'verifying' | 'valid' | 'error';
 export type ThemePreference = 'light' | 'dark';
 
+/** ค่าเริ่มต้นตามระบบของผู้ใช้ (06 §2: `prefers-color-scheme` + toggle) — ไม่อ่าน/เขียน storage ใด ๆ (N2) */
+function initialTheme(): ThemePreference {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return 'light';
+  }
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
 export interface SessionStoreState {
   hasKey: boolean;
   keyStatus: KeyStatus;
@@ -65,7 +73,7 @@ export const useSessionStore = create<SessionStoreState>((set, get) => ({
   maxCostUsdPerTurn: DEFAULT_MAX_COST_USD_PER_TURN,
   maxCostUsdPerSession: DEFAULT_MAX_COST_USD_PER_SESSION,
   spentUsd: 0,
-  theme: 'light',
+  theme: initialTheme(),
 
   async submitKey(apiKey) {
     set({ keyStatus: 'verifying', keyErrorKind: null, keyErrorMessage: null });

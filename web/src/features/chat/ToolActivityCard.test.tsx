@@ -1,0 +1,50 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import type { ToolActivity } from '@/stores/chatStore';
+import { t } from '@/i18n';
+import { ToolActivityCard } from './ToolActivityCard';
+
+function activity(overrides: Partial<ToolActivity>): ToolActivity {
+  return { id: 'a1', name: 'search_catalog', status: 'running', ...overrides };
+}
+
+describe('ToolActivityCard (06 §7 #25)', () => {
+  it('running: แสดงข้อความ "กำลังทำงาน" ของ tool นั้น ๆ', () => {
+    render(<ToolActivityCard activity={activity({ status: 'running' })} />);
+    expect(screen.getByText(/กำลังค้นว่ามีรายการคล้าย/)).toBeInTheDocument();
+  });
+
+  it('done: แสดงสรุปผลจริง (inputSummary) + ปุ่มดูผลเมื่อมี onViewResults', () => {
+    const onViewResults = vi.fn();
+    render(
+      <ToolActivityCard
+        activity={activity({ status: 'done', inputSummary: 'search_catalog: พบ 5 รายการ' })}
+        onViewResults={onViewResults}
+      />,
+    );
+
+    expect(screen.getByText('search_catalog: พบ 5 รายการ')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: t('chat.tool.viewResults') }));
+    expect(onViewResults).toHaveBeenCalledOnce();
+  });
+
+  it('error: ไม่มีปุ่มดูผล แม้ส่ง onViewResults มา', () => {
+    render(
+      <ToolActivityCard
+        activity={activity({ status: 'error', inputSummary: 'search_catalog: เรียกใช้ไม่สำเร็จ' })}
+        onViewResults={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('search_catalog: เรียกใช้ไม่สำเร็จ')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: t('chat.tool.viewResults') })).not.toBeInTheDocument();
+  });
+
+  it('web_search: แสดง query เสมอ (แม้ไม่ได้ส่ง onViewResults มา) + ไม่มีปุ่มดูผล', () => {
+    render(<ToolActivityCard activity={activity({ name: 'web_search', status: 'done', inputSummary: 'แอร์ 18000 บีทียู' })} />);
+
+    expect(screen.getByText(/แอร์ 18000 บีทียู/)).toBeInTheDocument();
+    expect(screen.getByText(t('chat.tool.web_search.notice'))).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: t('chat.tool.viewResults') })).not.toBeInTheDocument();
+  });
+});

@@ -1,13 +1,94 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
 import { App } from '@/app/App';
+import { t } from '@/i18n';
+import { useSessionStore } from '@/stores/sessionStore';
 
-describe('App', () => {
-  it('renders the Thai placeholder page at the root route', () => {
+const APP_SOURCE = readFileSync(path.join(import.meta.dirname, 'App.tsx'), 'utf-8');
+
+function setHash(hash: string): void {
+  window.location.hash = hash;
+}
+
+afterEach(() => {
+  setHash('#/');
+  useSessionStore.setState({ theme: 'light' });
+  document.documentElement.removeAttribute('data-theme');
+});
+
+describe('App — routes (HashRouter)', () => {
+  it('"/" แสดงหน้า KeyGate ภายใน #main-content พร้อม skip link (a11y §6)', () => {
+    setHash('#/');
     render(<App />);
-    expect(
-      screen.getByRole('heading', { name: 'เครื่องมือวางแผนงบประมาณภาครัฐ (TGBP)' }),
-    ).toBeInTheDocument();
-    expect(screen.getByText('กำลังพัฒนา')).toBeInTheDocument();
+
+    expect(screen.getByText(t('a11y.skipToContent'))).toBeInTheDocument();
+    expect(document.getElementById('main-content')).not.toBeNull();
+  });
+
+  it('เส้นทางที่ไม่รู้จัก → แสดงหน้า 404', () => {
+    setHash('#/ไม่มีจริง');
+    render(<App />);
+
+    expect(screen.getByRole('heading', { name: t('errors.notFoundTitle') })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: t('errors.notFoundAction') })).toBeInTheDocument();
+  });
+
+  it('"/about" ไม่ตกไปที่หน้า 404 (route จับคู่ได้)', () => {
+    setHash('#/about');
+    render(<App />);
+
+    expect(screen.queryByRole('heading', { name: t('errors.notFoundTitle') })).not.toBeInTheDocument();
+  });
+
+  it('"/load" แสดง placeholder ของ T-502 (เปิดไฟล์ .tgbp.json โดยไม่ต้องมี key)', () => {
+    setHash('#/load');
+    render(<App />);
+
+    expect(screen.getByRole('heading', { name: t('export.load.title') })).toBeInTheDocument();
+  });
+
+  it('"/workspace" โดยไม่มี key → guard redirect กลับไปหน้า KeyGate ("/")', async () => {
+    useSessionStore.setState({ hasKey: false });
+    setHash('#/workspace');
+    render(<App />);
+
+    // guard อยู่ใน lazy chunk ของ workspace — ตอนรันทั้งชุดพร้อมกัน dynamic import ช้ากว่า 1 s (ค่า default
+    // ของ waitFor) ได้ จึงให้เวลาเพิ่ม (main thread: เคย fail เฉพาะตอนรันเต็มชุด ผ่านเมื่อรันเดี่ยว)
+    await waitFor(
+      () => {
+        expect(window.location.hash).toBe('#/');
+      },
+      { timeout: 10_000 },
+    );
+  }, 15_000);
+
+  it('ยังคง import และแทรก dataHarnessRoute ใน <Routes> เหมือนเดิมทุกประการ (e2e/eval ของ data harness พึ่งพา route นี้)', () => {
+    expect(APP_SOURCE).toContain("import { dataHarnessRoute } from '@/app/dataHarness/DataHarnessRoute';");
+    expect(APP_SOURCE).toContain('{dataHarnessRoute}');
+  });
+});
+
+describe('App — theme sync (06 §2: data-theme บน <html>, เก็บใน sessionStore เท่านั้น ห้าม localStorage)', () => {
+  it('sessionStore.theme สะท้อนเป็น data-theme บน <html> ทันทีที่ mount', () => {
+    useSessionStore.setState({ theme: 'dark' });
+    setHash('#/');
+    render(<App />);
+
+    expect(document.documentElement.dataset['theme']).toBe('dark');
+  });
+
+  it('เปลี่ยน theme ระหว่างทาง → data-theme อัปเดตตาม', async () => {
+    useSessionStore.setState({ theme: 'light' });
+    setHash('#/');
+    render(<App />);
+    expect(document.documentElement.dataset['theme']).toBe('light');
+
+    useSessionStore.getState().setTheme('dark');
+
+    await waitFor(() => {
+      expect(document.documentElement.dataset['theme']).toBe('dark');
+    });
   });
 });
