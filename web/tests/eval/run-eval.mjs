@@ -387,6 +387,19 @@ async function main() {
     );
   }
 
+  // กัน preview server ค้างจากการรันครั้งก่อน (เคยพบ dry-run ค้างถือ port ไว้หลายชั่วโมง): ถ้ามีใครตอบที่ port นี้
+  // อยู่แล้ว `--strictPort` ของเราจะล้มเงียบ ๆ และ eval จะไปยิงกับ bundle เก่าของ server ค้าง → ยกเลิกก่อนใช้เงิน
+  const portAlreadyServing = await fetch(BASE_URL).then(
+    () => true,
+    () => false,
+  );
+  if (portAlreadyServing) {
+    console.error(
+      `[eval] มี server อื่นตอบอยู่ที่ ${BASE_URL} แล้ว (อาจเป็น preview ค้างจากรอบก่อน) — ปิด process นั้นก่อนแล้วรันใหม่`,
+    );
+    process.exit(1);
+  }
+
   buildHarnessBundle();
   const preview = startPreviewServer();
   const rows = [];
