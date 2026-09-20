@@ -137,6 +137,45 @@ describe('emit_proposal — comparables ต้องตรงกับ fingerpri
     expect(out.proposal.comparables[0]?.amount_thb).toBe(50_000);
     expect(out.warnings.join(' ')).not.toMatch(/comparables.*แก้ทับ/);
   });
+
+  it('ต่างแค่ชื่อหน่วยงาน/ชื่อรายการ (ตัวเลขตรง) หลายรายการ → แก้ทับด้วยค่าจริง แต่รวมเป็น warning สรุปข้อเดียว', async () => {
+    const { ctx, toolLog } = makeCtx();
+    for (const id of ['src-a', 'src-b']) {
+      toolLog.recordSourceId(id);
+      toolLog.recordSourceFingerprint?.(id, {
+        amountThb: 849_000,
+        unitPriceThb: null,
+        itemQty: null,
+        itemUnit: null,
+        fiscalYearBe: 2566,
+        agency: 'กรมส่งเสริมการปกครองท้องถิ่น',
+        ministry: null,
+        itemNameRaw: `ก่อสร้างฝายน้ำล้นตามแบบ มข.2527 (${id})`,
+        dataset: 'pbo_disbursement',
+      });
+    }
+    const out = await run(
+      proposal([line({ citations: [{ kind: 'budget_line', source_id: 'src-a' }] })], {
+        comparables: ['src-a', 'src-b'].map((id) => ({
+          source_id: id,
+          fiscal_year_be: 2566,
+          agency: 'อบต.พังเคน (ผ่านกรมส่งเสริมการปกครองท้องถิ่น)', // โมเดลเรียบเรียงชื่อเอง
+          item_name: 'ก่อสร้างฝายน้ำล้น มข.2527', // ย่อเอง
+          amount_thb: 849_000,
+          similarity_note: 'ใกล้เคียง',
+        })),
+      }),
+      ctx,
+    );
+    expect(out.proposal.comparables.map((c) => c.agency)).toEqual([
+      'กรมส่งเสริมการปกครองท้องถิ่น',
+      'กรมส่งเสริมการปกครองท้องถิ่น',
+    ]);
+    const comparableWarnings = out.warnings.filter((w) => w.startsWith('comparables'));
+    expect(comparableWarnings).toHaveLength(1);
+    expect(comparableWarnings[0]).toMatch(/2 รายการเทียบเคียง/);
+    expect(comparableWarnings[0]).toContain('src-a, src-b');
+  });
 });
 
 describe('emit_proposal — trace unit_price_thb ของ basis=historical (T-307 H2)', () => {

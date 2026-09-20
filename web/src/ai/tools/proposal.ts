@@ -987,7 +987,12 @@ function processWebCitation(
  * ทับด้วยค่าจริงจาก `SourceFingerprint` เมื่อไม่ตรง (ไม่ใช่แค่ตัด/ลดระดับ) เพื่อไม่ให้ AI ใช้ source_id
  * จริงเป็น "ใบเบิกทาง" แล้วแต่งตัวเลข/ชื่อหน่วยงานที่ผูกกับ id นั้นขึ้นมาเอง ไม่ตรวจ field ที่ fingerprint
  * เป็น `null` จริง (แปลว่าแถวต้นทางไม่มีค่านั้นอยู่แล้ว — ไม่มีค่าจริงให้เขียนทับ) */
-function reconcileComparable(c: Comparable, ctx: ToolContext, warnings: string[]): Comparable {
+function reconcileComparable(
+  c: Comparable,
+  ctx: ToolContext,
+  warnings: string[],
+  labelOnlyCorrections: string[],
+): Comparable {
   const fp = ctx.toolLog.getSourceFingerprint?.(c.source_id);
   if (fp === undefined) {
     // ไม่มี fingerprint ให้ตรวจ (เช่น source_id นี้เห็นแค่ผ่าน search_catalog aggregate ที่ไม่มีค่า
@@ -995,9 +1000,11 @@ function reconcileComparable(c: Comparable, ctx: ToolContext, warnings: string[]
     return c;
   }
   const mismatches: string[] = [];
+  let numericMismatch = false;
   let corrected: Comparable = c;
 
   if (fp.amountThb !== null && c.amount_thb !== fp.amountThb) {
+    numericMismatch = true;
     mismatches.push(`amount_thb (${String(c.amount_thb)} → ${String(fp.amountThb)})`);
     corrected = { ...corrected, amount_thb: fp.amountThb };
   }
@@ -1006,10 +1013,12 @@ function reconcileComparable(c: Comparable, ctx: ToolContext, warnings: string[]
     fp.unitPriceThb !== null &&
     c.unit_price_thb !== fp.unitPriceThb
   ) {
+    numericMismatch = true;
     mismatches.push(`unit_price_thb (${String(c.unit_price_thb)} → ${String(fp.unitPriceThb)})`);
     corrected = { ...corrected, unit_price_thb: fp.unitPriceThb };
   }
   if (c.fiscal_year_be !== fp.fiscalYearBe) {
+    numericMismatch = true;
     mismatches.push(`fiscal_year_be (${String(c.fiscal_year_be)} → ${String(fp.fiscalYearBe)})`);
     corrected = { ...corrected, fiscal_year_be: fp.fiscalYearBe };
   }
@@ -1022,7 +1031,12 @@ function reconcileComparable(c: Comparable, ctx: ToolContext, warnings: string[]
     corrected = { ...corrected, item_name: fp.itemNameRaw };
   }
 
-  if (mismatches.length > 0) {
+  if (mismatches.length > 0 && !numericMismatch) {
+    // main thread (T-604 + ลองเว็บจริง): โมเดลมักย่อ/เรียบเรียงชื่อหน่วยงาน-ชื่อรายการเอง (ตัวเลขถูกทุกตัว) → เดิมได้
+    // warning ยาว 3–4 บรรทัด "ต่อรายการ" จนกลบคำเตือนที่สำคัญจริง (ราคาตรวจย้อนไม่ได้ ฯลฯ) — แก้ทับด้วยค่าจริง
+    // เหมือนเดิมทุกประการ แต่รวมเป็น warning สรุปข้อเดียวท้ายรายการ (ดู `validateAndNormalizeProposal`)
+    labelOnlyCorrections.push(c.source_id);
+  } else if (mismatches.length > 0) {
     warnings.push(
       `comparables (source_id=${c.source_id}): ค่าที่ AI ใส่ไม่ตรงกับข้อมูลจริงที่เคยเห็นในบทสนทนานี้ — ` +
         `แก้ทับด้วยค่าจริงแล้ว: ${mismatches.join(', ')}`,
@@ -1048,6 +1062,7 @@ export function validateAndNormalizeProposal(
     .map((w) => processWebCitation(w, ctx, warnings))
     .filter((w): w is WebCitation => w !== null);
 
+  const labelOnlyCorrections: string[] = [];
   const comparables = input.comparables
     .filter((c) => {
       if (!ctx.toolLog.hasSourceId(c.source_id)) {
@@ -1056,7 +1071,13 @@ export function validateAndNormalizeProposal(
       }
       return true;
     })
-    .map((c) => reconcileComparable(c, ctx, warnings));
+    .map((c) => reconcileComparable(c, ctx, warnings, labelOnlyCorrections));
+  if (labelOnlyCorrections.length > 0) {
+    warnings.push(
+      `comparables: ปรับชื่อหน่วยงาน/ชื่อรายการของ ${String(labelOnlyCorrections.length)} รายการเทียบเคียงให้ตรงกับแถวข้อมูลจริง ` +
+        `(ตัวเลขตรงอยู่แล้ว ไม่มีการแก้) — source_id: ${labelOnlyCorrections.join(', ')}`,
+    );
+  }
 
   const illustrations = input.illustrations.filter((i) => {
     if (!ctx.toolLog.hasIllustrationId(i.illustration_id)) {

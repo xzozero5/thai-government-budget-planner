@@ -458,6 +458,9 @@ function AlwaysIncludedRow({ label }: { label: string }): ReactElement {
   );
 }
 
+/** ข้อสังเกตจาก validator ที่แสดงเรียงตรง ๆ ได้โดยไม่ดันเนื้อหา dialog — เกินนี้ยุบเป็น <details> */
+const INLINE_VALIDATOR_WARNINGS_MAX = 2;
+
 function ExportWarnings({
   missingCitationCount,
   isEstimateHeavy,
@@ -493,11 +496,28 @@ function ExportWarnings({
           {t('proposal.warnings.noCitation', { count: missingCitationCount })}
         </p>
       )}
-      {validatorWarnings.map((warning, index) => (
-        <p key={index} className="text-fg">
-          {warning}
-        </p>
-      ))}
+      {validatorWarnings.length <= INLINE_VALIDATOR_WARNINGS_MAX ? (
+        validatorWarnings.map((warning, index) => (
+          <p key={index} className="text-fg">
+            {warning}
+          </p>
+        ))
+      ) : (
+        // main thread (ลองเว็บจริง): ข้อเสนอจริงมีข้อสังเกตจาก validator 6–18 ข้อ ข้อละ 2–4 บรรทัด → กล่องนี้ดัน
+        // ตัวเลือกส่งออกทั้งหมดตกขอบ dialog — ยุบเป็น <details> (ทุกข้อยังถูกพิมพ์ลง PDF เสมอ ไม่ได้ซ่อนจากเอกสาร)
+        <details>
+          <summary className="cursor-pointer text-fg underline-offset-2 hover:underline">
+            {t('export.validatorWarningsSummary', { count: validatorWarnings.length })}
+          </summary>
+          <div className="mt-1.5 flex max-h-48 flex-col gap-1.5 overflow-y-auto pr-1">
+            {validatorWarnings.map((warning, index) => (
+              <p key={index} className="text-fg-muted">
+                {warning}
+              </p>
+            ))}
+          </div>
+        </details>
+      )}
     </div>
   );
 }
