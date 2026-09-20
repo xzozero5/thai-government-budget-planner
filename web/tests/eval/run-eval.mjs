@@ -39,7 +39,8 @@ const CASES_PATH = join(EVAL_DIR, 'cases.yaml');
 const DOCS_REPORT_PATH = join(REPO_ROOT, 'docs', 'eval-report.md');
 const DRY_RUN_REPORT_PATH = join(OUT_DIR, 'dry-run-report.md');
 
-const PORT = 4175;
+// override ได้ด้วย env `TGBP_EVAL_PORT` (เช่นเมื่อพอร์ตปกติถูก process ค้างถือไว้และปิดเองไม่ได้)
+const PORT = Number(process.env.TGBP_EVAL_PORT ?? 4175);
 // outDir แยกจาก e2e ของ Playwright (`dist-e2e-harness`) — agent/CI ที่รัน e2e ขนานกันจะไม่ rebuild ทับ bundle
 // ที่ preview server ของ eval กำลัง serve อยู่กลาง case ที่จ่ายเงินแล้ว
 const HARNESS_OUT_DIR = 'dist-eval-harness';
@@ -348,6 +349,20 @@ function getCommitHash() {
   }
 }
 
+/** บน Windows `spawn(..., {shell:true})` ได้ pid ของ cmd.exe — `child.kill()` ฆ่าแค่ shell แต่ node ของ
+ * `vite preview` รอด (พบ preview ค้างถือพอร์ตข้ามรอบ 2 ครั้งแล้ว) → ปิดทั้ง process tree ของ child ตัวเอง */
+function stopPreviewServer(preview) {
+  if (process.platform === 'win32' && preview.pid !== undefined) {
+    try {
+      execFileSync('taskkill', ['/pid', String(preview.pid), '/T', '/F'], { stdio: 'ignore' });
+      return;
+    } catch {
+      // ตกไปใช้ kill() ปกติด้านล่าง
+    }
+  }
+  preview.kill();
+}
+
 // ---------------------------------------------------------------------------
 // --rescore: ให้คะแนน transcript จริงเดิมใหม่ (ไม่มีค่าใช้จ่าย)
 // ---------------------------------------------------------------------------
@@ -606,7 +621,7 @@ async function main() {
 
     await browser.close();
   } finally {
-    preview.kill();
+    stopPreviewServer(preview);
   }
 
   const caseOrder = new Map(allCases.map((c, i) => [c.id, i]));

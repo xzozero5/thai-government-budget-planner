@@ -136,4 +136,20 @@ test('README screenshots (replay ของการรันจริง)', asyn
   await page.getByRole('button', { name: 'ส่งออก PDF' }).click();
   await expect(page.getByRole('dialog', { name: 'ส่งออกเป็น PDF' })).toBeVisible();
   await shot(page, '07-export-dialog.png');
+  await page.getByRole('dialog', { name: 'ส่งออกเป็น PDF' }).getByRole('button', { name: 'ปิด', exact: true }).last().click();
+
+  // 6) บันทึก .tgbp.json → เปิดที่ /load (ไม่ต้องใช้ key) → กดชิปอ้างอิงแล้วต้องเห็นแถวต้นทางจริง (sourceShards)
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'บันทึกไฟล์' }).click();
+  const download = await downloadPromise;
+  const savedPath = path.join(OUT_DIR, '..', '..', 'web', 'test-results', 'readme-session.tgbp.json');
+  await download.saveAs(savedPath);
+  await page.goto('/#/load');
+  await page.locator('input[type="file"]').setInputFiles(savedPath);
+  await expect(page.getByText('อ่านอย่างเดียว')).toBeVisible();
+  // บน /load ชิปใช้ label แบบไม่มี hint ของแถว (ข้อความ note ของ citation) — เลือกชิปแรกของบรรทัดหลัก
+  await page.getByTestId('boq-table-desktop').getByRole('button', { name: /มข\.2527/ }).first().click();
+  const loadDrawer = page.getByRole('dialog');
+  await expect(loadDrawer.getByText(/PBO\/2566\.xlsx/).first()).toBeVisible({ timeout: 60_000 });
+  await shot(page, '08-load-readonly-drawer.png');
 });

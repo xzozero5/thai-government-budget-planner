@@ -8,10 +8,10 @@
 | 0 Bootstrap | ✅ เสร็จ | — |
 | 1 Data pipeline | ✅ เสร็จ (T-101–T-115) | — |
 | 2 Architecture & data access | ✅ เสร็จตามขอบเขต MVP (T-201–T-208) | T-209, T-210 เลื่อนไปทำพร้อม republish ข้อมูลครั้งถัดไป (ไม่บล็อก) |
-| 3 AI layer | ✅ โค้ดเสร็จ (T-301–T-307, T-309); **T-308 รอบ 1 เสร็จ** (PO review ผล eval จริง → แก้เกณฑ์ + แก้บั๊ก 4 จุด) | ผล eval "ผ่านบางส่วน จำกัดด้วยงบ" (2/7 ตามเกณฑ์เข้ม) — การแก้หลัง eval ยังไม่ได้วัดซ้ำกับ API จริง (งบที่อนุมัติเหลือ ~0.54 USD) |
+| 3 AI layer | ✅ โค้ดเสร็จ (T-301–T-307, T-309); **T-308 รอบ 1 เสร็จ** (PO review ผล eval จริง → แก้เกณฑ์ + แก้บั๊ก 5 จุด → รันซ้ำ 1 เคสดีขึ้นชัด) | ผล eval "ผ่านบางส่วน จำกัดด้วยงบ" (เกณฑ์ 18/20 ยังไม่ถึง: รันได้ 7/20) — งบที่อนุมัติเหลือ ~0.41 USD |
 | 4 UI | ✅ เสร็จ (T-401–T-412) | should/could จาก PO review ที่เหลือ → post-MVP (ดู `docs/qa/po-review-phase4-5.md`) |
 | 5 Export | 🔶 T-501, T-502, T-504 เสร็จ | **T-503** ตรวจ PDF ใน viewer จริง 4 ตัว (ต้องใช้คน) |
-| 6 QA & hardening | 🔶 T-602 เสร็จ + แก้ครบ; **T-604 รันแล้ว** (7/20 เคส, 1.35 USD); T-601/T-605/T-606 บางส่วน; ลองเว็บจริงผ่าน Chrome → แก้บั๊ก UI 4 จุด | T-603 (บั๊กจาก eval: query กว้างเกิน / item_key เฉียด / shard ของ sample id — ai-engineer กำลังแก้), T-601 ส่วนที่ต้องใช้คน/เบราว์เซอร์อื่น, T-503 |
+| 6 QA & hardening | 🔶 T-602 เสร็จ + แก้ครบ; **T-604 + T-604b รันแล้ว**; **T-603 บั๊กจาก eval/ลองเว็บจริงแก้ครบ** (ยืนยันกับข้อมูล production + API จริง 1 เคส); T-601/T-605/T-606 บางส่วน | T-601 ส่วนที่ต้องใช้คน/เบราว์เซอร์อื่น, T-503 (คนเปิด PDF ใน viewer จริง), preview ค้างที่พอร์ต 4175 (pid 35888 — ระบบ permission ไม่ให้ main thread ปิดเอง) |
 
 - Phase: **4 และ 5 ปิดแล้ว (2569-09-21)** · **Phase 6 กำลังทำ** — เสร็จ: T-602 security review + แก้ finding ครบ 16 ข้อ, QA ข้อมูล B1/B5, T-605 ตรวจเว็บจริงเบื้องต้น, ร่าง T-606 · เหลือ: **T-604 eval จริง core8 (รอคุณนิวอนุมัติคำสั่ง — ใช้เงิน API)** → T-308 po review ผล eval, T-601 ส่วนที่ต้องใช้คน/เบราว์เซอร์อื่น (A8/T-503 PDF ใน viewer จริง 4 ตัว, E1 Firefox/Safari/มือถือ, E2 axe, D1 Lighthouse), T-603 แก้บั๊กที่พบเพิ่ม · Phase 3: โค้ดเสร็จ; eval จริงเลื่อนมา T-604 ตามคำสั่งคุณนิว
 - Demo/production: https://xzozero5.github.io/thai-government-budget-planner/ — deploy อัตโนมัติจาก `main` เมื่อ CI เขียว
@@ -36,6 +36,13 @@
 - GitHub Pages: **live แล้ว** — ยืนยัน 19 ก.ย.: หน้า placeholder ขึ้น, CSP meta อยู่ใน HTML ที่ serve, `Accept-Ranges: bytes`, `Range: bytes=0-99` กับ `data/sources.json` → **206 / 100 bytes**; ยังต้องวัดกับไฟล์ parquet + DuckDB-WASM จริงใน S1 (T-201) และ `Cache-Control: max-age=600` (ข้อมูลใหม่อาจช้า ≤ 10 นาที)
 
 ## Log
+
+## 2569-09-21 ดึก (Asia/Bangkok) — Claude Code main thread (+ ai-engineer) — T-603 บั๊กจาก eval, T-604b รันซ้ำ 1 เคส
+- **ai-engineer** (หยุดกลางคันเพราะ usage limit ตอนกำลังรัน test รอบสุดท้าย → main thread ตรวจต่อเอง: tsc/eslint สะอาด, vitest 1444/1444): (ค) `query_budget_lines` ที่กว้างเกินเพดาน 12 ไฟล์และมี keywords/item_key → เลือก shard จาก `search_catalog` + `CatalogItem.shards` แล้วค้นเฉพาะไฟล์ที่ตรงที่สุด + warning "ไม่ครบทุกไฟล์" (ไม่ยกเพดาน) (ง) item_key ไม่ตรง catalog → warning + เสนอ key ใกล้เคียง (ใช้ร่วมกับ get_price_trend) (จ) ToolLog จำ candidate shards ของ `sample_source_ids`; `get_budget_line` ไล่หาเป็นชุด ≤12 ไฟล์ (สูงสุด 5 ชุด) · main thread ต่อสายฝั่ง drawer ของหน้าทำงาน (`features/workspace/citationDrawerLoaders.ts` + test) `2b15364`
+- **ยืนยันกับข้อมูล production** (PO P0-3): e2e ใหม่ `web/tests/e2e/tool-regressions.spec.ts` ยิง input คำต่อคำจาก transcript จริงที่เคยล้มทั้ง 3 แบบ — ผ่าน; gate ใน worktree สะอาดที่ `2b15364`: unit 1444/1444, e2e 25/25
+- **T-604b** (คุณนิวอนุมัติ "เอาเลย ตาม PO"): รันซ้ำ `unit-price-n1-total-station` (Haiku) **0.1324 USD** — เดิม: ไม่ได้ข้อเสนอ, tool error 6, 16 tool call, ชนเพดานรอบ → หลังแก้: **ได้ข้อเสนอในครั้งแรก, error 0, 6 tool call, จบเอง**; ยังตกเกณฑ์ `citation_resolve_100pct` เพราะโมเดลใส่ citation ชนิด web ที่ไม่ใช่ URL 1 ตัว (validator ตัดทิ้งถูกต้อง) · ledger eval 1.7283; อนุมัติ 1.89 → เหลือ ~0.41
+- runner: รอบแรกของ T-604b **ไม่ได้ยิง API** เพราะตัวกันเจอ preview ค้างจากรอบ core8 ที่พอร์ต 4175 (สาเหตุ: `spawn(shell:true)` บน Windows → `kill()` ฆ่าแค่ cmd.exe) → แก้ให้ `taskkill /T` process tree ของ child ตัวเอง + env `TGBP_EVAL_PORT`; **pid 35888 ยังค้างอยู่** — ระบบ permission ปฏิเสธไม่ให้ main thread ปิด → แจ้งคุณนิว
+- ภาพ README เพิ่ม 2 ภาพ (หน้าต่างส่งออกหลังยุบคำเตือน, `/load` อ่านอย่างเดียว + drawer แถวต้นทางจริงจาก `sourceShards`) — สคริปต์ replay ครอบ flow บันทึกไฟล์ → `/load` → drawer ด้วย
 
 ## 2569-09-21 ค่ำ (Asia/Bangkok) — Claude Code main thread (+ frontend-dev, ai-engineer, po) — T-604 eval จริง, T-308 รอบ 1, ลองเว็บจริงผ่าน Chrome, README ใหม่
 - **ลองเว็บจริงผ่าน Claude in Chrome** (ไม่ใส่ key — main thread พิมพ์ key เองไม่ได้ตามกฎความปลอดภัย; ใช้ `/load` + ไฟล์ที่สร้างจากข้อเสนอจริงของ eval): พบ+แก้ (1) `Collapse` ค้างครึ่งเดียวเมื่อแท็บถูก throttle (rAF ไม่ยิง) `e287afe` (2) **หน้า `/load` ขึ้น "อ้างอิงไม่พบ — อย่าเชื่อตัวเลข" กับ citation ที่ถูกต้องทุกตัว** เพราะ `.tgbp.json` ไม่เก็บ shard → เพิ่ม `sourceShards` (optional, ตรวจ path ด้วย `lib/safeDataPath`), data layer โหลด lazy เมื่อกดชิป, ข้อความใหม่สำหรับไฟล์เก่า `6925373` (3) ป้ายที่มาตัดบรรทัดกลางคำ `6246da1` (4) หน้าต่างส่งออกถูกกล่องคำเตือนยาวดันตัวเลือกตกขอบ → ยุบเป็น details; รวม warning แก้ชื่อ comparables เป็นข้อเดียว `e69eb6d`

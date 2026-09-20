@@ -74,7 +74,7 @@
 ## Phase 6 — QA & hardening (เป้า: 2 วัน)
 - [~] T-601 `qa-engineer` รัน `08-QA-CHECKLIST.md` ทั้งหมด → `docs/qa/run-<date>.md` + `bugs.md`
 - [x] T-602 `security-reviewer` รัน 09 §5 C1–C9 ; แก้
-- [ ] T-603 `frontend-dev` แก้ bug severity high/medium ทั้งหมด; a11y fixes จาก axe
+- [~] T-603 (บั๊กจาก eval จริง + ลองเว็บจริงแก้ครบ 2569-09-21; เหลือ a11y fixes จาก axe ที่ยังไม่ได้รัน) `frontend-dev` แก้ bug severity high/medium ทั้งหมด; a11y fixes จาก axe
 - [x] T-604 (รันแล้ว 7/20 เคส, 1.35 USD — "ผ่านบางส่วน จำกัดด้วยงบ"; รันซ้ำ 1 เคสหลังแก้ = T-604b ถ้าคุณนิวอนุมัติ) `ai-engineer` รัน eval รอบสุดท้าย → eval-report
 - [~] T-605 `frontend-dev` ตรวจ production deploy บน GitHub Pages: CSP meta ทำงาน, range request/latency บน URL จริง (บันทึกลง SPIKES.md), Lighthouse, README deploy section; ยืนยันว่า CSP meta ไม่ถูก strip และบันทึกผลกระทบที่ไม่มี `frame-ancestors` (ADR-003 ข้อ 1); custom domain (ถ้ามี) เป็น post-MVP; workflow ต้อง deploy `web/public/duckdb-ext/**` + smoke ว่า `.wasm` ถูก serve และถูกบีบอัดหรือไม่
 - [~] T-606 `po` release notes `docs/RELEASE-0.1.md`, STATUS = "MVP done", รายการ post-MVP (F6 data browser, OCR, share link ฯลฯ)

@@ -25,6 +25,7 @@ Key อยู่ที่ `web/.env.local` (`VITE_EVAL_ANTHROPIC_API_KEY`; gitig
 | 2569-09-20 | T-306 eval จริง case แรก `equip-aircon-18000btu` (Haiku 4.5, 5 requests, ชนเพดาน case 0.12) — ledger `web/tests/eval/api-spend.json` | **0.1202** (เพดาน T-306 1.80) | **0.2655** |
 | 2569-09-20 | T-308 รอบ 1 — รัน case เดิมซ้ำหลังลด token (Haiku 4.5, 7 requests, 2 turns เพราะโมเดลถามกลับก่อน) — **proposal ไม่ถูกบันทึกเพราะบั๊ก harness** (แก้แล้ว `97fa99e`) | **0.1283** | **0.3939** |
 | 2569-09-20 | **T-604 eval จริง core8** (commit `e287afe`): รัน 7 เคส (6 Haiku 4.5 + 1 Sonnet 5), `hallucination-lure-1997-price` = not_run (budget) — PASS 4 / FAIL 3, cache hit 100 % ทุกเคส; ต่อเคส: Haiku 0.009–0.222, Sonnet 0.398 — ledger `web/tests/eval/api-spend.json` สะสม 1.5959 | **1.3473** (อนุมัติ 1.89 → เหลือ ~0.54) | **1.7412** |
+| 2569-09-20 | **T-604b รันซ้ำ 1 เคส** `unit-price-n1-total-station` (Haiku 4.5) หลังแก้ repair layer + query กว้าง + sample id (commit `2b15364`) — คุณนิวอนุมัติ "เอาเลย ตาม PO": ได้ข้อเสนอในครั้งแรก, tool error 0 (เดิม 6), 6 tool call (เดิม 16) — ledger eval สะสม 1.7283 | **0.1324** (อนุมัติ 1.89 → เหลือ ~0.41) | **1.8736** |
 
 ### คำตัดสินของคุณนิว (2569-09-21) — งบ T-604
 คุณนิวแจ้ง: **ยอดคงเหลือจริงของ key = 2.89 USD, อนุมัติให้ใช้ 1.89 USD สำหรับ eval** (เหลือสำรอง 1.00) — ยอดคงเหลือจริงต่ำกว่าที่ ledger ของโปรเจกต์คำนวณได้ (5.00 − 0.3939 = 4.61) เพราะ demo บนหน้าเว็บจริงของคุณนิวใช้ key เดียวกัน (ไม่ผ่าน ledger ของเรา) → **ยึดยอดใน Console ของคุณนิวเป็นหลักเสมอ**
