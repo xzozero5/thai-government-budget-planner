@@ -23,9 +23,11 @@
   "include": [
     "vite.config.ts",
     "playwright.config.ts",
+    "playwright.screenshots.config.ts",
     "tailwind.config.ts",
     "vite-plugins",
     "tests/e2e",
+    "tests/screenshots",
     "scripts"
   ]
 }
