@@ -3,6 +3,7 @@
  * คลิกหรือ Enter (ปุ่มเป็น `<button>` จึงได้ Enter/Space ฟรีจาก browser) เข้าโหมดแก้ → Enter ยืนยัน,
  * Esc/blur ยกเลิก (ไม่ commit ค่าที่พิมพ์ค้างไว้) — validate `> 0` และ `≤ max` ก่อน commit เสมอ
  */
+import { useProposalReadOnly } from './readOnlyContext';
 import { useState } from 'react';
 import type { KeyboardEvent, ReactElement } from 'react';
 import { Input } from '@/components/ui';
@@ -29,8 +30,10 @@ export function BoqInlineEditCell({
   ariaLabel,
   formatValue,
   onCommit,
-  disabled = false,
+  disabled: disabledProp = false,
 }: BoqInlineEditCellProps): ReactElement {
+  const readOnly = useProposalReadOnly();
+  const disabled = disabledProp || readOnly;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);

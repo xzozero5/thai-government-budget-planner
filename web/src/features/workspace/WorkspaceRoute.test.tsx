@@ -22,6 +22,26 @@ vi.mock('@/ai/session/chatController', () => ({
   },
 }));
 
+// ดูเหตุผลเดียวกับ `WorkspacePage.test.tsx` — `useDataStoreInit` ยิง facade จริงตอน mount
+vi.mock('@/data', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/data')>();
+  return {
+    ...actual,
+    data: {
+      ...actual.data,
+      dataVersion: vi.fn().mockResolvedValue('test-version'),
+      facets: vi.fn().mockResolvedValue({
+        budget_types: [],
+        coverage_notes: [],
+        datasets: [],
+        fiscal_years: [],
+        ministries: [],
+        provinces: [],
+      }),
+    },
+  };
+});
+
 function renderWorkspaceRoute(): void {
   render(
     <MemoryRouter initialEntries={['/workspace']}>

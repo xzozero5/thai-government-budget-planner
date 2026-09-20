@@ -40,6 +40,7 @@ export function ProposalPane({
   renderStatCards,
   renderTrend,
   renderIllustration,
+  resolveCitationLabel,
 }: ProposalPaneProps): ReactElement {
   if (proposal === null) {
     if (isAiRunning) {
@@ -78,6 +79,7 @@ export function ProposalPane({
           onRequestReview={onRequestReview}
           onOpenCitation={onOpenCitation}
           renderTrend={renderTrend}
+          resolveCitationLabel={resolveCitationLabel}
         />
       ),
     },

@@ -1,11 +1,17 @@
 import { useState } from 'react';
 import type { ReactElement } from 'react';
+import type { BoqLine, Citation } from '@/ai/tools/proposal';
 import { IconButton, Tabs } from '@/components/ui';
 import { ChatPane } from '@/features/chat';
 import { t } from '@/i18n';
 import { getCurrentProposalVersion, useProposalStore } from '@/stores/proposalStore';
 import { DataLoadingIndicator } from './DataLoadingIndicator';
-import { CitationDrawerSlot, ProposalPaneSlot, type CitationDrawerSlotContext } from './slots';
+import {
+  CitationDrawerContainer,
+  ProposalPaneContainer,
+  type CitationDrawerOpenState,
+} from './slots';
+import { useDataStoreInit } from './useDataStoreInit';
 import { useMediaQuery } from './useMediaQuery';
 import { WorkspaceHeader } from './WorkspaceHeader';
 
@@ -37,24 +43,37 @@ function ExpandStrip({ label, onExpand }: { label: string; onExpand: () => void 
 }
 
 /**
- * T-405 — Workspace layout (06 §3–4.3): desktop 2-pane (chat ~40% / proposal ~60%, ซ่อน/ขยายได้ทีละฝั่ง),
- * มือถือ tabs สลับ, drawer overlay สำหรับ citation
+ * T-405/406/407 — Workspace layout (06 §3–4.3): desktop 2-pane (chat ~40% / proposal ~60%,
+ * ซ่อน/ขยายได้ทีละฝั่ง), มือถือ tabs สลับ, drawer overlay สำหรับ citation
  *
- * `ProposalPaneSlot`/`CitationDrawerSlot` (`./slots.tsx`) เป็น placeholder ที่ main thread จะแทนที่ด้วย
- * T-406/T-407 ของจริง — จุดต่อคือ import 2 ตัวนี้จากไฟล์เดียวกัน ไม่ต้องแก้ `WorkspacePage` เอง
+ * `ProposalPaneContainer`/`CitationDrawerContainer` (`./slots.tsx`) ต่อกับ store/ai/data ของจริงแล้ว —
+ * `drawerState` รวมสองทางที่เปิด drawer เดียวกันได้: คลิก citation chip ใน BOQ (ผ่าน
+ * `ProposalPaneContainer.onOpenCitation`) กับกด "ดูผล" ของ tool activity ในแชท (`ChatPane.onOpenToolResults`)
  */
 export function WorkspacePage(): ReactElement {
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
   const [collapsed, setCollapsed] = useState<CollapsedPane>('none');
-  const [drawerContext, setDrawerContext] = useState<CitationDrawerSlotContext | undefined>(undefined);
+  const [drawerState, setDrawerState] = useState<CitationDrawerOpenState | null>(null);
   const warningCount = useProposalStore((s) => getCurrentProposalVersion(s)?.warnings.length ?? 0);
 
+  useDataStoreInit();
+
   function closeDrawer(): void {
-    setDrawerContext(undefined);
+    setDrawerState(null);
   }
 
-  const chatPane = <ChatPane onOpenToolResults={setDrawerContext} />;
-  const proposalPane = <ProposalPaneSlot />;
+  function handleOpenCitation(citation: Citation, line?: BoqLine): void {
+    setDrawerState(line !== undefined ? { kind: 'citation', citation, contextLine: line } : { kind: 'citation', citation });
+  }
+
+  const chatPane = (
+    <ChatPane
+      onOpenToolResults={(context) => {
+        setDrawerState({ kind: 'toolActivity', context });
+      }}
+    />
+  );
+  const proposalPane = <ProposalPaneContainer onOpenCitation={handleOpenCitation} />;
   const proposalTabLabel =
     warningCount > 0 ? `${t('workspace.proposalPane')} (${String(warningCount)})` : t('workspace.proposalPane');
 
@@ -122,7 +141,7 @@ export function WorkspacePage(): ReactElement {
         )}
       </div>
       <DataLoadingIndicator />
-      <CitationDrawerSlot open={drawerContext !== undefined} onClose={closeDrawer} context={drawerContext} />
+      <CitationDrawerContainer state={drawerState} onClose={closeDrawer} />
     </div>
   );
 }

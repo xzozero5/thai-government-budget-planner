@@ -28,6 +28,7 @@ import type { Basis } from '@/components/ui';
 import { formatFiscalYearBe, formatNumber, formatThb } from '@/lib/format';
 import { t } from '@/i18n';
 import { BoqInlineEditCell } from './BoqInlineEditCell';
+import { useProposalReadOnly } from './readOnlyContext';
 import { citationChipLabel, isWebCitation } from './citationLabel';
 import { QTY_MAX, UNIT_PRICE_MAX_THB } from './recompute';
 import type { BoqLine, Citation, Proposal, TrendRef } from './types';
@@ -50,6 +51,31 @@ const CONFIDENCE_LABEL_KEY = {
   low: 'proposal.confidence.low',
 } as const;
 
+/** ปุ่ม "ให้ AI ทบทวน" ต่อแถว — ซ่อนในโหมดอ่านอย่างเดียว (หน้า /load ไม่มี AI session) */
+function ReviewLineButton({
+  lineId,
+  onRequestReview,
+}: {
+  lineId: string;
+  onRequestReview: (lineId?: string) => void;
+}): ReactElement | null {
+  const readOnly = useProposalReadOnly();
+  if (readOnly) {
+    return null;
+  }
+  return (
+    <Button
+      size="sm"
+      variant="ghost"
+      onClick={() => {
+        onRequestReview(lineId);
+      }}
+    >
+      {t('proposal.reviewWithAi')}
+    </Button>
+  );
+}
+
 export interface BoqTableProps {
   proposal: Proposal;
   editedLineIds: readonly string[];
@@ -57,6 +83,9 @@ export interface BoqTableProps {
   onRequestReview: (lineId?: string) => void;
   onOpenCitation: (citation: Citation, line: BoqLine) => void;
   renderTrend?: ((trendRef: TrendRef) => ReactNode) | undefined;
+  /** ป้าย citation chip แบบละเอียด (เช่น "PBO 2566 · กรมพลังงาน") — ไม่ส่งมา/คืน `undefined` ต่อ
+   * citation หนึ่ง ๆ = ใช้ label ย่อเดิมจาก `citationChipLabel` (ไม่ทำลาย test เดิมของ T-406) */
+  resolveCitationLabel?: ((citation: Citation) => string | undefined) | undefined;
 }
 
 interface CategoryGroup {
@@ -131,20 +160,23 @@ function RationalePopover({ line }: { line: BoqLine }): ReactElement {
 function CitationChips({
   line,
   onOpenCitation,
+  resolveCitationLabel,
 }: {
   line: BoqLine;
   onOpenCitation: (citation: Citation, line: BoqLine) => void;
+  resolveCitationLabel?: ((citation: Citation) => string | undefined) | undefined;
 }): ReactElement {
   if (line.citations.length === 0) {
     return <span className="text-xs text-fg-muted">—</span>;
   }
   return (
     <div className="flex flex-wrap gap-1.5">
-      {line.citations.map((citation, index) =>
-        isWebCitation(citation) ? (
+      {line.citations.map((citation, index) => {
+        const label = resolveCitationLabel?.(citation) ?? citationChipLabel(citation);
+        return isWebCitation(citation) ? (
           <span key={`${line.id}-${String(index)}`} className="inline-flex items-center gap-1">
             <ExternalLink href={citation.url} hideCopyButton>
-              {citationChipLabel(citation)}
+              {label}
             </ExternalLink>
             <button
               type="button"
@@ -164,10 +196,10 @@ function CitationChips({
               onOpenCitation(citation, line);
             }}
           >
-            {citationChipLabel(citation)}
+            {label}
           </Chip>
-        ),
-      )}
+        );
+      })}
     </div>
   );
 }
@@ -196,6 +228,7 @@ function BoqLineRow({
   onRequestReview,
   onOpenCitation,
   renderTrend,
+  resolveCitationLabel,
 }: {
   line: BoqLine;
   edited: boolean;
@@ -204,6 +237,7 @@ function BoqLineRow({
   onRequestReview: (lineId?: string) => void;
   onOpenCitation: (citation: Citation, line: BoqLine) => void;
   renderTrend: ((trendRef: TrendRef) => ReactNode) | undefined;
+  resolveCitationLabel?: ((citation: Citation) => string | undefined) | undefined;
 }): ReactElement {
   return (
     <TableRow
@@ -223,15 +257,7 @@ function BoqLineRow({
             <span className="inline-flex items-center rounded-sm bg-surface-2 px-2 py-0.5 text-xs font-medium text-accent">
               {t('proposal.boq.editedBadge')}
             </span>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                onRequestReview(line.id);
-              }}
-            >
-              {t('proposal.reviewWithAi')}
-            </Button>
+            <ReviewLineButton lineId={line.id} onRequestReview={onRequestReview} />
           </div>
         )}
       </TableCell>
@@ -279,7 +305,11 @@ function BoqLineRow({
         <TrendCell line={line} renderTrend={renderTrend} />
       </TableCell>
       <TableCell>
-        <CitationChips line={line} onOpenCitation={onOpenCitation} />
+        <CitationChips
+          line={line}
+          onOpenCitation={onOpenCitation}
+          resolveCitationLabel={resolveCitationLabel}
+        />
       </TableCell>
     </TableRow>
   );
@@ -291,12 +321,14 @@ function BoqLineCard({
   onEditLine,
   onRequestReview,
   onOpenCitation,
+  resolveCitationLabel,
 }: {
   line: BoqLine;
   edited: boolean;
   onEditLine: (lineId: string, patch: { qty?: number; unit_price_thb?: number }) => void;
   onRequestReview: (lineId?: string) => void;
   onOpenCitation: (citation: Citation, line: BoqLine) => void;
+  resolveCitationLabel?: ((citation: Citation) => string | undefined) | undefined;
 }): ReactElement {
   return (
     <Card className="space-y-2">
@@ -328,21 +360,17 @@ function BoqLineCard({
         <BasisBadge basis={line.basis} label={t(`proposal.basis.${BASIS_LABEL_KEY[line.basis]}`)} />
         <ConfidenceDots level={line.confidence} label={t(CONFIDENCE_LABEL_KEY[line.confidence])} />
       </div>
-      <CitationChips line={line} onOpenCitation={onOpenCitation} />
+      <CitationChips
+        line={line}
+        onOpenCitation={onOpenCitation}
+        resolveCitationLabel={resolveCitationLabel}
+      />
       {edited && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center rounded-sm bg-surface-2 px-2 py-0.5 text-xs font-medium text-accent">
             {t('proposal.boq.editedBadge')}
           </span>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              onRequestReview(line.id);
-            }}
-          >
-            {t('proposal.reviewWithAi')}
-          </Button>
+          <ReviewLineButton lineId={line.id} onRequestReview={onRequestReview} />
         </div>
       )}
     </Card>
@@ -356,6 +384,7 @@ export function BoqTable({
   onRequestReview,
   onOpenCitation,
   renderTrend,
+  resolveCitationLabel,
 }: BoqTableProps): ReactElement {
   const groups = groupByCategory(proposal.boq);
   const editedSet = new Set(editedLineIds);
@@ -411,6 +440,7 @@ export function BoqTable({
                       onRequestReview={onRequestReview}
                       onOpenCitation={onOpenCitation}
                       renderTrend={renderTrend}
+                      resolveCitationLabel={resolveCitationLabel}
                     />
                   ))}
                   <TableRow className="bg-surface-2 font-medium">
@@ -436,6 +466,7 @@ export function BoqTable({
             onEditLine={onEditLine}
             onRequestReview={onRequestReview}
             onOpenCitation={onOpenCitation}
+            resolveCitationLabel={resolveCitationLabel}
           />
         ))}
       </div>

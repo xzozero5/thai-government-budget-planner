@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastProvider } from '@/components/ui';
 import { t } from '@/i18n';
 import { useChatStore } from '@/stores/chatStore';
+import { useDataStore } from '@/stores/dataStore';
 import { useProposalStore } from '@/stores/proposalStore';
 import { useSessionStore } from '@/stores/sessionStore';
 import { WorkspacePage } from './WorkspacePage';
@@ -20,6 +21,27 @@ vi.mock('@/ai/session/chatController', () => ({
   },
 }));
 
+// `WorkspacePage` เรียก `useDataStoreInit` (ต่อสาย T-408) ซึ่งยิง `data.dataVersion()`/`data.facets()`
+// จริงตอน mount — mock ทั้งคู่กันไม่ให้ test นี้พึ่ง fetch ข้ามเครือข่ายจริง (ไม่เกี่ยวกับสิ่งที่ทดสอบ)
+vi.mock('@/data', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/data')>();
+  return {
+    ...actual,
+    data: {
+      ...actual.data,
+      dataVersion: vi.fn().mockResolvedValue('test-version'),
+      facets: vi.fn().mockResolvedValue({
+        budget_types: [],
+        coverage_notes: [],
+        datasets: [],
+        fiscal_years: [],
+        ministries: [],
+        provinces: [],
+      }),
+    },
+  };
+});
+
 function renderPage(): void {
   render(
     <MemoryRouter>
@@ -33,6 +55,7 @@ function renderPage(): void {
 beforeEach(() => {
   useChatStore.getState().reset();
   useProposalStore.getState().reset();
+  useDataStore.getState().reset();
   useSessionStore.setState({ theme: 'light', hasKey: true });
 });
 

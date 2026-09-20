@@ -54,6 +54,10 @@ export interface ProposalPaneProps {
   onExport: () => void;
   onSave: () => void;
   isAiRunning: boolean;
+  /** ป้าย citation chip แบบละเอียด (เช่น "PBO 2566 · กรมพลังงาน") ที่ resolve จาก `SourceFingerprint`
+   * ของ `ToolLog` แล้ว (T-405/406 ต่อสาย) — คืน `undefined` = ใช้ label ย่อเดิม (`citationChipLabel`)
+   * ไม่ส่ง prop นี้มาเลย = พฤติกรรมเดิมทุกกรณี (ไม่ทำลาย test เดิมของ T-406) */
+  resolveCitationLabel?: (citation: Citation) => string | undefined;
   /** ช่องสำหรับ component จาก `components/viz/**` (T-412, กำลังทำขนาน) — ยังไม่มีให้ = ไม่แสดงส่วนนี้ */
   renderStatCards?: (cards: StatCard[]) => ReactNode;
   renderTrend?: (trendRef: TrendRef) => ReactNode;
