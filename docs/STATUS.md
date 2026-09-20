@@ -27,6 +27,11 @@
 
 ## Log
 
+## 2569-09-20 22:00 (Asia/Bangkok) — Claude Code main thread — PAUSE (คุณนิวสั่ง)
+- หยุด agent ที่ค้าง 3 ตัวกลางงาน (transcript ยังอยู่ — resume ด้วย SendMessage ได้): **ต่อสาย workspace** (ยังไม่ได้เขียนไฟล์), **T-502** (เขียนแค่ `web/src/features/export/index.ts` แบบ stub ที่อ้างไฟล์ที่ยังไม่มี → **tsc แดงใน working tree; HEAD ที่ commit แล้วสะอาด**), **T-501 รอบแก้ PDF** (`web/src/features/export/pdf/**` ยัง untracked ทั้งโฟลเดอร์ = เวอร์ชันก่อนแก้ 8 ข้อ; มีไฟล์ debug `web/__*` ค้าง — ห้าม commit, ลบเมื่อรับงาน)
+- เริ่มต่อ: (1) resume 3 agent ข้างบน (หรือสั่งใหม่ตาม brief เดิมใน transcript) (2) ตรวจรับ + ดู PDF เป็นภาพด้วย `scratchpad/pdfview/render.mjs` (3) T-409 e2e + storage audit, T-411 motion, T-408 ที่เหลือ, T-410 review, T-503 (4) Phase 6 — eval จริง core8 รันครั้งเดียวที่ T-604 (ต้องขออนุมัติคำสั่งจากคุณนิว)
+- `web/src/lib/.gitkeep` ถูกลบใน working tree (โฟลเดอร์มีไฟล์จริงแล้ว) — commit พร้อมงานถัดไปได้
+
 ## 2569-09-20 21:00 (Asia/Bangkok) — Claude Code main thread (+ ui-designer, frontend-dev ×8, ai-engineer) — Phase 3 ปิดส่วนโค้ด + Phase 4/5 ขนาน
 - **T-306**: main thread review กลไกคุมเงินของ runner ทีละจุด → แก้ 4 ข้อก่อนใช้เงิน (case ที่ error ยังรายงาน usage ที่จ่ายแล้ว, page.evaluate พัง/ค้าง → ลง ledger เท่าเพดาน + หยุดทั้งรอบ, timeout 8 นาที, transcript จริงแยก `real-runs/` กัน dry-run ทับ) · รันจริงโจทย์แอร์ 18000 บีทียู บน Haiku 2 ครั้ง (0.1202 + 0.1283 USD): **rubric จับได้ว่าโมเดลใช้ยอดต่อบรรทัดงบเป็นราคาต่อหน่วย** (269,625 บาท/เครื่อง; ข้อมูล PBO กลุ่มนี้ไม่มี qty/unit_price เลย) และ prefix system+tools ≈ 28k tokens
 - **T-308 รอบ 1** (ai-engineer): system prompt 14.1k→6.8k ตัวอักษร, tools JSON 17.6k→15.1k, คำเตือน amount_per_line + `implied_unit_price_hint` (ฐานร่วมของยอด, label estimate), warning `amount_per_line_as_unit_price` ใน emit_proposal · main thread โจมตี heuristic 12 เคส → support ขั้นต่ำ 3 แถว · รอบ 2 prefix cache 22.8k tokens แต่ต้นทุน/ข้อยัง ≈ 0.13 USD (โมเดลถามกลับ 1 turn + emit_proposal 7.5k output tokens) · **บั๊ก harness**: tool ขนานเสร็จสลับลำดับ → proposal ที่จ่ายเงินแล้วไม่ถูกบันทึก → `matchCaptures` + ใช้ `result.proposal` เป็นแหล่งหลัก (มี test) → **ยังไม่ได้ยืนยันว่าการแก้ราคาต่อหน่วยได้ผลจริง `[UNVERIFIED]`** (รอ T-604)
