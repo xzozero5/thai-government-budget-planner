@@ -1,3 +1,5 @@
+// ต้องมาก่อนทุก import ที่อาจ parse ด้วย Zod (กัน CSP violation จาก probe `new Function` — B-001)
+import '@/lib/zodConfig';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from '@/app/App';
