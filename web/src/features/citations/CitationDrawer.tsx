@@ -298,7 +298,7 @@ function BudgetLineBody({
       )}
       {line.disbursement_rate !== null && (
         <p className="mt-1 text-sm text-fg-muted">
-          {t('citation.budgetLine.disbursedPercent', { percent: formatPercent(line.disbursement_rate, { alreadyPercent: false }) })}
+          {t('citation.budgetLine.disbursedPercent', { percent: formatPercent(line.disbursement_rate, { alreadyPercent: false, withSymbol: false }) })}
         </p>
       )}
 

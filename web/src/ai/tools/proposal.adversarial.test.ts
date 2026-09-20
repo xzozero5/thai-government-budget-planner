@@ -212,6 +212,38 @@ describe('emit_proposal — citation ที่แต่งขึ้นต้อ�
     expect(out.warnings.join(' ')).toMatch(/factor|เงินเฟ้อ|adjust_for_inflation/);
   });
 
+  it('price_derivation ที่ factor ถูก "ปัดเศษ" (ต่าง ≤0.5 %) และราคาปัดแบบงานงบ → ไม่ตัดทิ้ง, factor ถูกเขียนทับด้วยค่าจริง, ราคา trace ได้', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('seen-1');
+    toolLog.recordSourceFingerprint?.('seen-1', fingerprint({ unitPriceThb: 849_000 }));
+    toolLog.recordInflationAdjustment({
+      fromAmountThb: 849_000,
+      fromYearBe: 2566,
+      toYearBe: 2569,
+      indicator: 'construction_material_index',
+      factor: 1.051772,
+      adjustedThb: 892_954,
+    });
+    const out = await run(
+      proposal([
+        line({
+          unit_price_thb: 893_000, // ปัดจาก 892,954
+          total_thb: 1_786_000,
+          price_derivation: {
+            from_amount_thb: 849_000,
+            from_year_be: 2566,
+            to_year_be: 2569,
+            indicator: 'construction_material_index',
+            factor: 1.0518, // ปัดจาก 1.051772
+          },
+        }),
+      ]),
+      ctx,
+    );
+    expect(out.proposal.boq[0]?.price_derivation?.factor).toBe(1.051772);
+    expect(out.warnings.join(' ')).not.toMatch(/price_derivation|price_not_traceable/);
+  });
+
   it('price_derivation ที่ไม่เคยเรียก adjust_for_inflation เลย → warning', async () => {
     const { ctx, toolLog } = makeCtx();
     toolLog.recordSourceId('seen-1');

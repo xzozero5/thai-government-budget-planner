@@ -92,6 +92,15 @@ describe('CitationDrawer', () => {
       expect(screen.getByText(line.source_sheet, { exact: false })).toBeInTheDocument();
     });
 
+    it('อัตราเบิกจ่ายแสดง "%" ครั้งเดียว (พบบนเว็บจริง: "98.6%%")', async () => {
+      const line = makeLine({ disbursement_rate: 0.941 });
+      const loaders = makeLoaders({ loadBudgetLine: vi.fn().mockResolvedValue(line) });
+      const citation: Citation = { kind: 'budget_line', source_id: 'src-1' };
+      render(<CitationDrawer open citation={citation} onClose={vi.fn()} loaders={loaders} />);
+
+      expect(await screen.findByText('เบิกจ่าย 94.1% ของงบหลังโอน')).toBeInTheDocument();
+    });
+
     it('unit_price_thb มีค่า → ไม่แสดงป้าย N3', async () => {
       const line = makeLine();
       const loaders = makeLoaders({ loadBudgetLine: vi.fn().mockResolvedValue(line) });

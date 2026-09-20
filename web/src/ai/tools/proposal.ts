@@ -713,6 +713,8 @@ function isWithinTolerance(value: number, range: TraceRange, pct: number): boole
  * from_amount_thb ตรงกับราคาแถวใดแถวหนึ่งที่ cite จริง (±1 บาท) (3) unit_price_thb ของบรรทัดนี้ตรงกับ
  * ผล adjustedThb ของ tool จริง (±1 บาท) — ป้องกันโมเดลอ้าง price_derivation ที่ผ่านเงื่อนไข factor แล้ว
  * เอา from_amount_thb ที่ไม่เกี่ยวกับแถวที่ cite จริงมาแต่ง */
+const INFLATION_ROUNDING_TOLERANCE_PCT = 0.005;
+
 function priceTraceableViaInflation(
   line: Pick<BoqLine, 'unit_price_thb' | 'price_derivation'>,
   citations: readonly Citation[],
@@ -743,7 +745,9 @@ function priceTraceableViaInflation(
     range !== null && isWithinTolerance(pd.from_amount_thb, range, HISTORICAL_PRICE_TOLERANCE_PCT);
   if (!matchesCitedRow && !withinCitedRange) return false;
 
-  return Math.abs(line.unit_price_thb - found.adjustedThb) <= 1;
+  // ยอมให้ปัดเศษแบบงานงบประมาณ (เช่น 850,504 → 850,500) ได้ไม่เกิน 0.5 % ของผลจริงของ tool — เกินนั้นถือว่าไม่ใช่ตัวเลขเดียวกัน
+  const roundingAllowance = Math.max(1, found.adjustedThb * INFLATION_ROUNDING_TOLERANCE_PCT);
+  return Math.abs(line.unit_price_thb - found.adjustedThb) <= roundingAllowance;
 }
 
 /** T-410 ข้อ 3 (หลัง demo จริง 2569-09-20) — `trend_ref` เป็น pointer ให้ UI โหลด series เองมาวาดกราฟ
@@ -817,11 +821,18 @@ function processBoqLine(line: BoqLine, ctx: ToolContext, warnings: string[]): Bo
       toYearBe: priceDerivation.to_year_be,
       indicator: priceDerivation.indicator,
     });
-    if (!found || Math.abs(found.factor - priceDerivation.factor) > 1e-6) {
+    const factorGap = found ? Math.abs(found.factor - priceDerivation.factor) : 0;
+    if (!found || factorGap > found.factor * INFLATION_ROUNDING_TOLERANCE_PCT) {
+      // ไม่เคยเรียก tool ด้วยค่าชุดนี้ หรือ factor ต่างจากผลจริงเกินระดับ "ปัดเศษ" (โมเดลคิดเงินเฟ้อเอง) → ตัดทิ้ง
       warnings.push(
         `${label}: price_derivation ไม่ตรงกับผลจริงของ adjust_for_inflation ที่เคยเรียกในบทสนทนานี้ — ตัดออก`,
       );
       priceDerivation = undefined;
+    } else if (factorGap > 1e-6) {
+      // ลองเว็บจริง (Sonnet 5): โมเดลอ้างการปรับเงินเฟ้อที่เรียกจริง (ยอดตั้งต้น/ปี/ตัวชี้วัดตรงกับ ToolLog ทุกตัว) แต่
+      // พิมพ์ factor แบบปัดเศษ (ต่างไม่เกิน 0.5 %) → เดิมถูกตัดทั้งก้อนและราคากลายเป็น "ตรวจย้อนไม่ได้" ทั้งที่หลักฐานครบ — factor เป็น
+      // ข้อเท็จจริงจาก tool จึงเขียนทับด้วยค่าจริง (แบบเดียวกับ comparables) ไม่ใช่เหตุให้ทิ้งหลักฐาน
+      priceDerivation = { ...priceDerivation, factor: found.factor };
     }
   }
 
@@ -854,7 +865,8 @@ function processBoqLine(line: BoqLine, ctx: ToolContext, warnings: string[]): Bo
         range !== null &&
         isWithinTolerance(line.unit_price_thb, range, HISTORICAL_PRICE_TOLERANCE_PCT);
       const traceableByInflation =
-        !traceableByRange && priceTraceableViaInflation(line, citations, ctx);
+        !traceableByRange &&
+        priceTraceableViaInflation({ ...line, price_derivation: priceDerivation }, citations, ctx);
       if (!traceableByRange && !traceableByInflation) {
         warnings.push(
           `${label}: unit_price_thb (${String(line.unit_price_thb)}) ตรวจสอบย้อนกลับไปยัง citation ไม่ได้ ` +

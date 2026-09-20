@@ -46,6 +46,10 @@ describe('formatPercent', () => {
     expect(formatPercent(0.055)).toBe('5.5%');
   });
 
+  it('withSymbol:false คืนเฉพาะตัวเลข (ใช้กับ copy ที่มี "%" ต่อท้าย {percent} อยู่แล้ว)', () => {
+    expect(formatPercent(0.986, { withSymbol: false })).toBe('98.6');
+  });
+
   it('alreadyPercent:true ใช้ค่าตรง ๆ', () => {
     expect(formatPercent(5.5, { alreadyPercent: true })).toBe('5.5%');
   });

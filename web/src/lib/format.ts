@@ -49,6 +49,9 @@ export function formatUsd(amountUsd: number, options: FormatUsdOptions = {}): st
 }
 
 export interface FormatPercentOptions {
+  /** `false` = คืนเฉพาะตัวเลข ไม่เติม "%" — ใช้เมื่อข้อความใน copy มี "%" ต่อท้าย `{percent}` อยู่แล้ว
+   * (พบบนเว็บจริง: "เบิกจ่าย 98.6%% ของงบหลังโอน") ค่าเริ่มต้น `true` */
+  withSymbol?: boolean;
   /** `true` = ค่าที่ส่งมาเป็นเปอร์เซ็นต์อยู่แล้ว (เช่น 5.5 หมายถึง 5.5%); ค่าเริ่มต้น `false` = สัดส่วน 0–1 */
   alreadyPercent?: boolean;
   /** จำนวนตำแหน่งทศนิยม — ค่าเริ่มต้น 1 */
@@ -59,14 +62,14 @@ export interface FormatPercentOptions {
 
 /** จัดรูปแบบสัดส่วนเป็นเปอร์เซ็นต์ไทย เช่น `0.055` → `"5.5%"` */
 export function formatPercent(value: number, options: FormatPercentOptions = {}): string {
-  const { alreadyPercent = false, fractionDigits = 1, showSign = false } = options;
+  const { alreadyPercent = false, fractionDigits = 1, showSign = false, withSymbol = true } = options;
   const percentValue = alreadyPercent ? value : value * 100;
   const formatted = new Intl.NumberFormat(THAI_LOCALE, {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
     signDisplay: showSign ? 'exceptZero' : 'auto',
   }).format(percentValue);
-  return `${formatted}%`;
+  return withSymbol ? `${formatted}%` : formatted;
 }
 
 export interface FormatFiscalYearBeOptions {

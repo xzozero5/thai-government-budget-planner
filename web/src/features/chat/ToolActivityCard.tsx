@@ -50,7 +50,11 @@ function messageFor(activity: ToolActivity): string {
   // `inputSummary` ของ web_search คือ query ดิบ (ดู `ai/session/chatController.ts#handleAgentEvent`
   // case 'server_tool') ไม่ใช่ประโยคสำเร็จรูปแบบ tool อื่น
   if (name === 'web_search') {
-    return renderToolTemplate('chat.tool.web_search.running', { query: inputSummary ?? summary?.query ?? '' });
+    // ลองเว็บจริง: การ์ดที่เสร็จแล้วยังขึ้น "กำลังค้น…" ค้างไว้ → แยกข้อความตามสถานะ (ยังแสดง query ทุกครั้งตาม T-307)
+    return renderToolTemplate(
+      status === 'running' ? 'chat.tool.web_search.running' : 'chat.tool.web_search.searched',
+      { query: inputSummary ?? summary?.query ?? '' },
+    );
   }
 
   if (status === 'running') {

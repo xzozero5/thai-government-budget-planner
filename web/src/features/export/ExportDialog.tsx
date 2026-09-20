@@ -487,7 +487,7 @@ function ExportWarnings({
       {isEstimateHeavy && (
         <p className="text-fg">
           {t('proposal.warnings.estimateHeavy', {
-            percent: formatPercent(estimatePercent, { alreadyPercent: true }),
+            percent: formatPercent(estimatePercent, { alreadyPercent: true, withSymbol: false }),
           })}
         </p>
       )}
