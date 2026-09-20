@@ -36,6 +36,8 @@ describe('sessionStore', () => {
     expect(state.maxCostUsdPerTurn).toBeCloseTo(0.5);
     expect(state.maxCostUsdPerSession).toBeCloseTo(3.0);
     expect(state.spentUsd).toBe(0);
+    expect(state.budgetWarningShown).toBe(false);
+    expect(state.budgetWarningAt).toBeNull();
   });
 
   it('submitKey สำเร็จ → hasKey=true, keyStatus=valid, ไม่มี error', async () => {
@@ -123,6 +125,82 @@ describe('sessionStore', () => {
     const serialized = JSON.stringify(useSessionStore.getState());
     expect(serialized).not.toContain(FAKE_KEY);
     expect(serialized).not.toMatch(/"apiKey"|"_options"|"client"/);
+  });
+});
+
+describe('sessionStore — เตือนงบ 80% (US-1.1 / T-410 ข้อ 2)', () => {
+  afterEach(async () => {
+    // เหตุผลเดียวกับ afterEach บนสุดของไฟล์นี้: clearKey('manual') จะยิง onClear listener ที่รีเซ็ต
+    // budgetWarningShown/At ให้เองผ่าน sessionStore — แต่ maxCostUsdPerSession/spentUsd ต้องรีเซ็ตเอง
+    // ตรงนี้เพราะ setter ไม่ได้ทำโดยอัตโนมัติ (กันเทสต์ถัดไปในไฟล์นี้เห็นค่าค้าง)
+    keyHolder.clearKey('manual');
+    const { useSessionStore: store } = await import('./sessionStore');
+    store.setState({ maxCostUsdPerSession: 3, spentUsd: 0 });
+  });
+
+  it('markBudgetWarningShown ครั้งแรก → shown=true และมี timestamp', async () => {
+    const { useSessionStore: store } = await import('./sessionStore');
+    const before = Date.now();
+
+    store.getState().markBudgetWarningShown();
+
+    expect(store.getState().budgetWarningShown).toBe(true);
+    expect(store.getState().budgetWarningAt).not.toBeNull();
+    expect(store.getState().budgetWarningAt ?? 0).toBeGreaterThanOrEqual(before);
+  });
+
+  it('markBudgetWarningShown เรียกซ้ำ → idempotent (ไม่ทับ timestamp เดิม)', async () => {
+    const { useSessionStore: store } = await import('./sessionStore');
+    store.getState().markBudgetWarningShown();
+    const firstAt = store.getState().budgetWarningAt;
+
+    store.getState().markBudgetWarningShown();
+
+    expect(store.getState().budgetWarningAt).toBe(firstAt);
+  });
+
+  it('resetBudgetWarning → shown=false, at=null', async () => {
+    const { useSessionStore: store } = await import('./sessionStore');
+    store.getState().markBudgetWarningShown();
+
+    store.getState().resetBudgetWarning();
+
+    expect(store.getState().budgetWarningShown).toBe(false);
+    expect(store.getState().budgetWarningAt).toBeNull();
+  });
+
+  it('setMaxCostUsdPerSession เพิ่มเพดาน (สูงกว่าเดิม) → รีเซ็ต flag ที่เคยเตือนแล้ว', async () => {
+    const { useSessionStore: store } = await import('./sessionStore');
+    store.getState().setMaxCostUsdPerSession(3);
+    store.getState().markBudgetWarningShown();
+    expect(store.getState().budgetWarningShown).toBe(true);
+
+    store.getState().setMaxCostUsdPerSession(5);
+
+    expect(store.getState().budgetWarningShown).toBe(false);
+    expect(store.getState().budgetWarningAt).toBeNull();
+  });
+
+  it('setMaxCostUsdPerSession ลดเพดาน (ต่ำกว่าเดิม) → ไม่รีเซ็ต flag', async () => {
+    const { useSessionStore: store } = await import('./sessionStore');
+    store.getState().setMaxCostUsdPerSession(5);
+    store.getState().markBudgetWarningShown();
+    expect(store.getState().budgetWarningShown).toBe(true);
+
+    store.getState().setMaxCostUsdPerSession(4);
+
+    expect(store.getState().budgetWarningShown).toBe(true);
+  });
+
+  it('key ถูกล้าง (ทุกเหตุผล) → รีเซ็ต flag คำเตือนงบ', async () => {
+    const { useSessionStore: store } = await import('./sessionStore');
+    store.getState().markBudgetWarningShown();
+    expect(store.getState().budgetWarningShown).toBe(true);
+
+    keyHolder.clearKey('idle');
+
+    expect(store.getState().budgetWarningShown).toBe(false);
+    expect(store.getState().budgetWarningAt).toBeNull();
   });
 });
 

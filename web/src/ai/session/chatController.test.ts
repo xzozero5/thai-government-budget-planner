@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createDataFacade, type EconIndicatorSeries, type Facets } from '@/data';
 import { useChatStore } from '@/stores/chatStore';
 import { useProposalStore } from '@/stores/proposalStore';
+import { useSessionStore } from '@/stores/sessionStore';
 import { useToolLogStore } from '@/stores/toolLogStore';
 import type { Proposal } from '../tools/proposal';
 import {
@@ -219,6 +220,81 @@ describe('createChatController — sendMessage', () => {
     const userMessages = useChatStore.getState().messages.filter((m) => m.role === 'user');
     expect(userMessages).toHaveLength(1);
     expect(userMessages[0]?.text).toBe('ข้อความแรก');
+  });
+});
+
+describe('createChatController — เตือนงบ 80% (US-1.1 / T-410 ข้อ 2)', () => {
+  beforeEach(() => {
+    useSessionStore.setState({
+      maxCostUsdPerSession: 0.5,
+      spentUsd: 0,
+      budgetWarningShown: false,
+      budgetWarningAt: null,
+    });
+  });
+
+  afterEach(() => {
+    // กัน state รั่วไปเทสต์ describe อื่นในไฟล์นี้ (sessionStore เป็น singleton ข้าม describe block)
+    useSessionStore.setState({
+      maxCostUsdPerSession: 3,
+      spentUsd: 0,
+      budgetWarningShown: false,
+      budgetWarningAt: null,
+    });
+  });
+
+  it('spentUsd รวมข้าม 80% ของเพดาน session ครั้งแรก → sessionStore.budgetWarningShown/At ถูกตั้ง', async () => {
+    const fake = createFakeAnthropicClient({
+      turns: [
+        {
+          kind: 'message',
+          message: makeMessage({
+            content: [makeTextBlock('เสร็จสิ้น')],
+            stop_reason: 'end_turn',
+            // model เริ่มต้น (Sonnet 5, $2/$10 ต่อ MTok): 0.2 + 0.4 = 0.6 USD ต่อ turn นี้ (เกิน 80% ของ
+            // เพดาน 0.5 ที่ตั้งไว้ข้างบน)
+            usage: makeUsage({ input_tokens: 100_000, output_tokens: 40_000 }),
+          }),
+        },
+      ],
+    });
+    const controller = createChatController({
+      dataFacade: stubDataFacade(),
+      getClient: () => fake.client,
+      registerAbortController: noRegisterAbort,
+      touchActivity: noop,
+    });
+
+    await controller.sendMessage('ข้อความ');
+
+    expect(useSessionStore.getState().budgetWarningShown).toBe(true);
+    expect(useSessionStore.getState().budgetWarningAt).not.toBeNull();
+  });
+
+  it('spentUsd ยังต่ำกว่า 80% ของเพดาน → ไม่ตั้ง flag', async () => {
+    const fake = createFakeAnthropicClient({
+      turns: [
+        {
+          kind: 'message',
+          message: makeMessage({
+            content: [makeTextBlock('เสร็จสิ้น')],
+            stop_reason: 'end_turn',
+            usage: makeUsage({ input_tokens: 10, output_tokens: 10 }),
+          }),
+        },
+      ],
+    });
+    const controller = createChatController({
+      dataFacade: stubDataFacade(),
+      getClient: () => fake.client,
+      registerAbortController: noRegisterAbort,
+      touchActivity: noop,
+    });
+
+    await controller.sendMessage('ข้อความ');
+
+    expect(useSessionStore.getState().budgetWarningShown).toBe(false);
+    expect(useSessionStore.getState().budgetWarningAt).toBeNull();
   });
 });
 

@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { t } from '@/i18n';
 import { KeyGatePage } from '@/features/keygate/KeyGatePage';
 import * as keyHolder from '@/ai/session/keyHolder';
 
@@ -143,5 +144,21 @@ describe('KeyGatePage', () => {
     renderPage();
 
     await waitFor(() => expect(screen.getByText('WORKSPACE_OK')).toBeInTheDocument());
+  });
+
+  it('T-410 ข้อ 1 (US-1.2): แสดงประมาณการต้นทุนต่อข้อเสนอ ใต้ตัวเลือกโมเดล พร้อมป้าย "ยังไม่ได้วัดจริง" สำหรับ Sonnet (ค่าเริ่มต้น)', () => {
+    renderPage();
+
+    expect(screen.getByText(/ข้อเสนอหนึ่งฉบับใช้ประมาณ/)).toBeInTheDocument();
+    expect(screen.getByText(t('common.costEstimateUnverified'))).toBeInTheDocument();
+  });
+
+  it('T-410 ข้อ 1: เปลี่ยนไปโมเดล Haiku (วัดจริงแล้ว) → ป้าย "ยังไม่ได้วัดจริง" หายไป', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.selectOptions(screen.getByLabelText('โมเดลที่ใช้'), 'claude-haiku-4-5-20251001');
+
+    expect(screen.queryByText(t('common.costEstimateUnverified'))).not.toBeInTheDocument();
   });
 });

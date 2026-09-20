@@ -71,6 +71,21 @@ describe('chatStore', () => {
     ).toContain('ราคา');
   });
 
+  it('T-410 ข้อ 3 (US-2.2): upsertToolActivity เก็บ field เสริม summary แบบมีโครงสร้างได้ (optional, ไม่กระทบ inputSummary เดิม)', () => {
+    const id = useChatStore.getState().addMessage({ role: 'assistant', status: 'streaming' });
+    useChatStore.getState().upsertToolActivity(id, {
+      id: 'tool_1',
+      name: 'search_catalog',
+      status: 'done',
+      inputSummary: 'search_catalog: พบ 1240 รายการ',
+      summary: { tool: 'search_catalog', status: 'done', count: 1240, query: 'เครื่องปรับอากาศ' },
+    });
+
+    const activity = useChatStore.getState().messages.find((m) => m.id === id)?.toolActivities[0];
+    expect(activity?.inputSummary).toBe('search_catalog: พบ 1240 รายการ');
+    expect(activity?.summary).toEqual({ tool: 'search_catalog', status: 'done', count: 1240, query: 'เครื่องปรับอากาศ' });
+  });
+
   it('addWarning เพิ่ม warning ต่อท้ายรายการเดิม', () => {
     const id = useChatStore.getState().addMessage({ role: 'assistant', status: 'streaming' });
     useChatStore.getState().addWarning(id, 'คำเตือนที่ 1');

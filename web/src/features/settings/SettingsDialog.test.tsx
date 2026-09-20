@@ -88,4 +88,21 @@ describe('SettingsDialog (06 §4.6)', () => {
     render(<SettingsDialog open onClose={() => undefined} />);
     expect(screen.getByText(t('settings.usageValue', { amount: '$0.42' }))).toBeInTheDocument();
   });
+
+  it('T-410 ข้อ 1 (US-1.2): แสดงประมาณการต้นทุนต่อข้อเสนอ พร้อมป้าย "ยังไม่ได้วัดจริง" สำหรับ Sonnet (ค่าเริ่มต้น)', () => {
+    render(<SettingsDialog open onClose={() => undefined} />);
+
+    expect(screen.getByText(/ข้อเสนอหนึ่งฉบับใช้ประมาณ/)).toBeInTheDocument();
+    expect(screen.getByText(t('common.costEstimateUnverified'))).toBeInTheDocument();
+  });
+
+  it('T-410 ข้อ 1: เปลี่ยนไปโมเดล Haiku (วัดจริงแล้ว) → ป้าย "ยังไม่ได้วัดจริง" หายไป', () => {
+    render(<SettingsDialog open onClose={() => undefined} />);
+
+    fireEvent.change(screen.getByLabelText(t('settings.modelLabel')), {
+      target: { value: 'claude-haiku-4-5-20251001' },
+    });
+
+    expect(screen.queryByText(t('common.costEstimateUnverified'))).not.toBeInTheDocument();
+  });
 });

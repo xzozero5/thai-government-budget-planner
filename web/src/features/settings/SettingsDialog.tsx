@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import type { ChangeEvent, ReactElement } from 'react';
 import { Button, Dialog, Input, Select, Switch } from '@/components/ui';
-import { formatUsd } from '@/lib/format';
+import { formatNumber, formatUsd } from '@/lib/format';
 import { t } from '@/i18n';
 import { getModelCapability, isModelId, MODEL_LIST, type EffortLevel } from '@/ai/models';
+import { COST_ESTIMATE_CHECKED_AT_TH, getCostEstimate, usdToThbApprox } from '@/ai/session/costEstimates';
 import { sessionChatController } from '@/ai/session/chatController';
 import { useSessionStore } from '@/stores/sessionStore';
 import { markManualClear } from '@/features/workspace/manualClearFlag';
@@ -64,6 +65,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps): ReactEle
   const [sessionError, setSessionError] = useState<string | null>(null);
 
   const supportsEffort = getModelCapability(model).supportsEffort;
+  const costEstimate = getCostEstimate(model);
 
   function commitTurn(): void {
     const value = parseBudget(turnDraft);
@@ -106,6 +108,18 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps): ReactEle
           }}
           options={MODEL_LIST.map((m) => ({ value: m.id, label: m.labelTh }))}
         />
+
+        <div className="flex flex-col gap-0.5 text-xs text-fg-muted">
+          <p>{t('settings.modelCostHint')}</p>
+          <p>
+            {t('common.costPerProposalEstimate', {
+              usd: formatNumber(costEstimate.usd, { fractionDigits: 2 }),
+              thb: formatNumber(usdToThbApprox(costEstimate.usd), { fractionDigits: 0 }),
+              date: COST_ESTIMATE_CHECKED_AT_TH,
+            })}
+          </p>
+          {costEstimate.unverified && <p className="text-warn">{t('common.costEstimateUnverified')}</p>}
+        </div>
 
         {supportsEffort && (
           <Select

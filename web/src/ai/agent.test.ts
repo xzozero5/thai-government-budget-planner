@@ -197,6 +197,87 @@ describe('runAgentTurn — tool loop 2 รอบ', () => {
   });
 });
 
+describe('runAgentTurn — tool_result.summary แบบมีโครงสร้าง (T-410 ข้อ 3, US-2.2)', () => {
+  it('tool ที่มี output.total → summary.status ตาม count, คง summaryTh เดิมไว้ (backward compatible)', async () => {
+    const getEconValue = vi.fn().mockResolvedValue({
+      value: 105.2,
+      unit: 'index',
+      source_name: 'สนค.',
+      source_url: 'https://example.go.th',
+      verified: false,
+      note: 'ค่าดัชนี',
+    });
+    const ctx = makeCtx({ data: createDataFacade({ getEconValue }) });
+    const round1 = makeMessage({
+      content: [makeToolUseBlock('tu_1', 'get_econ_indicator', { indicators: ['cpi_headline_index'], years_be: [2567] })],
+      stop_reason: 'tool_use',
+    });
+    const round2 = makeMessage({ content: [makeTextBlock('ครบแล้ว')], stop_reason: 'end_turn' });
+    const fake = createFakeAnthropicClient({ turns: [{ kind: 'message', message: round1 }, { kind: 'message', message: round2 }] });
+    const events: AgentEvent[] = [];
+
+    await runAgentTurn(baseInput({ client: fake.client, toolContext: ctx, onEvent: (e) => events.push(e) }));
+
+    const toolResult = events.find((e) => e.type === 'tool_result');
+    if (toolResult?.type !== 'tool_result') {
+      throw new Error('คาดว่ามี event tool_result');
+    }
+    expect(toolResult.summaryTh).toBe('get_econ_indicator: พบ 1 รายการ');
+    expect(toolResult.summary).toEqual({ tool: 'get_econ_indicator', status: 'done', count: 1 });
+  });
+
+  it('tool ที่ output.total เป็น 0 → summary.status = "empty"', async () => {
+    const searchResult = { matches: [], total: 0 };
+    const emptyFacets = {
+      budget_types: [],
+      coverage_notes: [],
+      datasets: [],
+      fiscal_years: [],
+      ministries: [],
+      provinces: [],
+    };
+    const ctx = makeCtx({
+      data: createDataFacade({
+        searchCatalog: () => Promise.resolve(searchResult),
+        facets: () => Promise.resolve(emptyFacets),
+      }),
+    });
+    const round1 = makeMessage({
+      content: [makeToolUseBlock('tu_1', 'search_catalog', { query: 'เครื่องปรับอากาศ' })],
+      stop_reason: 'tool_use',
+    });
+    const round2 = makeMessage({ content: [makeTextBlock('ไม่พบครับ')], stop_reason: 'end_turn' });
+    const fake = createFakeAnthropicClient({ turns: [{ kind: 'message', message: round1 }, { kind: 'message', message: round2 }] });
+    const events: AgentEvent[] = [];
+
+    await runAgentTurn(baseInput({ client: fake.client, toolContext: ctx, onEvent: (e) => events.push(e) }));
+
+    const toolResult = events.find((e) => e.type === 'tool_result');
+    if (toolResult?.type !== 'tool_result') {
+      throw new Error('คาดว่ามี event tool_result');
+    }
+    expect(toolResult.summary).toEqual({ tool: 'search_catalog', status: 'empty', count: 0, query: 'เครื่องปรับอากาศ' });
+  });
+
+  it('tool ที่ isError → summary.status = "error" (ไม่มี count)', async () => {
+    const round1 = makeMessage({
+      content: [makeToolUseBlock('u1', 'ไม่มีเครื่องมือชื่อนี้', {})],
+      stop_reason: 'tool_use',
+    });
+    const round2 = makeMessage({ content: [makeTextBlock('ขอโทษครับ')], stop_reason: 'end_turn' });
+    const fake = createFakeAnthropicClient({ turns: [{ kind: 'message', message: round1 }, { kind: 'message', message: round2 }] });
+    const events: AgentEvent[] = [];
+
+    await runAgentTurn(baseInput({ client: fake.client, onEvent: (e) => events.push(e) }));
+
+    const toolResult = events.find((e) => e.type === 'tool_result');
+    if (toolResult?.type !== 'tool_result') {
+      throw new Error('คาดว่ามี event tool_result');
+    }
+    expect(toolResult.summary).toEqual({ tool: 'ไม่มีเครื่องมือชื่อนี้', status: 'error' });
+  });
+});
+
 describe('runAgentTurn — pause_turn', () => {
   it('ส่งประวัติเดิมกลับไปให้ server ทำต่อโดยไม่เติม user message ใหม่', async () => {
     const round1 = makeMessage({

@@ -84,12 +84,24 @@ export type AgentEndedBecause =
   | 'max_tokens'
   | 'error';
 
+/** สรุปผลลัพธ์ของ tool แบบมีโครงสร้าง (T-410 ข้อ 3, US-2.2) — เสริม `summaryTh` (ข้อความสำเร็จรูปเดิม)
+ * ไม่ใช่มาแทนที่ ให้ UI (`chat.tool.*` ใน copy) map เข้าโดยไม่ต้อง parse ข้อความไทย/อังกฤษปนกัน */
+export interface ToolResultSummary {
+  /** ชื่อ tool ตรงกับ `AgentEvent.tool_result.name` (ภาษาอังกฤษ เช่น `search_catalog`) */
+  tool: string;
+  status: 'done' | 'empty' | 'error';
+  /** จำนวนผลลัพธ์ — มีเฉพาะ tool ที่ output มี field `total` เป็นตัวเลข (ส่วนใหญ่ของ client tools) */
+  count?: number;
+  /** คำค้นที่ผู้ใช้/โมเดลส่งมา — มีเฉพาะ tool ที่รับพารามิเตอร์ชื่อ `query` */
+  query?: string;
+}
+
 export type AgentEvent =
   | { type: 'round'; round: number }
   | { type: 'text_delta'; text: string }
   | { type: 'tool_start'; id: string; name: string }
   | { type: 'tool_input_progress'; id: string; partialJson: string }
-  | { type: 'tool_result'; id: string; name: string; isError: boolean; summaryTh: string }
+  | { type: 'tool_result'; id: string; name: string; isError: boolean; summaryTh: string; summary: ToolResultSummary }
   | { type: 'server_tool'; name: 'web_search'; query?: string }
   | { type: 'usage'; costUsd: number; totalSpentUsd: number }
   | { type: 'warning'; messageTh: string };
@@ -181,22 +193,24 @@ function addUsage(totals: AgentUsageTotals, usage: Anthropic.Usage): void {
 // APIError ทั่วไป)
 // ---------------------------------------------------------------------------
 
+// โทนข้อความ (T-410 ข้อ 3, docs/06-UI-SPEC.md §5): "เกิดอะไร + ทำอะไรต่อ" แบบเป็นกันเอง ไม่ใช้คำว่า
+// "กรุณา" — ใช้เครื่องหมาย — คั่นระหว่างสองส่วนแทน
 function classifyAnthropicError(err: unknown): string {
   if (err instanceof Anthropic.AuthenticationError) {
-    return 'API key ไม่ถูกต้องหรือถูกเพิกถอน กรุณาตรวจสอบแล้วลองใหม่อีกครั้ง';
+    return 'API key ใช้ไม่ได้ (อาจพิมพ์ผิดหรือถูกเพิกถอน) — ตรวจสอบแล้วลองใหม่อีกครั้ง';
   }
   if (err instanceof Anthropic.PermissionDeniedError) {
-    return 'บัญชีนี้ไม่มีสิทธิ์เรียกใช้โมเดลที่เลือก กรุณาตรวจสอบสิทธิ์ในบัญชี Anthropic ของคุณ';
+    return 'บัญชีนี้ไม่มีสิทธิ์เรียกใช้โมเดลที่เลือก — ตรวจสอบสิทธิ์ในบัญชี Anthropic ของคุณ';
   }
   if (err instanceof Anthropic.RateLimitError) {
     const retryAfter = err.headers.get('retry-after');
     return retryAfter !== null && retryAfter !== ''
-      ? `ถูกจำกัดอัตราการเรียกใช้ (rate limit) กรุณารออย่างน้อย ${retryAfter} วินาทีแล้วลองใหม่อีกครั้ง`
-      : 'ถูกจำกัดอัตราการเรียกใช้ (rate limit) กรุณารอสักครู่แล้วลองใหม่อีกครั้ง';
+      ? `ถูกจำกัดอัตราการเรียกใช้ (rate limit) — รออย่างน้อย ${retryAfter} วินาทีแล้วลองใหม่อีกครั้ง`
+      : 'ถูกจำกัดอัตราการเรียกใช้ (rate limit) — รอสักครู่แล้วลองใหม่อีกครั้ง';
   }
   // ต้องเช็คก่อน APIError ทั่วไป — ใน TS SDK เป็น subclass ของ APIError
   if (err instanceof Anthropic.APIConnectionError) {
-    return 'เชื่อมต่อ api.anthropic.com ไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่';
+    return 'เชื่อมต่อ api.anthropic.com ไม่สำเร็จ — ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่';
   }
   if (err instanceof Anthropic.APIError) {
     // ครอบคลุม 5xx (รวม 529 overloaded — TS SDK ไม่มี class แยกสำหรับ overloaded, ดู
@@ -204,9 +218,9 @@ function classifyAnthropicError(err: unknown): string {
     // หมายเหตุ: `instanceof` กับ class ทั่วไป (ไม่ระบุ generic args) ทำให้ TS narrow `err.status` เป็น
     // `any` แทนที่จะใช้ default type param ของ `APIError` — กัน `no-unsafe-assignment` ด้วย typeof guard
     const status = typeof err.status === 'number' ? err.status : undefined;
-    return `เซิร์ฟเวอร์ Anthropic ขัดข้องหรือปฏิเสธคำขอ (สถานะ ${status !== undefined ? String(status) : 'ไม่ทราบ'}) กรุณาลองใหม่อีกครั้ง`;
+    return `เซิร์ฟเวอร์ Anthropic ขัดข้องหรือปฏิเสธคำขอ (สถานะ ${status !== undefined ? String(status) : 'ไม่ทราบ'}) — ลองใหม่อีกครั้งในอีกสักครู่`;
   }
-  return 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุขณะเรียก AI กรุณาลองใหม่อีกครั้ง';
+  return 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุขณะเรียก AI — ลองใหม่อีกครั้ง';
 }
 
 // ---------------------------------------------------------------------------
@@ -257,7 +271,10 @@ const WEB_SEARCH_ERROR_TH: Record<Anthropic.WebSearchToolResultErrorCode, string
   request_too_large: 'คำขอค้นเว็บมีขนาดใหญ่เกินไป',
 };
 
-function extractWebSearchQuery(input: unknown): string | undefined {
+/** ดึงค่า `query` (ถ้ามี) จาก input ของ tool ใด ๆ — ใช้ทั้งกับ server tool `web_search` (event
+ * `server_tool`) และ client tools ทั่วไปที่รับพารามิเตอร์ชื่อ `query` (ส่วนหนึ่งของ `summary` แบบมี
+ * โครงสร้างใน event `tool_result` — ดู `ToolResultSummary`) */
+function extractQueryField(input: unknown): string | undefined {
   if (input !== null && typeof input === 'object' && 'query' in input) {
     const query = (input as { query?: unknown }).query;
     return typeof query === 'string' ? query : undefined;
@@ -272,7 +289,7 @@ function processServerToolBlocks(
 ): void {
   for (const block of content) {
     if (block.type === 'server_tool_use' && block.name === 'web_search') {
-      const query = extractWebSearchQuery(block.input);
+      const query = extractQueryField(block.input);
       emit(query !== undefined ? { type: 'server_tool', name: 'web_search', query } : { type: 'server_tool', name: 'web_search' });
       continue;
     }
@@ -298,21 +315,39 @@ function processServerToolBlocks(
 // tool_use เดิม (ADR-006 ข้อ 5)
 // ---------------------------------------------------------------------------
 
-function summarizeToolResult(name: string, result: GenericToolRunResult): string {
+/** สรุปผลลัพธ์ของ tool 1 ตัวแบบมีโครงสร้าง (T-410 ข้อ 3, US-2.2) — `summaryTh` ยังเป็นข้อความอังกฤษ
+ * ปนไทยแบบเดิมทุกตัวอักษร (backward compatible กับ UI ปัจจุบันที่ยังอ่าน field นี้ตรง ๆ) ส่วน `summary`
+ * เป็น field ใหม่ให้ผู้เรียก (เช่น `chatController`) map เข้า copy key `chat.tool.*` เอง โดยไม่ต้อง
+ * parse ข้อความไทย */
+function buildToolResultSummary(
+  name: string,
+  rawInput: unknown,
+  result: GenericToolRunResult,
+): { summaryTh: string; summary: ToolResultSummary } {
+  const query = extractQueryField(rawInput);
+  const withQuery = (partial: Omit<ToolResultSummary, 'tool' | 'query'>): ToolResultSummary => ({
+    tool: name,
+    ...(query !== undefined ? { query } : {}),
+    ...partial,
+  });
+
   if (result.isError) {
-    return `${name}: เรียกใช้ไม่สำเร็จ`;
+    return { summaryTh: `${name}: เรียกใช้ไม่สำเร็จ`, summary: withQuery({ status: 'error' }) };
   }
   const output = result.output;
   if (output !== null && typeof output === 'object') {
     const total = (output as { total?: unknown }).total;
     if (typeof total === 'number') {
-      return `${name}: พบ ${String(total)} รายการ`;
+      return {
+        summaryTh: `${name}: พบ ${String(total)} รายการ`,
+        summary: withQuery({ status: total === 0 ? 'empty' : 'done', count: total }),
+      };
     }
     if ((output as { ok?: unknown }).ok === true) {
-      return `${name}: สำเร็จ`;
+      return { summaryTh: `${name}: สำเร็จ`, summary: withQuery({ status: 'done' }) };
     }
   }
-  return `${name}: เรียกสำเร็จ`;
+  return { summaryTh: `${name}: เรียกสำเร็จ`, summary: withQuery({ status: 'done' }) };
 }
 
 interface ToolRoundOutcome {
@@ -354,12 +389,14 @@ async function runToolUseBlocks(
       content: result.content,
     });
     calls.push({ id: block.id, name: block.name, isError: result.isError, round });
+    const { summaryTh, summary } = buildToolResultSummary(block.name, block.input, result);
     emit({
       type: 'tool_result',
       id: block.id,
       name: block.name,
       isError: result.isError,
-      summaryTh: summarizeToolResult(block.name, result),
+      summaryTh,
+      summary,
     });
     if (!result.isError && block.name === 'emit_proposal' && isEmitProposalOutput(result.output)) {
       proposal = result.output;
@@ -523,14 +560,14 @@ export async function runAgentTurn(input: RunAgentTurnInput): Promise<RunAgentTu
             role: 'user',
             content: buildDroppedToolResults(
               toolUseBlocks,
-              'พารามิเตอร์ของเครื่องมือนี้ถูกตัดกลางคันเพราะครบเพดาน max_tokens — ไม่ได้เรียกเครื่องมือนี้จริง กรุณาลองใหม่',
+              'พารามิเตอร์ของเครื่องมือนี้ถูกตัดกลางคันเพราะครบเพดาน max_tokens — ไม่ได้เรียกเครื่องมือนี้จริง ลองใหม่อีกครั้ง',
             ),
           },
         ];
       }
       emit({
         type: 'warning',
-        messageTh: 'คำตอบยาวเกินเพดาน max_tokens ของรอบนี้ กรุณาลองใหม่หรือถามให้เจาะจงขึ้น',
+        messageTh: 'คำตอบยาวเกินเพดาน max_tokens ของรอบนี้ — ลองใหม่หรือถามให้เจาะจงขึ้น',
       });
       return finish(message.stop_reason, 'max_tokens');
     }

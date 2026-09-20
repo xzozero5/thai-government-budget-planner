@@ -10,8 +10,10 @@ import type { ChangeEvent, FormEvent, ReactElement } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Card, ExternalLink, IconButton, Input, Select } from '@/components/ui';
 import { t } from '@/i18n';
+import { formatNumber } from '@/lib/format';
 import { useSessionStore } from '@/stores/sessionStore';
 import { MODEL_LIST, getModelCapability, isModelId } from '@/ai/models';
+import { COST_ESTIMATE_CHECKED_AT_TH, getCostEstimate, usdToThbApprox } from '@/ai/session/costEstimates';
 import { redactSecrets } from '@/ai/session/redactSecrets';
 import { getKeyGateErrorMessage } from '@/features/keygate/errorCopy';
 import { validateApiKeyFormat } from '@/features/keygate/validateApiKey';
@@ -87,6 +89,7 @@ export function KeyGatePage(): ReactElement {
 
   const modelCapability = getModelCapability(model);
   const modelOptions = MODEL_LIST.map((m) => ({ value: m.id, label: m.labelTh }));
+  const costEstimate = getCostEstimate(model);
 
   const errorMessage =
     keyStatus === 'error' && keyErrorKind !== null
@@ -191,6 +194,17 @@ export function KeyGatePage(): ReactElement {
               helperText={t('keygate.modelHelp')}
               disabled={isVerifying}
             />
+
+            <div className="flex flex-col gap-0.5 text-xs text-fg-muted">
+              <p>
+                {t('common.costPerProposalEstimate', {
+                  usd: formatNumber(costEstimate.usd, { fractionDigits: 2 }),
+                  thb: formatNumber(usdToThbApprox(costEstimate.usd), { fractionDigits: 0 }),
+                  date: COST_ESTIMATE_CHECKED_AT_TH,
+                })}
+              </p>
+              {costEstimate.unverified && <p className="text-warn">{t('common.costEstimateUnverified')}</p>}
+            </div>
 
             <Input
               id={BUDGET_INPUT_ID}

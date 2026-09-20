@@ -9,6 +9,7 @@
  * ห้าม import React (module boundary) — ใช้ hook ที่ zustand ให้มาตรง ๆ จาก component
  */
 import { create } from 'zustand';
+import type { ToolResultSummary } from '@/ai/agent';
 import { createId } from './id';
 
 export type ChatRole = 'user' | 'assistant';
@@ -16,12 +17,18 @@ export type ChatMessageStatus = 'streaming' | 'done' | 'error' | 'cancelled';
 export type ToolActivityStatus = 'running' | 'done' | 'error';
 
 /** สถานะการเรียกเครื่องมือ 1 รายการ (client tool หรือ server tool `web_search`) — `inputSummary`
- * รวม query ของ `web_search` ด้วย (T-307 §9 ข้อ 6: "web_search โปร่งใส — แสดง query ทุกครั้ง") */
+ * รวม query ของ `web_search` ด้วย (T-307 §9 ข้อ 6: "web_search โปร่งใส — แสดง query ทุกครั้ง")
+ *
+ * `summary` (T-410 ข้อ 3, US-2.2) — เสริม field แบบมีโครงสร้างจาก `AgentEvent.tool_result.summary` เพื่อ
+ * ให้ UI (`chat.tool.*` ใน copy) map ข้อความไทยเองตาม `status`/`count`/`query` โดยไม่ต้อง parse
+ * `inputSummary` (ข้อความสำเร็จรูปเดิม ยังคงอยู่เพื่อ backward compatibility) — `optional` เพราะ activity
+ * ของ server tool `web_search` (ที่ chatController สังเคราะห์ id เอง) ยังไม่มีค่านี้ */
 export interface ToolActivity {
   id: string;
   name: string;
   status: ToolActivityStatus;
   inputSummary?: string;
+  summary?: ToolResultSummary;
 }
 
 export interface ChatMessage {

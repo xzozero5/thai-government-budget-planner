@@ -43,6 +43,14 @@ export interface SessionStoreState {
   spentUsd: number;
   theme: ThemePreference;
 
+  /** US-1.1 (T-410 ข้อ 2) — เคยแตะ 80% ของ `maxCostUsdPerSession` แล้วหรือยัง (กันเตือนซ้ำ) รีเซ็ตเมื่อ
+   * ผู้ใช้เพิ่มเพดาน หรือ key ถูกล้าง (ไม่ว่าเหตุผลใด) */
+  budgetWarningShown: boolean;
+  /** timestamp (`Date.now()`) ของครั้งล่าสุดที่ระบบเพิ่ง trigger คำเตือน 80% — `null` เมื่อยังไม่เคย/ถูก
+   * รีเซ็ต — UI (toast ใน `features/workspace`) subscribe ค่านี้เพื่อรู้ว่า "มีเหตุการณ์ใหม่เกิดขึ้น" ได้
+   * (เทียบว่าเปลี่ยนจาก `null`/ค่าก่อนหน้าหรือไม่ — ตัว toast จริงไม่ได้ทำในไฟล์นี้) */
+  budgetWarningAt: number | null;
+
   /** ใส่ key ใหม่: สร้าง client ใน `keyHolder` แล้วทดสอบด้วย `verifyKey` — สำเร็จ → `hasKey=true`;
    * ล้มเหลว → ล้าง client ทิ้งทันทีและเก็บ error ที่ redact แล้ว คืนผลลัพธ์ให้ผู้เรียก (UI) ใช้แสดงผลต่อ */
   submitKey: (apiKey: string) => Promise<VerifyKeyResult>;
@@ -55,9 +63,16 @@ export interface SessionStoreState {
   setMode: (mode: ChatMode) => void;
   setEnableWebSearch: (enabled: boolean) => void;
   setMaxCostUsdPerTurn: (usd: number) => void;
+  /** เพิ่มเพดาน session → รีเซ็ต flag เตือน 80% (US-1.1: ผู้ใช้ "ต่อ" งบแล้วไม่ควรถูกเตือนซ้ำทันที) */
   setMaxCostUsdPerSession: (usd: number) => void;
   setSpentUsd: (usd: number) => void;
   setTheme: (theme: ThemePreference) => void;
+
+  /** เรียกโดย `ai/session/chatController.ts` ครั้งแรกที่ `spentUsd` ข้าม 80% ของ `maxCostUsdPerSession`
+   * — idempotent (เรียกซ้ำแล้วไม่ทับ `budgetWarningAt` เดิม) เพื่อให้ "ครั้งแรก" มีความหมายจริง */
+  markBudgetWarningShown: () => void;
+  /** ล้าง flag/timestamp คำเตือน 80% — เรียกตอนผู้ใช้เพิ่มเพดาน หรือ key ถูกล้าง */
+  resetBudgetWarning: () => void;
 }
 
 export const useSessionStore = create<SessionStoreState>((set, get) => ({
@@ -74,6 +89,8 @@ export const useSessionStore = create<SessionStoreState>((set, get) => ({
   maxCostUsdPerSession: DEFAULT_MAX_COST_USD_PER_SESSION,
   spentUsd: 0,
   theme: initialTheme(),
+  budgetWarningShown: false,
+  budgetWarningAt: null,
 
   async submitKey(apiKey) {
     set({ keyStatus: 'verifying', keyErrorKind: null, keyErrorMessage: null });
@@ -113,13 +130,27 @@ export const useSessionStore = create<SessionStoreState>((set, get) => ({
     set({ maxCostUsdPerTurn: usd });
   },
   setMaxCostUsdPerSession(usd) {
-    set({ maxCostUsdPerSession: usd });
+    const increased = usd > get().maxCostUsdPerSession;
+    set({
+      maxCostUsdPerSession: usd,
+      ...(increased ? { budgetWarningShown: false, budgetWarningAt: null } : {}),
+    });
   },
   setSpentUsd(usd) {
     set({ spentUsd: usd });
   },
   setTheme(theme) {
     set({ theme });
+  },
+
+  markBudgetWarningShown() {
+    if (get().budgetWarningShown) {
+      return;
+    }
+    set({ budgetWarningShown: true, budgetWarningAt: Date.now() });
+  },
+  resetBudgetWarning() {
+    set({ budgetWarningShown: false, budgetWarningAt: null });
   },
 }));
 
@@ -131,5 +162,9 @@ keyHolder.onClear(() => {
     keyStatus: 'idle',
     keyErrorKind: null,
     keyErrorMessage: null,
+    // US-1.1 (T-410 ข้อ 2): key ถูกล้างไม่ว่าเหตุผลใด (manual/idle/pagehide/budget_exceeded) ถือเป็นจบ
+    // session เชิงแนวคิด — เตือนใหม่ได้เมื่อเริ่มใช้งานอีกครั้ง
+    budgetWarningShown: false,
+    budgetWarningAt: null,
   });
 });

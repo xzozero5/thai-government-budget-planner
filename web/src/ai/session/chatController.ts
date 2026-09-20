@@ -26,6 +26,7 @@ import { runAgentTurn, type AgentEvent } from '../agent';
 import { createInMemoryIllustrationSink, type IllustrationSink } from '../illustrationSink';
 import { createToolLog, type ToolLog } from '../toolLog';
 import { generateNonce } from '../tools/toolKit';
+import { hasCrossedBudgetWarningThreshold } from './budgetWarning';
 import * as keyHolder from './keyHolder';
 import { redactSecrets } from './redactSecrets';
 import { buildProductionSystemBlocks } from './systemPrompt';
@@ -100,6 +101,9 @@ export function createChatController(deps: ChatControllerDeps = {}): ChatControl
           name: event.name,
           status: event.isError ? 'error' : 'done',
           inputSummary: event.summaryTh,
+          // T-410 ข้อ 3 (US-2.2): field มีโครงสร้างเสริมจาก event เดิม — UI mapping เข้า chat.tool.*
+          // ทำภายหลังโดย main thread (ยังใช้ inputSummary/summaryTh เดิมได้อยู่)
+          summary: event.summary,
         });
         useToolLogStore.getState().bump();
         break;
@@ -114,9 +118,16 @@ export function createChatController(deps: ChatControllerDeps = {}): ChatControl
         useToolLogStore.getState().bump();
         break;
       }
-      case 'usage':
+      case 'usage': {
         useSessionStore.getState().setSpentUsd(event.totalSpentUsd);
+        // US-1.1 (T-410 ข้อ 2): ตั้ง flag/timestamp ใน sessionStore ครั้งแรกที่ข้าม 80% ของเพดาน session
+        // — toast จริงแสดงโดย UI (features/workspace) ที่ subscribe `budgetWarningAt`
+        const { maxCostUsdPerSession } = useSessionStore.getState();
+        if (hasCrossedBudgetWarningThreshold(event.totalSpentUsd, maxCostUsdPerSession)) {
+          useSessionStore.getState().markBudgetWarningShown();
+        }
         break;
+      }
       case 'warning':
         useChatStore.getState().addWarning(assistantId, redactSecrets(event.messageTh));
         break;
