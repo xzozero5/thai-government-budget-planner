@@ -420,6 +420,44 @@ describe('emit_proposal — repair layer ก่อน Zod parse (ซ่อมส
     expect(result.output.proposal.totals.grand_total_thb).toBe(1_000_000);
   });
 
+  // T-604 (eval จริง เคส unit-price-n1-total-station): รูปผิด 2 แบบนี้ทำให้ไม่ได้ข้อเสนอเลยทั้งที่เนื้อหาครบ
+  it('open_questions เป็น [{text}] → แกะเป็น string เงียบ ๆ (ไม่เปลี่ยนเนื้อหา ไม่ต้องมี warning)', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('src-1');
+    const raw: unknown = { ...baseProposal(), open_questions: [{ text: 'สเปครุ่นไหน' }, 'ตั้งที่จังหวัดใด'] };
+    const result = await emitProposalTool.run(raw, ctx);
+    if (result.isError) throw new Error('expected success — [{text}] ต้องแกะเป็น string ได้');
+    expect(result.output.proposal.open_questions).toEqual(['สเปครุ่นไหน', 'ตั้งที่จังหวัดใด']);
+    expect(result.output.warnings.some((w) => w.includes('open_questions'))).toBe(false);
+  });
+
+  it('open_questions เป็น object ที่มี field อื่นปน → ไม่เดา ยังคงถูกปฏิเสธ', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('src-1');
+    const raw: unknown = { ...baseProposal(), open_questions: [{ text: 'ก', priority: 'high' }] };
+    const result = await emitProposalTool.run(raw, ctx);
+    expect(result.isError).toBe(true);
+  });
+
+  it('assumptions เป็น string ล้วน → ห่อเป็น {text, impact:"medium"} พร้อม warning ว่าระบบตั้ง impact ให้เอง', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('src-1');
+    const raw: unknown = { ...baseProposal(), assumptions: ['ใช้ CPI ทั่วไปแทนดัชนีเฉพาะ'] };
+    const result = await emitProposalTool.run(raw, ctx);
+    if (result.isError) throw new Error('expected success — assumptions เป็น string ต้องซ่อมได้');
+    expect(result.output.proposal.assumptions).toEqual([{ text: 'ใช้ CPI ทั่วไปแทนดัชนีเฉพาะ', impact: 'medium' }]);
+    expect(result.output.warnings.some((w) => w.includes('assumptions[0]') && w.includes('ปานกลาง'))).toBe(true);
+  });
+
+  it('risks เป็น string ล้วน → ห่อเป็น {text}', async () => {
+    const { ctx, toolLog } = makeCtx();
+    toolLog.recordSourceId('src-1');
+    const raw: unknown = { ...baseProposal(), risks: ['ราคาอาจเปลี่ยน'] };
+    const result = await emitProposalTool.run(raw, ctx);
+    if (result.isError) throw new Error('expected success — risks เป็น string ต้องซ่อมได้');
+    expect(result.output.proposal.risks).toEqual([{ text: 'ราคาอาจเปลี่ยน' }]);
+  });
+
   it('จำนวนติดลบยังคงถูกปฏิเสธ — repair layer ไม่ทำให้เกณฑ์ความปลอดภัยเดิมหลวมลง', async () => {
     const { ctx, toolLog } = makeCtx();
     toolLog.recordSourceId('src-1');

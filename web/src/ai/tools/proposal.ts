@@ -292,6 +292,27 @@ function repairEnumField(
   }
 }
 
+/** key ที่โมเดลมักใช้ห่อข้อความเดี่ยวเป็น object (พบจริงใน T-604: `open_questions: [{text: "…"}]`) */
+const TEXT_WRAPPER_KEYS = ['text', 'question', 'item', 'value'] as const;
+
+/**
+ * T-604 (eval จริง เคส unit-price-n1-total-station): โมเดลส่ง array ของข้อความเป็น `[{text:"…"}]` แทน
+ * `["…"]` (สับสนกับ `assumptions`/`risks` ที่เป็น object จริง) → emit_proposal ถูก reject ทั้งก้อน 2 รอบจน
+ * ชนเพดานรอบ ไม่ได้ข้อเสนอเลย — การแกะห่อแบบนี้ไม่เปลี่ยนเนื้อหา/ตัวเลขใด ๆ จึงซ่อมเงียบ ๆ ได้ (ไม่มี warning)
+ * แกะเฉพาะ object ที่มี key ห่อข้อความ "ตัวเดียว" เท่านั้น (มี field อื่นปน = ไม่เดา ปล่อยให้ Zod ปฏิเสธ)
+ */
+function unwrapTextObject(item: unknown): unknown {
+  const obj = asRecord(item);
+  if (obj === undefined) return item;
+  const keys = Object.keys(obj);
+  if (keys.length !== 1) return item;
+  const onlyKey = keys[0];
+  const wrapped = TEXT_WRAPPER_KEYS.find((k) => k === onlyKey);
+  if (wrapped === undefined) return item;
+  const text = obj[wrapped];
+  return typeof text === 'string' ? text : item;
+}
+
 function repairStringArrayField(
   obj: Record<string, unknown>,
   key: string,
@@ -305,7 +326,8 @@ function repairStringArrayField(
   if (!Array.isArray(value)) {
     return;
   }
-  const items: unknown[] = value.map((item: unknown, i: number) => {
+  const items: unknown[] = value.map((rawItem: unknown, i: number) => {
+    const item = unwrapTextObject(rawItem);
     if (typeof item === 'string' && item.length > itemMax) {
       warnings.push(
         `${label}.${key}[${String(i)}]: ยาวเกินเพดาน ${String(itemMax)} ตัวอักษร — ตัดส่วนเกินออกอัตโนมัติ`,
@@ -427,6 +449,12 @@ function repairScopeSection(raw: unknown, warnings: string[], label: string): un
 }
 
 function repairAssumption(raw: unknown, warnings: string[], label: string): unknown {
+  if (typeof raw === 'string') {
+    // T-604: โมเดลส่งสมมติฐานเป็นข้อความล้วน (ไม่มี impact) — รับข้อความไว้ และตั้ง impact='medium' แบบบอกผู้ใช้
+    // ตรง ๆ ว่าระบบตั้งให้เอง (ไม่ใช่การประเมินของ AI) แทนการ reject ข้อเสนอทั้งฉบับ
+    warnings.push(`${label}: AI ไม่ได้ระบุระดับผลกระทบของสมมติฐานนี้ — ระบบตั้งเป็น "ปานกลาง" ให้ก่อน โปรดทบทวน`);
+    return { text: raw.length > TEXT_MAX ? `${raw.slice(0, TEXT_MAX - 1)}…` : raw, impact: 'medium' };
+  }
   const obj = asRecord(raw);
   if (obj === undefined) return raw;
   repairStringField(obj, 'text', TEXT_MAX, warnings, label);
@@ -435,6 +463,10 @@ function repairAssumption(raw: unknown, warnings: string[], label: string): unkn
 }
 
 function repairRisk(raw: unknown, warnings: string[], label: string): unknown {
+  if (typeof raw === 'string') {
+    // T-604: ความเสี่ยงเป็นข้อความล้วน → ห่อเป็น {text} (mitigation เป็น optional อยู่แล้ว ไม่ต้องเดาอะไรเพิ่ม)
+    return { text: raw.length > TEXT_MAX ? `${raw.slice(0, TEXT_MAX - 1)}…` : raw };
+  }
   const obj = asRecord(raw);
   if (obj === undefined) return raw;
   repairStringField(obj, 'text', TEXT_MAX, warnings, label);
