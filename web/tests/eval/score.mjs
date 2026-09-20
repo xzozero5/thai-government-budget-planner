@@ -285,6 +285,50 @@ export function cacheHitInfo(transcript) {
   };
 }
 
+/** 07-TESTING §4 "citation resolve 100 %" (T-308 PO review P0-1: เดิมคำนวณ precision ไว้แต่ไม่เคยบังคับ →
+ * เคสที่ citation ถูก validator ตัดทิ้งทั้งหมดยัง PASS ได้) — ผ่านเมื่อ citation ที่โมเดลอ้างเหลือรอดครบทุกตัว */
+function checkCitationPrecision(transcript, checks) {
+  if (!transcript.proposal) {
+    return;
+  }
+  const c = citationIntegrity(transcript);
+  pushCheck(
+    checks,
+    'citation_resolve_100pct',
+    c.hallucinated === 0,
+    `อ้าง ${String(c.claimed)} citation, เหลือรอดหลัง validator ${String(c.resolved)} (ถูกตัด ${String(c.hallucinated)})`,
+  );
+}
+
+/** T-308 PO review P0-2: โหมด audit — หลักฐานจากงบจริงอยู่ที่ `audit_findings[].citations` + `comparables[]`
+ * (05-FEATURES §5) ไม่ใช่ basis ของ BOQ (ซึ่งเป็นราคาที่หน่วยงานเสนอมา — ติดป้าย historical จะขัด N3) */
+function checkAuditEvidence(caseSpec, transcript, checks) {
+  const minFindings = caseSpec.expected.min_audit_findings_with_citation;
+  const minComparables = caseSpec.expected.min_comparables;
+  if (minFindings === undefined && minComparables === undefined) {
+    return;
+  }
+  const proposal = transcript.proposal;
+  if (minFindings !== undefined) {
+    const n = (proposal?.audit_findings ?? []).filter((f) => (f.citations ?? []).length > 0).length;
+    pushCheck(
+      checks,
+      'min_audit_findings_with_citation',
+      n >= minFindings,
+      `audit_findings ที่ยังมี citation หลัง validator = ${String(n)} (ต้องการ >= ${String(minFindings)})`,
+    );
+  }
+  if (minComparables !== undefined) {
+    const n = (proposal?.comparables ?? []).filter((c) => typeof c.source_id === 'string' && c.source_id !== '').length;
+    pushCheck(
+      checks,
+      'min_comparables',
+      n >= minComparables,
+      `comparables ที่มี source_id = ${String(n)} (ต้องการ >= ${String(minComparables)})`,
+    );
+  }
+}
+
 /**
  * ตรวจ 1 case → `{case_id, auto_pass, checks[], citation, cache}` — ไม่ throw แม้ transcript ผิดรูป
  * (เช่นมี `fatalError` จาก harness) เพื่อให้ runner รายงานผลของทุก case ได้เสมอ
@@ -313,6 +357,8 @@ export function scoreCase(caseSpec, transcript, opts = {}) {
   checkMustMention(caseSpec, transcript, checks);
   checkGrandTotalRange(caseSpec, transcript, checks);
   checkMaxConfidence(caseSpec, transcript, checks);
+  checkCitationPrecision(transcript, checks);
+  checkAuditEvidence(caseSpec, transcript, checks);
   checkToolRoundsWithinBudget(transcript, checks);
   checkCostWithinCap(transcript, opts.costCapUsd, checks);
 

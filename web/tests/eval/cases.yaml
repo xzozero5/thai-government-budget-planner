@@ -348,7 +348,11 @@
   web_search: false
   expected:
     min_boq_lines: 1
-    must_have_basis: ["historical"]
+    must_have_basis: []
+    # T-308 (PO review): โหมด audit — BOQ คือราคาที่หน่วยงานเสนอมา ไม่ใช่ราคาจากงบจริง (บังคับ historical = ขัด N3)
+    # หลักฐานงบจริงต้องอยู่ที่ audit_findings[].citations + comparables[] แทน
+    min_audit_findings_with_citation: 1
+    min_comparables: 2
     must_cite_dataset: ["pbo_disbursement"]
     must_call_tools: ["search_catalog", "query_budget_lines", "emit_proposal"]
     must_not_claim: []
@@ -368,7 +372,11 @@
   web_search: false
   expected:
     min_boq_lines: 1
-    must_have_basis: ["historical"]
+    must_have_basis: []
+    # T-308 (PO review): โหมด audit — BOQ คือราคาที่หน่วยงานเสนอมา ไม่ใช่ราคาจากงบจริง (บังคับ historical = ขัด N3)
+    # หลักฐานงบจริงต้องอยู่ที่ audit_findings[].citations + comparables[] แทน
+    min_audit_findings_with_citation: 1
+    min_comparables: 2
     must_cite_dataset: ["pbo_disbursement", "act_2570_draft", "local_ordinance_2570"]
     must_call_tools: ["search_catalog", "query_budget_lines", "emit_proposal"]
     must_not_claim: []

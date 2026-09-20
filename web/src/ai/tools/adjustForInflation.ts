@@ -42,6 +42,8 @@ export const AdjustForInflationOutputSchema = z.object({
   factor: z.number(),
   from_value: z.number(),
   to_value: z.number(),
+  /** ปีของ to_value ที่ใช้จริง (ต่างจาก to_year_be เมื่อใช้ปีล่าสุดที่มีข้อมูลแทน) — ใช้ปีนี้เมื่ออ้าง citation econ */
+  to_year_be_used: z.number().int(),
   index_unit: z.string(),
   indicator: z.string(),
   source: z.object({
@@ -69,6 +71,12 @@ async function handler(
   };
   const result = await ctx.data.adjustForInflation(facadeInput);
 
+  // T-604 (eval จริง เคส equip-aircon-18000btu): ค่าดัชนีปีต้นทาง/ปลายทางที่ tool นี้อ่านจากข้อมูลจริงและ
+  // ส่งกลับให้โมเดลเห็น (from_value/to_value) ต้องอ้างเป็น citation kind=econ ได้ — เดิมบันทึกเฉพาะ
+  // get_econ_indicator ทำให้ citation ที่ถูกต้องของโมเดลถูก validator ตัดทิ้ง (การปรับเงินเฟ้อดูไร้หลักฐาน)
+  ctx.toolLog.recordEconValue(indicator, input.from_year_be);
+  ctx.toolLog.recordEconValue(indicator, result.toYearBeUsed);
+
   ctx.toolLog.recordInflationAdjustment({
     fromAmountThb: input.amount_thb,
     fromYearBe: input.from_year_be,
@@ -83,6 +91,7 @@ async function handler(
     factor: result.factor,
     from_value: result.fromIndex,
     to_value: result.toIndex,
+    to_year_be_used: result.toYearBeUsed,
     index_unit: result.indexUnit,
     indicator,
     source: {

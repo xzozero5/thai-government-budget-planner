@@ -55,6 +55,7 @@ const KEY_LIKE_RE = /sk-ant-[A-Za-z0-9_-]{8,}/;
 function parseArgs(argv) {
   const args = {
     real: false,
+    rescore: false,
     confirmSpend: false,
     tier: 'core8',
     case: undefined,
@@ -68,6 +69,11 @@ function parseArgs(argv) {
       args.real = false;
     } else if (a === '--real') {
       args.real = true;
+    } else if (a === '--rescore') {
+      // ให้คะแนน transcript จริงที่มีอยู่แล้วใน real-runs/ ใหม่ด้วยเกณฑ์ปัจจุบัน — ไม่เปิดเบราว์เซอร์, ไม่อ่าน key,
+      // ไม่เรียก API (ไม่มีค่าใช้จ่าย) ใช้หลังแก้ score.mjs/cases.yaml
+      args.rescore = true;
+      args.real = true; // รายงานเป็นของ transcript จริง (modeLabel/REAL_RUNS_DIR)
     } else if (a === '--confirm-spend') {
       args.confirmSpend = true;
     } else if (a === '--tier') {
@@ -343,6 +349,34 @@ function getCommitHash() {
 }
 
 // ---------------------------------------------------------------------------
+// --rescore: ให้คะแนน transcript จริงเดิมใหม่ (ไม่มีค่าใช้จ่าย)
+// ---------------------------------------------------------------------------
+
+function rescoreOnly(args) {
+  const allCases = parseYaml(readFileSync(CASES_PATH, 'utf8'));
+  const rows = allCases.map((c) => {
+    const transcriptPath = join(REAL_RUNS_DIR, `${c.id}.json`);
+    if (existsSync(transcriptPath)) {
+      const transcript = JSON.parse(readFileSync(transcriptPath, 'utf8'));
+      if (transcript.isDryRun === false) {
+        const score = scoreCase(c, transcript, { costCapUsd: perCaseCapUsd(c, args) });
+        console.log(`[eval] rescore ${c.id}: auto_pass=${String(score.auto_pass)}`);
+        return { caseId: c.id, model: c.model, status: 'run', transcript, score };
+      }
+    }
+    return { caseId: c.id, model: c.model, status: 'not_run (budget)' };
+  });
+  const reportPath = writeReport(rows, { ...args, tier: `${args.tier} (rescore — ไม่ได้เรียก API ใหม่)` }, getCommitHash());
+  const leaks = scanOutputsForKeyLeaks(reportPath);
+  if (leaks.length > 0) {
+    console.error('[eval] SECURITY FAIL — พบสตริงคล้าย Anthropic API key ใน output ของ eval:', leaks);
+    process.exitCode = 1;
+    return;
+  }
+  console.log('[eval] rescore เสร็จ — ไม่มีการเรียก API');
+}
+
+// ---------------------------------------------------------------------------
 // main
 // ---------------------------------------------------------------------------
 
@@ -350,6 +384,11 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   mkdirSync(OUT_DIR, { recursive: true });
   mkdirSync(REAL_RUNS_DIR, { recursive: true });
+
+  if (args.rescore) {
+    rescoreOnly(args);
+    return;
+  }
 
   if (args.real && !args.confirmSpend) {
     console.error(

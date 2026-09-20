@@ -77,6 +77,8 @@ export interface AdjustForInflationResult {
   fromIndex: number;
   /** ค่าดัชนีปีปลายทางที่ใช้จริง (อาจเป็นปีล่าสุดที่มีค่า ถ้า allowLatestAvailable) */
   toIndex: number;
+  /** ปีของค่าดัชนีปลายทางที่ใช้จริง (= `toYearBe` เว้นแต่ตกไปใช้ปีล่าสุดที่มีค่าตาม allowLatestAvailable) */
+  toYearBeUsed: number;
   indexUnit: string;
   basis: AdjustForInflationBasis;
   warnings: string[];
@@ -194,6 +196,7 @@ export function adjustForInflation(input: AdjustForInflationInput): AdjustForInf
     factor,
     fromIndex: fromPoint.value,
     toIndex: toPoint.value,
+    toYearBeUsed: toPoint.year_be,
     indexUnit: series.unit,
     basis: {
       indicator: series.indicator,

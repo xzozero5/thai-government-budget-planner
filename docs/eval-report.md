@@ -1,13 +1,13 @@
 # T-306 Eval Report — REAL RUN (เรียก API จริง)
 
-- วันที่: 2026-09-20T11:14:42.205Z
-- Tier ที่รัน: core8
+- วันที่: 2026-09-20T11:42:26.459Z
+- Tier ที่รัน: core8 (rescore — ไม่ได้เรียก API ใหม่)
 - Judge: **rule-based** (ADR-006 ข้อ 10 / docs/07-TESTING.md §4) — ไม่ใช่ LLM-as-judge รอบนี้
-- commit: e287afe
+- commit: 6246da1
 
 | case | model | สถานะ | auto_pass | turns | tool calls | citation precision | cost (USD) | cache hit % |
 |---|---|---|---|---|---|---|---|---|
-| equip-aircon-18000btu | claude-haiku-4-5-20251001 | run | PASS | 2 | 14 | 0.50 | 0.1827 | 100 |
+| equip-aircon-18000btu | claude-haiku-4-5-20251001 | run | FAIL | 2 | 14 | 0.50 | 0.1827 | 100 |
 | equip-notebook-office | claude-haiku-4-5-20251001 | not_run (budget) | - | - | - | - | - | - |
 | equip-truck-diesel-1ton | claude-haiku-4-5-20251001 | not_run (budget) | - | - | - | - | - | - |
 | construction-road-concrete | claude-haiku-4-5-20251001 | not_run (budget) | - | - | - | - | - | - |
@@ -17,7 +17,7 @@
 | training-vocational-program | claude-haiku-4-5-20251001 | not_run (budget) | - | - | - | - | - | - |
 | it-system-document-management | claude-haiku-4-5-20251001 | not_run (budget) | - | - | - | - | - | - |
 | local-tradition-festival | claude-haiku-4-5-20251001 | not_run (budget) | - | - | - | - | - | - |
-| longtail-item-keyword-fallback | claude-haiku-4-5-20251001 | run | PASS | 2 | 12 | 0.00 | 0.2023 | 100 |
+| longtail-item-keyword-fallback | claude-haiku-4-5-20251001 | run | FAIL | 2 | 12 | 0.00 | 0.2023 | 100 |
 | fiscal-year-2562-gap | claude-haiku-4-5-20251001 | run | FAIL | 2 | 18 | 0.90 | 0.2219 | 100 |
 | unit-price-n1-total-station | claude-haiku-4-5-20251001 | run | FAIL | 2 | 16 | 1.00 | 0.1418 | 100 |
 | no-data-informational-query | claude-haiku-4-5-20251001 | run | PASS | 2 | 0 | 1.00 | 0.0091 | 100 |
@@ -46,8 +46,15 @@
 - local-water-supply-village (claude-haiku-4-5-20251001) — not_run (budget)
 
 ## เหตุผลที่ตก (เฉพาะ case ที่ auto_pass=false)
+### equip-aircon-18000btu
+- **citation_resolve_100pct**: อ้าง 2 citation, เหลือรอดหลัง validator 1 (ถูกตัด 1)
+
+### longtail-item-keyword-fallback
+- **citation_resolve_100pct**: อ้าง 8 citation, เหลือรอดหลัง validator 0 (ถูกตัด 8)
+
 ### fiscal-year-2562-gap
 - **must_cite_dataset**: ไม่พบ dataset ที่คาดไว้ (pbo_disbursement) ในผลลัพธ์ tool ใด ๆ ของ case นี้ (พบจริง: ไม่มีเลย)
+- **citation_resolve_100pct**: อ้าง 10 citation, เหลือรอดหลัง validator 9 (ถูกตัด 1)
 - **cost_within_cap**: totalCostUsd=0.2219 USD (เพดานต่อ case: 0.2200 USD)
 
 ### unit-price-n1-total-station
@@ -55,7 +62,7 @@
 - **must_have_basis**: ไม่พบ basis: historical
 
 ### audit-aircon-price-check
-- **must_have_basis**: ไม่พบ basis: historical
+- **citation_resolve_100pct**: อ้าง 6 citation, เหลือรอดหลัง validator 5 (ถูกตัด 1)
 
 ## หมายเหตุ
 - รันจริงด้วย Anthropic API — ดูค่าใช้จ่ายสะสมทั้งหมดที่ `web/tests/eval/api-spend.json`

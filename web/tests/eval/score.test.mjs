@@ -194,3 +194,62 @@ describe('scoreCase', () => {
     expect(result.checks.find((c) => c.name === 'tool_rounds_within_budget').pass).toBe(false);
   });
 });
+
+// T-308 (PO review P0-1/P0-2)
+describe('scoreCase — citation_resolve_100pct / หลักฐานโหมด audit', () => {
+  const line = (citations) => ({ basis: 'historical', rationale: 'x', citations });
+
+  it('citation ที่โมเดลอ้างถูก validator ตัดบางส่วน → ตก citation_resolve_100pct', () => {
+    const transcript = baseTranscript({
+      toolCalls: [
+        {
+          name: 'emit_proposal',
+          isError: false,
+          input: { boq: [line([{ kind: 'budget_line', source_id: 'a' }, { kind: 'budget_line', source_id: 'ghost' }])] },
+        },
+      ],
+      proposal: { boq: [line([{ kind: 'budget_line', source_id: 'a' }])], totals: { grand_total_thb: 1 } },
+    });
+    const result = scoreCase(baseCase(), transcript);
+    const check = result.checks.find((c) => c.name === 'citation_resolve_100pct');
+    expect(check?.pass).toBe(false);
+    expect(result.auto_pass).toBe(false);
+  });
+
+  it('ไม่มี proposal (เคส no-data) → ไม่ตรวจ citation_resolve_100pct', () => {
+    const result = scoreCase(baseCase(), baseTranscript());
+    expect(result.checks.some((c) => c.name === 'citation_resolve_100pct')).toBe(false);
+  });
+
+  it('โหมด audit: ต้องมี audit_findings ที่ยังมี citation + comparables ที่มี source_id ตามจำนวนขั้นต่ำ', () => {
+    const caseSpec = baseCase({
+      expected: { ...baseCase().expected, min_audit_findings_with_citation: 1, min_comparables: 2 },
+    });
+    const proposalBase = { boq: [line([])], totals: { grand_total_thb: 1 } };
+    const emit = { name: 'emit_proposal', isError: false, input: { boq: [line([])] } };
+
+    const weak = scoreCase(
+      caseSpec,
+      baseTranscript({
+        toolCalls: [emit],
+        proposal: { ...proposalBase, audit_findings: [{ citations: [] }], comparables: [{ source_id: 'a' }] },
+      }),
+    );
+    expect(weak.checks.find((c) => c.name === 'min_audit_findings_with_citation')?.pass).toBe(false);
+    expect(weak.checks.find((c) => c.name === 'min_comparables')?.pass).toBe(false);
+
+    const strong = scoreCase(
+      caseSpec,
+      baseTranscript({
+        toolCalls: [emit],
+        proposal: {
+          ...proposalBase,
+          audit_findings: [{ citations: [{ kind: 'budget_line', source_id: 'a' }] }],
+          comparables: [{ source_id: 'a' }, { source_id: 'b' }],
+        },
+      }),
+    );
+    expect(strong.checks.find((c) => c.name === 'min_audit_findings_with_citation')?.pass).toBe(true);
+    expect(strong.checks.find((c) => c.name === 'min_comparables')?.pass).toBe(true);
+  });
+});

@@ -13,6 +13,7 @@ describe('adjustForInflationTool', () => {
       factor: 1.1,
       fromIndex: 100,
       toIndex: 110,
+      toYearBeUsed: 2568,
       indexUnit: 'index',
       basis: { indicator: 'cpi_headline_index', source_name: 'สนค.', source_url: 'https://x', verified: false },
       warnings: [],
@@ -38,6 +39,14 @@ describe('adjustForInflationTool', () => {
       indicator: 'cpi_headline_index',
     });
     expect(found?.factor).toBe(1.1);
+    // T-604: ค่าดัชนีที่ tool นี้อ่านจริงต้องอ้างเป็น citation econ ได้ — ปีปลายทางใช้ "ปีที่ใช้จริง" (2568)
+    // ไม่ใช่ปีที่ขอ (2570) เพราะค่าของปี 2570 ไม่เคยถูกอ่าน
+    expect(toolLog.hasEconValue('cpi_headline_index', 2565)).toBe(true);
+    expect(toolLog.hasEconValue('cpi_headline_index', 2568)).toBe(true);
+    expect(toolLog.hasEconValue('cpi_headline_index', 2570)).toBe(false);
+    if (!result.isError) {
+      expect(result.output.to_year_be_used).toBe(2568);
+    }
   });
 
   it('ปีที่ไม่มีข้อมูล → is_error (ห้ามเดา)', async () => {
