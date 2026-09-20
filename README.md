@@ -43,6 +43,28 @@ uv run ruff check . && uv run ruff format --check . && uv run pytest
 ```
 ข้อมูลดิบ (`เพราะ AI ไม่ใช่แค่ CHATBOT/`) ต้องวางที่ root ของ repo เอง — ไม่อยู่ใน git; pipeline อ่านอย่างเดียว เขียน output ไป `web/public/data/`
 
+### สร้างข้อมูลใหม่ (regenerate data)
+```bash
+cd pipeline
+uv run tgbp build --dataset all      # ~12 นาที, deterministic: extract → normalize → validate (V1–V9) → publish
+                                     # → web/public/data/ (manifest, shards, catalog, trends, docs, econ, ดัชนีค้นหา)
+                                     # hard validation fail = exit code ≠ 0 และไม่ publish
+uv run tgbp validate                 # รันเฉพาะ validation ซ้ำ → validation.json
+```
+ตรวจ `git diff --stat web/public/data` แล้ว commit เป็น commit แยก (`data: …`) — `data_version` ใน `manifest.json` จะเปลี่ยนเมื่อเนื้อหา shard เปลี่ยน
+
+### Eval ของ AI (ใช้เงินจริง — อ่าน `docs/api-budget.md` ก่อน)
+```bash
+cd web
+npm run eval                         # dry-run (fake client, ไม่เสียเงิน)
+npm run eval -- --real --confirm-spend --tier core8 --max-usd 1.80   # ยิง API จริง: key จาก web/.env.local, ledger ที่ tests/eval/api-spend.json
+npm run guard:n2                     # ยืนยันว่า key ของ eval ไม่ถูก inline เข้า bundle
+```
+
+### ใช้งานเว็บ
+เปิด `https://xzozero5.github.io/thai-government-budget-planner/` → ใส่ API key ของ Anthropic (อยู่ในหน่วยความจำของแท็บเท่านั้น) → เล่าโครงการ → ได้ข้อเสนอ + BOQ ที่ทุกตัวเลขคลิกดูที่มาได้ → ส่งออก PDF หรือบันทึก `.tgbp.json` (เปิดดูภายหลังที่ `#/load` ได้โดยไม่ต้องใช้ key) — ข้อจำกัดของข้อมูลดูที่หน้า "เกี่ยวกับเว็บนี้"
+**หมายเหตุ**: ทุกครั้งที่ deploy เวอร์ชันใหม่ แท็บที่เปิดค้างไว้ควรบันทึกงานแล้วรีเฟรช (ไฟล์ JS ของเวอร์ชันเดิมถูกแทนที่)
+
 ## เริ่มต้น (Claude Code)
 ```
 claude

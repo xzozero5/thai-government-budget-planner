@@ -8,7 +8,7 @@
 
 ## B-001 — DuckDB-WASM ยิง CSP violation จริง (script-src eval + connect-src data:) ระหว่าง flow ปกติ
 
-- **สถานะ**: พบจริง (reproducible)
+- **สถานะ**: **ปิดแล้ว (2569-09-21, `715f520`)** — ต้นตอจริงไม่ใช่ DuckDB: (ก) `eval` ×3 = Zod 4 probe `new Function("")` → `web/src/lib/zodConfig.ts` (jitless) (ข) `connect-src data:` = yoga-layout ของ react-pdf `fetch(data:…wasm)` ตอน export → อนุญาต `data:` ใน connect-src (ไม่เปิด unsafe-eval); e2e happy-path บังคับ `cspViolations() == []` แล้ว — รอ security-reviewer ทบทวนการอนุญาต `data:` ใน T-602
 - **Severity**: high
 - **ประเภท**: security (N5 / 09-SECURITY §2, §5 C2/C3)
 - **พบจาก**: `web/tests/e2e/happy-path.spec.ts` (T-409) — รันกับ **production build จริง** (`npm run build` แล้ว `npm run preview`, CSP meta ที่ inject จริงตาม `vite-plugins/cspMeta.ts`) ไม่ใช่ dev server (dev server ไม่มี CSP meta จึงไม่เคยเจอเคสนี้มาก่อน — และ `tests/e2e/data/duckdb-repo.spec.ts` เดิมรันผ่าน harness build `--mode e2e-harness` ที่เรียก `data.queryLines()` ตรง ๆ ไม่ผ่านชั้น AI tool/Zod จึงไม่ trigger code path เดียวกัน)
@@ -71,3 +71,14 @@ dependency นี้อาจไม่มี fallback เดียวกัน, 
 แทนการ assert เป็น `[]` ตรง ๆ — ดูเหตุผลในไฟล์ตรงจุดนั้น) เพื่อไม่ให้ suite ทั้งชุดแดงจากบั๊กที่ qa-engineer
 แก้เองไม่ได้ (อยู่นอกขอบเขตงาน T-409 ที่ห้ามแก้ `web/src/**`) — **แนะนำให้เปิด task แยกสำหรับแก้ B-001 แล้วเปลี่ยน
 บรรทัดนั้นกลับเป็น `expect(audit.cspViolations()).toEqual([])` เมื่อแก้เสร็จ**
+
+
+---
+
+## B-002 — `sources.json` นับ `.DS_Store` เป็นไฟล์ต้นทาง 1 รายการ
+
+- **สถานะ**: พบจริง (main thread, QA B5 2569-09-21) · **Severity**: low · **ประเภท**: data
+- **Reproduce**: เทียบ `web/public/data/sources.json` กับไฟล์จริงใน `เพราะ AI ไม่ใช่แค่ CHATBOT/` (ไม่นับ `.DS_Store`, `~$*`) → ไฟล์บนดิสก์ครบทุกไฟล์ใน json แต่ json มีเกิน 1 รายการ: `งบประมาณ สมุทรปราการ/1 - …/ร่าง พ.ร.บ. งบ 2570 ฉบับเต็ม - PDF/.DS_Store`
+- **คาดหวัง**: inventory ข้าม `.DS_Store` ทุกระดับ (08 §B5) · **จริง**: หลุด 1 ไฟล์ (โฟลเดอร์ย่อยลึก)
+- **ผลกระทบ**: `find_documents` อาจคืน "เอกสาร" ที่ไม่ใช่เอกสาร 1 รายการ; ไม่กระทบตัวเลขงบ
+- **ไฟล์ที่เกี่ยว**: `pipeline/tgbp_pipeline/inventory.py` — แก้พร้อม republish รอบถัดไป (T-209/T-210) เพราะ `data_version` จะเปลี่ยน
